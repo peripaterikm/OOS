@@ -1,0 +1,20 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local env
+.env
+
+# Generated outputs
+artifacts/
+reports/
+
+# IDE
+.vscode/
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db

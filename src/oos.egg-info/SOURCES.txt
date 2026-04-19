@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/oos/__init__.py
+src/oos/cli.py
+src/oos/config.py
+src/oos/orchestrator.py
+src/oos.egg-info/PKG-INFO
+src/oos.egg-info/SOURCES.txt
+src/oos.egg-info/dependency_links.txt
+src/oos.egg-info/entry_points.txt
+src/oos.egg-info/top_level.txt

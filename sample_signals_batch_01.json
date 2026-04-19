@@ -1,0 +1,154 @@
+[
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "Every week our ops manager exports orders from one system, copies them into Excel, cleans the columns by hand, and then re-enters part of the data into the accounting system. It takes about 4 hours a week and we still get invoice mistakes.",
+      "candidate_icp": "SMB operations manager",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_review",
+      "raw_content": "We use three tools to manage client onboarding, and none of them talk to each other. Our team keeps a master spreadsheet just to track what step each client is in. This causes delays almost every week.",
+      "candidate_icp": "B2B service operations lead",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_community_post",
+      "raw_content": "Our finance team still manually chases unpaid invoices from repeat B2B customers. We track promises to pay in notes and spreadsheets. Every month someone misses a follow-up and cash collection slips.",
+      "candidate_icp": "SMB finance manager",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "We run a small logistics company. Dispatchers copy delivery exceptions from WhatsApp into the TMS manually because drivers don't use the app consistently. This creates billing disputes and wasted hours.",
+      "candidate_icp": "SMB logistics operations manager",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_review",
+      "raw_content": "The CRM says one thing, the invoicing system says another, and support has a third source of truth. We built our own reconciliation spreadsheet just to see which customers are active and billable.",
+      "candidate_icp": "Revenue operations manager",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "In our clinic network, staff manually call patients who forgot forms before appointments. There's no clean workflow for incomplete intake packets, so front desk staff spends hours chasing documents every day.",
+      "candidate_icp": "Multi-location clinic admin lead",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_review",
+      "raw_content": "We manage 80 field technicians. Scheduling changes happen in Slack, but payroll needs structured timesheets. So office staff manually reconstruct who worked where from chat messages every Friday.",
+      "candidate_icp": "Field service operations manager",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_community_post",
+      "raw_content": "Our compliance team copies vendor data from onboarding forms into two separate systems and still has to review each submission manually. The duplicate work isn't huge per vendor, but across the month it eats days.",
+      "candidate_icp": "Vendor/compliance operations lead",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "We are a small distributor. Customer orders come by email in different formats, and staff manually standardizes line items before entering them into ERP. Errors are common and returns are expensive.",
+      "candidate_icp": "Wholesale distributor operations manager",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_review",
+      "raw_content": "Our recruiting team exports candidate pipelines every Monday to build client reports manually because the ATS dashboards are useless for the exact metrics clients want. It's repetitive and nobody likes doing it.",
+      "candidate_icp": "Recruitment agency operations lead",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "We run bookkeeping for many SMB clients. Every month clients send documents through email, WhatsApp, and random cloud links. Staff manually organizes and renames everything before any real work starts.",
+      "candidate_icp": "Bookkeeping firm operations manager",
+      "expected_status": "validated"
+    },
+    {
+      "source": "synthetic_community_post",
+      "raw_content": "Our sales coordinators manually rebuild quotes when customers ask for slightly different bundles. The pricing logic lives in people's heads and old spreadsheets, so quote turnaround is slow and inconsistent.",
+      "candidate_icp": "SMB sales operations / pricing coordinator",
+      "expected_status": "validated"
+    },
+  
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "The reporting in our tool is frustrating and I wish it were cleaner. We usually just export it and do our own thing.",
+      "candidate_icp": "Unknown business user",
+      "expected_status": "weak"
+    },
+    {
+      "source": "synthetic_review",
+      "raw_content": "I don't love our current onboarding workflow. It feels clunky, but we've kind of adapted to it.",
+      "candidate_icp": "Customer success manager",
+      "expected_status": "weak"
+    },
+    {
+      "source": "synthetic_community_post",
+      "raw_content": "There should really be better software for small finance teams. We do too much manually.",
+      "candidate_icp": "Finance employee",
+      "expected_status": "weak"
+    },
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "I suspect a lot of teams still use spreadsheets for tracking approvals. Not sure how common it is, but it seems inefficient.",
+      "candidate_icp": "Operations consultant",
+      "expected_status": "weak"
+    },
+    {
+      "source": "synthetic_review",
+      "raw_content": "We sometimes lose track of who approved what. It's annoying, though we usually sort it out eventually.",
+      "candidate_icp": "Back-office team lead",
+      "expected_status": "weak"
+    },
+    {
+      "source": "synthetic_community_post",
+      "raw_content": "Our team has too many tabs open all the time and context switching is exhausting.",
+      "candidate_icp": "General knowledge worker",
+      "expected_status": "weak"
+    },
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "Maybe there is room for a better way to organize client updates across tools, but I haven't really looked deeply into it.",
+      "candidate_icp": "Agency account manager",
+      "expected_status": "weak"
+    },
+  
+    {
+      "source": "synthetic_social_post",
+      "raw_content": "Software these days is terrible.",
+      "candidate_icp": "Unknown",
+      "expected_status": "noise"
+    },
+    {
+      "source": "synthetic_review",
+      "raw_content": "I hate Mondays and dashboards.",
+      "candidate_icp": "Unknown",
+      "expected_status": "noise"
+    },
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "Everything should just use AI already.",
+      "candidate_icp": "Unknown",
+      "expected_status": "noise"
+    },
+    {
+      "source": "synthetic_social_post",
+      "raw_content": "Spreadsheets are ugly.",
+      "candidate_icp": "Unknown",
+      "expected_status": "noise"
+    },
+    {
+      "source": "synthetic_review",
+      "raw_content": "The interface color is bad and the vibe is off.",
+      "candidate_icp": "Unknown",
+      "expected_status": "noise"
+    },
+    {
+      "source": "synthetic_forum_post",
+      "raw_content": "Someone should build a better startup for all this stuff.",
+      "candidate_icp": "Unknown",
+      "expected_status": "noise"
+    }
+  ]

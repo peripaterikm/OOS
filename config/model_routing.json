@@ -1,0 +1,13 @@
+{
+  "rules_by_stage": {
+    "signal": "cheap",
+    "opportunity": "medium",
+    "ideation": "strong",
+    "screen": "medium",
+    "hypothesis": "medium",
+    "council": "strong",
+    "portfolio": "cheap",
+    "weekly_review": "cheap"
+  }
+}
+
