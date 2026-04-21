@@ -59,6 +59,16 @@ class TestCli(unittest.TestCase):
                         "Run exp_dry customer interviews.",
                         "--timestamp",
                         "2026-04-16T12:00:00+00:00",
+                        "--readiness-report-id",
+                        "v1_readiness_2026-04-16T12-00-00+00-00.json",
+                        "--weekly-review-id",
+                        "weekly_review_2026-W16.json",
+                        "--council-decision-id",
+                        "cd_dry_1",
+                        "--hypothesis-id",
+                        "hyp_dry_1",
+                        "--experiment-id",
+                        "exp_dry_1",
                     ]
                 )
 
@@ -78,6 +88,11 @@ class TestCli(unittest.TestCase):
             self.assertEqual(review["selected_next_experiment_or_action"], "Run exp_dry customer interviews.")
             self.assertEqual(review["timestamp"], "2026-04-16T12:00:00+00:00")
             self.assertTrue(review["portfolio_updated"])
+            self.assertEqual(review["readiness_report_id"], "v1_readiness_2026-04-16T12-00-00+00-00.json")
+            self.assertEqual(review["weekly_review_id"], "weekly_review_2026-W16.json")
+            self.assertEqual(review["council_decision_ids"], ["cd_dry_1"])
+            self.assertEqual(review["hypothesis_ids"], ["hyp_dry_1"])
+            self.assertEqual(review["experiment_ids"], ["exp_dry_1"])
 
             portfolio = json.loads((artifacts_dir / "portfolio" / "ps_opp_dry_1.json").read_text(encoding="utf-8"))
             self.assertEqual(portfolio["state"], "Parked")

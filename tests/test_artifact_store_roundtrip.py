@@ -159,6 +159,11 @@ class TestArtifactStoreRoundTrip(unittest.TestCase):
                 selected_next_experiment_or_action="Провести 5 интервью с операционными менеджерами.",
                 timestamp="2026-04-16T00:00:00",
                 portfolio_updated=True,
+                readiness_report_id="v1_readiness_2026-04-16T00-00-00+00-00.json",
+                weekly_review_id="weekly_review_2026-W16.json",
+                council_decision_ids=["cd_1"],
+                hypothesis_ids=["hyp_1"],
+                experiment_ids=["exp_1"],
             )
             store.write_model(frd)
             self.assertEqual(store.read_model(FounderReviewDecision, "frd_1"), frd)

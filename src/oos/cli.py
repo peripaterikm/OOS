@@ -24,6 +24,11 @@ def _record_founder_review_decision(
     reason: str,
     next_action: str,
     timestamp: str | None,
+    readiness_report_id: str | None,
+    weekly_review_id: str | None,
+    council_decision_ids: list[str],
+    hypothesis_ids: list[str],
+    experiment_ids: list[str],
 ) -> tuple[Path, bool]:
     config = OOSConfig.from_env(project_root=project_root)
     ts = timestamp or datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -48,6 +53,11 @@ def _record_founder_review_decision(
         selected_next_experiment_or_action=next_action,
         timestamp=ts,
         portfolio_updated=portfolio_updated,
+        readiness_report_id=readiness_report_id,
+        weekly_review_id=weekly_review_id,
+        council_decision_ids=council_decision_ids,
+        hypothesis_ids=hypothesis_ids,
+        experiment_ids=experiment_ids,
     )
     ref = ArtifactStore(root_dir=config.artifacts_dir).write_model(review)
     return ref.path, portfolio_updated
@@ -115,6 +125,34 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional ISO timestamp for deterministic recording.",
     )
+    review_parser.add_argument(
+        "--readiness-report-id",
+        default=None,
+        help="Optional readiness report artifact id or filename reviewed.",
+    )
+    review_parser.add_argument(
+        "--weekly-review-id",
+        default=None,
+        help="Optional weekly review artifact id or filename reviewed.",
+    )
+    review_parser.add_argument(
+        "--council-decision-id",
+        action="append",
+        default=[],
+        help="Optional council decision id reviewed; repeat for multiple.",
+    )
+    review_parser.add_argument(
+        "--hypothesis-id",
+        action="append",
+        default=[],
+        help="Optional hypothesis id reviewed; repeat for multiple.",
+    )
+    review_parser.add_argument(
+        "--experiment-id",
+        action="append",
+        default=[],
+        help="Optional experiment id reviewed; repeat for multiple.",
+    )
 
     return parser
 
@@ -151,6 +189,11 @@ def main(argv: list[str] | None = None) -> int:
             reason=args.reason,
             next_action=args.next_action,
             timestamp=args.timestamp,
+            readiness_report_id=args.readiness_report_id,
+            weekly_review_id=args.weekly_review_id,
+            council_decision_ids=args.council_decision_id,
+            hypothesis_ids=args.hypothesis_id,
+            experiment_ids=args.experiment_id,
         )
 
         print("Founder review decision recorded.")
