@@ -1,0 +1,11 @@
+model = "auto"
+
+[project]
+name = "oos"
+
+[behavior]
+approval_mode = "review-first"
+
+[context]
+read_agents_md = true
+prefer_repo_docs = true
