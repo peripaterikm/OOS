@@ -115,6 +115,22 @@ py -m oos.cli v1-dry-run --project-root "C:\MARK\My_projects\OOS"
 
 ---
 
+### 6. Verification commands
+
+PowerShell, from the project root:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+$env:PYTHONPATH = "src"
+
+py -m unittest tests.test_cli -v
+py -m unittest tests.test_week8_end_to_end -v
+py -m unittest discover -s tests -p "test_*.py" -v
+py -m oos.cli v1-dry-run --project-root "C:\MARK\My_projects\OOS"
+```
+
+---
+
 ## Git / GitHub
 
 ### Что не коммитить
