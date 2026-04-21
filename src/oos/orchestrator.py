@@ -245,6 +245,30 @@ class Orchestrator:
             *[f"--experiment-id {exp.id}" for _, exp in hyp_exp_pairs],
         ]
         founder_review_command = " `\n  ".join(command_parts)
+        kill_reason_ids = [res.kill_reason_id for _, res in screened if res.kill_reason_id]
+        killed_command_lines = []
+        if kill_reason_ids:
+            killed_command_parts = [
+                f'"{sys.executable}" -m oos.cli record-founder-review',
+                f'--project-root "{self.config.project_root}"',
+                f"--opportunity-id {opp.id}",
+                "--decision Killed",
+                '--reason "Founder reviewed the kill evidence and accepts the kill decision."',
+                '--next-action "Archive the opportunity and reuse the failure pattern in future screening."',
+                f"--linked-kill-reason-id {kill_reason_ids[0]}",
+                f"--readiness-report-id {readiness_path.name}",
+                f"--weekly-review-id {weekly_path.name}",
+                *[f"--council-decision-id {decision.id}" for decision in council_decisions],
+                *[f"--hypothesis-id {hyp.id}" for hyp, _ in hyp_exp_pairs],
+                *[f"--experiment-id {exp.id}" for _, exp in hyp_exp_pairs],
+            ]
+            killed_command_lines = [
+                "",
+                "## Ready-To-Run Killed Decision Command",
+                "```powershell",
+                " `\n  ".join(killed_command_parts),
+                "```",
+            ]
 
         founder_checklist = [
             "# OOS v1 Founder Review Checklist",
@@ -300,6 +324,7 @@ class Orchestrator:
             "```powershell",
             founder_review_command,
             "```",
+            *killed_command_lines,
         ]
         founder_checklist_path.write_text("\n".join(founder_checklist), encoding="utf-8")
 

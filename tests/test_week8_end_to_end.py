@@ -66,9 +66,11 @@ class TestWeek8EndToEnd(unittest.TestCase):
             self.assertIn("park until 5 ICP interviews confirm urgency", founder_checklist)
             self.assertIn("Run 5 ops-manager interviews this week", founder_checklist)
             self.assertIn("## Ready-To-Run Decision Command", founder_checklist)
+            self.assertIn("## Ready-To-Run Killed Decision Command", founder_checklist)
             self.assertIn(f'"{sys.executable}" -m oos.cli record-founder-review', founder_checklist)
             self.assertIn(f'--project-root "{project_root}"', founder_checklist)
             self.assertIn("--opportunity-id opp_dry_1", founder_checklist)
+            self.assertIn("--decision Killed", founder_checklist)
             self.assertIn("--readiness-report-id v1_readiness_2026-04-16T00-00-00+00-00.json", founder_checklist)
             self.assertIn("--weekly-review-id weekly_review_2026-W16.json", founder_checklist)
             self.assertIn("artifacts/signals/sig_dry_valid.json", founder_checklist)
@@ -89,6 +91,8 @@ class TestWeek8EndToEnd(unittest.TestCase):
             self.assertIn("sig_dry_weak", opportunity["source_signal_ids"])
             idea_ids = readiness["artifacts_written"]["ideas"]
             self.assertGreaterEqual(len(idea_ids), 1)
+            for kill_reason_id in readiness["artifacts_written"]["kills"]:
+                self.assertIn(f"--linked-kill-reason-id {kill_reason_id}", founder_checklist)
             for council_id in readiness["artifacts_written"]["council"]:
                 self.assertIn(f"--council-decision-id {council_id}", founder_checklist)
             for hypothesis_id in readiness["artifacts_written"]["hypotheses"]:
