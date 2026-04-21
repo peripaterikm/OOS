@@ -29,6 +29,7 @@ def _record_founder_review_decision(
     council_decision_ids: list[str],
     hypothesis_ids: list[str],
     experiment_ids: list[str],
+    linked_kill_reason_id: str | None,
 ) -> tuple[Path, bool]:
     config = OOSConfig.from_env(project_root=project_root)
     ts = timestamp or datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -42,6 +43,17 @@ def _record_founder_review_decision(
             opportunity_id=opportunity_id,
             to_state=PortfolioStateEnum(decision.value),
             reason=f"Founder review {ts}: {reason}",
+        )
+        portfolio_updated = True
+    elif decision == FounderReviewDecisionEnum.Killed:
+        if not linked_kill_reason_id:
+            raise ValueError("--linked-kill-reason-id is required when --decision Killed")
+        portfolio = PortfolioManager(artifacts_root=config.artifacts_dir)
+        portfolio.transition(
+            opportunity_id=opportunity_id,
+            to_state=PortfolioStateEnum.Killed,
+            reason=f"Founder review {ts}: {reason}",
+            linked_kill_reason_id=linked_kill_reason_id,
         )
         portfolio_updated = True
 
@@ -153,6 +165,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=[],
         help="Optional experiment id reviewed; repeat for multiple.",
     )
+    review_parser.add_argument(
+        "--linked-kill-reason-id",
+        default=None,
+        help="Required when --decision Killed; existing KillReason id to link to portfolio state.",
+    )
 
     return parser
 
@@ -194,6 +211,7 @@ def main(argv: list[str] | None = None) -> int:
             council_decision_ids=args.council_decision_id,
             hypothesis_ids=args.hypothesis_id,
             experiment_ids=args.experiment_id,
+            linked_kill_reason_id=args.linked_kill_reason_id,
         )
 
         print("Founder review decision recorded.")

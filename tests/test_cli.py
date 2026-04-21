@@ -98,6 +98,69 @@ class TestCli(unittest.TestCase):
             self.assertEqual(portfolio["state"], "Parked")
             self.assertIn("Founder review 2026-04-16T12:00:00+00:00", portfolio["reason"])
 
+    def test_record_founder_review_killed_requires_and_links_kill_reason(self) -> None:
+        with TemporaryDirectory() as tmp:
+            with redirect_stdout(io.StringIO()):
+                main(["v1-dry-run", "--project-root", tmp])
+
+            artifacts_dir = Path(tmp) / "artifacts"
+            kill_reason_id = next((artifacts_dir / "kills").glob("*.json")).stem
+            stdout = io.StringIO()
+
+            with redirect_stdout(stdout):
+                exit_code = main(
+                    [
+                        "record-founder-review",
+                        "--project-root",
+                        tmp,
+                        "--opportunity-id",
+                        "opp_dry_1",
+                        "--decision",
+                        "Killed",
+                        "--reason",
+                        "Founder accepts the existing kill reason.",
+                        "--next-action",
+                        "Archive the opportunity and reuse the pattern.",
+                        "--timestamp",
+                        "2026-04-16T13:00:00+00:00",
+                        "--linked-kill-reason-id",
+                        kill_reason_id,
+                    ]
+                )
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("portfolio_updated: true", stdout.getvalue())
+            review_path = artifacts_dir / "founder_reviews" / "frd_opp_dry_1_2026-04-16T13_00_00_00_00.json"
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+            self.assertEqual(review["decision"], "Killed")
+            self.assertTrue(review["portfolio_updated"])
+
+            portfolio = json.loads((artifacts_dir / "portfolio" / "ps_opp_dry_1.json").read_text(encoding="utf-8"))
+            self.assertEqual(portfolio["state"], "Killed")
+            self.assertEqual(portfolio["linked_kill_reason_id"], kill_reason_id)
+
+    def test_record_founder_review_killed_requires_kill_reason_id(self) -> None:
+        with TemporaryDirectory() as tmp:
+            with redirect_stdout(io.StringIO()):
+                main(["v1-dry-run", "--project-root", tmp])
+
+            with self.assertRaisesRegex(ValueError, "--linked-kill-reason-id is required"):
+                main(
+                    [
+                        "record-founder-review",
+                        "--project-root",
+                        tmp,
+                        "--opportunity-id",
+                        "opp_dry_1",
+                        "--decision",
+                        "Killed",
+                        "--reason",
+                        "Founder accepts the kill case.",
+                        "--next-action",
+                        "Archive the opportunity.",
+                    ]
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
