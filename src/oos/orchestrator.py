@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import sys
 from typing import Dict, List, Optional
 
 from .config import OOSConfig
@@ -230,6 +231,21 @@ class Orchestrator:
         ]
         checklist_path.write_text("\n".join(checklist), encoding="utf-8")
 
+        command_parts = [
+            f'"{sys.executable}" -m oos.cli record-founder-review',
+            f'--project-root "{self.config.project_root}"',
+            f"--opportunity-id {opp.id}",
+            "--decision Parked",
+            '--reason "Founder reviewed the v1 dry-run package and wants more evidence before proceeding."',
+            '--next-action "Run the selected cheapest next experiment before the next portfolio review."',
+            f"--readiness-report-id {readiness_path.name}",
+            f"--weekly-review-id {weekly_path.name}",
+            *[f"--council-decision-id {decision.id}" for decision in council_decisions],
+            *[f"--hypothesis-id {hyp.id}" for hyp, _ in hyp_exp_pairs],
+            *[f"--experiment-id {exp.id}" for _, exp in hyp_exp_pairs],
+        ]
+        founder_review_command = " `\n  ".join(command_parts)
+
         founder_checklist = [
             "# OOS v1 Founder Review Checklist",
             "",
@@ -269,6 +285,11 @@ class Orchestrator:
             "- Pick the cheapest next experiment to run this week.",
             "- Record any kill decision with a concrete reason, not only a label.",
             "- Update portfolio state after the review decision.",
+            "",
+            "## Ready-To-Run Decision Command",
+            "```powershell",
+            founder_review_command,
+            "```",
         ]
         founder_checklist_path.write_text("\n".join(founder_checklist), encoding="utf-8")
 

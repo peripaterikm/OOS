@@ -1,4 +1,5 @@
 import json
+import sys
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -59,6 +60,12 @@ class TestWeek8EndToEnd(unittest.TestCase):
             self.assertIn("## Council Concerns", founder_checklist)
             self.assertIn("## Portfolio State Review", founder_checklist)
             self.assertIn("## Founder Action Checklist", founder_checklist)
+            self.assertIn("## Ready-To-Run Decision Command", founder_checklist)
+            self.assertIn(f'"{sys.executable}" -m oos.cli record-founder-review', founder_checklist)
+            self.assertIn(f'--project-root "{project_root}"', founder_checklist)
+            self.assertIn("--opportunity-id opp_dry_1", founder_checklist)
+            self.assertIn("--readiness-report-id v1_readiness_2026-04-16T00-00-00+00-00.json", founder_checklist)
+            self.assertIn("--weekly-review-id weekly_review_2026-W16.json", founder_checklist)
             self.assertIn("artifacts/signals/sig_dry_valid.json", founder_checklist)
             self.assertIn("artifacts/weak_signals/sig_dry_weak.json", founder_checklist)
             self.assertIn("artifacts/opportunities/opp_dry_1.json", founder_checklist)
@@ -77,6 +84,12 @@ class TestWeek8EndToEnd(unittest.TestCase):
             self.assertIn("sig_dry_weak", opportunity["source_signal_ids"])
             idea_ids = readiness["artifacts_written"]["ideas"]
             self.assertGreaterEqual(len(idea_ids), 1)
+            for council_id in readiness["artifacts_written"]["council"]:
+                self.assertIn(f"--council-decision-id {council_id}", founder_checklist)
+            for hypothesis_id in readiness["artifacts_written"]["hypotheses"]:
+                self.assertIn(f"--hypothesis-id {hypothesis_id}", founder_checklist)
+            for experiment_id in readiness["artifacts_written"]["experiments"]:
+                self.assertIn(f"--experiment-id {experiment_id}", founder_checklist)
             for iid in idea_ids:
                 self.assertTrue((artifacts_dir / "ideas" / f"{iid}.json").exists())
 
