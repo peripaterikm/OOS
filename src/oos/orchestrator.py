@@ -80,8 +80,8 @@ class Orchestrator:
 
         # Stage 1: Signals (manual ingestion)
         signal_layer = SignalLayer(artifacts_root=artifacts_root)
-        # One "validated" and one "weak" signal; deterministic via explicit validity overrides through file-import path is
-        # not needed here—use manual signals that should score high/medium.
+        # One validated signal and one weak signal; the weak fixture is intentionally
+        # recurrence + workaround only, so it routes to weak_signals before manual promotion.
         sig_valid = signal_layer.ingest_manual(
             raw_content="Every day I manually export and copy data; it takes 30 minutes and causes errors.",
             extracted_pain="Manual export/copy wastes time daily and causes errors.",
@@ -92,8 +92,8 @@ class Orchestrator:
             metadata={"dry_run": True},
         )
         sig_weak = signal_layer.ingest_manual(
-            raw_content="Often annoying, but not sure why.",
-            extracted_pain="Annoying workflow friction.",
+            raw_content="Often I paste between tools because the handoff is annoying.",
+            extracted_pain="Repeated paste-based handoff creates friction.",
             candidate_icp="unknown",
             source="dry_run",
             timestamp=now.isoformat(timespec="seconds"),
@@ -168,10 +168,11 @@ class Orchestrator:
         # - Else if any kill exists => Killed (with first kill reason)
         outcomes = [res.outcome for _, res in screened]
         first_kill_reason = next((res.kill_reason_id for _, res in screened if res.kill_reason_id), None)
+        transition_reason = f"Dry run {now.isoformat(timespec='seconds')} [needs_review]"
         if "pass" in outcomes:
-            portfolio.transition(opportunity_id=opp.id, to_state=PortfolioStateEnum.Active, reason="Dry run [needs_review]")
+            portfolio.transition(opportunity_id=opp.id, to_state=PortfolioStateEnum.Active, reason=transition_reason)
         elif "park" in outcomes:
-            portfolio.transition(opportunity_id=opp.id, to_state=PortfolioStateEnum.Parked, reason="Dry run [needs_review]")
+            portfolio.transition(opportunity_id=opp.id, to_state=PortfolioStateEnum.Parked, reason=transition_reason)
         else:
             portfolio.transition(
                 opportunity_id=opp.id,
