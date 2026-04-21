@@ -22,6 +22,7 @@ class TestCli(unittest.TestCase):
             self.assertIn("weekly_review:", output)
             self.assertIn("readiness_report:", output)
             self.assertIn("operational_checklist:", output)
+            self.assertIn("founder_review_checklist:", output)
 
             artifacts_dir = Path(tmp) / "artifacts"
             self.assertTrue((artifacts_dir / "signals" / "sig_dry_valid.json").exists())
@@ -29,6 +30,7 @@ class TestCli(unittest.TestCase):
             self.assertTrue((artifacts_dir / "opportunities" / "opp_dry_1.json").exists())
             self.assertTrue((artifacts_dir / "portfolio" / "ps_opp_dry_1.json").exists())
             self.assertTrue((artifacts_dir / "ops" / "v1_operational_checklist.txt").exists())
+            self.assertTrue((artifacts_dir / "ops" / "v1_founder_review_checklist.md").exists())
 
             readiness_paths = list((artifacts_dir / "readiness").glob("v1_readiness_*.json"))
             self.assertEqual(len(readiness_paths), 1)

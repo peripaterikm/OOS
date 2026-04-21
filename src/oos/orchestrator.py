@@ -186,6 +186,10 @@ class Orchestrator:
         weekly_path = weekly.generate(now=now)
 
         # Readiness report + operational checklist artifacts
+        ops_dir = artifacts_root / "ops"
+        ops_dir.mkdir(parents=True, exist_ok=True)
+        founder_checklist_path = ops_dir / "v1_founder_review_checklist.md"
+
         readiness_dir = artifacts_root / "readiness"
         readiness_dir.mkdir(parents=True, exist_ok=True)
         safe_ts = now.isoformat(timespec="seconds").replace(":", "-")
@@ -204,14 +208,13 @@ class Orchestrator:
                 "council": [d.id for d in council_decisions],
                 "portfolio": [f"ps_{opp.id}"],
                 "weekly_review": weekly_path.name,
+                "founder_review_checklist": founder_checklist_path.name,
             },
             "status": "ok",
             "notes": "Dry-run validates artifact coherence and stage connectivity (no execution layer).",
         }
         readiness_path.write_text(json.dumps(readiness_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        ops_dir = artifacts_root / "ops"
-        ops_dir.mkdir(parents=True, exist_ok=True)
         checklist_path = ops_dir / "v1_operational_checklist.txt"
         checklist = [
             "OOS v1 Operational Checklist (minimal)",
@@ -227,9 +230,52 @@ class Orchestrator:
         ]
         checklist_path.write_text("\n".join(checklist), encoding="utf-8")
 
+        founder_checklist = [
+            "# OOS v1 Founder Review Checklist",
+            "",
+            "## Review Objective",
+            f"- Review the dry-run package generated at `{now.isoformat(timespec='seconds')}`.",
+            f"- Start with readiness: `artifacts/readiness/{readiness_path.name}`.",
+            f"- Use weekly review: `artifacts/weekly_reviews/{weekly_path.name}`.",
+            "",
+            "## Signals And Opportunities To Inspect",
+            "- Validated signal: `artifacts/signals/sig_dry_valid.json`.",
+            "- Weak signal promoted for review: `artifacts/weak_signals/sig_dry_weak.json`.",
+            f"- Opportunity card: `artifacts/opportunities/{opp.id}.json`.",
+            "",
+            "## Kill / Proceed Decisions",
+            *[
+                f"- `{idea.id}`: `{res.outcome}`"
+                + (f" with kill reason `artifacts/kills/{res.kill_reason_id}.json`." if res.kill_reason_id else ".")
+                for idea, res in screened
+            ],
+            "",
+            "## Hypotheses And Experiments To Review",
+            *[
+                f"- Hypothesis `artifacts/hypotheses/{hyp.id}.json`; experiment `artifacts/experiments/{exp.id}.json`."
+                for hyp, exp in hyp_exp_pairs
+            ],
+            "",
+            "## Council Concerns",
+            *[f"- Council decision: `artifacts/council/{decision.id}.json`." for decision in council_decisions],
+            "",
+            "## Portfolio State Review",
+            f"- Portfolio state: `artifacts/portfolio/ps_{opp.id}.json`.",
+            f"- Weekly review package: `artifacts/weekly_reviews/{weekly_path.name}`.",
+            "",
+            "## Founder Action Checklist",
+            "- Decide whether `opp_dry_1` should stay Active, be Parked, or be Killed.",
+            "- Approve or reject the weak signal promotion from `sig_dry_weak`.",
+            "- Pick the cheapest next experiment to run this week.",
+            "- Record any kill decision with a concrete reason, not only a label.",
+            "- Update portfolio state after the review decision.",
+        ]
+        founder_checklist_path.write_text("\n".join(founder_checklist), encoding="utf-8")
+
         return {
             "weekly_review": weekly_path,
             "readiness_report": readiness_path,
             "operational_checklist": checklist_path,
+            "founder_review_checklist": founder_checklist_path,
         }
 
