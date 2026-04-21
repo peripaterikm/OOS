@@ -40,6 +40,12 @@ class PortfolioStateEnum(str, Enum):
     Graduated = "Graduated"
 
 
+class FounderReviewDecisionEnum(str, Enum):
+    Active = "Active"
+    Parked = "Parked"
+    Killed = "Killed"
+
+
 @dataclass(frozen=True)
 class Signal:
     id: str
@@ -261,6 +267,30 @@ class KillReason:
         _require_non_empty(self.looked_attractive_because, "KillReason.looked_attractive_because")
 
 
+@dataclass(frozen=True)
+class FounderReviewDecision:
+    id: str
+    opportunity_id: str
+    decision: FounderReviewDecisionEnum
+    reason: str
+    selected_next_experiment_or_action: str
+    timestamp: str = field(default_factory=_iso_utc_now_seconds)
+    portfolio_updated: bool = False
+
+    def validate(self) -> None:
+        _require_non_empty(self.id, "FounderReviewDecision.id")
+        _require_non_empty(self.opportunity_id, "FounderReviewDecision.opportunity_id")
+        _require_non_empty(str(self.decision.value), "FounderReviewDecision.decision")
+        _require_non_empty(self.reason, "FounderReviewDecision.reason")
+        _require_non_empty(
+            self.selected_next_experiment_or_action,
+            "FounderReviewDecision.selected_next_experiment_or_action",
+        )
+        _require_non_empty(self.timestamp, "FounderReviewDecision.timestamp")
+        if not isinstance(self.portfolio_updated, bool):
+            raise ValueError("FounderReviewDecision.portfolio_updated must be bool")
+
+
 MODEL_KIND = {
     Signal: "signals",
     OpportunityCard: "opportunities",
@@ -271,6 +301,7 @@ MODEL_KIND = {
     CouncilDecision: "council",
     PortfolioState: "portfolio",
     KillReason: "kills",
+    FounderReviewDecision: "founder_reviews",
 }
 
 
@@ -316,6 +347,13 @@ def model_from_dict(model_cls: Any, data: Dict[str, Any]) -> Any:
             **{
                 **data,
                 "state": _enum_from_value(PortfolioStateEnum, data.get("state")),
+            }
+        )
+    elif model_cls is FounderReviewDecision:
+        obj = FounderReviewDecision(
+            **{
+                **data,
+                "decision": _enum_from_value(FounderReviewDecisionEnum, data.get("decision")),
             }
         )
     else:

@@ -7,6 +7,8 @@ from oos.models import (
     CouncilDecision,
     Evidence,
     Experiment,
+    FounderReviewDecision,
+    FounderReviewDecisionEnum,
     Hypothesis,
     IdeaScreenStatus,
     IdeaVariant,
@@ -148,6 +150,18 @@ class TestArtifactStoreRoundTrip(unittest.TestCase):
             )
             store.write_model(kr)
             self.assertEqual(store.read_model(KillReason, "kr_1"), kr)
+
+            frd = FounderReviewDecision(
+                id="frd_1",
+                opportunity_id="opp_1",
+                decision=FounderReviewDecisionEnum.Parked,
+                reason="Нужно проверить спрос до продолжения.",
+                selected_next_experiment_or_action="Провести 5 интервью с операционными менеджерами.",
+                timestamp="2026-04-16T00:00:00",
+                portfolio_updated=True,
+            )
+            store.write_model(frd)
+            self.assertEqual(store.read_model(FounderReviewDecision, "frd_1"), frd)
 
             # Ensure UTF-8 JSON does not escape Cyrillic by default.
             opp_path = store.path_for("opportunities", "opp_1")

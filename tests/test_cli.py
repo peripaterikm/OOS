@@ -37,6 +37,52 @@ class TestCli(unittest.TestCase):
             readiness = json.loads(readiness_paths[0].read_text(encoding="utf-8"))
             self.assertEqual(readiness["status"], "ok")
 
+    def test_record_founder_review_writes_decision_and_updates_safe_portfolio_state(self) -> None:
+        with TemporaryDirectory() as tmp:
+            with redirect_stdout(io.StringIO()):
+                main(["v1-dry-run", "--project-root", tmp])
+            stdout = io.StringIO()
+
+            with redirect_stdout(stdout):
+                exit_code = main(
+                    [
+                        "record-founder-review",
+                        "--project-root",
+                        tmp,
+                        "--opportunity-id",
+                        "opp_dry_1",
+                        "--decision",
+                        "Parked",
+                        "--reason",
+                        "Founder wants more evidence before keeping this active.",
+                        "--next-action",
+                        "Run exp_dry customer interviews.",
+                        "--timestamp",
+                        "2026-04-16T12:00:00+00:00",
+                    ]
+                )
+
+            output = stdout.getvalue()
+            self.assertEqual(exit_code, 0)
+            self.assertIn("Founder review decision recorded.", output)
+            self.assertIn("decision_artifact:", output)
+            self.assertIn("portfolio_updated: true", output)
+
+            artifacts_dir = Path(tmp) / "artifacts"
+            review_path = artifacts_dir / "founder_reviews" / "frd_opp_dry_1_2026-04-16T12_00_00_00_00.json"
+            self.assertTrue(review_path.exists())
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+            self.assertEqual(review["opportunity_id"], "opp_dry_1")
+            self.assertEqual(review["decision"], "Parked")
+            self.assertEqual(review["reason"], "Founder wants more evidence before keeping this active.")
+            self.assertEqual(review["selected_next_experiment_or_action"], "Run exp_dry customer interviews.")
+            self.assertEqual(review["timestamp"], "2026-04-16T12:00:00+00:00")
+            self.assertTrue(review["portfolio_updated"])
+
+            portfolio = json.loads((artifacts_dir / "portfolio" / "ps_opp_dry_1.json").read_text(encoding="utf-8"))
+            self.assertEqual(portfolio["state"], "Parked")
+            self.assertIn("Founder review 2026-04-16T12:00:00+00:00", portfolio["reason"])
+
 
 if __name__ == "__main__":
     unittest.main()

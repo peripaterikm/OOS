@@ -2,10 +2,55 @@ from __future__ import annotations
 
 import argparse
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
+from .artifact_store import ArtifactStore
 from .config import OOSConfig
+from .models import FounderReviewDecision, FounderReviewDecisionEnum, PortfolioStateEnum
 from .orchestrator import Orchestrator
+from .portfolio_layer import PortfolioManager
+
+
+def _safe_artifact_id_part(value: str) -> str:
+    return "".join(ch if ch.isalnum() or ch in {"_", "-"} else "_" for ch in value)
+
+
+def _record_founder_review_decision(
+    *,
+    project_root: Path,
+    opportunity_id: str,
+    decision: FounderReviewDecisionEnum,
+    reason: str,
+    next_action: str,
+    timestamp: str | None,
+) -> tuple[Path, bool]:
+    config = OOSConfig.from_env(project_root=project_root)
+    ts = timestamp or datetime.now(timezone.utc).isoformat(timespec="seconds")
+    safe_ts = _safe_artifact_id_part(ts)
+    artifact_id = f"frd_{_safe_artifact_id_part(opportunity_id)}_{safe_ts}"
+
+    portfolio_updated = False
+    if decision in (FounderReviewDecisionEnum.Active, FounderReviewDecisionEnum.Parked):
+        portfolio = PortfolioManager(artifacts_root=config.artifacts_dir)
+        portfolio.transition(
+            opportunity_id=opportunity_id,
+            to_state=PortfolioStateEnum(decision.value),
+            reason=f"Founder review {ts}: {reason}",
+        )
+        portfolio_updated = True
+
+    review = FounderReviewDecision(
+        id=artifact_id,
+        opportunity_id=opportunity_id,
+        decision=decision,
+        reason=reason,
+        selected_next_experiment_or_action=next_action,
+        timestamp=ts,
+        portfolio_updated=portfolio_updated,
+    )
+    ref = ArtifactStore(root_dir=config.artifacts_dir).write_model(review)
+    return ref.path, portfolio_updated
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -42,6 +87,35 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Path to the OOS project root (defaults to current working directory).",
     )
 
+    review_parser = subparsers.add_parser(
+        "record-founder-review",
+        help="Record a founder review decision as an artifact.",
+    )
+    review_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    review_parser.add_argument("--opportunity-id", required=True, help="Opportunity id under founder review.")
+    review_parser.add_argument(
+        "--decision",
+        required=True,
+        choices=[d.value for d in FounderReviewDecisionEnum],
+        help="Founder decision for the opportunity.",
+    )
+    review_parser.add_argument("--reason", required=True, help="Concrete reason for the decision.")
+    review_parser.add_argument(
+        "--next-action",
+        required=True,
+        help="Selected next experiment or next action.",
+    )
+    review_parser.add_argument(
+        "--timestamp",
+        default=None,
+        help="Optional ISO timestamp for deterministic recording.",
+    )
+
     return parser
 
 
@@ -67,6 +141,21 @@ def main(argv: list[str] | None = None) -> int:
         print("OOS v1 dry run completed.")
         for k, p in paths.items():
             print(f"{k}: {p}")
+        return 0
+
+    if args.command == "record-founder-review":
+        path, portfolio_updated = _record_founder_review_decision(
+            project_root=args.project_root,
+            opportunity_id=args.opportunity_id,
+            decision=FounderReviewDecisionEnum(args.decision),
+            reason=args.reason,
+            next_action=args.next_action,
+            timestamp=args.timestamp,
+        )
+
+        print("Founder review decision recorded.")
+        print(f"decision_artifact: {path}")
+        print(f"portfolio_updated: {str(portfolio_updated).lower()}")
         return 0
 
     # In Week 1 there are no other commands.
