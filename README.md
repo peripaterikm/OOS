@@ -54,28 +54,34 @@
 
 ## Как запускать проект
 
+Windows and PowerShell are the primary developer environment for this repository.
+Use a native Windows Python virtual environment at `.venv`; do not treat WSL/Linux as the default workflow.
+
 ### 1. Создать виртуальное окружение
 
 PowerShell, из корня проекта:
 
 ```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\scripts\bootstrap.ps1
 ```
 
 Если PowerShell ругается на policy:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
+.\scripts\bootstrap.ps1
 ```
 
 ---
 
 ### 2. Установить проект
 
+`scripts\bootstrap.ps1` installs `requirements.txt` when present and then installs OOS in editable mode.
+Manual equivalent:
+
 ```powershell
-py -m pip install -e .
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -e .
 ```
 
 ---
@@ -84,7 +90,7 @@ py -m pip install -e .
 
 ```powershell
 $env:PYTHONPATH = "src"
-py -m unittest discover -s tests -p "test_*.py" -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v
 ```
 
 ---
@@ -92,14 +98,14 @@ py -m unittest discover -s tests -p "test_*.py" -v
 ### 4. Smoke test
 
 ```powershell
-oos smoke-test
+.\.venv\Scripts\python.exe -m oos.cli smoke-test --project-root .
 ```
 
-или:
+`oos smoke-test` also works after activation, or when `.venv\Scripts` is on `PATH`:
 
 ```powershell
-$env:PYTHONPATH = "src"
-py -m oos.cli smoke-test
+.\.venv\Scripts\Activate.ps1
+oos smoke-test --project-root .
 ```
 
 ---
@@ -108,7 +114,7 @@ py -m oos.cli smoke-test
 
 ```powershell
 $env:PYTHONPATH = "src"
-py -m oos.cli v1-dry-run --project-root "C:\MARK\My_projects\OOS"
+.\.venv\Scripts\python.exe -m oos.cli v1-dry-run --project-root .
 ```
 
 После этого артефакты появляются в `artifacts/`.
@@ -122,7 +128,7 @@ py -m oos.cli v1-dry-run --project-root "C:\MARK\My_projects\OOS"
 - `artifacts/ops/v1_founder_review_checklist.md`
 - `artifacts/weekly_reviews/<weekly_review_...>.json`
 
-Checklist содержит готовые команды `record-founder-review` для текущей среды. Если передаёшь `--readiness-report-id`, `--weekly-review-id`, `--council-decision-id`, `--hypothesis-id`, `--experiment-id` или `--linked-kill-reason-id`, CLI проверяет, что соответствующий artifact существует. Для `--decision Killed` параметр `--linked-kill-reason-id` обязателен.
+Checklist содержит готовые PowerShell-compatible команды `record-founder-review` для текущей среды. Запускай их из PowerShell в Windows-native `.venv`. Если передаёшь `--readiness-report-id`, `--weekly-review-id`, `--council-decision-id`, `--hypothesis-id`, `--experiment-id` или `--linked-kill-reason-id`, CLI проверяет, что соответствующий artifact существует. Для `--decision Killed` параметр `--linked-kill-reason-id` обязателен.
 
 ---
 
@@ -131,13 +137,19 @@ Checklist содержит готовые команды `record-founder-review`
 PowerShell, from the project root:
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
-$env:PYTHONPATH = "src"
+.\scripts\verify.ps1
+```
 
-py -m unittest tests.test_cli -v
-py -m unittest tests.test_week8_end_to_end -v
-py -m unittest discover -s tests -p "test_*.py" -v
-py -m oos.cli v1-dry-run --project-root "C:\MARK\My_projects\OOS"
+By default, `scripts\verify.ps1` runs the dry run against a clean temporary project root so existing local `artifacts/` state cannot mask workflow regressions.
+
+Manual equivalent:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m unittest tests.test_cli -v
+.\.venv\Scripts\python.exe -m unittest tests.test_week8_end_to_end -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v
+.\.venv\Scripts\python.exe -m oos.cli v1-dry-run --project-root .
 ```
 
 ---
