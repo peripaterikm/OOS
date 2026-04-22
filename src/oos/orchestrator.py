@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
+import shlex
 import sys
 from typing import Dict, List, Optional
 
@@ -36,6 +38,19 @@ class Orchestrator:
     """
 
     config: OOSConfig
+
+    def _shell_code_fence(self) -> str:
+        return "powershell" if os.name == "nt" else "bash"
+
+    def _quote_command_arg(self, value: str) -> str:
+        if os.name == "nt":
+            escaped = value.replace('"', '\\"')
+            return f'"{escaped}"' if any(ch.isspace() for ch in value) else escaped
+        return shlex.quote(value)
+
+    def _format_review_command(self, command_parts: List[str]) -> str:
+        continuation = " `" if os.name == "nt" else " \\"
+        return f"{continuation}\n  ".join(command_parts)
 
     def run_empty_pipeline(self) -> Path:
         """
@@ -232,29 +247,29 @@ class Orchestrator:
         checklist_path.write_text("\n".join(checklist), encoding="utf-8")
 
         command_parts = [
-            f'"{sys.executable}" -m oos.cli record-founder-review',
-            f'--project-root "{self.config.project_root}"',
+            f"{self._quote_command_arg(sys.executable)} -m oos.cli record-founder-review",
+            f"--project-root {self._quote_command_arg(str(self.config.project_root))}",
             f"--opportunity-id {opp.id}",
             "--decision Parked",
-            '--reason "Founder reviewed the v1 dry-run package and wants more evidence before proceeding."',
-            '--next-action "Run the selected cheapest next experiment before the next portfolio review."',
+            f"--reason {self._quote_command_arg('Founder reviewed the v1 dry-run package and wants more evidence before proceeding.')}",
+            f"--next-action {self._quote_command_arg('Run the selected cheapest next experiment before the next portfolio review.')}",
             f"--readiness-report-id {readiness_path.name}",
             f"--weekly-review-id {weekly_path.name}",
             *[f"--council-decision-id {decision.id}" for decision in council_decisions],
             *[f"--hypothesis-id {hyp.id}" for hyp, _ in hyp_exp_pairs],
             *[f"--experiment-id {exp.id}" for _, exp in hyp_exp_pairs],
         ]
-        founder_review_command = " `\n  ".join(command_parts)
+        founder_review_command = self._format_review_command(command_parts)
         kill_reason_ids = [res.kill_reason_id for _, res in screened if res.kill_reason_id]
         killed_command_lines = []
         if kill_reason_ids:
             killed_command_parts = [
-                f'"{sys.executable}" -m oos.cli record-founder-review',
-                f'--project-root "{self.config.project_root}"',
+                f"{self._quote_command_arg(sys.executable)} -m oos.cli record-founder-review",
+                f"--project-root {self._quote_command_arg(str(self.config.project_root))}",
                 f"--opportunity-id {opp.id}",
                 "--decision Killed",
-                '--reason "Founder reviewed the kill evidence and accepts the kill decision."',
-                '--next-action "Archive the opportunity and reuse the failure pattern in future screening."',
+                f"--reason {self._quote_command_arg('Founder reviewed the kill evidence and accepts the kill decision.')}",
+                f"--next-action {self._quote_command_arg('Archive the opportunity and reuse the failure pattern in future screening.')}",
                 f"--linked-kill-reason-id {kill_reason_ids[0]}",
                 f"--readiness-report-id {readiness_path.name}",
                 f"--weekly-review-id {weekly_path.name}",
@@ -265,8 +280,8 @@ class Orchestrator:
             killed_command_lines = [
                 "",
                 "## Ready-To-Run Killed Decision Command",
-                "```powershell",
-                " `\n  ".join(killed_command_parts),
+                f"```{self._shell_code_fence()}",
+                self._format_review_command(killed_command_parts),
                 "```",
             ]
 
@@ -277,6 +292,7 @@ class Orchestrator:
             f"- Review the dry-run package generated at `{now.isoformat(timespec='seconds')}`.",
             f"- Start with readiness: `artifacts/readiness/{readiness_path.name}`.",
             f"- Use weekly review: `artifacts/weekly_reviews/{weekly_path.name}`.",
+            f"- Commands below are generated for `{sys.platform}` using `{sys.executable}`.",
             "",
             "## Signals And Opportunities To Inspect",
             "- Validated signal: `artifacts/signals/sig_dry_valid.json`.",
@@ -321,7 +337,7 @@ class Orchestrator:
             "- Examples: `Write kill summary and add pattern to future screen checks.`",
             "",
             "## Ready-To-Run Decision Command",
-            "```powershell",
+            f"```{self._shell_code_fence()}",
             founder_review_command,
             "```",
             *killed_command_lines,

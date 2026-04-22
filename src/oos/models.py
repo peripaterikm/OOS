@@ -281,6 +281,7 @@ class FounderReviewDecision:
     council_decision_ids: List[str] = field(default_factory=list)
     hypothesis_ids: List[str] = field(default_factory=list)
     experiment_ids: List[str] = field(default_factory=list)
+    linked_kill_reason_id: Optional[str] = None
 
     def validate(self) -> None:
         _require_non_empty(self.id, "FounderReviewDecision.id")
@@ -297,6 +298,8 @@ class FounderReviewDecision:
         _require_list(self.council_decision_ids, "FounderReviewDecision.council_decision_ids")
         _require_list(self.hypothesis_ids, "FounderReviewDecision.hypothesis_ids")
         _require_list(self.experiment_ids, "FounderReviewDecision.experiment_ids")
+        if self.decision == FounderReviewDecisionEnum.Killed:
+            _require_non_empty(self.linked_kill_reason_id, "FounderReviewDecision.linked_kill_reason_id")
 
 
 MODEL_KIND = {

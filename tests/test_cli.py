@@ -41,6 +41,13 @@ class TestCli(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             with redirect_stdout(io.StringIO()):
                 main(["v1-dry-run", "--project-root", tmp])
+            artifacts_dir = Path(tmp) / "artifacts"
+            readiness_path = next((artifacts_dir / "readiness").glob("v1_readiness_*.json"))
+            readiness = json.loads(readiness_path.read_text(encoding="utf-8"))
+            weekly_review_id = readiness["artifacts_written"]["weekly_review"]
+            council_id = readiness["artifacts_written"]["council"][0]
+            hypothesis_id = readiness["artifacts_written"]["hypotheses"][0]
+            experiment_id = readiness["artifacts_written"]["experiments"][0]
             stdout = io.StringIO()
 
             with redirect_stdout(stdout):
@@ -60,15 +67,15 @@ class TestCli(unittest.TestCase):
                         "--timestamp",
                         "2026-04-16T12:00:00+00:00",
                         "--readiness-report-id",
-                        "v1_readiness_2026-04-16T12-00-00+00-00.json",
+                        readiness_path.name,
                         "--weekly-review-id",
-                        "weekly_review_2026-W16.json",
+                        weekly_review_id,
                         "--council-decision-id",
-                        "cd_dry_1",
+                        council_id,
                         "--hypothesis-id",
-                        "hyp_dry_1",
+                        hypothesis_id,
                         "--experiment-id",
-                        "exp_dry_1",
+                        experiment_id,
                     ]
                 )
 
@@ -78,7 +85,6 @@ class TestCli(unittest.TestCase):
             self.assertIn("decision_artifact:", output)
             self.assertIn("portfolio_updated: true", output)
 
-            artifacts_dir = Path(tmp) / "artifacts"
             review_path = artifacts_dir / "founder_reviews" / "frd_opp_dry_1_2026-04-16T12_00_00_00_00.json"
             self.assertTrue(review_path.exists())
             review = json.loads(review_path.read_text(encoding="utf-8"))
@@ -88,11 +94,11 @@ class TestCli(unittest.TestCase):
             self.assertEqual(review["selected_next_experiment_or_action"], "Run exp_dry customer interviews.")
             self.assertEqual(review["timestamp"], "2026-04-16T12:00:00+00:00")
             self.assertTrue(review["portfolio_updated"])
-            self.assertEqual(review["readiness_report_id"], "v1_readiness_2026-04-16T12-00-00+00-00.json")
-            self.assertEqual(review["weekly_review_id"], "weekly_review_2026-W16.json")
-            self.assertEqual(review["council_decision_ids"], ["cd_dry_1"])
-            self.assertEqual(review["hypothesis_ids"], ["hyp_dry_1"])
-            self.assertEqual(review["experiment_ids"], ["exp_dry_1"])
+            self.assertEqual(review["readiness_report_id"], readiness_path.name)
+            self.assertEqual(review["weekly_review_id"], weekly_review_id)
+            self.assertEqual(review["council_decision_ids"], [council_id])
+            self.assertEqual(review["hypothesis_ids"], [hypothesis_id])
+            self.assertEqual(review["experiment_ids"], [experiment_id])
 
             portfolio = json.loads((artifacts_dir / "portfolio" / "ps_opp_dry_1.json").read_text(encoding="utf-8"))
             self.assertEqual(portfolio["state"], "Parked")
@@ -134,6 +140,7 @@ class TestCli(unittest.TestCase):
             review = json.loads(review_path.read_text(encoding="utf-8"))
             self.assertEqual(review["decision"], "Killed")
             self.assertTrue(review["portfolio_updated"])
+            self.assertEqual(review["linked_kill_reason_id"], kill_reason_id)
 
             portfolio = json.loads((artifacts_dir / "portfolio" / "ps_opp_dry_1.json").read_text(encoding="utf-8"))
             self.assertEqual(portfolio["state"], "Killed")
@@ -160,6 +167,78 @@ class TestCli(unittest.TestCase):
                         "Archive the opportunity.",
                     ]
                 )
+
+    def test_record_founder_review_rejects_missing_linked_artifacts(self) -> None:
+        with TemporaryDirectory() as tmp:
+            with redirect_stdout(io.StringIO()):
+                main(["v1-dry-run", "--project-root", tmp])
+
+            base_args = [
+                "record-founder-review",
+                "--project-root",
+                tmp,
+                "--opportunity-id",
+                "opp_dry_1",
+                "--decision",
+                "Parked",
+                "--reason",
+                "Founder wants more evidence.",
+                "--next-action",
+                "Run interviews.",
+            ]
+            missing_cases = [
+                ("readiness", ["--readiness-report-id", "missing_readiness"]),
+                ("weekly_reviews", ["--weekly-review-id", "missing_weekly_review"]),
+                ("council", ["--council-decision-id", "missing_council"]),
+                ("hypotheses", ["--hypothesis-id", "missing_hypothesis"]),
+                ("experiments", ["--experiment-id", "missing_experiment"]),
+            ]
+            for kind, args in missing_cases:
+                with self.subTest(kind=kind):
+                    with self.assertRaisesRegex(ValueError, f"Linked {kind} artifact not found"):
+                        main(base_args + args)
+
+            killed_args = [
+                "record-founder-review",
+                "--project-root",
+                tmp,
+                "--opportunity-id",
+                "opp_dry_1",
+                "--decision",
+                "Killed",
+                "--reason",
+                "Founder accepts the kill case.",
+                "--next-action",
+                "Archive the opportunity.",
+                "--linked-kill-reason-id",
+                "missing_kill_reason",
+            ]
+            with self.assertRaisesRegex(ValueError, "Linked kills artifact not found"):
+                main(killed_args)
+
+    def test_record_founder_review_rejects_path_like_linked_artifact_ids(self) -> None:
+        with TemporaryDirectory() as tmp:
+            with redirect_stdout(io.StringIO()):
+                main(["v1-dry-run", "--project-root", tmp])
+
+            args = [
+                "record-founder-review",
+                "--project-root",
+                tmp,
+                "--opportunity-id",
+                "opp_dry_1",
+                "--decision",
+                "Parked",
+                "--reason",
+                "Founder wants more evidence.",
+                "--next-action",
+                "Run interviews.",
+                "--weekly-review-id",
+                "../weekly_review_2026-W16",
+            ]
+
+            with self.assertRaisesRegex(ValueError, "pass an artifact id or .json filename, not a path"):
+                main(args)
 
 
 if __name__ == "__main__":

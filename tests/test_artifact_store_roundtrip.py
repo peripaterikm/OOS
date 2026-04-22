@@ -164,6 +164,7 @@ class TestArtifactStoreRoundTrip(unittest.TestCase):
                 council_decision_ids=["cd_1"],
                 hypothesis_ids=["hyp_1"],
                 experiment_ids=["exp_1"],
+                linked_kill_reason_id=None,
             )
             store.write_model(frd)
             self.assertEqual(store.read_model(FounderReviewDecision, "frd_1"), frd)

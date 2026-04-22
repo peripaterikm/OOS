@@ -16,6 +16,62 @@ def _safe_artifact_id_part(value: str) -> str:
     return "".join(ch if ch.isalnum() or ch in {"_", "-"} else "_" for ch in value)
 
 
+def _artifact_path(root_dir: Path, kind: str, artifact_id_or_filename: str) -> Path:
+    artifact_id_or_filename = artifact_id_or_filename.strip()
+    path_fragment = Path(artifact_id_or_filename)
+    if (
+        not artifact_id_or_filename
+        or path_fragment.is_absolute()
+        or len(path_fragment.parts) != 1
+        or "\\" in artifact_id_or_filename
+    ):
+        raise ValueError(
+            f"Invalid linked {kind} artifact id {artifact_id_or_filename!r}: "
+            f"pass an artifact id or .json filename, not a path. "
+            f"Expected file under {root_dir / kind}."
+        )
+    if path_fragment.suffix and path_fragment.suffix != ".json":
+        raise ValueError(
+            f"Invalid linked {kind} artifact id {artifact_id_or_filename!r}: "
+            "use the artifact id or its .json filename."
+        )
+
+    path = root_dir / kind / artifact_id_or_filename
+    if path.suffix != ".json":
+        path = path.with_suffix(".json")
+    return path
+
+
+def _require_existing_artifact(root_dir: Path, kind: str, artifact_id_or_filename: str) -> None:
+    path = _artifact_path(root_dir, kind, artifact_id_or_filename)
+    if not path.exists():
+        raise ValueError(f"Linked {kind} artifact not found for {artifact_id_or_filename!r}: expected {path}")
+
+
+def _validate_founder_review_links(
+    *,
+    artifacts_dir: Path,
+    readiness_report_id: str | None,
+    weekly_review_id: str | None,
+    council_decision_ids: list[str],
+    hypothesis_ids: list[str],
+    experiment_ids: list[str],
+    linked_kill_reason_id: str | None,
+) -> None:
+    if readiness_report_id:
+        _require_existing_artifact(artifacts_dir, "readiness", readiness_report_id)
+    if weekly_review_id:
+        _require_existing_artifact(artifacts_dir, "weekly_reviews", weekly_review_id)
+    for council_decision_id in council_decision_ids:
+        _require_existing_artifact(artifacts_dir, "council", council_decision_id)
+    for hypothesis_id in hypothesis_ids:
+        _require_existing_artifact(artifacts_dir, "hypotheses", hypothesis_id)
+    for experiment_id in experiment_ids:
+        _require_existing_artifact(artifacts_dir, "experiments", experiment_id)
+    if linked_kill_reason_id:
+        _require_existing_artifact(artifacts_dir, "kills", linked_kill_reason_id)
+
+
 def _record_founder_review_decision(
     *,
     project_root: Path,
@@ -35,6 +91,15 @@ def _record_founder_review_decision(
     ts = timestamp or datetime.now(timezone.utc).isoformat(timespec="seconds")
     safe_ts = _safe_artifact_id_part(ts)
     artifact_id = f"frd_{_safe_artifact_id_part(opportunity_id)}_{safe_ts}"
+    _validate_founder_review_links(
+        artifacts_dir=config.artifacts_dir,
+        readiness_report_id=readiness_report_id,
+        weekly_review_id=weekly_review_id,
+        council_decision_ids=council_decision_ids,
+        hypothesis_ids=hypothesis_ids,
+        experiment_ids=experiment_ids,
+        linked_kill_reason_id=linked_kill_reason_id,
+    )
 
     portfolio_updated = False
     if decision in (FounderReviewDecisionEnum.Active, FounderReviewDecisionEnum.Parked):
@@ -70,6 +135,7 @@ def _record_founder_review_decision(
         council_decision_ids=council_decision_ids,
         hypothesis_ids=hypothesis_ids,
         experiment_ids=experiment_ids,
+        linked_kill_reason_id=linked_kill_reason_id,
     )
     ref = ArtifactStore(root_dir=config.artifacts_dir).write_model(review)
     return ref.path, portfolio_updated

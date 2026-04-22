@@ -115,7 +115,18 @@ py -m oos.cli v1-dry-run --project-root "C:\MARK\My_projects\OOS"
 
 ---
 
-### 6. Verification commands
+### 6. Founder review workflow
+
+После `v1-dry-run` открой:
+- `artifacts/readiness/<v1_readiness_...>.json`
+- `artifacts/ops/v1_founder_review_checklist.md`
+- `artifacts/weekly_reviews/<weekly_review_...>.json`
+
+Checklist содержит готовые команды `record-founder-review` для текущей среды. Если передаёшь `--readiness-report-id`, `--weekly-review-id`, `--council-decision-id`, `--hypothesis-id`, `--experiment-id` или `--linked-kill-reason-id`, CLI проверяет, что соответствующий artifact существует. Для `--decision Killed` параметр `--linked-kill-reason-id` обязателен.
+
+---
+
+### 7. Verification commands
 
 PowerShell, from the project root:
 
