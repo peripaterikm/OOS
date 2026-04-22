@@ -4,10 +4,11 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
+from .artifact_store import ArtifactStore
 from .portfolio_layer import PortfolioManager
-from .models import PortfolioState, PortfolioStateEnum
+from .models import FounderReviewDecision, PortfolioState, PortfolioStateEnum
 
 
 def _iso_utc_now_seconds() -> str:
@@ -49,6 +50,7 @@ class WeeklyReviewPackage:
     should_be_parked: List[str]
     may_be_graduated: List[str]
     killed_with_kill_links: Dict[str, str]
+    recent_founder_reviews: List[Dict[str, Any]]
     notes: str = ""
 
 
@@ -90,7 +92,11 @@ class WeeklyReviewGenerator:
             should_be_parked=sorted(set(should_park)),
             may_be_graduated=sorted(set(may_graduate)),
             killed_with_kill_links=killed_links,
-            notes="Deterministic weekly summary. Add explicit tags in PortfolioState.reason to surface decisions.",
+            recent_founder_reviews=self._load_recent_founder_reviews(),
+            notes=(
+                "Deterministic weekly summary. Add explicit tags in PortfolioState.reason to surface decisions. "
+                "Founder review decisions are surfaced from founder_reviews artifacts when present."
+            ),
         )
 
         out_dir = self.artifacts_root / "weekly_reviews"
@@ -105,4 +111,42 @@ class WeeklyReviewGenerator:
             if tag in (ps.reason or ""):
                 out.append(ps.opportunity_id)
         return out
+
+    def _load_recent_founder_reviews(self) -> List[Dict[str, Any]]:
+        review_dir = self.artifacts_root / "founder_reviews"
+        if not review_dir.exists():
+            return []
+
+        store = ArtifactStore(root_dir=self.artifacts_root)
+        reviews: List[FounderReviewDecision] = []
+        for path in review_dir.glob("*.json"):
+            reviews.append(store.read_model(FounderReviewDecision, path.stem))
+
+        reviews.sort(key=lambda review: (review.timestamp, review.id), reverse=True)
+        return [self._format_founder_review(review) for review in reviews]
+
+    def _format_founder_review(self, review: FounderReviewDecision) -> Dict[str, Any]:
+        linked_evidence_ids: Dict[str, Any] = {}
+        if review.readiness_report_id:
+            linked_evidence_ids["readiness_report_id"] = review.readiness_report_id
+        if review.weekly_review_id:
+            linked_evidence_ids["weekly_review_id"] = review.weekly_review_id
+        if review.council_decision_ids:
+            linked_evidence_ids["council_decision_ids"] = review.council_decision_ids
+        if review.hypothesis_ids:
+            linked_evidence_ids["hypothesis_ids"] = review.hypothesis_ids
+        if review.experiment_ids:
+            linked_evidence_ids["experiment_ids"] = review.experiment_ids
+        if review.linked_kill_reason_id:
+            linked_evidence_ids["linked_kill_reason_id"] = review.linked_kill_reason_id
+
+        return {
+            "id": review.id,
+            "opportunity_id": review.opportunity_id,
+            "decision": review.decision.value,
+            "reason": review.reason,
+            "selected_next_action": review.selected_next_experiment_or_action,
+            "timestamp": review.timestamp,
+            "linked_evidence_ids": linked_evidence_ids,
+        }
 

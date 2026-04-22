@@ -110,6 +110,7 @@ class TestWeek8EndToEnd(unittest.TestCase):
             weekly_payload = json.loads(paths["weekly_review"].read_text(encoding="utf-8"))
             by_state = weekly_payload["by_state"]
             self.assertIn("opp_dry_1", by_state["Active"] + by_state["Parked"] + by_state["Killed"] + by_state["Graduated"])
+            self.assertEqual(weekly_payload["recent_founder_reviews"], [])
 
     def test_end_to_end_dry_run_is_repeatable_for_same_artifact_root(self) -> None:
         with TemporaryDirectory() as tmp:

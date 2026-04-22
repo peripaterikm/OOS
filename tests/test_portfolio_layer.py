@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from oos.artifact_store import ArtifactStore
-from oos.models import KillReason, PortfolioStateEnum
+from oos.models import FounderReviewDecision, FounderReviewDecisionEnum, KillReason, PortfolioStateEnum
 from oos.portfolio_layer import PortfolioManager
 from oos.weekly_review import WeeklyReviewGenerator
 
@@ -140,6 +140,63 @@ class TestWeeklyReview(unittest.TestCase):
 
             # killed includes kill link
             self.assertEqual(payload["killed_with_kill_links"]["opp_k"], "kr_1")
+            self.assertEqual(payload["recent_founder_reviews"], [])
+
+    def test_weekly_summary_surfaces_founder_review_decisions(self) -> None:
+        with TemporaryDirectory() as tmp:
+            artifacts_root = Path(tmp) / "artifacts"
+            store = ArtifactStore(root_dir=artifacts_root)
+            store.write_model(
+                FounderReviewDecision(
+                    id="frd_old",
+                    opportunity_id="opp_old",
+                    decision=FounderReviewDecisionEnum.Active,
+                    reason="Founder keeps this active after reviewing interview evidence.",
+                    selected_next_experiment_or_action="Run pricing smoke test.",
+                    timestamp="2026-04-15T12:00:00+00:00",
+                    portfolio_updated=True,
+                    weekly_review_id="weekly_review_2026-W15.json",
+                )
+            )
+            store.write_model(
+                FounderReviewDecision(
+                    id="frd_new",
+                    opportunity_id="opp_new",
+                    decision=FounderReviewDecisionEnum.Parked,
+                    reason="Founder parks until buyer urgency is proven.",
+                    selected_next_experiment_or_action="Run 5 ICP interviews.",
+                    timestamp="2026-04-16T12:00:00+00:00",
+                    portfolio_updated=True,
+                    readiness_report_id="v1_readiness_2026-04-16.json",
+                    weekly_review_id="weekly_review_2026-W16.json",
+                    council_decision_ids=["cd_1"],
+                    hypothesis_ids=["hyp_1"],
+                    experiment_ids=["exp_1"],
+                )
+            )
+
+            out_path = WeeklyReviewGenerator(artifacts_root=artifacts_root).generate(
+                now=datetime(2026, 4, 16, tzinfo=timezone.utc)
+            )
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+
+            reviews = payload["recent_founder_reviews"]
+            self.assertEqual([review["id"] for review in reviews], ["frd_new", "frd_old"])
+            latest = reviews[0]
+            self.assertEqual(latest["opportunity_id"], "opp_new")
+            self.assertEqual(latest["decision"], "Parked")
+            self.assertEqual(latest["reason"], "Founder parks until buyer urgency is proven.")
+            self.assertEqual(latest["selected_next_action"], "Run 5 ICP interviews.")
+            self.assertEqual(
+                latest["linked_evidence_ids"],
+                {
+                    "readiness_report_id": "v1_readiness_2026-04-16.json",
+                    "weekly_review_id": "weekly_review_2026-W16.json",
+                    "council_decision_ids": ["cd_1"],
+                    "hypothesis_ids": ["hyp_1"],
+                    "experiment_ids": ["exp_1"],
+                },
+            )
 
 
 if __name__ == "__main__":
