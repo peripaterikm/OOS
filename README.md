@@ -57,19 +57,36 @@
 Windows and PowerShell are the primary developer environment for this repository.
 Use a native Windows Python virtual environment at `.venv`; do not treat WSL/Linux as the default workflow.
 
+### Unified developer command
+
+Use `scripts\dev.ps1` as the single Windows-native entrypoint for common developer operations:
+
+```powershell
+.\scripts\dev.ps1 bootstrap
+.\scripts\dev.ps1 verify
+.\scripts\dev.ps1 dry-run
+.\scripts\dev.ps1 founder-review-help
+```
+
+`.\scripts\dev.ps1 dry-run` uses a clean temporary project root by default. To write dry-run artifacts under this repository for founder review:
+
+```powershell
+.\scripts\dev.ps1 dry-run -DryRunProjectRoot .
+```
+
 ### 1. Создать виртуальное окружение
 
 PowerShell, из корня проекта:
 
 ```powershell
-.\scripts\bootstrap.ps1
+.\scripts\dev.ps1 bootstrap
 ```
 
 Если PowerShell ругается на policy:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\scripts\bootstrap.ps1
+.\scripts\dev.ps1 bootstrap
 ```
 
 ---
@@ -137,10 +154,10 @@ Checklist содержит готовые PowerShell-compatible команды `
 PowerShell, from the project root:
 
 ```powershell
-.\scripts\verify.ps1
+.\scripts\dev.ps1 verify
 ```
 
-By default, `scripts\verify.ps1` runs the dry run against a clean temporary project root so existing local `artifacts/` state cannot mask workflow regressions.
+By default, `scripts\dev.ps1 verify` runs the dry run against a clean temporary project root so existing local `artifacts/` state cannot mask workflow regressions.
 
 Manual equivalent:
 
