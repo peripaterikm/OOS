@@ -72,6 +72,19 @@ def _validate_founder_review_links(
         _require_existing_artifact(artifacts_dir, "kills", linked_kill_reason_id)
 
 
+def _refuse_dirty_dry_run(project_root: Path) -> bool:
+    artifacts_dir = project_root / "artifacts"
+    if not artifacts_dir.is_dir() or not any(artifacts_dir.iterdir()):
+        return False
+
+    print("v1-dry-run refused: dirty project root detected.")
+    print(f"Existing artifacts found at: {artifacts_dir.resolve()}")
+    print("Next steps:")
+    print("  1) remove or rename the artifacts directory, or")
+    print("  2) run against a clean project root")
+    return True
+
+
 def _record_founder_review_decision(
     *,
     project_root: Path,
@@ -255,6 +268,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "v1-dry-run":
+        if _refuse_dirty_dry_run(args.project_root):
+            return 2
+
         config = OOSConfig.from_env(project_root=args.project_root)
         orchestrator = Orchestrator(config=config)
         paths = orchestrator.run_v1_dry_run()
