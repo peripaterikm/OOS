@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -231,6 +232,89 @@ def _record_founder_review_by_review_id(
     return result
 
 
+def _latest_weekly_review_path(artifacts_dir: Path) -> Path | None:
+    weekly_dir = artifacts_dir / "weekly_reviews"
+    if not weekly_dir.exists():
+        return None
+    paths = sorted(weekly_dir.glob("weekly_review_*.json"), key=lambda path: (path.stat().st_mtime, path.name))
+    return paths[-1] if paths else None
+
+
+def _print_weekly_cycle_status(*, project_root: Path) -> int:
+    config = OOSConfig.from_env(project_root=project_root)
+    artifacts_dir = config.artifacts_dir
+    inbox_path = artifacts_dir / "ops" / "founder_review_inbox.md"
+    index_path = artifacts_dir / "ops" / "founder_review_index.json"
+    weekly_path = _latest_weekly_review_path(artifacts_dir)
+
+    if not inbox_path.exists() or not index_path.exists() or weekly_path is None:
+        print("weekly-cycle-status refused: no real weekly cycle artifacts found.")
+        print(f"Expected founder review inbox at: {inbox_path}")
+        print(f"Expected founder review index at: {index_path}")
+        print(f"Expected weekly reviews under: {artifacts_dir / 'weekly_reviews'}")
+        print("Next step:")
+        print(
+            "  .\\.venv\\Scripts\\python.exe -m oos.cli run-weekly-cycle "
+            f"--project-root {config.project_root} --input-file examples\\real_signal_batch.jsonl"
+        )
+        return 2
+
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    weekly = json.loads(weekly_path.read_text(encoding="utf-8"))
+    entries = index.get("entries") or []
+    if not isinstance(entries, list) or not entries:
+        print(f"weekly-cycle-status refused: founder review index has no review entries: {index_path}")
+        return 2
+
+    print("OOS weekly cycle status")
+    print(f"project_root: {config.project_root}")
+    print(f"founder_review_inbox: {inbox_path}")
+    print(f"founder_review_index: {index_path}")
+    print(f"latest_weekly_review: {weekly_path}")
+    print("")
+    print("Reviewable items:")
+    for entry in entries:
+        review_id = entry["review_id"]
+        decision_options = ", ".join(entry["decision_options"])
+        print(f"- {review_id}: {entry['title']}")
+        print(f"  summary: {entry['summary']}")
+        print(f"  decision_options: {decision_options}")
+        print(f"  linked_signal_ids: {', '.join(entry['linked_signal_ids'])}")
+        print(
+            "  example: "
+            f".\\.venv\\Scripts\\python.exe -m oos.cli record-founder-review "
+            f"--project-root {config.project_root} --review-id {review_id} --decision pass"
+        )
+
+    print("")
+    print("Founder decisions:")
+    recent_reviews = weekly.get("recent_founder_reviews") or []
+    if recent_reviews:
+        for review in recent_reviews:
+            print(
+                f"- {review.get('review_id') or '(manual)'}: {review.get('decision')} "
+                f"for {review.get('opportunity_id')} at {review.get('timestamp')}"
+            )
+            linked_signal_ids = review.get("linked_signal_ids") or []
+            if linked_signal_ids:
+                print(f"  linked_signal_ids: {', '.join(linked_signal_ids)}")
+    else:
+        print("- none recorded yet")
+
+    print("")
+    print("Portfolio/result summary:")
+    for entry in entries:
+        linked_artifacts = entry.get("linked_artifact_ids", {})
+        portfolio_ids = linked_artifacts.get("portfolio") or []
+        for portfolio_id in portfolio_ids:
+            portfolio_path = artifacts_dir / "portfolio" / f"{portfolio_id}.json"
+            if portfolio_path.exists():
+                portfolio = json.loads(portfolio_path.read_text(encoding="utf-8"))
+                print(f"- {portfolio['opportunity_id']}: {portfolio['state']} ({portfolio.get('reason', '')})")
+
+    return 0
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="oos",
@@ -297,6 +381,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=Path,
         required=True,
         help="Path to a canonical JSONL signal batch file.",
+    )
+
+    status_parser = subparsers.add_parser(
+        "weekly-cycle-status",
+        help="Print operator status for the latest real weekly cycle.",
+    )
+    status_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
     )
 
     review_parser = subparsers.add_parser(
@@ -419,6 +514,9 @@ def main(argv: list[str] | None = None) -> int:
         for k, p in paths.items():
             print(f"{k}: {p}")
         return 0
+
+    if args.command == "weekly-cycle-status":
+        return _print_weekly_cycle_status(project_root=args.project_root)
 
     if args.command == "record-founder-review":
         decision = _parse_founder_decision(args.decision)

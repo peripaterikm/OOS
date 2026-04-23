@@ -25,7 +25,13 @@ The command writes runtime artifacts under `artifacts\`.
 
 ## Founder Review Step
 
-Open the founder package:
+Check the weekly cycle status:
+
+```powershell
+.\.venv\Scripts\python.exe -m oos.cli weekly-cycle-status --project-root .
+```
+
+Open the founder package if you want the full markdown inbox:
 
 ```powershell
 notepad artifacts\ops\founder_review_inbox.md
@@ -48,9 +54,9 @@ Use `pass`, `park`, or `kill` according to the review inbox.
 Check the updated artifacts:
 
 ```powershell
+.\.venv\Scripts\python.exe -m oos.cli weekly-cycle-status --project-root .
 Get-ChildItem artifacts\weekly_reviews
 Get-ChildItem artifacts\founder_reviews
-Get-Content artifacts\ops\founder_review_inbox.md
 ```
 
-The weekly review should include the recorded founder decision, the portfolio state should reflect the decision, and traceability should point back to the input `signal_id` values.
+The status command should show available `review_id` values before the decision, then show the recorded founder decision, updated weekly review path, portfolio/result summary, and traceability back to the input `signal_id` values after the decision.

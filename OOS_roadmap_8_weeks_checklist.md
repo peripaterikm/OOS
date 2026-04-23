@@ -7,10 +7,10 @@
 - [x] **0.1.3** founder loop mostly closed
 - [x] **0.1.4** Windows-native developer operations established
 - [ ] **0.2.1** Current phase: **Phase 2 - Real Input Path**
-- [ ] **0.2.2** Current item: **3.2 Weekly runbook v1**
+- [ ] **0.2.2** Current item: **4.1 AI-assisted ideation behind flag**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **8**
-- [ ] **0.2.4** Completed from this roadmap: **5 / 8**
-- [ ] **0.2.5** Remaining: **3 / 8**
+- [ ] **0.2.4** Completed from this roadmap: **6 / 8**
+- [ ] **0.2.5** Remaining: **2 / 8**
 
 ---
 
@@ -76,18 +76,18 @@
 - [x] **3.1.5** Verify portfolio and weekly review reflect the result
 
 ### 3.2. Weekly runbook v1
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Week:** 6
 
-- [ ] **3.2.1** Write one concise weekly runbook
+- [x] **3.2.1** Write one concise weekly runbook
 - [ ] **3.2.2** Cover:
-  - [ ] **3.2.2.1** input
-  - [ ] **3.2.2.2** launch
-  - [ ] **3.2.2.3** review
-  - [ ] **3.2.2.4** decision recording
-  - [ ] **3.2.2.5** output check
-- [ ] **3.2.3** Remove unnecessary manual steps
-- [ ] **3.2.4** Confirm the weekly cycle is reproducible from the runbook alone
+  - [x] **3.2.2.1** input
+  - [x] **3.2.2.2** launch
+  - [x] **3.2.2.3** review
+  - [x] **3.2.2.4** decision recording
+  - [x] **3.2.2.5** output check
+- [x] **3.2.3** Remove unnecessary manual steps
+- [x] **3.2.4** Confirm the weekly cycle is reproducible from the runbook alone
 
 ---
 
