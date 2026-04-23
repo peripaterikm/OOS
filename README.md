@@ -177,6 +177,20 @@ The review index preserves traceability to input signal IDs and linked artifacts
 
 ---
 
+### AI-assisted ideation flag
+
+AI assistance is enabled only for ideation. Signal ingestion, screening, council, portfolio, weekly review, and founder decisions remain unchanged.
+
+```powershell
+$env:OOS_AI_IDEATION_ENABLED = "1"
+$env:OOS_AI_IDEATION_RESPONSE_JSON = '[{"short_concept":"AI-assisted workflow mapper","business_model":"subscription","standardization_focus":"repeatable workflow templates","ai_leverage":"cluster workflow breakdowns","external_execution_needed":"none","rough_monetization_model":"monthly subscription"}]'
+.\.venv\Scripts\python.exe -m oos.cli run-weekly-cycle --project-root . --input-file examples\real_signal_batch.jsonl
+```
+
+If the flag is off, deterministic ideation is used. If the flag is on but AI output is unavailable, invalid, or fails validation, OOS automatically falls back to deterministic ideation.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:

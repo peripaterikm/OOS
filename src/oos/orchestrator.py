@@ -13,7 +13,7 @@ from .config import OOSConfig
 from .council_layer import CouncilLayer
 from .founder_review_package import FounderReviewEntry, FounderReviewPackageWriter
 from .hypothesis_layer import HypothesisLayer
-from .ideation import DeterministicIdeationStub
+from .ideation import build_ideation_engine
 from .model_routing import ModelRouter
 from .opportunity_layer import OpportunityFramer
 from .portfolio_layer import PortfolioManager
@@ -130,7 +130,11 @@ class Orchestrator:
         )
 
         # Stage 3: Ideation (deterministic stub)
-        ideation = DeterministicIdeationStub(store=signal_layer.router.store)
+        ideation = build_ideation_engine(
+            store=signal_layer.router.store,
+            ai_enabled=self.config.ai_ideation_enabled,
+            ai_response_json=self.config.ai_ideation_response_json,
+        )
         ideas = ideation.generate(opp)
 
         # Stage 4: Screen (force one kill and one pass via overrides for deterministic coverage)
@@ -381,7 +385,11 @@ class Orchestrator:
             opportunity_type="real_signal_batch",
         )
 
-        ideation = DeterministicIdeationStub(store=signal_layer.router.store)
+        ideation = build_ideation_engine(
+            store=signal_layer.router.store,
+            ai_enabled=self.config.ai_ideation_enabled,
+            ai_response_json=self.config.ai_ideation_response_json,
+        )
         ideas = ideation.generate(opp)
 
         screen = ScreenEvaluator(store=signal_layer.router.store)
