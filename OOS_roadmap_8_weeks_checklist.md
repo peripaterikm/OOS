@@ -7,10 +7,10 @@
 - [x] **0.1.3** founder loop mostly closed
 - [x] **0.1.4** Windows-native developer operations established
 - [ ] **0.2.1** Current phase: **Phase 2 - Real Input Path**
-- [ ] **0.2.2** Current item: **3.1 First real weekly cycle**
+- [ ] **0.2.2** Current item: **3.2 Weekly runbook v1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **8**
-- [ ] **0.2.4** Completed from this roadmap: **4 / 8**
-- [ ] **0.2.5** Remaining: **4 / 8**
+- [ ] **0.2.4** Completed from this roadmap: **5 / 8**
+- [ ] **0.2.5** Remaining: **3 / 8**
 
 ---
 
@@ -66,14 +66,14 @@
 ## 3. Phase 3 вЂ” Weekly Operating Cadence
 
 ### 3.1. First real weekly cycle
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Week:** 5
 
-- [ ] **3.1.1** Run one real weekly cycle on real signals
-- [ ] **3.1.2** Process the batch through the pipeline
-- [ ] **3.1.3** Complete founder review on the produced package
-- [ ] **3.1.4** Record founder decisions
-- [ ] **3.1.5** Verify portfolio and weekly review reflect the result
+- [x] **3.1.1** Run one real weekly cycle on real signals
+- [x] **3.1.2** Process the batch through the pipeline
+- [x] **3.1.3** Complete founder review on the produced package
+- [x] **3.1.4** Record founder decisions
+- [x] **3.1.5** Verify portfolio and weekly review reflect the result
 
 ### 3.2. Weekly runbook v1
 **Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  

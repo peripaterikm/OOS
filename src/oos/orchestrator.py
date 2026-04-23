@@ -516,3 +516,6 @@ class Orchestrator:
             **founder_review_paths,
         }
 
+    def run_weekly_cycle(self, *, input_file: Path, now: Optional[datetime] = None) -> Dict[str, Path]:
+        return self.run_signal_batch(input_file=input_file, now=now)
+
