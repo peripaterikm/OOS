@@ -120,7 +120,7 @@ class PortfolioManager:
         if not portfolio_dir.exists():
             return []
         states: List[PortfolioState] = []
-        for p in portfolio_dir.glob("*.json"):
+        for p in sorted(portfolio_dir.glob("*.json")):
             states.append(self.store.read_model(PortfolioState, p.stem))
         return states
 

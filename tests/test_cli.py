@@ -9,6 +9,51 @@ from oos.cli import main
 
 
 class TestCli(unittest.TestCase):
+    def test_v1_dry_run_proceeds_without_artifacts_directory(self) -> None:
+        with TemporaryDirectory() as tmp:
+            stdout = io.StringIO()
+
+            with redirect_stdout(stdout):
+                exit_code = main(["v1-dry-run", "--project-root", tmp])
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("OOS v1 dry run completed.", stdout.getvalue())
+            self.assertTrue((Path(tmp) / "artifacts").exists())
+
+    def test_v1_dry_run_proceeds_with_empty_artifacts_directory(self) -> None:
+        with TemporaryDirectory() as tmp:
+            artifacts_dir = Path(tmp) / "artifacts"
+            artifacts_dir.mkdir()
+            stdout = io.StringIO()
+
+            with redirect_stdout(stdout):
+                exit_code = main(["v1-dry-run", "--project-root", tmp])
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("OOS v1 dry run completed.", stdout.getvalue())
+            self.assertTrue((artifacts_dir / "signals" / "sig_dry_valid.json").exists())
+
+    def test_v1_dry_run_refuses_non_empty_artifacts_directory(self) -> None:
+        with TemporaryDirectory() as tmp:
+            artifacts_dir = Path(tmp) / "artifacts"
+            artifacts_dir.mkdir()
+            existing_path = artifacts_dir / "existing.txt"
+            existing_path.write_text("existing artifact", encoding="utf-8")
+            stdout = io.StringIO()
+
+            with redirect_stdout(stdout):
+                exit_code = main(["v1-dry-run", "--project-root", tmp])
+
+            output = stdout.getvalue()
+            self.assertEqual(exit_code, 2)
+            self.assertIn("v1-dry-run refused: dirty project root detected.", output)
+            self.assertIn(f"Existing artifacts found at: {artifacts_dir.resolve()}", output)
+            self.assertIn("Next steps:", output)
+            self.assertIn("  1) remove or rename the artifacts directory, or", output)
+            self.assertIn("  2) run against a clean project root", output)
+            self.assertEqual(existing_path.read_text(encoding="utf-8"), "existing artifact")
+            self.assertFalse((artifacts_dir / "signals").exists())
+
     def test_v1_dry_run_command_writes_expected_artifacts(self) -> None:
         with TemporaryDirectory() as tmp:
             stdout = io.StringIO()

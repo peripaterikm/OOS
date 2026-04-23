@@ -276,6 +276,8 @@ class FounderReviewDecision:
     selected_next_experiment_or_action: str
     timestamp: str = field(default_factory=_iso_utc_now_seconds)
     portfolio_updated: bool = False
+    review_id: Optional[str] = None
+    linked_signal_ids: List[str] = field(default_factory=list)
     readiness_report_id: Optional[str] = None
     weekly_review_id: Optional[str] = None
     council_decision_ids: List[str] = field(default_factory=list)
@@ -295,6 +297,7 @@ class FounderReviewDecision:
         _require_non_empty(self.timestamp, "FounderReviewDecision.timestamp")
         if not isinstance(self.portfolio_updated, bool):
             raise ValueError("FounderReviewDecision.portfolio_updated must be bool")
+        _require_list(self.linked_signal_ids, "FounderReviewDecision.linked_signal_ids")
         _require_list(self.council_decision_ids, "FounderReviewDecision.council_decision_ids")
         _require_list(self.hypothesis_ids, "FounderReviewDecision.hypothesis_ids")
         _require_list(self.experiment_ids, "FounderReviewDecision.experiment_ids")

@@ -138,6 +138,45 @@ $env:PYTHONPATH = "src"
 
 ---
 
+### Runtime contract
+
+- All v1 dry-run and weekly-review runtime I/O is rooted under the explicit `--project-root`.
+- If `<project-root>\artifacts` exists and is non-empty, `v1-dry-run` refuses before mutating anything.
+- The current working directory must not affect behavior when `--project-root` is provided.
+- Determinism means same input produces the same class of outputs and the same weekly-review schema; timestamped filenames are not byte-identical guarantees.
+
+---
+
+### Real signal batch input
+
+Canonical real signal batches use JSONL: one JSON object per line with `signal_id`, `captured_at`, `source_type`, `title`, `text`, and `source_ref`.
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m oos.cli run-signal-batch --project-root . --input-file examples\real_signal_batch.jsonl
+```
+
+Runtime output I/O is rooted under `--project-root`; produced artifacts are written under `<project-root>\artifacts`.
+
+---
+
+### Real founder review package
+
+Real signal batch runs write the preferred founder workflow package to:
+- `artifacts\ops\founder_review_inbox.md`
+- `artifacts\ops\founder_review_index.json`
+
+Use the inbox review IDs to record decisions without looking up internal artifact IDs:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m oos.cli record-founder-review --project-root . --review-id review-001 --decision pass
+```
+
+The review index preserves traceability to input signal IDs and linked artifacts, and the weekly review surfaces recorded founder decisions.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:

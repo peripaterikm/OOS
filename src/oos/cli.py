@@ -7,9 +7,28 @@ from pathlib import Path
 
 from .artifact_store import ArtifactStore
 from .config import OOSConfig
+from .founder_review_package import FounderReviewIndex
 from .models import FounderReviewDecision, FounderReviewDecisionEnum, PortfolioStateEnum
 from .orchestrator import Orchestrator
 from .portfolio_layer import PortfolioManager
+from .weekly_review import WeeklyReviewGenerator
+
+
+DECISION_ALIASES = {
+    "active": FounderReviewDecisionEnum.Active,
+    "pass": FounderReviewDecisionEnum.Active,
+    "parked": FounderReviewDecisionEnum.Parked,
+    "park": FounderReviewDecisionEnum.Parked,
+    "killed": FounderReviewDecisionEnum.Killed,
+    "kill": FounderReviewDecisionEnum.Killed,
+}
+
+
+DECISION_REVIEW_OPTIONS = {
+    FounderReviewDecisionEnum.Active: "pass",
+    FounderReviewDecisionEnum.Parked: "park",
+    FounderReviewDecisionEnum.Killed: "kill",
+}
 
 
 def _safe_artifact_id_part(value: str) -> str:
@@ -72,6 +91,27 @@ def _validate_founder_review_links(
         _require_existing_artifact(artifacts_dir, "kills", linked_kill_reason_id)
 
 
+def _parse_founder_decision(value: str) -> FounderReviewDecisionEnum:
+    decision = DECISION_ALIASES.get(value.strip().lower())
+    if decision is None:
+        allowed = ", ".join(["pass", "park", "kill", *[d.value for d in FounderReviewDecisionEnum]])
+        raise ValueError(f"Invalid founder decision {value!r}. Expected one of: {allowed}")
+    return decision
+
+
+def _refuse_dirty_dry_run(project_root: Path) -> bool:
+    artifacts_dir = project_root / "artifacts"
+    if not artifacts_dir.is_dir() or not any(artifacts_dir.iterdir()):
+        return False
+
+    print("v1-dry-run refused: dirty project root detected.")
+    print(f"Existing artifacts found at: {artifacts_dir.resolve()}")
+    print("Next steps:")
+    print("  1) remove or rename the artifacts directory, or")
+    print("  2) run against a clean project root")
+    return True
+
+
 def _record_founder_review_decision(
     *,
     project_root: Path,
@@ -80,6 +120,8 @@ def _record_founder_review_decision(
     reason: str,
     next_action: str,
     timestamp: str | None,
+    review_id: str | None = None,
+    linked_signal_ids: list[str] | None = None,
     readiness_report_id: str | None,
     weekly_review_id: str | None,
     council_decision_ids: list[str],
@@ -130,6 +172,8 @@ def _record_founder_review_decision(
         selected_next_experiment_or_action=next_action,
         timestamp=ts,
         portfolio_updated=portfolio_updated,
+        review_id=review_id,
+        linked_signal_ids=linked_signal_ids or [],
         readiness_report_id=readiness_report_id,
         weekly_review_id=weekly_review_id,
         council_decision_ids=council_decision_ids,
@@ -139,6 +183,52 @@ def _record_founder_review_decision(
     )
     ref = ArtifactStore(root_dir=config.artifacts_dir).write_model(review)
     return ref.path, portfolio_updated
+
+
+def _record_founder_review_by_review_id(
+    *,
+    project_root: Path,
+    review_id: str,
+    decision: FounderReviewDecisionEnum,
+    reason: str | None,
+    next_action: str | None,
+    timestamp: str | None,
+) -> tuple[Path, bool]:
+    config = OOSConfig.from_env(project_root=project_root)
+    entry = FounderReviewIndex(config.artifacts_dir).get_entry(review_id)
+    decision_option = DECISION_REVIEW_OPTIONS[decision]
+    if decision_option not in entry.decision_options:
+        raise ValueError(
+            f"Decision {decision_option!r} is not available for {review_id}. "
+            f"Expected one of: {', '.join(entry.decision_options)}"
+        )
+
+    linked = entry.linked_artifact_ids
+    linked_kill_reason_id = None
+    kill_ids = linked.get("kills") or []
+    if decision == FounderReviewDecisionEnum.Killed:
+        if not kill_ids:
+            raise ValueError(f"Cannot record kill for {review_id}: no linked kill reason exists in the review index")
+        linked_kill_reason_id = str(kill_ids[0])
+
+    result = _record_founder_review_decision(
+        project_root=project_root,
+        opportunity_id=entry.entity_id,
+        decision=decision,
+        reason=reason or f"Founder selected {decision_option} for {review_id}: {entry.title}",
+        next_action=next_action or "Review the linked artifacts and run the next cheapest validation step.",
+        timestamp=timestamp,
+        review_id=review_id,
+        linked_signal_ids=entry.linked_signal_ids,
+        readiness_report_id=str(linked["readiness_report"]) if linked.get("readiness_report") else None,
+        weekly_review_id=str(linked["weekly_review"]) if linked.get("weekly_review") else None,
+        council_decision_ids=[str(item) for item in linked.get("council", [])],
+        hypothesis_ids=[str(item) for item in linked.get("hypotheses", [])],
+        experiment_ids=[str(item) for item in linked.get("experiments", [])],
+        linked_kill_reason_id=linked_kill_reason_id,
+    )
+    WeeklyReviewGenerator(artifacts_root=config.artifacts_dir).generate()
+    return result
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -175,6 +265,40 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Path to the OOS project root (defaults to current working directory).",
     )
 
+    batch_parser = subparsers.add_parser(
+        "run-signal-batch",
+        help="Run an end-to-end v1 pipeline from a canonical JSONL signal batch.",
+    )
+    batch_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    batch_parser.add_argument(
+        "--input-file",
+        type=Path,
+        required=True,
+        help="Path to a canonical JSONL signal batch file.",
+    )
+
+    weekly_parser = subparsers.add_parser(
+        "run-weekly-cycle",
+        help="Run one real weekly cycle from a canonical JSONL signal batch.",
+    )
+    weekly_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    weekly_parser.add_argument(
+        "--input-file",
+        type=Path,
+        required=True,
+        help="Path to a canonical JSONL signal batch file.",
+    )
+
     review_parser = subparsers.add_parser(
         "record-founder-review",
         help="Record a founder review decision as an artifact.",
@@ -185,17 +309,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=Path.cwd(),
         help="Path to the OOS project root (defaults to current working directory).",
     )
-    review_parser.add_argument("--opportunity-id", required=True, help="Opportunity id under founder review.")
+    review_parser.add_argument("--review-id", default=None, help="Founder review id from founder_review_index.json.")
+    review_parser.add_argument("--opportunity-id", default=None, help="Opportunity id under founder review.")
     review_parser.add_argument(
         "--decision",
         required=True,
-        choices=[d.value for d in FounderReviewDecisionEnum],
+        choices=["pass", "park", "kill", *[d.value for d in FounderReviewDecisionEnum]],
         help="Founder decision for the opportunity.",
     )
-    review_parser.add_argument("--reason", required=True, help="Concrete reason for the decision.")
+    review_parser.add_argument("--reason", default=None, help="Concrete reason for the decision.")
     review_parser.add_argument(
         "--next-action",
-        required=True,
+        default=None,
         help="Selected next experiment or next action.",
     )
     review_parser.add_argument(
@@ -255,6 +380,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "v1-dry-run":
+        if _refuse_dirty_dry_run(args.project_root):
+            return 2
+
         config = OOSConfig.from_env(project_root=args.project_root)
         orchestrator = Orchestrator(config=config)
         paths = orchestrator.run_v1_dry_run()
@@ -264,21 +392,70 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{k}: {p}")
         return 0
 
+    if args.command == "run-signal-batch":
+        config = OOSConfig.from_env(project_root=args.project_root)
+        orchestrator = Orchestrator(config=config)
+        try:
+            paths = orchestrator.run_signal_batch(input_file=args.input_file)
+        except ValueError as exc:
+            print(str(exc))
+            return 2
+
+        print("OOS signal batch run completed.")
+        for k, p in paths.items():
+            print(f"{k}: {p}")
+        return 0
+
+    if args.command == "run-weekly-cycle":
+        config = OOSConfig.from_env(project_root=args.project_root)
+        orchestrator = Orchestrator(config=config)
+        try:
+            paths = orchestrator.run_weekly_cycle(input_file=args.input_file)
+        except ValueError as exc:
+            print(str(exc))
+            return 2
+
+        print("OOS weekly cycle completed.")
+        for k, p in paths.items():
+            print(f"{k}: {p}")
+        return 0
+
     if args.command == "record-founder-review":
-        path, portfolio_updated = _record_founder_review_decision(
-            project_root=args.project_root,
-            opportunity_id=args.opportunity_id,
-            decision=FounderReviewDecisionEnum(args.decision),
-            reason=args.reason,
-            next_action=args.next_action,
-            timestamp=args.timestamp,
-            readiness_report_id=args.readiness_report_id,
-            weekly_review_id=args.weekly_review_id,
-            council_decision_ids=args.council_decision_id,
-            hypothesis_ids=args.hypothesis_id,
-            experiment_ids=args.experiment_id,
-            linked_kill_reason_id=args.linked_kill_reason_id,
-        )
+        decision = _parse_founder_decision(args.decision)
+        if args.review_id:
+            try:
+                path, portfolio_updated = _record_founder_review_by_review_id(
+                    project_root=args.project_root,
+                    review_id=args.review_id,
+                    decision=decision,
+                    reason=args.reason,
+                    next_action=args.next_action,
+                    timestamp=args.timestamp,
+                )
+            except ValueError as exc:
+                print(str(exc))
+                return 2
+        else:
+            if not args.opportunity_id:
+                raise ValueError("--opportunity-id is required unless --review-id is provided")
+            if not args.reason:
+                raise ValueError("--reason is required unless --review-id is provided")
+            if not args.next_action:
+                raise ValueError("--next-action is required unless --review-id is provided")
+            path, portfolio_updated = _record_founder_review_decision(
+                project_root=args.project_root,
+                opportunity_id=args.opportunity_id,
+                decision=decision,
+                reason=args.reason,
+                next_action=args.next_action,
+                timestamp=args.timestamp,
+                readiness_report_id=args.readiness_report_id,
+                weekly_review_id=args.weekly_review_id,
+                council_decision_ids=args.council_decision_id,
+                hypothesis_ids=args.hypothesis_id,
+                experiment_ids=args.experiment_id,
+                linked_kill_reason_id=args.linked_kill_reason_id,
+            )
 
         print("Founder review decision recorded.")
         print(f"decision_artifact: {path}")
