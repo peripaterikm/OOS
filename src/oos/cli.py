@@ -188,6 +188,23 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Path to the OOS project root (defaults to current working directory).",
     )
 
+    batch_parser = subparsers.add_parser(
+        "run-signal-batch",
+        help="Run an end-to-end v1 pipeline from a canonical JSONL signal batch.",
+    )
+    batch_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    batch_parser.add_argument(
+        "--input-file",
+        type=Path,
+        required=True,
+        help="Path to a canonical JSONL signal batch file.",
+    )
+
     review_parser = subparsers.add_parser(
         "record-founder-review",
         help="Record a founder review decision as an artifact.",
@@ -276,6 +293,20 @@ def main(argv: list[str] | None = None) -> int:
         paths = orchestrator.run_v1_dry_run()
 
         print("OOS v1 dry run completed.")
+        for k, p in paths.items():
+            print(f"{k}: {p}")
+        return 0
+
+    if args.command == "run-signal-batch":
+        config = OOSConfig.from_env(project_root=args.project_root)
+        orchestrator = Orchestrator(config=config)
+        try:
+            paths = orchestrator.run_signal_batch(input_file=args.input_file)
+        except ValueError as exc:
+            print(str(exc))
+            return 2
+
+        print("OOS signal batch run completed.")
         for k, p in paths.items():
             print(f"{k}: {p}")
         return 0

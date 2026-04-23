@@ -16,9 +16,10 @@ from .ideation import DeterministicIdeationStub
 from .model_routing import ModelRouter
 from .opportunity_layer import OpportunityFramer
 from .portfolio_layer import PortfolioManager
-from .models import PortfolioStateEnum
+from .models import PortfolioStateEnum, Signal, SignalStatus
 from .screen_layer import ScreenEvaluator
 from .signal_layer import SignalLayer
+from .real_signal_batch import CanonicalSignalBatchLoader
 from .weekly_review import WeeklyReviewGenerator
 
 
@@ -341,6 +342,146 @@ class Orchestrator:
             founder_review_command,
             "```",
             *killed_command_lines,
+        ]
+        founder_checklist_path.write_text("\n".join(founder_checklist), encoding="utf-8")
+
+        return {
+            "weekly_review": weekly_path,
+            "readiness_report": readiness_path,
+            "operational_checklist": checklist_path,
+            "founder_review_checklist": founder_checklist_path,
+        }
+
+    def run_signal_batch(self, *, input_file: Path, now: Optional[datetime] = None) -> Dict[str, Path]:
+        now = now or datetime.now(timezone.utc)
+        artifacts_root = self.config.artifacts_dir
+        batch_items = CanonicalSignalBatchLoader().load(input_file)
+
+        signal_layer = SignalLayer(artifacts_root=artifacts_root)
+        signals: List[Signal] = []
+        for item in batch_items:
+            metadata = {**item.metadata(), "input_file": str(input_file.resolve())}
+            signals.append(signal_layer.ingest_raw_signal(item.to_raw_signal(), metadata=metadata))
+
+        eligible_signals = [signal for signal in signals if signal.status == SignalStatus.validated]
+        if not eligible_signals:
+            raise ValueError(
+                "run-signal-batch refused: no validated signals found. "
+                "Add at least one signal with recurring, specific pain and cost/workaround evidence."
+            )
+
+        router = ModelRouter(config_path=self.config.project_root / "config" / "model_routing.json")
+        routing_selected = {stage: router.select(stage) for stage in router.config.rules_by_stage.keys()}
+
+        framer = OpportunityFramer(store=signal_layer.router.store)
+        opp = framer.frame_from_signals(
+            eligible_signals,
+            opportunity_id="opp_batch_1",
+            initial_notes=f"Real signal batch imported from {input_file.name}.",
+            opportunity_type="real_signal_batch",
+        )
+
+        ideation = DeterministicIdeationStub(store=signal_layer.router.store)
+        ideas = ideation.generate(opp)
+
+        screen = ScreenEvaluator(store=signal_layer.router.store)
+        screened = []
+        for idea in ideas:
+            screened.append((idea, screen.evaluate(idea)))
+
+        hyp_layer = HypothesisLayer(artifacts_root=artifacts_root)
+        hyp_exp_pairs = []
+        for idea, res in screened:
+            out = hyp_layer.generate_for_screened_idea(idea, screen_outcome=res.outcome)
+            if out is not None:
+                hyp_exp_pairs.append(out)
+
+        council = CouncilLayer(artifacts_root=artifacts_root)
+        council_decisions = []
+        for idea, res in screened:
+            if res.outcome in {"pass", "park"}:
+                council_decisions.append(council.generate_for_shortlisted_idea(idea))
+
+        portfolio = PortfolioManager(artifacts_root=artifacts_root)
+        outcomes = [res.outcome for _, res in screened]
+        first_kill_reason = next((res.kill_reason_id for _, res in screened if res.kill_reason_id), None)
+        transition_reason = f"Signal batch {now.isoformat(timespec='seconds')} [needs_review]"
+        if "pass" in outcomes:
+            portfolio.transition(opportunity_id=opp.id, to_state=PortfolioStateEnum.Active, reason=transition_reason)
+        elif "park" in outcomes:
+            portfolio.transition(opportunity_id=opp.id, to_state=PortfolioStateEnum.Parked, reason=transition_reason)
+        else:
+            portfolio.transition(
+                opportunity_id=opp.id,
+                to_state=PortfolioStateEnum.Killed,
+                reason="Signal batch [recommend_kill]",
+                linked_kill_reason_id=first_kill_reason,
+            )
+
+        weekly = WeeklyReviewGenerator(artifacts_root=artifacts_root)
+        weekly_path = weekly.generate(now=now)
+
+        ops_dir = artifacts_root / "ops"
+        ops_dir.mkdir(parents=True, exist_ok=True)
+        checklist_path = ops_dir / "v1_operational_checklist.txt"
+        founder_checklist_path = ops_dir / "v1_founder_review_checklist.md"
+
+        readiness_dir = artifacts_root / "readiness"
+        readiness_dir.mkdir(parents=True, exist_ok=True)
+        safe_ts = now.isoformat(timespec="seconds").replace(":", "-")
+        readiness_path = readiness_dir / f"v1_readiness_{safe_ts}.json"
+        readiness_payload = {
+            "version": "v1",
+            "generated_at": now.isoformat(timespec="seconds"),
+            "source": "signal_batch",
+            "input_file": str(input_file.resolve()),
+            "routing": routing_selected,
+            "artifacts_written": {
+                "signals": [signal.id for signal in signals],
+                "validated_signals": [signal.id for signal in eligible_signals],
+                "opportunity": opp.id,
+                "ideas": [idea.id for idea, _ in screened],
+                "kills": [res.kill_reason_id for _, res in screened if res.kill_reason_id],
+                "hypotheses": [hyp.id for hyp, _ in hyp_exp_pairs],
+                "experiments": [exp.id for _, exp in hyp_exp_pairs],
+                "council": [decision.id for decision in council_decisions],
+                "portfolio": [f"ps_{opp.id}"],
+                "weekly_review": weekly_path.name,
+                "founder_review_checklist": founder_checklist_path.name,
+            },
+            "status": "ok",
+            "notes": "Real signal batch run; downstream artifacts trace to input signal ids.",
+        }
+        readiness_path.write_text(json.dumps(readiness_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        checklist = [
+            "OOS v1 Operational Checklist (signal batch)",
+            "",
+            f"1) Review imported signal artifacts from {input_file.name}.",
+            "2) Review OpportunityCard source_signal_ids for input traceability.",
+            "3) Review IdeaVariants, Screen outputs, Hypotheses, Experiments and CouncilDecision artifacts.",
+            "4) Review PortfolioState and weekly review package.",
+            "",
+            "Founder remains the final decision maker (human-in-the-loop).",
+        ]
+        checklist_path.write_text("\n".join(checklist), encoding="utf-8")
+
+        founder_checklist = [
+            "# OOS v1 Founder Review Checklist",
+            "",
+            "## Review Objective",
+            f"- Review the real signal batch imported from `{input_file.name}`.",
+            f"- Start with readiness: `artifacts/readiness/{readiness_path.name}`.",
+            f"- Use weekly review: `artifacts/weekly_reviews/{weekly_path.name}`.",
+            "",
+            "## Signals And Opportunity To Inspect",
+            *[f"- Input signal: `artifacts/signals/{signal.id}.json`." for signal in signals],
+            f"- Opportunity card: `artifacts/opportunities/{opp.id}.json`.",
+            "",
+            "## Founder Action Checklist",
+            "- Confirm whether the source signals represent real, recurring pain.",
+            "- Pick the cheapest next experiment to run this week.",
+            "- Record any founder decision with a concrete reason.",
         ]
         founder_checklist_path.write_text("\n".join(founder_checklist), encoding="utf-8")
 

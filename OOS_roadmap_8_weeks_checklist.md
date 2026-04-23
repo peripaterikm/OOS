@@ -7,10 +7,10 @@
 - [x] **0.1.3** founder loop mostly closed
 - [x] **0.1.4** Windows-native developer operations established
 - [ ] **0.2.1** Current phase: **Phase 2 - Real Input Path**
-- [ ] **0.2.2** Current item: **2.1 Real signal batch ingestion**
+- [ ] **0.2.2** Current item: **2.2 Real founder package**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **8**
-- [ ] **0.2.4** Completed from this roadmap: **2 / 8**
-- [ ] **0.2.5** Remaining: **6 / 8**
+- [ ] **0.2.4** Completed from this roadmap: **3 / 8**
+- [ ] **0.2.5** Remaining: **5 / 8**
 
 ---
 
@@ -44,13 +44,13 @@
 ## 2. Phase 2 вЂ” Real Input Path
 
 ### 2.1. Real signal batch ingestion
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Week:** 3
 
-- [ ] **2.1.1** Define one working format for real signal batch input
-- [ ] **2.1.2** Add a stable path for ingesting real signals without manual reshaping
-- [ ] **2.1.3** Run a real batch through the pipeline end-to-end
-- [ ] **2.1.4** Verify that outputs are real artifacts, not only demo-package outputs
+- [x] **2.1.1** Define one working format for real signal batch input
+- [x] **2.1.2** Add a stable path for ingesting real signals without manual reshaping
+- [x] **2.1.3** Run a real batch through the pipeline end-to-end
+- [x] **2.1.4** Verify that outputs are real artifacts, not only demo-package outputs
 
 ### 2.2. Real founder package
 **Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  

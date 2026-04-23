@@ -147,6 +147,19 @@ $env:PYTHONPATH = "src"
 
 ---
 
+### Real signal batch input
+
+Canonical real signal batches use JSONL: one JSON object per line with `signal_id`, `captured_at`, `source_type`, `title`, `text`, and `source_ref`.
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m oos.cli run-signal-batch --project-root . --input-file examples\real_signal_batch.jsonl
+```
+
+Runtime output I/O is rooted under `--project-root`; produced artifacts are written under `<project-root>\artifacts`.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:

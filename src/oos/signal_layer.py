@@ -303,6 +303,9 @@ class SignalLayer:
             signals.append(self._ingest_one(raw, metadata={"import_path": str(path)}))
         return signals
 
+    def ingest_raw_signal(self, raw: RawSignal, *, metadata: Optional[Dict[str, Any]] = None) -> Signal:
+        return self._ingest_one(raw, metadata=metadata or {})
+
     def _ingest_one(self, raw: RawSignal, metadata: Dict[str, Any]) -> Signal:
         rid = raw.id or _new_signal_id()
         ts = raw.timestamp or _iso_utc_now_seconds()
