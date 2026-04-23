@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from .artifact_store import ArtifactStore
 from .models import IdeaScreenStatus, IdeaVariant, OpportunityCard
@@ -26,6 +27,18 @@ class IdeationEngine:
     """
 
     def generate(self, opportunity: OpportunityCard) -> List[IdeaVariant]:  # pragma: no cover
+        raise NotImplementedError
+
+
+class AIIdeationProvider:
+    """
+    Narrow provider boundary for optional model-assisted ideation.
+
+    Implementations must return simple dict payloads that can be converted to
+    IdeaVariant without changing downstream contracts.
+    """
+
+    def generate(self, opportunity: OpportunityCard) -> List[Dict[str, Any]]:  # pragma: no cover
         raise NotImplementedError
 
 
@@ -87,4 +100,79 @@ class DeterministicIdeationStub(IdeationEngine):
                 self.store.write_model(i)
 
         return ideas
+
+
+@dataclass(frozen=True)
+class StaticJSONAIIdeationProvider(AIIdeationProvider):
+    response_json: str
+
+    def generate(self, opportunity: OpportunityCard) -> List[Dict[str, Any]]:
+        if not self.response_json.strip():
+            raise ValueError("AI ideation response payload is unavailable")
+        data = json.loads(self.response_json)
+        if not isinstance(data, list):
+            raise ValueError("AI ideation response must be a JSON list")
+        return data
+
+
+@dataclass(frozen=True)
+class SafeAIIdeationAdapter(IdeationEngine):
+    store: Optional[ArtifactStore]
+    deterministic: IdeationEngine
+    provider: AIIdeationProvider
+
+    def generate(self, opportunity: OpportunityCard) -> List[IdeaVariant]:
+        try:
+            ideas = self._generate_ai_ideas(opportunity)
+        except Exception:
+            return self.deterministic.generate(opportunity)
+
+        if not ideas:
+            return self.deterministic.generate(opportunity)
+
+        if self.store is not None:
+            for idea in ideas:
+                self.store.write_model(idea)
+        return ideas
+
+    def _generate_ai_ideas(self, opportunity: OpportunityCard) -> List[IdeaVariant]:
+        now = _iso_utc_now_seconds()
+        ideas: List[IdeaVariant] = []
+        for raw in self.provider.generate(opportunity):
+            if not isinstance(raw, dict):
+                raise ValueError("AI ideation item must be a JSON object")
+            idea = IdeaVariant(
+                id=str(raw.get("id") or _new_idea_id()),
+                opportunity_id=opportunity.id,
+                short_concept=str(raw.get("short_concept") or "").strip(),
+                business_model=str(raw.get("business_model") or "").strip(),
+                standardization_focus=str(raw.get("standardization_focus") or "").strip(),
+                ai_leverage=str(raw.get("ai_leverage") or "").strip(),
+                external_execution_needed=str(raw.get("external_execution_needed") or "none").strip(),
+                rough_monetization_model=str(raw.get("rough_monetization_model") or "").strip(),
+                status=IdeaScreenStatus.candidate,
+                screen_result_id=None,
+                created_at=now,
+                updated_at=now,
+            )
+            idea.validate()
+            ideas.append(idea)
+        return ideas
+
+
+def build_ideation_engine(
+    *,
+    store: Optional[ArtifactStore],
+    ai_enabled: bool,
+    ai_response_json: str = "",
+    provider: Optional[AIIdeationProvider] = None,
+) -> IdeationEngine:
+    deterministic = DeterministicIdeationStub(store=store)
+    if not ai_enabled:
+        return deterministic
+    return SafeAIIdeationAdapter(
+        store=store,
+        deterministic=deterministic,
+        provider=provider or StaticJSONAIIdeationProvider(response_json=ai_response_json),
+    )
 

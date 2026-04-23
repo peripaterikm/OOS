@@ -7,10 +7,10 @@
 - [x] **0.1.3** founder loop mostly closed
 - [x] **0.1.4** Windows-native developer operations established
 - [ ] **0.2.1** Current phase: **Phase 2 - Real Input Path**
-- [ ] **0.2.2** Current item: **4.1 AI-assisted ideation behind flag**
+- [ ] **0.2.2** Current item: **Completed / final milestone state**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **8**
-- [ ] **0.2.4** Completed from this roadmap: **6 / 8**
-- [ ] **0.2.5** Remaining: **2 / 8**
+- [ ] **0.2.4** Completed from this roadmap: **8 / 8**
+- [ ] **0.2.5** Remaining: **0 / 8**
 
 ---
 
@@ -94,22 +94,22 @@
 ## 4. Phase 4 вЂ” Controlled Model Enablement
 
 ### 4.1. AI-assisted ideation behind flag
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Week:** 7
 
-- [ ] **4.1.1** Choose one safe layer for model-assisted mode
-- [ ] **4.1.2** Add the model-assisted mode behind a feature flag
-- [ ] **4.1.3** Preserve deterministic fallback behavior
-- [ ] **4.1.4** Confirm the assisted mode adds useful value without destabilizing the core
+- [x] **4.1.1** Choose one safe layer for model-assisted mode
+- [x] **4.1.2** Add the model-assisted mode behind a feature flag
+- [x] **4.1.3** Preserve deterministic fallback behavior
+- [x] **4.1.4** Confirm the assisted mode adds useful value without destabilizing the core
 
 ### 4.2. Evaluation and rollback rules
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Week:** 8
 
-- [ ] **4.2.1** Define quality criteria for assisted mode
-- [ ] **4.2.2** Define rollback rules
-- [ ] **4.2.3** Compare deterministic vs assisted mode on several real cases
-- [ ] **4.2.4** Document where model assistance helps and where it should be disabled
+- [x] **4.2.1** Define quality criteria for assisted mode
+- [x] **4.2.2** Define rollback rules
+- [x] **4.2.3** Compare deterministic vs assisted mode on several real cases
+- [x] **4.2.4** Document where model assistance helps and where it should be disabled
 
 ---
 

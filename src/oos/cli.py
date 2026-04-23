@@ -6,6 +6,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .ai_ideation_evaluation import evaluate_ai_ideation
 from .artifact_store import ArtifactStore
 from .config import OOSConfig
 from .founder_review_package import FounderReviewIndex
@@ -394,6 +395,23 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Path to the OOS project root (defaults to current working directory).",
     )
 
+    eval_parser = subparsers.add_parser(
+        "evaluate-ai-ideation",
+        help="Evaluate deterministic vs assisted ideation on a canonical JSONL signal batch.",
+    )
+    eval_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    eval_parser.add_argument(
+        "--input-file",
+        type=Path,
+        required=True,
+        help="Path to a canonical JSONL signal batch file.",
+    )
+
     review_parser = subparsers.add_parser(
         "record-founder-review",
         help="Record a founder review decision as an artifact.",
@@ -517,6 +535,22 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "weekly-cycle-status":
         return _print_weekly_cycle_status(project_root=args.project_root)
+
+    if args.command == "evaluate-ai-ideation":
+        config = OOSConfig.from_env(project_root=args.project_root)
+        try:
+            report_path = evaluate_ai_ideation(
+                project_root=config.project_root,
+                input_file=args.input_file,
+                ai_response_json=config.ai_ideation_response_json,
+            )
+        except ValueError as exc:
+            print(str(exc))
+            return 2
+
+        print("OOS AI ideation evaluation completed.")
+        print(f"evaluation_report: {report_path}")
+        return 0
 
     if args.command == "record-founder-review":
         decision = _parse_founder_decision(args.decision)
