@@ -142,11 +142,13 @@ class WeeklyReviewGenerator:
 
         return {
             "id": review.id,
+            "review_id": review.review_id,
             "opportunity_id": review.opportunity_id,
             "decision": review.decision.value,
             "reason": review.reason,
             "selected_next_action": review.selected_next_experiment_or_action,
             "timestamp": review.timestamp,
+            "linked_signal_ids": review.linked_signal_ids,
             "linked_evidence_ids": linked_evidence_ids,
         }
 

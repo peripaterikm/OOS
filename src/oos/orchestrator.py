@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 
 from .config import OOSConfig
 from .council_layer import CouncilLayer
+from .founder_review_package import FounderReviewEntry, FounderReviewPackageWriter
 from .hypothesis_layer import HypothesisLayer
 from .ideation import DeterministicIdeationStub
 from .model_routing import ModelRouter
@@ -344,7 +345,6 @@ class Orchestrator:
             *killed_command_lines,
         ]
         founder_checklist_path.write_text("\n".join(founder_checklist), encoding="utf-8")
-
         return {
             "weekly_review": weekly_path,
             "readiness_report": readiness_path,
@@ -484,11 +484,35 @@ class Orchestrator:
             "- Record any founder decision with a concrete reason.",
         ]
         founder_checklist_path.write_text("\n".join(founder_checklist), encoding="utf-8")
+        review_entry = FounderReviewEntry(
+            review_id="review-001",
+            entity_type="opportunity",
+            entity_id=opp.id,
+            title=opp.title,
+            summary=opp.pain_summary,
+            decision_options=["pass", "park", "kill"],
+            linked_signal_ids=opp.source_signal_ids,
+            linked_artifact_ids={
+                "opportunity": opp.id,
+                "readiness_report": readiness_path.name,
+                "weekly_review": weekly_path.name,
+                "council": [decision.id for decision in council_decisions],
+                "hypotheses": [hyp.id for hyp, _ in hyp_exp_pairs],
+                "experiments": [exp.id for _, exp in hyp_exp_pairs],
+                "kills": [res.kill_reason_id for _, res in screened if res.kill_reason_id],
+                "portfolio": [f"ps_{opp.id}"],
+            },
+        )
+        founder_review_paths = FounderReviewPackageWriter(artifacts_root=artifacts_root).write(
+            entries=[review_entry],
+            project_root=self.config.project_root,
+        )
 
         return {
             "weekly_review": weekly_path,
             "readiness_report": readiness_path,
             "operational_checklist": checklist_path,
             "founder_review_checklist": founder_checklist_path,
+            **founder_review_paths,
         }
 

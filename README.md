@@ -160,6 +160,23 @@ Runtime output I/O is rooted under `--project-root`; produced artifacts are writ
 
 ---
 
+### Real founder review package
+
+Real signal batch runs write the preferred founder workflow package to:
+- `artifacts\ops\founder_review_inbox.md`
+- `artifacts\ops\founder_review_index.json`
+
+Use the inbox review IDs to record decisions without looking up internal artifact IDs:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m oos.cli record-founder-review --project-root . --review-id review-001 --decision pass
+```
+
+The review index preserves traceability to input signal IDs and linked artifacts, and the weekly review surfaces recorded founder decisions.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:

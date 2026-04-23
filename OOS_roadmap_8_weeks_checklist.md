@@ -7,10 +7,10 @@
 - [x] **0.1.3** founder loop mostly closed
 - [x] **0.1.4** Windows-native developer operations established
 - [ ] **0.2.1** Current phase: **Phase 2 - Real Input Path**
-- [ ] **0.2.2** Current item: **2.2 Real founder package**
+- [ ] **0.2.2** Current item: **3.1 First real weekly cycle**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **8**
-- [ ] **0.2.4** Completed from this roadmap: **3 / 8**
-- [ ] **0.2.5** Remaining: **5 / 8**
+- [ ] **0.2.4** Completed from this roadmap: **4 / 8**
+- [ ] **0.2.5** Remaining: **4 / 8**
 
 ---
 
@@ -53,13 +53,13 @@
 - [x] **2.1.4** Verify that outputs are real artifacts, not only demo-package outputs
 
 ### 2.2. Real founder package
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Week:** 4
 
-- [ ] **2.2.1** Verify that checklist and weekly review remain useful on real signals
-- [ ] **2.2.2** Remove the biggest UX friction points in the founder review package
-- [ ] **2.2.3** Verify founder decisions can be recorded back into the system without artifact archaeology
-- [ ] **2.2.4** Confirm traceability still works with real input
+- [x] **2.2.1** Verify that checklist and weekly review remain useful on real signals
+- [x] **2.2.2** Remove the biggest UX friction points in the founder review package
+- [x] **2.2.3** Verify founder decisions can be recorded back into the system without artifact archaeology
+- [x] **2.2.4** Confirm traceability still works with real input
 
 ---
 
