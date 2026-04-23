@@ -32,7 +32,7 @@ class OOSConfig:
         - project_root defaults to the current working directory,
         - artifacts_dir is "<project_root>/artifacts".
         """
-        base_root = project_root or Path.cwd()
+        base_root = (project_root or Path.cwd()).resolve()
         artifacts_dir = base_root / "artifacts"
         return cls(project_root=base_root, artifacts_dir=artifacts_dir)
 

@@ -138,6 +138,15 @@ $env:PYTHONPATH = "src"
 
 ---
 
+### Runtime contract
+
+- All v1 dry-run and weekly-review runtime I/O is rooted under the explicit `--project-root`.
+- If `<project-root>\artifacts` exists and is non-empty, `v1-dry-run` refuses before mutating anything.
+- The current working directory must not affect behavior when `--project-root` is provided.
+- Determinism means same input produces the same class of outputs and the same weekly-review schema; timestamped filenames are not byte-identical guarantees.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:
