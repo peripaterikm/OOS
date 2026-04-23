@@ -191,6 +191,22 @@ If the flag is off, deterministic ideation is used. If the flag is on but AI out
 
 ---
 
+### AI ideation evaluation and rollback
+
+Evaluate assisted ideation before using it:
+
+```powershell
+$env:PYTHONPATH = "src"
+$env:OOS_AI_IDEATION_RESPONSE_JSON = '[{"short_concept":"AI-assisted workflow mapper","business_model":"subscription","standardization_focus":"repeatable workflow templates","ai_leverage":"cluster workflow breakdowns","external_execution_needed":"none","rough_monetization_model":"monthly subscription"}]'
+.\.venv\Scripts\python.exe -m oos.cli evaluate-ai-ideation --project-root . --input-file examples\real_signal_batch.jsonl
+```
+
+The report is written to `artifacts\evaluation\ai_ideation_evaluation.json`. Criteria are schema validity, required field completeness, downstream compatibility, traceability preservation, and non-empty useful idea content.
+
+Rollback rules: invalid schema falls back to deterministic, empty or unusable assisted output falls back to deterministic, and assisted mode is not approved unless it passes all criteria. This evaluation applies only to ideation.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:
