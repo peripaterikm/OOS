@@ -207,6 +207,22 @@ Rollback rules: invalid schema falls back to deterministic, empty or unusable as
 
 ---
 
+### Evaluation dataset v0 and heuristic baseline role
+
+`examples\evaluation_dataset_v0\` is the first repeatable smoke-test fixture for Roadmap v2.2 AI evaluation. It contains at least 15 explicitly labeled synthetic signals, expected cluster notes, expected opportunity notes, and founder/operator quality notes. It is an early calibration fixture only; it does not implement clustering, deduplication, or AI scoring.
+
+Current heuristic ideation is a baseline, fallback, and control group. It is good for placeholder output, fallback behavior, pipeline plumbing tests, and comparison against future AI-assisted meaning layers. It is not the primary ideation engine and should not be treated as strong opportunity discovery.
+
+Idea artifacts now expose `generation_mode` with one of:
+
+- `heuristic_baseline`
+- `llm_assisted`
+- `heuristic_fallback_after_llm_failure`
+
+This makes later AI evaluation honest: assisted outputs can be compared against a visible control group, and fallback artifacts cannot be confused with primary LLM ideation.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:

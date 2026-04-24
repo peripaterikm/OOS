@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from .artifact_store import ArtifactStore
-from .models import IdeaScreenStatus, IdeaVariant, OpportunityCard
+from .models import IdeationGenerationMode, IdeaScreenStatus, IdeaVariant, OpportunityCard
 
 
 def _iso_utc_now_seconds() -> str:
@@ -45,15 +45,19 @@ class AIIdeationProvider:
 @dataclass(frozen=True)
 class DeterministicIdeationStub(IdeationEngine):
     """
-    Minimal constrained ideation stub.
+    Minimal constrained heuristic ideation baseline.
 
     Produces 1–2 IdeaVariant objects that are:
     - tied to the OpportunityCard pain/ICP,
     - product/system oriented,
     - not generic "AI assistant for everyone".
+
+    This path is baseline / fallback / control-group plumbing, not the
+    primary intelligence layer for strong opportunity discovery.
     """
 
     store: Optional[ArtifactStore] = None
+    generation_mode: IdeationGenerationMode = IdeationGenerationMode.heuristic_baseline
 
     def generate(self, opportunity: OpportunityCard) -> List[IdeaVariant]:
         now = _iso_utc_now_seconds()
@@ -71,6 +75,7 @@ class DeterministicIdeationStub(IdeationEngine):
                 external_execution_needed="none",
                 rough_monetization_model="tiered subscription by seat or volume",
                 status=IdeaScreenStatus.candidate,
+                generation_mode=self.generation_mode,
                 screen_result_id=None,
                 created_at=now,
                 updated_at=now,
@@ -89,6 +94,7 @@ class DeterministicIdeationStub(IdeationEngine):
                 external_execution_needed="none",
                 rough_monetization_model="subscription with usage-based add-on",
                 status=IdeaScreenStatus.candidate,
+                generation_mode=self.generation_mode,
                 screen_result_id=None,
                 created_at=now,
                 updated_at=now,
@@ -125,15 +131,23 @@ class SafeAIIdeationAdapter(IdeationEngine):
         try:
             ideas = self._generate_ai_ideas(opportunity)
         except Exception:
-            return self.deterministic.generate(opportunity)
+            return self._generate_heuristic_fallback(opportunity)
 
         if not ideas:
-            return self.deterministic.generate(opportunity)
+            return self._generate_heuristic_fallback(opportunity)
 
         if self.store is not None:
             for idea in ideas:
                 self.store.write_model(idea)
         return ideas
+
+    def _generate_heuristic_fallback(self, opportunity: OpportunityCard) -> List[IdeaVariant]:
+        if isinstance(self.deterministic, DeterministicIdeationStub):
+            return DeterministicIdeationStub(
+                store=self.deterministic.store,
+                generation_mode=IdeationGenerationMode.heuristic_fallback_after_llm_failure,
+            ).generate(opportunity)
+        return self.deterministic.generate(opportunity)
 
     def _generate_ai_ideas(self, opportunity: OpportunityCard) -> List[IdeaVariant]:
         now = _iso_utc_now_seconds()
@@ -151,6 +165,7 @@ class SafeAIIdeationAdapter(IdeationEngine):
                 external_execution_needed=str(raw.get("external_execution_needed") or "none").strip(),
                 rough_monetization_model=str(raw.get("rough_monetization_model") or "").strip(),
                 status=IdeaScreenStatus.candidate,
+                generation_mode=IdeationGenerationMode.llm_assisted,
                 screen_result_id=None,
                 created_at=now,
                 updated_at=now,

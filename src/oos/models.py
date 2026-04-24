@@ -33,6 +33,12 @@ class IdeaScreenStatus(str, Enum):
     screened_kill = "screened_kill"
 
 
+class IdeationGenerationMode(str, Enum):
+    heuristic_baseline = "heuristic_baseline"
+    llm_assisted = "llm_assisted"
+    heuristic_fallback_after_llm_failure = "heuristic_fallback_after_llm_failure"
+
+
 class PortfolioStateEnum(str, Enum):
     Active = "Active"
     Parked = "Parked"
@@ -124,6 +130,7 @@ class IdeaVariant:
     external_execution_needed: str
     rough_monetization_model: str
     status: IdeaScreenStatus = IdeaScreenStatus.candidate
+    generation_mode: IdeationGenerationMode = IdeationGenerationMode.heuristic_baseline
     screen_result_id: Optional[str] = None
     created_at: str = field(default_factory=_iso_utc_now_seconds)
     updated_at: str = field(default_factory=_iso_utc_now_seconds)
@@ -137,6 +144,7 @@ class IdeaVariant:
         _require_non_empty(self.ai_leverage, "IdeaVariant.ai_leverage")
         _require_non_empty(self.external_execution_needed, "IdeaVariant.external_execution_needed")
         _require_non_empty(self.rough_monetization_model, "IdeaVariant.rough_monetization_model")
+        _require_non_empty(str(self.generation_mode.value), "IdeaVariant.generation_mode")
 
 
 @dataclass(frozen=True)
@@ -354,6 +362,10 @@ def model_from_dict(model_cls: Any, data: Dict[str, Any]) -> Any:
             **{
                 **data,
                 "status": _enum_from_value(IdeaScreenStatus, data.get("status", "candidate")),
+                "generation_mode": _enum_from_value(
+                    IdeationGenerationMode,
+                    data.get("generation_mode", IdeationGenerationMode.heuristic_baseline.value),
+                ),
             }
         )
     elif model_cls is PortfolioState:
