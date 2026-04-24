@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **3.1**
+- [ ] **0.2.2** Current item: **3.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **4 / 16**
-- [ ] **0.2.5** Remaining: **12 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **5 / 16**
+- [ ] **0.2.5** Remaining: **11 / 16**
 
 ---
 
@@ -492,7 +492,7 @@ If fewer than 80% of non-duplicate signals receive valid structured extraction:
 # Phase 3 — AI Semantic Clustering and Contradictions
 
 ## 3.1. LLM semantic clustering of canonical signals
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 3
 
 ### Goal
@@ -520,28 +520,28 @@ If all clusters have confidence < 0.4:
 
 ### Tasks
 
-- [ ] **3.1.1** Add LLM semantic clustering adapter
-- [ ] **3.1.2** Use canonicalized signal set from 2.1
-- [ ] **3.1.3** Define cluster output schema
-- [ ] **3.1.4** Validate all linked `signal_ids`
-- [ ] **3.1.5** Prevent empty or orphan clusters
-- [ ] **3.1.6** Include prompt/model/input metadata
-- [ ] **3.1.7** Add focused tests for:
-  - [ ] **3.1.7.1** valid clustering
-  - [ ] **3.1.7.2** missing signal references
-  - [ ] **3.1.7.3** invalid cluster output
-  - [ ] **3.1.7.4** fallback behavior
-  - [ ] **3.1.7.5** duplicate inflation avoidance
+- [x] **3.1.1** Add LLM semantic clustering adapter
+- [x] **3.1.2** Use canonicalized signal set from 2.1
+- [x] **3.1.3** Define cluster output schema
+- [x] **3.1.4** Validate all linked `signal_ids`
+- [x] **3.1.5** Prevent empty or orphan clusters
+- [x] **3.1.6** Include prompt/model/input metadata
+- [x] **3.1.7** Add focused tests for:
+  - [x] **3.1.7.1** valid clustering
+  - [x] **3.1.7.2** missing signal references
+  - [x] **3.1.7.3** invalid cluster output
+  - [x] **3.1.7.4** fallback behavior
+  - [x] **3.1.7.5** duplicate inflation avoidance
 
 ### Definition of Done
 
-- [ ] Signals can be grouped by semantic meaning
-- [ ] Duplicates do not inflate cluster recurrence
-- [ ] Each cluster explains why signals belong together
-- [ ] Code validates references and schema
-- [ ] Traceability is preserved
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Signals can be grouped by semantic meaning
+- [x] Duplicates do not inflate cluster recurrence
+- [x] Each cluster explains why signals belong together
+- [x] Code validates references and schema
+- [x] Traceability is preserved
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
