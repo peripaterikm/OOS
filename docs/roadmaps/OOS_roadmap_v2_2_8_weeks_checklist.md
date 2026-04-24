@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **2.1**
+- [ ] **0.2.2** Current item: **2.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **2 / 16**
-- [ ] **0.2.5** Remaining: **14 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **3 / 16**
+- [ ] **0.2.5** Remaining: **13 / 16**
 
 ---
 
@@ -362,7 +362,7 @@ Create shared infrastructure rules for AI outputs before building multiple AI la
 # Phase 2 — Pre-Processing and AI Signal Understanding
 
 ## 2.1. Pre-clustering dedup / fingerprinting
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 2
 
 ### Goal
@@ -392,26 +392,26 @@ If another method is chosen, it must be explicitly documented before implementat
 
 ### Tasks
 
-- [ ] **2.1.1** Add normalized signal fingerprinting
-- [ ] **2.1.2** Add exact duplicate detection
-- [ ] **2.1.3** Add near-duplicate candidate detection using the documented threshold / method
-- [ ] **2.1.4** Add duplicate group metadata:
-  - [ ] **2.1.4.1** `duplicate_group_id`
-  - [ ] **2.1.4.2** `is_duplicate`
-  - [ ] **2.1.4.3** `canonical_signal_id`
-- [ ] **2.1.5** Ensure duplicates are not physically deleted
-- [ ] **2.1.6** Ensure clustering can use canonicalized signal set
-- [ ] **2.1.7** Add focused tests for exact and near duplicates
+- [x] **2.1.1** Add normalized signal fingerprinting
+- [x] **2.1.2** Add exact duplicate detection
+- [x] **2.1.3** Add near-duplicate candidate detection using the documented threshold / method
+- [x] **2.1.4** Add duplicate group metadata:
+  - [x] **2.1.4.1** `duplicate_group_id`
+  - [x] **2.1.4.2** `is_duplicate`
+  - [x] **2.1.4.3** `canonical_signal_id`
+- [x] **2.1.5** Ensure duplicates are not physically deleted
+- [x] **2.1.6** Ensure clustering can use canonicalized signal set
+- [x] **2.1.7** Add focused tests for exact and near duplicates
 
 ### Definition of Done
 
-- [ ] Duplicates are detected before clustering
-- [ ] Near-duplicate threshold / method is documented before implementation
-- [ ] Duplicate metadata is stored
-- [ ] No signal is deleted automatically
-- [ ] Clustering can avoid inflated recurrence from duplicates
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Duplicates are detected before clustering
+- [x] Near-duplicate threshold / method is documented before implementation
+- [x] Duplicate metadata is stored
+- [x] No signal is deleted automatically
+- [x] Clustering can avoid inflated recurrence from duplicates
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
