@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **1.2**
+- [ ] **0.2.2** Current item: **2.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **1 / 16**
-- [ ] **0.2.5** Remaining: **15 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **2 / 16**
+- [ ] **0.2.5** Remaining: **14 / 16**
 
 ---
 
@@ -321,7 +321,7 @@ not good primary ideation engine
 ---
 
 ## 1.2. AI contracts, prompt versioning, and operational constraints
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 1
 
 ### Goal
@@ -330,32 +330,32 @@ Create shared infrastructure rules for AI outputs before building multiple AI la
 
 ### Tasks
 
-- [ ] **1.2.1** Define common AI artifact metadata fields
-- [ ] **1.2.2** Add prompt version tracking
-- [ ] **1.2.3** Add model ID tracking
-- [ ] **1.2.4** Add input hash tracking
-- [ ] **1.2.5** Add LLM call budget tracking
-- [ ] **1.2.6** Add timeout / failure metadata
-- [ ] **1.2.7** Add cache key convention:
-  - [ ] **1.2.7.1** `input_hash`
-  - [ ] **1.2.7.2** `prompt_version`
-  - [ ] **1.2.7.3** `model_id`
-- [ ] **1.2.8** Add batching strategy documentation
-- [ ] **1.2.9** Add economy/standard/deep mode budget documentation
-- [ ] **1.2.10** Add stage-level rollback policy convention
-- [ ] **1.2.11** Document operational constraints in README / docs
-- [ ] **1.2.12** Add focused tests for metadata and prompt versioning
+- [x] **1.2.1** Define common AI artifact metadata fields
+- [x] **1.2.2** Add prompt version tracking
+- [x] **1.2.3** Add model ID tracking
+- [x] **1.2.4** Add input hash tracking
+- [x] **1.2.5** Add LLM call budget tracking
+- [x] **1.2.6** Add timeout / failure metadata
+- [x] **1.2.7** Add cache key convention:
+  - [x] **1.2.7.1** `input_hash`
+  - [x] **1.2.7.2** `prompt_version`
+  - [x] **1.2.7.3** `model_id`
+- [x] **1.2.8** Add batching strategy documentation
+- [x] **1.2.9** Add economy/standard/deep mode budget documentation
+- [x] **1.2.10** Add stage-level rollback policy convention
+- [x] **1.2.11** Document operational constraints in README / docs
+- [x] **1.2.12** Add focused tests for metadata and prompt versioning
 
 ### Definition of Done
 
-- [ ] Every new LLM artifact type can carry prompt/model/input metadata
-- [ ] Prompt versioning convention is documented
-- [ ] Call budget and failure policy are documented
-- [ ] Batching strategy is documented
-- [ ] Cache key convention is documented
-- [ ] Stage-level rollback convention is documented
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Every new LLM artifact type can carry prompt/model/input metadata
+- [x] Prompt versioning convention is documented
+- [x] Call budget and failure policy are documented
+- [x] Batching strategy is documented
+- [x] Cache key convention is documented
+- [x] Stage-level rollback convention is documented
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
@@ -1273,7 +1273,7 @@ Both artifacts must exist for this mini-epic to be complete.
 
 ## 9. Milestones
 
-- [ ] **9.1** Milestone A: Measurement foundation ready after **1.2**
+- [x] **9.1** Milestone A: Measurement foundation ready after **1.2**
 - [ ] **9.2** Milestone B: AI signal understanding operational after **2.2**
 - [ ] **9.3** Milestone C: AI semantic clustering operational after **3.2**
 - [ ] **9.4** Milestone D: AI opportunity framing operational after **4.2**

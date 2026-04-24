@@ -131,6 +131,7 @@ class IdeaVariant:
     rough_monetization_model: str
     status: IdeaScreenStatus = IdeaScreenStatus.candidate
     generation_mode: IdeationGenerationMode = IdeationGenerationMode.heuristic_baseline
+    ai_metadata: Optional[Dict[str, Any]] = None
     screen_result_id: Optional[str] = None
     created_at: str = field(default_factory=_iso_utc_now_seconds)
     updated_at: str = field(default_factory=_iso_utc_now_seconds)
@@ -145,6 +146,8 @@ class IdeaVariant:
         _require_non_empty(self.external_execution_needed, "IdeaVariant.external_execution_needed")
         _require_non_empty(self.rough_monetization_model, "IdeaVariant.rough_monetization_model")
         _require_non_empty(str(self.generation_mode.value), "IdeaVariant.generation_mode")
+        if self.ai_metadata is not None and not isinstance(self.ai_metadata, dict):
+            raise ValueError("IdeaVariant.ai_metadata must be a dict when provided")
 
 
 @dataclass(frozen=True)
