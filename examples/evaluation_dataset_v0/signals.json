@@ -1,0 +1,168 @@
+[
+  {
+    "signal_id": "eval_v0_sig_001",
+    "captured_at": "2026-04-01T09:00:00+00:00",
+    "source_type": "customer_interview",
+    "title": "Ops lead reconciles failed order exports every morning",
+    "text": "The ops lead spends 45 minutes every morning exporting failed orders, checking spreadsheet rows, and deciding which support replies are safe to send.",
+    "source_ref": "eval-v0-interview-ops-001",
+    "synthetic": true,
+    "expected_theme": "workflow_exception_handling",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_002",
+    "captured_at": "2026-04-02T11:30:00+00:00",
+    "source_type": "support_ticket",
+    "title": "Failed exports require manual spreadsheet checklist",
+    "text": "When exports fail, support waits for ops to copy rows into a spreadsheet checklist. Missed rows become delayed customer updates.",
+    "source_ref": "eval-v0-ticket-ops-002",
+    "synthetic": true,
+    "expected_theme": "workflow_exception_handling",
+    "edge_case_tags": ["near_duplicate"],
+    "near_duplicate_of": "eval_v0_sig_001"
+  },
+  {
+    "signal_id": "eval_v0_sig_003",
+    "captured_at": "2026-04-04T15:10:00+00:00",
+    "source_type": "customer_interview",
+    "title": "Finance copies invoice handoffs between three tools",
+    "text": "The finance lead spends two hours each Friday copying invoice data between tools because edge cases break the handoff and create billing mistakes.",
+    "source_ref": "eval-v0-interview-finance-003",
+    "synthetic": true,
+    "expected_theme": "workflow_exception_handling",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_004",
+    "captured_at": "2026-04-05T10:45:00+00:00",
+    "source_type": "community_post",
+    "title": "Support supervisors rebuild escalation summaries manually",
+    "text": "Supervisors rebuild escalation summaries from chat logs, ticket comments, and account notes before weekly customer-risk meetings.",
+    "source_ref": "eval-v0-community-support-004",
+    "synthetic": true,
+    "expected_theme": "workflow_exception_handling",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_005",
+    "captured_at": "2026-04-07T13:20:00+00:00",
+    "source_type": "sales_call_note",
+    "title": "Implementation manager tracks onboarding blockers in side spreadsheet",
+    "text": "The implementation manager keeps a side spreadsheet of onboarding blockers because the project tool does not show which customer tasks are actually stuck.",
+    "source_ref": "eval-v0-sales-impl-005",
+    "synthetic": true,
+    "expected_theme": "workflow_exception_handling",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_006",
+    "captured_at": "2026-04-08T08:35:00+00:00",
+    "source_type": "support_ticket",
+    "title": "Vendor compliance evidence is collected by email thread",
+    "text": "A compliance coordinator asks vendors for the same policy screenshots every quarter and tracks missing evidence in email threads.",
+    "source_ref": "eval-v0-ticket-compliance-006",
+    "synthetic": true,
+    "expected_theme": "compliance_evidence_collection",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_007",
+    "captured_at": "2026-04-09T16:00:00+00:00",
+    "source_type": "customer_interview",
+    "title": "Security reviews stall while teams chase vendor answers",
+    "text": "Security review owners wait days for vendor answers, then paste the responses into a risk sheet for the approver.",
+    "source_ref": "eval-v0-interview-security-007",
+    "synthetic": true,
+    "expected_theme": "compliance_evidence_collection",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_008",
+    "captured_at": "2026-04-11T12:15:00+00:00",
+    "source_type": "community_post",
+    "title": "Clinic admin screenshots payer portal status daily",
+    "text": "A clinic admin screenshots payer portal statuses each morning because denial updates do not land in the practice system reliably.",
+    "source_ref": "eval-v0-community-health-008",
+    "synthetic": true,
+    "expected_theme": "external_portal_monitoring",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_009",
+    "captured_at": "2026-04-12T09:50:00+00:00",
+    "source_type": "customer_interview",
+    "title": "Logistics coordinator watches carrier portals for exceptions",
+    "text": "The logistics coordinator opens five carrier portals twice a day to catch shipment exceptions before account managers hear from customers.",
+    "source_ref": "eval-v0-interview-logistics-009",
+    "synthetic": true,
+    "expected_theme": "external_portal_monitoring",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_010",
+    "captured_at": "2026-04-13T14:40:00+00:00",
+    "source_type": "support_ticket",
+    "title": "Property manager checks utility portals before move-ins",
+    "text": "Before move-ins, the property manager manually checks utility provider portals because activation failures are not visible in the leasing system.",
+    "source_ref": "eval-v0-ticket-property-010",
+    "synthetic": true,
+    "expected_theme": "external_portal_monitoring",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_011",
+    "captured_at": "2026-04-14T17:05:00+00:00",
+    "source_type": "forum_post",
+    "title": "We need better visibility, maybe dashboards",
+    "text": "Our team needs better visibility into what is going on. A dashboard might help, but I am not sure where the data should come from.",
+    "source_ref": "eval-v0-forum-ambiguous-011",
+    "synthetic": true,
+    "expected_theme": "ambiguous",
+    "edge_case_tags": ["ambiguous", "unclear_pain"]
+  },
+  {
+    "signal_id": "eval_v0_sig_012",
+    "captured_at": "2026-04-15T10:25:00+00:00",
+    "source_type": "sales_call_note",
+    "title": "Manager says handoffs feel messy",
+    "text": "A manager said handoffs are messy and people are frustrated, but did not name the workflow, buyer, frequency, or cost.",
+    "source_ref": "eval-v0-sales-ambiguous-012",
+    "synthetic": true,
+    "expected_theme": "ambiguous",
+    "edge_case_tags": ["ambiguous", "unclear_buyer", "unclear_pain"]
+  },
+  {
+    "signal_id": "eval_v0_sig_013",
+    "captured_at": "2026-04-16T08:10:00+00:00",
+    "source_type": "social_post",
+    "title": "This software is annoying",
+    "text": "This software is annoying today. Everything is bad and I hate clicking around.",
+    "source_ref": "eval-v0-social-noise-013",
+    "synthetic": true,
+    "expected_theme": "weak_or_noise",
+    "edge_case_tags": ["weak_noisy"]
+  },
+  {
+    "signal_id": "eval_v0_sig_014",
+    "captured_at": "2026-04-17T11:55:00+00:00",
+    "source_type": "customer_interview",
+    "title": "RevOps reconciles lead routing exceptions by hand",
+    "text": "RevOps reviews lead routing exceptions every afternoon, fixes account ownership in a spreadsheet, and warns sales managers when records look risky.",
+    "source_ref": "eval-v0-interview-revops-014",
+    "synthetic": true,
+    "expected_theme": "workflow_exception_handling",
+    "edge_case_tags": []
+  },
+  {
+    "signal_id": "eval_v0_sig_015",
+    "captured_at": "2026-04-18T15:45:00+00:00",
+    "source_type": "support_ticket",
+    "title": "HR coordinator chases missing onboarding documents",
+    "text": "An HR coordinator checks email, file uploads, and payroll notes to find missing onboarding documents before a new hire start date.",
+    "source_ref": "eval-v0-ticket-hr-015",
+    "synthetic": true,
+    "expected_theme": "compliance_evidence_collection",
+    "edge_case_tags": []
+  }
+]
