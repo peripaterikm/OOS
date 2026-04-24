@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from .ai_contracts import AIStageStatus, PromptIdentity, build_ai_metadata
 from .artifact_store import ArtifactStore
 from .models import IdeationGenerationMode, IdeaScreenStatus, IdeaVariant, OpportunityCard
 
@@ -16,6 +17,22 @@ def _iso_utc_now_seconds() -> str:
 
 def _new_idea_id() -> str:
     return f"idea_{uuid.uuid4().hex}"
+
+
+IDEATION_PROMPT = PromptIdentity(prompt_name="ideation_constrained", prompt_version="ideation_constrained_v1")
+IDEATION_MODEL_ID = "static_json_ai_ideation_provider"
+
+
+def _opportunity_input_payload(opportunity: OpportunityCard) -> Dict[str, Any]:
+    return {
+        "id": opportunity.id,
+        "title": opportunity.title,
+        "source_signal_ids": opportunity.source_signal_ids,
+        "pain_summary": opportunity.pain_summary,
+        "icp": opportunity.icp,
+        "opportunity_type": opportunity.opportunity_type,
+        "why_it_matters": opportunity.why_it_matters,
+    }
 
 
 class IdeationEngine:
@@ -58,6 +75,7 @@ class DeterministicIdeationStub(IdeationEngine):
 
     store: Optional[ArtifactStore] = None
     generation_mode: IdeationGenerationMode = IdeationGenerationMode.heuristic_baseline
+    ai_metadata: Optional[Dict[str, Any]] = None
 
     def generate(self, opportunity: OpportunityCard) -> List[IdeaVariant]:
         now = _iso_utc_now_seconds()
@@ -76,6 +94,7 @@ class DeterministicIdeationStub(IdeationEngine):
                 rough_monetization_model="tiered subscription by seat or volume",
                 status=IdeaScreenStatus.candidate,
                 generation_mode=self.generation_mode,
+                ai_metadata=self.ai_metadata,
                 screen_result_id=None,
                 created_at=now,
                 updated_at=now,
@@ -95,6 +114,7 @@ class DeterministicIdeationStub(IdeationEngine):
                 rough_monetization_model="subscription with usage-based add-on",
                 status=IdeaScreenStatus.candidate,
                 generation_mode=self.generation_mode,
+                ai_metadata=self.ai_metadata,
                 screen_result_id=None,
                 created_at=now,
                 updated_at=now,
@@ -130,27 +150,51 @@ class SafeAIIdeationAdapter(IdeationEngine):
     def generate(self, opportunity: OpportunityCard) -> List[IdeaVariant]:
         try:
             ideas = self._generate_ai_ideas(opportunity)
-        except Exception:
-            return self._generate_heuristic_fallback(opportunity)
+        except Exception as exc:
+            return self._generate_heuristic_fallback(opportunity, failure_reason=str(exc))
 
         if not ideas:
-            return self._generate_heuristic_fallback(opportunity)
+            return self._generate_heuristic_fallback(opportunity, failure_reason="AI ideation returned no ideas")
 
         if self.store is not None:
             for idea in ideas:
                 self.store.write_model(idea)
         return ideas
 
-    def _generate_heuristic_fallback(self, opportunity: OpportunityCard) -> List[IdeaVariant]:
+    def _generate_heuristic_fallback(self, opportunity: OpportunityCard, *, failure_reason: str) -> List[IdeaVariant]:
+        metadata = build_ai_metadata(
+            prompt=IDEATION_PROMPT,
+            model_id=IDEATION_MODEL_ID,
+            input_payload=_opportunity_input_payload(opportunity),
+            generation_mode=IdeationGenerationMode.heuristic_fallback_after_llm_failure.value,
+            linked_input_ids=opportunity.source_signal_ids,
+            fallback_used=True,
+            stage_confidence=0.0,
+            stage_status=AIStageStatus.degraded,
+            failure_reason=failure_reason,
+            fallback_recommendation="Use heuristic fallback output only for pipeline continuity.",
+            degraded_mode=True,
+        ).to_dict()
         if isinstance(self.deterministic, DeterministicIdeationStub):
             return DeterministicIdeationStub(
                 store=self.deterministic.store,
                 generation_mode=IdeationGenerationMode.heuristic_fallback_after_llm_failure,
+                ai_metadata=metadata,
             ).generate(opportunity)
         return self.deterministic.generate(opportunity)
 
     def _generate_ai_ideas(self, opportunity: OpportunityCard) -> List[IdeaVariant]:
         now = _iso_utc_now_seconds()
+        metadata = build_ai_metadata(
+            prompt=IDEATION_PROMPT,
+            model_id=IDEATION_MODEL_ID,
+            input_payload=_opportunity_input_payload(opportunity),
+            generation_mode=IdeationGenerationMode.llm_assisted.value,
+            linked_input_ids=opportunity.source_signal_ids,
+            fallback_used=False,
+            stage_confidence=1.0,
+            stage_status=AIStageStatus.success,
+        ).to_dict()
         ideas: List[IdeaVariant] = []
         for raw in self.provider.generate(opportunity):
             if not isinstance(raw, dict):
@@ -166,6 +210,7 @@ class SafeAIIdeationAdapter(IdeationEngine):
                 rough_monetization_model=str(raw.get("rough_monetization_model") or "").strip(),
                 status=IdeaScreenStatus.candidate,
                 generation_mode=IdeationGenerationMode.llm_assisted,
+                ai_metadata=metadata,
                 screen_result_id=None,
                 created_at=now,
                 updated_at=now,

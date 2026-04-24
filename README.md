@@ -223,6 +223,30 @@ This makes later AI evaluation honest: assisted outputs can be compared against 
 
 ---
 
+### AI artifact contracts and prompt versioning
+
+Future LLM-produced artifacts use common AI metadata so outputs can be compared across prompt and model changes. Required fields are `prompt_name`, `prompt_version`, `model_id`, `input_hash`, `generation_mode`, `created_at`, `linked_input_ids`, `fallback_used`, `stage_confidence`, and `stage_status`.
+
+Prompt identity is explicit. A prompt change creates a new `prompt_version`, such as `signal_extractor_v1` then `signal_extractor_v2`; do not silently reuse the same version for changed behavior.
+
+Input hashing uses deterministic normalized JSON. The cache key convention is:
+
+```text
+input_hash + prompt_version + model_id
+```
+
+LLM call budgets are tracked by mode:
+
+- `economy`: warn above 12 calls
+- `standard`: warn above 25 calls
+- `deep`: warn above 40 calls
+
+Future AI stages should batch work where possible. Initial planning assumes 10-20 signals per small batch and 5-10 signals per extraction/scoring chunk, rather than one LLM call per signal.
+
+Each future AI stage must define its own rollback threshold before implementation. Fallbacks and degraded modes must be visible through metadata such as `fallback_used`, `stage_status`, `failure_reason`, `fallback_recommendation`, and `degraded_mode`.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:
