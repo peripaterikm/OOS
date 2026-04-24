@@ -247,6 +247,21 @@ Each future AI stage must define its own rollback threshold before implementatio
 
 ---
 
+### Pre-clustering signal deduplication
+
+Signal batches get deterministic duplicate metadata before any future semantic clustering. OOS normalizes signal text by lowercasing, tokenizing alphanumeric words, and joining tokens with single spaces; the normalized fingerprint is a SHA-256 hash of that normalized text.
+
+Exact duplicates share the same normalized fingerprint. Near duplicates use the explicit roadmap rule:
+
+```text
+near_duplicate = cosine similarity >= 0.85
+on normalized signal text
+```
+
+Duplicate signals are never physically deleted. Each signal artifact carries `duplicate_group_id`, `is_duplicate`, and `canonical_signal_id`, so original signal IDs remain traceable while future clustering can use the canonical signal set to avoid inflated recurrence counts.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:

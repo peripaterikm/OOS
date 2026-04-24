@@ -19,6 +19,7 @@ from .opportunity_layer import OpportunityFramer
 from .portfolio_layer import PortfolioManager
 from .models import PortfolioStateEnum, Signal, SignalStatus
 from .screen_layer import ScreenEvaluator
+from .signal_dedup import build_dedup_metadata, canonical_signal_set
 from .signal_layer import SignalLayer
 from .real_signal_batch import CanonicalSignalBatchLoader
 from .weekly_review import WeeklyReviewGenerator
@@ -362,12 +363,15 @@ class Orchestrator:
         batch_items = CanonicalSignalBatchLoader().load(input_file)
 
         signal_layer = SignalLayer(artifacts_root=artifacts_root)
+        raw_signals = [item.to_raw_signal() for item in batch_items]
+        dedup_metadata = build_dedup_metadata(raw_signals)
         signals: List[Signal] = []
-        for item in batch_items:
-            metadata = {**item.metadata(), "input_file": str(input_file.resolve())}
-            signals.append(signal_layer.ingest_raw_signal(item.to_raw_signal(), metadata=metadata))
+        for item, raw_signal in zip(batch_items, raw_signals):
+            dedup = dedup_metadata[raw_signal.id or item.signal_id].to_dict()
+            metadata = {**item.metadata(), "input_file": str(input_file.resolve()), **dedup}
+            signals.append(signal_layer.ingest_raw_signal(raw_signal, metadata=metadata))
 
-        eligible_signals = [signal for signal in signals if signal.status == SignalStatus.validated]
+        eligible_signals = [signal for signal in canonical_signal_set(signals) if signal.status == SignalStatus.validated]
         if not eligible_signals:
             raise ValueError(
                 "run-signal-batch refused: no validated signals found. "
