@@ -262,6 +262,20 @@ Duplicate signals are never physically deleted. Each signal artifact carries `du
 
 ---
 
+### Signal meaning extraction contract
+
+`src/oos/signal_understanding.py` defines the Roadmap v2.2 signal-understanding boundary. It accepts a batch of existing `Signal` artifacts and a stubbed provider payload; it does not call a live LLM or API. A future provider can implement the same `SignalUnderstandingProvider.extract(signals)` interface.
+
+Structured meaning records include `actor_user_segment`, `pain`, `context`, `current_workaround`, `urgency`, `cost_signal`, `evidence`, `uncertainty`, and `confidence`. Quality scoring includes `specificity`, `recurrence_potential`, `workaround`, `cost_signal`, `urgency`, `confidence`, and `explanation`.
+
+Every record links back to the original `signal_id` and carries common AI metadata from `ai_contracts.py`, including prompt version, model ID, input hash, generation mode, linked input IDs, fallback status, confidence, and stage status.
+
+Stage-level fallback rule: if fewer than 80% of non-duplicate canonical signals receive valid structured extraction, the batch is marked degraded. Failed signals get `analysis_mode = "analysis_unavailable"`, keep the raw signal ID, and do not replace existing weak/noise routing or founder review behavior.
+
+Duplicate signals do not inflate the denominator when the canonical signal set is used. Original duplicate artifacts remain preserved for traceability.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:

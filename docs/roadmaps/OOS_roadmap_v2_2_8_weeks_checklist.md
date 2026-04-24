@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **2.2**
+- [ ] **0.2.2** Current item: **3.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **3 / 16**
-- [ ] **0.2.5** Remaining: **13 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **4 / 16**
+- [ ] **0.2.5** Remaining: **12 / 16**
 
 ---
 
@@ -416,7 +416,7 @@ If another method is chosen, it must be explicitly documented before implementat
 ---
 
 ## 2.2. LLM signal meaning extraction + quality scoring
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 2
 
 ### Goal
@@ -456,36 +456,36 @@ If fewer than 80% of non-duplicate signals receive valid structured extraction:
 
 ### Tasks
 
-- [ ] **2.2.1** Add batched LLM signal extraction adapter behind a feature flag
-- [ ] **2.2.2** Define strict output schema for extracted signal meaning
-- [ ] **2.2.3** Add signal quality scoring to the same stage or adjacent batched stage
-- [ ] **2.2.4** Store extracted meaning as artifacts linked to original `signal_id`
-- [ ] **2.2.5** Validate extracted schema immediately
-- [ ] **2.2.6** Add fallback behavior for invalid/missing LLM output
-- [ ] **2.2.7** Include required AI metadata:
-  - [ ] **2.2.7.1** prompt version
-  - [ ] **2.2.7.2** model ID
-  - [ ] **2.2.7.3** input hash
-  - [ ] **2.2.7.4** generation mode
-- [ ] **2.2.8** Preserve existing weak/noise routing behavior
-- [ ] **2.2.9** Ensure founder can still promote weak signals manually
-- [ ] **2.2.10** Add focused tests for:
-  - [ ] **2.2.10.1** valid LLM extraction
-  - [ ] **2.2.10.2** invalid LLM extraction
-  - [ ] **2.2.10.3** fallback preserving raw signal
-  - [ ] **2.2.10.4** traceability to `signal_id`
-  - [ ] **2.2.10.5** quality scoring
+- [x] **2.2.1** Add batched LLM signal extraction adapter behind a feature flag
+- [x] **2.2.2** Define strict output schema for extracted signal meaning
+- [x] **2.2.3** Add signal quality scoring to the same stage or adjacent batched stage
+- [x] **2.2.4** Store extracted meaning as artifacts linked to original `signal_id`
+- [x] **2.2.5** Validate extracted schema immediately
+- [x] **2.2.6** Add fallback behavior for invalid/missing LLM output
+- [x] **2.2.7** Include required AI metadata:
+  - [x] **2.2.7.1** prompt version
+  - [x] **2.2.7.2** model ID
+  - [x] **2.2.7.3** input hash
+  - [x] **2.2.7.4** generation mode
+- [x] **2.2.8** Preserve existing weak/noise routing behavior
+- [x] **2.2.9** Ensure founder can still promote weak signals manually
+- [x] **2.2.10** Add focused tests for:
+  - [x] **2.2.10.1** valid LLM extraction
+  - [x] **2.2.10.2** invalid LLM extraction
+  - [x] **2.2.10.3** fallback preserving raw signal
+  - [x] **2.2.10.4** traceability to `signal_id`
+  - [x] **2.2.10.5** quality scoring
 
 ### Definition of Done
 
-- [ ] Each processed non-duplicate signal has structured meaning when LLM extraction succeeds
-- [ ] Raw signal is preserved when LLM extraction fails
-- [ ] Signal quality score exists when scoring succeeds
-- [ ] Artifact includes AI metadata and analysis mode
-- [ ] Traceability to original `signal_id` is preserved
-- [ ] Existing routing behavior remains compatible
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Each processed non-duplicate signal has structured meaning when LLM extraction succeeds
+- [x] Raw signal is preserved when LLM extraction fails
+- [x] Signal quality score exists when scoring succeeds
+- [x] Artifact includes AI metadata and analysis mode
+- [x] Traceability to original `signal_id` is preserved
+- [x] Existing routing behavior remains compatible
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
@@ -1274,7 +1274,7 @@ Both artifacts must exist for this mini-epic to be complete.
 ## 9. Milestones
 
 - [x] **9.1** Milestone A: Measurement foundation ready after **1.2**
-- [ ] **9.2** Milestone B: AI signal understanding operational after **2.2**
+- [x] **9.2** Milestone B: AI signal understanding operational after **2.2**
 - [ ] **9.3** Milestone C: AI semantic clustering operational after **3.2**
 - [ ] **9.4** Milestone D: AI opportunity framing operational after **4.2**
 - [ ] **9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**
