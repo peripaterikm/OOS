@@ -290,6 +290,20 @@ This layer is standalone for now. It is not required by `run-signal-batch` yet, 
 
 ---
 
+### Contradiction detection and merge candidates
+
+`src/oos/contradiction_detection.py` defines the Roadmap v2.2 contradiction-detection boundary. It accepts canonical `Signal` artifacts, optional signal-understanding records, optional semantic clusters, and a stubbed provider payload; it does not call a live LLM or API. A future provider can implement the same `ContradictionDetectionProvider.detect(...)` interface.
+
+A contradiction means two signals describe the same situation or process but give mutually exclusive assessments of pain, workaround, urgency, buyer/user need, or trust in the current solution. Reports include structured `ContradictionRecord` entries with linked signal IDs, canonical signal IDs when available, conflicting fields, evidence, severity (`low`, `medium`, `high`), confidence, recommendation, next action, and traceability fields.
+
+Merge candidates are review suggestions only. `MergeCandidate` entries include source signal IDs, the applicable canonical signal ID, similarity/confidence, a recommendation, and `do_not_auto_merge = true`. The layer never physically deletes signals and never automatically merges source artifacts.
+
+Invalid provider payloads produce a safe fallback report. Invalid individual contradiction or merge records are rejected into `rejected_record_errors` while valid records remain available, so opportunity framing can proceed without silently trusting bad claims.
+
+This layer is standalone for now and is not required by `run-signal-batch`. It prepares opportunity framing by surfacing conflicts and possible duplicates while preserving all source IDs, canonical IDs, skipped duplicate IDs, and common AI metadata for auditability.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:
