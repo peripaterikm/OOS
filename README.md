@@ -304,6 +304,110 @@ This layer is standalone for now and is not required by `run-signal-batch`. It p
 
 ---
 
+### Opportunity framing contract
+
+`src/oos/opportunity_framing.py` defines the Roadmap v2.2 opportunity-framing boundary. It accepts semantic clusters, canonical signals, optional signal-understanding records, optional contradiction reports, and a stubbed provider payload; it does not call a live LLM or API. A future provider can implement the same `OpportunityFramingProvider.frame(...)` interface.
+
+Opportunity cards include title, target user, pain, current workaround, why it matters, evidence, urgency, possible wedge, monetization hypothesis, risks, assumptions, a strict `non_obvious_angle`, linked cluster ID, linked signal IDs, linked canonical signal IDs, confidence, status, and common AI metadata.
+
+Evidence and assumptions are separate. Claims that cite source material must be represented as `OpportunityEvidence` and link to valid `signal_ids` plus a valid `cluster_id`. Unsupported but useful claims belong in `OpportunityAssumption`, not evidence.
+
+`non_obvious_angle` is a thesis that either contradicts the first obvious interpretation of the problem or identifies a segment, wedge, or monetization mechanism that does not follow directly from the literal signal wording. For example, the wedge may be restoring owner trust through reconciliation narratives rather than building another reporting dashboard.
+
+Stage-level fallback rule: if an opportunity has no linked evidence, it is marked `evidence_missing = true`, uses `parked_evidence_missing` status, and carries fallback metadata. Source clusters and signals are preserved, and invalid provider records are rejected without deleting valid cards.
+
+This layer is standalone for now and is not required by `run-signal-batch`. It prepares the 4.2 opportunity quality gate by making evidence, assumptions, traceability, and non-obviousness explicit before scoring.
+
+---
+
+### Opportunity quality gate
+
+`src/oos/opportunity_quality_gate.py` defines a deterministic, advisory gate for framed opportunities. It does not call a live LLM or API and is not wired into `run-signal-batch` yet.
+
+Each `OpportunityGateDecision` uses one of three statuses: `pass`, `park`, or `reject`. The gate checks for a clear user, concrete pain, linked evidence, urgency or cost signal, possible product angle, risks or uncertainty, and traceability back to source signals and cluster.
+
+The gate is deliberately conservative. Missing target user, pain, or traceability produces `reject`; missing evidence produces `park`; missing wedge, urgency/cost, or risks/uncertainty produces `park` with warnings. Strong cards with linked evidence and complete fields pass to pattern-guided ideation.
+
+Gate recommendations are advisory only. Founder decisions remain the final authority, and the optional `founder_override_status` field is non-invasive; it does not replace the gate status or the existing founder review flow.
+
+This prepares Roadmap 5.1 by ensuring only sufficiently grounded opportunities move into pattern-guided ideation, while weak or pretty-but-empty opportunities are parked or rejected before idea generation.
+
+---
+
+### Pattern-guided ideation
+
+`src/oos/pattern_guided_ideation.py` defines the Roadmap v2.2 pattern-guided ideation boundary. It accepts framed `OpportunityCard` objects and a stubbed provider payload; it does not call a live LLM or API and is not wired into `run-signal-batch` yet.
+
+The product pattern library currently includes `SaaS / tool`, `service-assisted workflow`, `data product`, `marketplace / brokered workflow`, `internal automation product`, `audit / risk radar`, and `expert-in-the-loop workflow`.
+
+The stage expects 3-5 idea variants per opportunity. Each accepted idea must include title, target user, pain addressed, product concept, wedge, why now, business model options, first experiment, assumptions, risks, selected product pattern, linked opportunity ID, linked signal IDs, generation mode, confidence, and common AI metadata.
+
+Product-shape diversity is explicit. If fewer than two distinct product patterns are produced for an opportunity, the result carries `low_diversity_warning = true` and uses clearly labeled heuristic fallback ideas when needed. Heuristic fallback remains fallback/control only, not the primary intelligence layer.
+
+This prepares Roadmap 5.2 by making ideation outputs structured enough to compare modes by validity, traceability, diversity, usefulness, and commercial realism.
+
+---
+
+### Ideation mode comparison
+
+`src/oos/ideation_mode_comparison.py` compares ideation modes without live LLM/API calls and is not wired into `run-signal-batch` yet. It evaluates `heuristic_baseline`, `pattern_guided`, and `llm_assisted` / `llm_constrained` idea artifacts as standalone comparison inputs.
+
+Schema validity and traceability are hard gates. Weighted criteria are relevance to input pain x2, novelty/diversity x1, commercial usefulness x2, founder fit x2, testability x1, automation potential x1, hallucination risk subtracted x1, plus a deterministic genericness penalty of `0`, `-1`, or `-2`.
+
+Preliminary thresholds are `score >= 12` for `candidate_for_council_review`, `8-11` for `park_low_priority`, and `< 8` for `auto_park`. Generic dashboard, generic assistant, or vague SaaS language is penalized conservatively until Phase 6 adds explicit anti-pattern checks.
+
+Mode summaries report average score, gate pass counts, candidate/park/auto-park counts, diversity signals, and an explainable preferred-mode recommendation. If LLM-constrained outputs fail gates, the recommendation points back to pattern-guided or heuristic fallback.
+
+This prepares Phase 6 by producing a deterministic comparison layer before anti-pattern checks and council critique are allowed to select top ideas.
+
+---
+
+### Deterministic anti-pattern checks
+
+`src/oos/anti_pattern_checks.py` adds a cheap deterministic pre-filter for weak idea patterns before expensive council critique. It is rule-based, contains no live LLM/API calls, and is not wired into `run-signal-batch` yet.
+
+The current rule set detects generic dashboards, generic chatbots, generic AI assistants, "Uber for X", consulting disguised as product, founder-time-heavy services, unclear buyers, non-urgent pain, and missing or vague first experiments.
+
+Each `AntiPatternFinding` includes the idea ID, anti-pattern ID, label, severity, explanation, matched evidence/fields, recommendation, and penalty. Checks do not delete or mutate source ideas.
+
+The genericness penalty is exposed as a deterministic helper and is reused by ideation mode comparison as a small bridge into Phase 6. Full anti-pattern scoring remains separate from council critique.
+
+---
+
+### Isolated AI council critique
+
+`src/oos/ai_council_critique.py` defines the standalone Roadmap 6.2 council boundary for top idea critique. It makes no live LLM/API calls and is not wired into `run-signal-batch` yet.
+
+Council critique only runs on selected top ideas: scored ideas at or above the council threshold (`total_score >= 12`) or the top fallback idea per opportunity when none cross the threshold. Standard mode caps critique at 3 ideas per opportunity.
+
+Each role is represented as an isolated provider boundary: Skeptic, Market Reality Checker, Founder Bottleneck Checker, Commercialization Critic, and Genericness Detector. Role outputs are validated separately before aggregation.
+
+Structured critiques preserve `idea_id`, linked signal IDs, linked opportunity ID, risks, kill candidates, unsupported claims, weakest assumption, recommendation, explanation, confidence, and AI metadata. Missing or invalid role outputs preserve the idea, mark `critique_unavailable`, and require founder manual review.
+
+If no role finds a serious risk or kill candidate, the summary marks `suspiciously_clean = true`. Founder decision authority remains final; council recommendations are advisory and prepare the Phase 7 founder feedback loop.
+
+---
+
+### Dev Ledger
+
+`docs/dev_ledger/` is the project memory for Roadmap v2.2 development. It records what was built, why decisions were made, rejected alternatives, validation results, known limitations, and stage-by-stage capability boundaries.
+
+Current project state lives in `docs/dev_ledger/00_project_state.md`. Important decisions live in `docs/dev_ledger/01_decisions/` as ADRs. Completed mini-epics are backfilled in `docs/dev_ledger/02_mini_epics/`.
+
+Each future mini-epic should update or add a concise record under `docs/dev_ledger/02_mini_epics/`. Use ADRs when a decision changes source of truth, workflow, architecture, or validation policy.
+
+---
+
+### Autonomous Codex workflow
+
+Autonomous Codex workflow docs live in `docs/dev_ledger/operations/`. They define local-first execution, stop conditions, permissions, validation requirements, and commit policy for approved roadmap scopes.
+
+Use `.\scripts\oos-status.ps1` to inspect branch, recent commits, git status, active roadmap state, and Dev Ledger project state. Use `.\scripts\oos-validate.ps1` to run full unittest discovery followed by `.\scripts\verify.ps1`.
+
+The workflow is local commits first, push later. Codex may create local commits after green validation when approved by the workflow, but must not push or merge unless explicitly requested.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:

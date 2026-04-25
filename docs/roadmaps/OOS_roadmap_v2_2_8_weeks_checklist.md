@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **4.1**
+- [ ] **0.2.2** Current item: **7.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **6 / 16**
-- [ ] **0.2.5** Remaining: **10 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **12 / 16**
+- [ ] **0.2.5** Remaining: **4 / 16**
 
 ---
 
@@ -605,7 +605,7 @@ These may describe the same reporting context but contradict each other about th
 # Phase 4 — AI Opportunity Framing
 
 ## 4.1. LLM opportunity cards with defined non-obvious angle
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 4
 
 ### Goal
@@ -658,32 +658,32 @@ If opportunity has no linked evidence:
 
 ### Tasks
 
-- [ ] **4.1.1** Add LLM opportunity framing adapter
-- [ ] **4.1.2** Define opportunity card schema
-- [ ] **4.1.3** Require evidence for claims
-- [ ] **4.1.4** Mark unsupported claims as assumptions
-- [ ] **4.1.5** Add `non_obvious_angle` with the strict definition above
-- [ ] **4.1.6** Include prompt/model/input metadata
-- [ ] **4.1.7** Add tests for:
-  - [ ] **4.1.7.1** valid opportunity card
-  - [ ] **4.1.7.2** missing evidence
-  - [ ] **4.1.7.3** unsupported assumptions
-  - [ ] **4.1.7.4** non-obvious angle
-  - [ ] **4.1.7.5** traceability
+- [x] **4.1.1** Add LLM opportunity framing adapter
+- [x] **4.1.2** Define opportunity card schema
+- [x] **4.1.3** Require evidence for claims
+- [x] **4.1.4** Mark unsupported claims as assumptions
+- [x] **4.1.5** Add `non_obvious_angle` with the strict definition above
+- [x] **4.1.6** Include prompt/model/input metadata
+- [x] **4.1.7** Add tests for:
+  - [x] **4.1.7.1** valid opportunity card
+  - [x] **4.1.7.2** missing evidence
+  - [x] **4.1.7.3** unsupported assumptions
+  - [x] **4.1.7.4** non-obvious angle
+  - [x] **4.1.7.5** traceability
 
 ### Definition of Done
 
-- [ ] Opportunity cards are generated from clusters
-- [ ] Claims are linked to evidence or marked as assumptions
-- [ ] `non_obvious_angle` is meaningful under the strict definition
-- [ ] Founder review can show evidence and uncertainty
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Opportunity cards are generated from clusters
+- [x] Claims are linked to evidence or marked as assumptions
+- [x] `non_obvious_angle` is meaningful under the strict definition
+- [x] Founder review can show evidence and uncertainty
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
 ## 4.2. Opportunity quality gate
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 4
 
 ### Goal
@@ -702,31 +702,31 @@ Prevent weak or pretty-but-empty opportunities from moving forward.
 
 ### Tasks
 
-- [ ] **4.2.1** Add opportunity quality gate
-- [ ] **4.2.2** Add statuses:
-  - [ ] **4.2.2.1** pass
-  - [ ] **4.2.2.2** park
-  - [ ] **4.2.2.3** reject
-- [ ] **4.2.3** Add AI explanation for recommendation
-- [ ] **4.2.4** Keep founder override capability
-- [ ] **4.2.5** Validate required fields immediately
-- [ ] **4.2.6** Add tests for pass/park/reject cases
+- [x] **4.2.1** Add opportunity quality gate
+- [x] **4.2.2** Add statuses:
+  - [x] **4.2.2.1** pass
+  - [x] **4.2.2.2** park
+  - [x] **4.2.2.3** reject
+- [x] **4.2.3** Add AI explanation for recommendation
+- [x] **4.2.4** Keep founder override capability
+- [x] **4.2.5** Validate required fields immediately
+- [x] **4.2.6** Add tests for pass/park/reject cases
 
 ### Definition of Done
 
-- [ ] Each opportunity receives a gate recommendation
-- [ ] Recommendation has an explanation
-- [ ] Code validates required fields
-- [ ] Founder can override
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Each opportunity receives a gate recommendation
+- [x] Recommendation has an explanation
+- [x] Code validates required fields
+- [x] Founder can override
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
 # Phase 5 — LLM Primary Ideation
 
 ## 5.1. Pattern-guided LLM ideation
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 5
 
 ### Goal
@@ -772,34 +772,34 @@ If fewer than 2 distinct product patterns are produced:
 
 ### Tasks
 
-- [ ] **5.1.1** Add product pattern library
-- [ ] **5.1.2** Expose pattern options to LLM ideation prompt/provider boundary
-- [ ] **5.1.3** Require 3–5 idea variants per opportunity
-- [ ] **5.1.4** Require different product shapes
-- [ ] **5.1.5** Add pattern metadata to idea artifacts
-- [ ] **5.1.6** Keep heuristic fallback, clearly labeled as fallback
-- [ ] **5.1.7** Include prompt/model/input metadata
-- [ ] **5.1.8** Add tests for:
-  - [ ] **5.1.8.1** successful LLM idea generation
-  - [ ] **5.1.8.2** invalid LLM output fallback
-  - [ ] **5.1.8.3** idea diversity
-  - [ ] **5.1.8.4** pattern diversity
-  - [ ] **5.1.8.5** traceability
+- [x] **5.1.1** Add product pattern library
+- [x] **5.1.2** Expose pattern options to LLM ideation prompt/provider boundary
+- [x] **5.1.3** Require 3–5 idea variants per opportunity
+- [x] **5.1.4** Require different product shapes
+- [x] **5.1.5** Add pattern metadata to idea artifacts
+- [x] **5.1.6** Keep heuristic fallback, clearly labeled as fallback
+- [x] **5.1.7** Include prompt/model/input metadata
+- [x] **5.1.8** Add tests for:
+  - [x] **5.1.8.1** successful LLM idea generation
+  - [x] **5.1.8.2** invalid LLM output fallback
+  - [x] **5.1.8.3** idea diversity
+  - [x] **5.1.8.4** pattern diversity
+  - [x] **5.1.8.5** traceability
 
 ### Definition of Done
 
-- [ ] LLM produces multiple genuinely different idea variants
-- [ ] Each idea includes business model and first experiment
-- [ ] Ideas use different product patterns
-- [ ] Heuristic fallback is labeled and not confused with primary ideation
-- [ ] Downstream pipeline remains compatible
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] LLM produces multiple genuinely different idea variants
+- [x] Each idea includes business model and first experiment
+- [x] Ideas use different product patterns
+- [x] Heuristic fallback is labeled and not confused with primary ideation
+- [x] Downstream pipeline remains compatible
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
 ## 5.2. Ideation mode comparison with weighted metrics
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 5
 
 ### Goal
@@ -857,34 +857,34 @@ The final council-selection threshold should be fixed here after real-batch cali
 
 ### Tasks
 
-- [ ] **5.2.1** Extend evaluation report to compare all ideation modes
-- [ ] **5.2.2** Implement metric ownership and scales
-- [ ] **5.2.3** Implement weighted aggregate score
-- [ ] **5.2.4** Add genericness penalty
-- [ ] **5.2.5** Add diversity score
-- [ ] **5.2.6** Add commercial usefulness and founder fit scores
-- [ ] **5.2.7** Add rollback / use recommendation
-- [ ] **5.2.8** Add preliminary score thresholds
-- [ ] **5.2.9** Add focused tests
+- [x] **5.2.1** Extend evaluation report to compare all ideation modes
+- [x] **5.2.2** Implement metric ownership and scales
+- [x] **5.2.3** Implement weighted aggregate score
+- [x] **5.2.4** Add genericness penalty
+- [x] **5.2.5** Add diversity score
+- [x] **5.2.6** Add commercial usefulness and founder fit scores
+- [x] **5.2.7** Add rollback / use recommendation
+- [x] **5.2.8** Add preliminary score thresholds
+- [x] **5.2.9** Add focused tests
 
 ### Definition of Done
 
-- [ ] Evaluation report compares modes clearly
-- [ ] Metrics have scorer, scale, and aggregation
-- [ ] Commercial usefulness, founder fit, and relevance have higher weights
-- [ ] Preliminary thresholds are documented and used
-- [ ] Heuristic mode is treated as baseline/control
-- [ ] LLM mode is judged by usefulness, not text prettiness
-- [ ] Report includes recommendation
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Evaluation report compares modes clearly
+- [x] Metrics have scorer, scale, and aggregation
+- [x] Commercial usefulness, founder fit, and relevance have higher weights
+- [x] Preliminary thresholds are documented and used
+- [x] Heuristic mode is treated as baseline/control
+- [x] LLM mode is judged by usefulness, not text prettiness
+- [x] Report includes recommendation
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
 # Phase 6 — Anti-Patterns and AI Council
 
 ## 6.1. Deterministic anti-pattern checks
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 6
 
 ### Goal
@@ -909,26 +909,26 @@ It should use rules / keywords / simple structural checks. It should not replace
 
 ### Tasks
 
-- [ ] **6.1.1** Add deterministic anti-pattern library
-- [ ] **6.1.2** Add anti-pattern check to idea evaluation
-- [ ] **6.1.3** Add genericness warning to founder review
-- [ ] **6.1.4** Add penalty to ranking/evaluation
-- [ ] **6.1.5** Keep this layer cheap and non-LLM
-- [ ] **6.1.6** Add tests for common anti-patterns
+- [x] **6.1.1** Add deterministic anti-pattern library
+- [x] **6.1.2** Add anti-pattern check to idea evaluation
+- [x] **6.1.3** Add genericness warning to founder review
+- [x] **6.1.4** Add penalty to ranking/evaluation
+- [x] **6.1.5** Keep this layer cheap and non-LLM
+- [x] **6.1.6** Add tests for common anti-patterns
 
 ### Definition of Done
 
-- [ ] Ideas are checked against deterministic anti-patterns
-- [ ] Generic ideas receive warnings and penalties
-- [ ] Founder sees anti-pattern warnings
-- [ ] LLM calls are not used for this layer
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Ideas are checked against deterministic anti-patterns
+- [x] Generic ideas receive warnings and penalties
+- [x] Founder sees anti-pattern warnings
+- [x] LLM calls are not used for this layer
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
 ## 6.2. Isolated AI council critique with suspiciously_clean protection
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 6
 
 ### Goal
@@ -1016,35 +1016,35 @@ If council role outputs are missing or invalid:
 
 ### Tasks
 
-- [ ] **6.2.1** Add top-idea selection rule for council critique
-- [ ] **6.2.2** Add isolated AI critique role outputs
-- [ ] **6.2.3** Add structured critique schema
-- [ ] **6.2.4** Add Critique Summary aggregator after isolated calls
-- [ ] **6.2.5** Link critique to idea IDs and signal IDs
-- [ ] **6.2.6** Include hallucination / unsupported-claim checks
-- [ ] **6.2.7** Add `suspiciously_clean` flag
-- [ ] **6.2.8** Add recommendation schema:
-  - [ ] **6.2.8.1** kill
-  - [ ] **6.2.8.2** park
-  - [ ] **6.2.8.3** test now
-  - [ ] **6.2.8.4** needs more evidence
-- [ ] **6.2.9** Require explanation and next action
-- [ ] **6.2.10** Preserve founder decision as final authority
-- [ ] **6.2.11** Add tests for critique generation, validation, isolated calls, top-idea selection, and suspiciously clean cases
+- [x] **6.2.1** Add top-idea selection rule for council critique
+- [x] **6.2.2** Add isolated AI critique role outputs
+- [x] **6.2.3** Add structured critique schema
+- [x] **6.2.4** Add Critique Summary aggregator after isolated calls
+- [x] **6.2.5** Link critique to idea IDs and signal IDs
+- [x] **6.2.6** Include hallucination / unsupported-claim checks
+- [x] **6.2.7** Add `suspiciously_clean` flag
+- [x] **6.2.8** Add recommendation schema:
+  - [x] **6.2.8.1** kill
+  - [x] **6.2.8.2** park
+  - [x] **6.2.8.3** test now
+  - [x] **6.2.8.4** needs more evidence
+- [x] **6.2.9** Require explanation and next action
+- [x] **6.2.10** Preserve founder decision as final authority
+- [x] **6.2.11** Add tests for critique generation, validation, isolated calls, top-idea selection, and suspiciously clean cases
 
 ### Definition of Done
 
-- [ ] Council only runs on selected top ideas
-- [ ] Standard mode sends at most 3 ideas per opportunity to council
-- [ ] Each council role is an isolated LLM call
-- [ ] Each top idea receives structured critique
-- [ ] Critique identifies weaknesses and first test
-- [ ] Unsupported AI claims are flagged
-- [ ] Suspiciously clean cases are flagged
-- [ ] Founder decision overrides AI recommendation
-- [ ] Weekly review shows both AI recommendation and founder decision
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Council only runs on selected top ideas
+- [x] Standard mode sends at most 3 ideas per opportunity to council
+- [x] Each council role is an isolated LLM call
+- [x] Each top idea receives structured critique
+- [x] Critique identifies weaknesses and first test
+- [x] Unsupported AI claims are flagged
+- [x] Suspiciously clean cases are flagged
+- [x] Founder decision overrides AI recommendation
+- [x] Weekly review shows both AI recommendation and founder decision
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
@@ -1276,9 +1276,9 @@ Both artifacts must exist for this mini-epic to be complete.
 - [x] **9.1** Milestone A: Measurement foundation ready after **1.2**
 - [x] **9.2** Milestone B: AI signal understanding operational after **2.2**
 - [x] **9.3** Milestone C: AI semantic clustering operational after **3.2**
-- [ ] **9.4** Milestone D: AI opportunity framing operational after **4.2**
-- [ ] **9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**
-- [ ] **9.6** Milestone F: Anti-pattern and AI council critique operational after **6.2**
+- [x] **9.4** Milestone D: AI opportunity framing operational after **4.2**
+- [x] **9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**
+- [x] **9.6** Milestone F: Anti-pattern and AI council critique operational after **6.2**
 - [ ] **9.7** Milestone G: Founder review and AI quality feedback operational after **7.2**
 - [ ] **9.8** Milestone H: Roadmap v2.2 complete after **8.2**
 
