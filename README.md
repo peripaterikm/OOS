@@ -320,6 +320,20 @@ This layer is standalone for now and is not required by `run-signal-batch`. It p
 
 ---
 
+### Opportunity quality gate
+
+`src/oos/opportunity_quality_gate.py` defines a deterministic, advisory gate for framed opportunities. It does not call a live LLM or API and is not wired into `run-signal-batch` yet.
+
+Each `OpportunityGateDecision` uses one of three statuses: `pass`, `park`, or `reject`. The gate checks for a clear user, concrete pain, linked evidence, urgency or cost signal, possible product angle, risks or uncertainty, and traceability back to source signals and cluster.
+
+The gate is deliberately conservative. Missing target user, pain, or traceability produces `reject`; missing evidence produces `park`; missing wedge, urgency/cost, or risks/uncertainty produces `park` with warnings. Strong cards with linked evidence and complete fields pass to pattern-guided ideation.
+
+Gate recommendations are advisory only. Founder decisions remain the final authority, and the optional `founder_override_status` field is non-invasive; it does not replace the gate status or the existing founder review flow.
+
+This prepares Roadmap 5.1 by ensuring only sufficiently grounded opportunities move into pattern-guided ideation, while weak or pretty-but-empty opportunities are parked or rejected before idea generation.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:

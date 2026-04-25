@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **4.2**
+- [ ] **0.2.2** Current item: **5.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **7 / 16**
-- [ ] **0.2.5** Remaining: **9 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **8 / 16**
+- [ ] **0.2.5** Remaining: **8 / 16**
 
 ---
 
@@ -683,7 +683,7 @@ If opportunity has no linked evidence:
 ---
 
 ## 4.2. Opportunity quality gate
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 4
 
 ### Goal
@@ -702,24 +702,24 @@ Prevent weak or pretty-but-empty opportunities from moving forward.
 
 ### Tasks
 
-- [ ] **4.2.1** Add opportunity quality gate
-- [ ] **4.2.2** Add statuses:
-  - [ ] **4.2.2.1** pass
-  - [ ] **4.2.2.2** park
-  - [ ] **4.2.2.3** reject
-- [ ] **4.2.3** Add AI explanation for recommendation
-- [ ] **4.2.4** Keep founder override capability
-- [ ] **4.2.5** Validate required fields immediately
-- [ ] **4.2.6** Add tests for pass/park/reject cases
+- [x] **4.2.1** Add opportunity quality gate
+- [x] **4.2.2** Add statuses:
+  - [x] **4.2.2.1** pass
+  - [x] **4.2.2.2** park
+  - [x] **4.2.2.3** reject
+- [x] **4.2.3** Add AI explanation for recommendation
+- [x] **4.2.4** Keep founder override capability
+- [x] **4.2.5** Validate required fields immediately
+- [x] **4.2.6** Add tests for pass/park/reject cases
 
 ### Definition of Done
 
-- [ ] Each opportunity receives a gate recommendation
-- [ ] Recommendation has an explanation
-- [ ] Code validates required fields
-- [ ] Founder can override
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Each opportunity receives a gate recommendation
+- [x] Recommendation has an explanation
+- [x] Code validates required fields
+- [x] Founder can override
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
@@ -1276,7 +1276,7 @@ Both artifacts must exist for this mini-epic to be complete.
 - [x] **9.1** Milestone A: Measurement foundation ready after **1.2**
 - [x] **9.2** Milestone B: AI signal understanding operational after **2.2**
 - [x] **9.3** Milestone C: AI semantic clustering operational after **3.2**
-- [ ] **9.4** Milestone D: AI opportunity framing operational after **4.2**
+- [x] **9.4** Milestone D: AI opportunity framing operational after **4.2**
 - [ ] **9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**
 - [ ] **9.6** Milestone F: Anti-pattern and AI council critique operational after **6.2**
 - [ ] **9.7** Milestone G: Founder review and AI quality feedback operational after **7.2**
