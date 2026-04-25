@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **4.1**
+- [ ] **0.2.2** Current item: **4.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **6 / 16**
-- [ ] **0.2.5** Remaining: **10 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **7 / 16**
+- [ ] **0.2.5** Remaining: **9 / 16**
 
 ---
 
@@ -605,7 +605,7 @@ These may describe the same reporting context but contradict each other about th
 # Phase 4 — AI Opportunity Framing
 
 ## 4.1. LLM opportunity cards with defined non-obvious angle
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 4
 
 ### Goal
@@ -658,27 +658,27 @@ If opportunity has no linked evidence:
 
 ### Tasks
 
-- [ ] **4.1.1** Add LLM opportunity framing adapter
-- [ ] **4.1.2** Define opportunity card schema
-- [ ] **4.1.3** Require evidence for claims
-- [ ] **4.1.4** Mark unsupported claims as assumptions
-- [ ] **4.1.5** Add `non_obvious_angle` with the strict definition above
-- [ ] **4.1.6** Include prompt/model/input metadata
-- [ ] **4.1.7** Add tests for:
-  - [ ] **4.1.7.1** valid opportunity card
-  - [ ] **4.1.7.2** missing evidence
-  - [ ] **4.1.7.3** unsupported assumptions
-  - [ ] **4.1.7.4** non-obvious angle
-  - [ ] **4.1.7.5** traceability
+- [x] **4.1.1** Add LLM opportunity framing adapter
+- [x] **4.1.2** Define opportunity card schema
+- [x] **4.1.3** Require evidence for claims
+- [x] **4.1.4** Mark unsupported claims as assumptions
+- [x] **4.1.5** Add `non_obvious_angle` with the strict definition above
+- [x] **4.1.6** Include prompt/model/input metadata
+- [x] **4.1.7** Add tests for:
+  - [x] **4.1.7.1** valid opportunity card
+  - [x] **4.1.7.2** missing evidence
+  - [x] **4.1.7.3** unsupported assumptions
+  - [x] **4.1.7.4** non-obvious angle
+  - [x] **4.1.7.5** traceability
 
 ### Definition of Done
 
-- [ ] Opportunity cards are generated from clusters
-- [ ] Claims are linked to evidence or marked as assumptions
-- [ ] `non_obvious_angle` is meaningful under the strict definition
-- [ ] Founder review can show evidence and uncertainty
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Opportunity cards are generated from clusters
+- [x] Claims are linked to evidence or marked as assumptions
+- [x] `non_obvious_angle` is meaningful under the strict definition
+- [x] Founder review can show evidence and uncertainty
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 

@@ -304,6 +304,22 @@ This layer is standalone for now and is not required by `run-signal-batch`. It p
 
 ---
 
+### Opportunity framing contract
+
+`src/oos/opportunity_framing.py` defines the Roadmap v2.2 opportunity-framing boundary. It accepts semantic clusters, canonical signals, optional signal-understanding records, optional contradiction reports, and a stubbed provider payload; it does not call a live LLM or API. A future provider can implement the same `OpportunityFramingProvider.frame(...)` interface.
+
+Opportunity cards include title, target user, pain, current workaround, why it matters, evidence, urgency, possible wedge, monetization hypothesis, risks, assumptions, a strict `non_obvious_angle`, linked cluster ID, linked signal IDs, linked canonical signal IDs, confidence, status, and common AI metadata.
+
+Evidence and assumptions are separate. Claims that cite source material must be represented as `OpportunityEvidence` and link to valid `signal_ids` plus a valid `cluster_id`. Unsupported but useful claims belong in `OpportunityAssumption`, not evidence.
+
+`non_obvious_angle` is a thesis that either contradicts the first obvious interpretation of the problem or identifies a segment, wedge, or monetization mechanism that does not follow directly from the literal signal wording. For example, the wedge may be restoring owner trust through reconciliation narratives rather than building another reporting dashboard.
+
+Stage-level fallback rule: if an opportunity has no linked evidence, it is marked `evidence_missing = true`, uses `parked_evidence_missing` status, and carries fallback metadata. Source clusters and signals are preserved, and invalid provider records are rejected without deleting valid cards.
+
+This layer is standalone for now and is not required by `run-signal-batch`. It prepares the 4.2 opportunity quality gate by making evidence, assumptions, traceability, and non-obviousness explicit before scoring.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:
