@@ -44,6 +44,7 @@ class TestDevLedgerStructure(unittest.TestCase):
             "3.2-contradiction-detection.md",
             "4.1-opportunity-framing.md",
             "4.2-opportunity-quality-gate.md",
+            "5.1-pattern-guided-ideation.md",
         ]
         for filename in required_records:
             with self.subTest(filename=filename):

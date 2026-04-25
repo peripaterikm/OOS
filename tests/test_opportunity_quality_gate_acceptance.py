@@ -48,9 +48,16 @@ class TestOpportunityQualityGateAcceptance(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertIn("**0.2.2** Current item: **5.1**", source)
-        self.assertIn("**0.2.4** Completed from this roadmap: **8 / 16**", source)
-        self.assertIn("**0.2.5** Remaining: **8 / 16**", source)
+        current_item = re.search(r"\*\*0\.2\.2\*\* Current item: \*\*(\d+\.\d+)\*\*", source)
+        completed = re.search(r"\*\*0\.2\.4\*\* Completed from this roadmap: \*\*(\d+) / 16\*\*", source)
+        remaining = re.search(r"\*\*0\.2\.5\*\* Remaining: \*\*(\d+) / 16\*\*", source)
+
+        self.assertIsNotNone(current_item)
+        self.assertIsNotNone(completed)
+        self.assertIsNotNone(remaining)
+        self.assertGreaterEqual(tuple(map(int, current_item.group(1).split("."))), (5, 1))
+        self.assertGreaterEqual(int(completed.group(1)), 8)
+        self.assertLessEqual(int(remaining.group(1)), 8)
         self.assertRegex(
             source,
             re.compile(

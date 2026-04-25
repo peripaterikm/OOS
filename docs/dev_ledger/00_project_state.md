@@ -7,11 +7,11 @@
 
 ## Current Progress
 
-- Current item: `5.1` — Pattern-guided LLM ideation
-- Completed: `8 / 16`
-- Remaining: `8 / 16`
-- Latest completed roadmap item: `4.2` — Opportunity quality gate
-- Next planned roadmap item: `5.1` — Pattern-guided LLM ideation
+- Current item: `5.2` — Ideation mode comparison with weighted metrics
+- Completed: `9 / 16`
+- Remaining: `7 / 16`
+- Latest completed roadmap item: `5.1` — Pattern-guided LLM ideation
+- Next planned roadmap item: `5.2` — Ideation mode comparison with weighted metrics
 
 ## Branch And Commit Strategy
 
@@ -25,4 +25,3 @@
 - Roadmap status changes only after required validation passes.
 - Provider boundaries, validation, metadata, and fallback behavior come before live LLM/API calls.
 - Heuristic ideation remains baseline/fallback/control until LLM primary ideation work is implemented.
-

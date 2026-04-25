@@ -334,6 +334,20 @@ This prepares Roadmap 5.1 by ensuring only sufficiently grounded opportunities m
 
 ---
 
+### Pattern-guided ideation
+
+`src/oos/pattern_guided_ideation.py` defines the Roadmap v2.2 pattern-guided ideation boundary. It accepts framed `OpportunityCard` objects and a stubbed provider payload; it does not call a live LLM or API and is not wired into `run-signal-batch` yet.
+
+The product pattern library currently includes `SaaS / tool`, `service-assisted workflow`, `data product`, `marketplace / brokered workflow`, `internal automation product`, `audit / risk radar`, and `expert-in-the-loop workflow`.
+
+The stage expects 3-5 idea variants per opportunity. Each accepted idea must include title, target user, pain addressed, product concept, wedge, why now, business model options, first experiment, assumptions, risks, selected product pattern, linked opportunity ID, linked signal IDs, generation mode, confidence, and common AI metadata.
+
+Product-shape diversity is explicit. If fewer than two distinct product patterns are produced for an opportunity, the result carries `low_diversity_warning = true` and uses clearly labeled heuristic fallback ideas when needed. Heuristic fallback remains fallback/control only, not the primary intelligence layer.
+
+This prepares Roadmap 5.2 by making ideation outputs structured enough to compare modes by validity, traceability, diversity, usefulness, and commercial realism.
+
+---
+
 ### Dev Ledger
 
 `docs/dev_ledger/` is the project memory for Roadmap v2.2 development. It records what was built, why decisions were made, rejected alternatives, validation results, known limitations, and stage-by-stage capability boundaries.

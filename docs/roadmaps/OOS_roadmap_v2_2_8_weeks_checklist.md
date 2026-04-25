@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **5.1**
+- [ ] **0.2.2** Current item: **5.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **8 / 16**
-- [ ] **0.2.5** Remaining: **8 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **9 / 16**
+- [ ] **0.2.5** Remaining: **7 / 16**
 
 ---
 
@@ -726,7 +726,7 @@ Prevent weak or pretty-but-empty opportunities from moving forward.
 # Phase 5 — LLM Primary Ideation
 
 ## 5.1. Pattern-guided LLM ideation
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 5
 
 ### Goal
@@ -772,29 +772,29 @@ If fewer than 2 distinct product patterns are produced:
 
 ### Tasks
 
-- [ ] **5.1.1** Add product pattern library
-- [ ] **5.1.2** Expose pattern options to LLM ideation prompt/provider boundary
-- [ ] **5.1.3** Require 3–5 idea variants per opportunity
-- [ ] **5.1.4** Require different product shapes
-- [ ] **5.1.5** Add pattern metadata to idea artifacts
-- [ ] **5.1.6** Keep heuristic fallback, clearly labeled as fallback
-- [ ] **5.1.7** Include prompt/model/input metadata
-- [ ] **5.1.8** Add tests for:
-  - [ ] **5.1.8.1** successful LLM idea generation
-  - [ ] **5.1.8.2** invalid LLM output fallback
-  - [ ] **5.1.8.3** idea diversity
-  - [ ] **5.1.8.4** pattern diversity
-  - [ ] **5.1.8.5** traceability
+- [x] **5.1.1** Add product pattern library
+- [x] **5.1.2** Expose pattern options to LLM ideation prompt/provider boundary
+- [x] **5.1.3** Require 3–5 idea variants per opportunity
+- [x] **5.1.4** Require different product shapes
+- [x] **5.1.5** Add pattern metadata to idea artifacts
+- [x] **5.1.6** Keep heuristic fallback, clearly labeled as fallback
+- [x] **5.1.7** Include prompt/model/input metadata
+- [x] **5.1.8** Add tests for:
+  - [x] **5.1.8.1** successful LLM idea generation
+  - [x] **5.1.8.2** invalid LLM output fallback
+  - [x] **5.1.8.3** idea diversity
+  - [x] **5.1.8.4** pattern diversity
+  - [x] **5.1.8.5** traceability
 
 ### Definition of Done
 
-- [ ] LLM produces multiple genuinely different idea variants
-- [ ] Each idea includes business model and first experiment
-- [ ] Ideas use different product patterns
-- [ ] Heuristic fallback is labeled and not confused with primary ideation
-- [ ] Downstream pipeline remains compatible
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] LLM produces multiple genuinely different idea variants
+- [x] Each idea includes business model and first experiment
+- [x] Ideas use different product patterns
+- [x] Heuristic fallback is labeled and not confused with primary ideation
+- [x] Downstream pipeline remains compatible
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
