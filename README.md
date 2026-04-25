@@ -334,6 +334,16 @@ This prepares Roadmap 5.1 by ensuring only sufficiently grounded opportunities m
 
 ---
 
+### Dev Ledger
+
+`docs/dev_ledger/` is the project memory for Roadmap v2.2 development. It records what was built, why decisions were made, rejected alternatives, validation results, known limitations, and stage-by-stage capability boundaries.
+
+Current project state lives in `docs/dev_ledger/00_project_state.md`. Important decisions live in `docs/dev_ledger/01_decisions/` as ADRs. Completed mini-epics are backfilled in `docs/dev_ledger/02_mini_epics/`.
+
+Each future mini-epic should update or add a concise record under `docs/dev_ledger/02_mini_epics/`. Use ADRs when a decision changes source of truth, workflow, architecture, or validation policy.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:
