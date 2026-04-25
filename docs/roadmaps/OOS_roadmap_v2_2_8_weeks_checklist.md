@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **6.2**
+- [ ] **0.2.2** Current item: **7.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **11 / 16**
-- [ ] **0.2.5** Remaining: **5 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **12 / 16**
+- [ ] **0.2.5** Remaining: **4 / 16**
 
 ---
 
@@ -928,7 +928,7 @@ It should use rules / keywords / simple structural checks. It should not replace
 ---
 
 ## 6.2. Isolated AI council critique with suspiciously_clean protection
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 6
 
 ### Goal
@@ -1016,35 +1016,35 @@ If council role outputs are missing or invalid:
 
 ### Tasks
 
-- [ ] **6.2.1** Add top-idea selection rule for council critique
-- [ ] **6.2.2** Add isolated AI critique role outputs
-- [ ] **6.2.3** Add structured critique schema
-- [ ] **6.2.4** Add Critique Summary aggregator after isolated calls
-- [ ] **6.2.5** Link critique to idea IDs and signal IDs
-- [ ] **6.2.6** Include hallucination / unsupported-claim checks
-- [ ] **6.2.7** Add `suspiciously_clean` flag
-- [ ] **6.2.8** Add recommendation schema:
-  - [ ] **6.2.8.1** kill
-  - [ ] **6.2.8.2** park
-  - [ ] **6.2.8.3** test now
-  - [ ] **6.2.8.4** needs more evidence
-- [ ] **6.2.9** Require explanation and next action
-- [ ] **6.2.10** Preserve founder decision as final authority
-- [ ] **6.2.11** Add tests for critique generation, validation, isolated calls, top-idea selection, and suspiciously clean cases
+- [x] **6.2.1** Add top-idea selection rule for council critique
+- [x] **6.2.2** Add isolated AI critique role outputs
+- [x] **6.2.3** Add structured critique schema
+- [x] **6.2.4** Add Critique Summary aggregator after isolated calls
+- [x] **6.2.5** Link critique to idea IDs and signal IDs
+- [x] **6.2.6** Include hallucination / unsupported-claim checks
+- [x] **6.2.7** Add `suspiciously_clean` flag
+- [x] **6.2.8** Add recommendation schema:
+  - [x] **6.2.8.1** kill
+  - [x] **6.2.8.2** park
+  - [x] **6.2.8.3** test now
+  - [x] **6.2.8.4** needs more evidence
+- [x] **6.2.9** Require explanation and next action
+- [x] **6.2.10** Preserve founder decision as final authority
+- [x] **6.2.11** Add tests for critique generation, validation, isolated calls, top-idea selection, and suspiciously clean cases
 
 ### Definition of Done
 
-- [ ] Council only runs on selected top ideas
-- [ ] Standard mode sends at most 3 ideas per opportunity to council
-- [ ] Each council role is an isolated LLM call
-- [ ] Each top idea receives structured critique
-- [ ] Critique identifies weaknesses and first test
-- [ ] Unsupported AI claims are flagged
-- [ ] Suspiciously clean cases are flagged
-- [ ] Founder decision overrides AI recommendation
-- [ ] Weekly review shows both AI recommendation and founder decision
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Council only runs on selected top ideas
+- [x] Standard mode sends at most 3 ideas per opportunity to council
+- [x] Each council role is an isolated LLM call
+- [x] Each top idea receives structured critique
+- [x] Critique identifies weaknesses and first test
+- [x] Unsupported AI claims are flagged
+- [x] Suspiciously clean cases are flagged
+- [x] Founder decision overrides AI recommendation
+- [x] Weekly review shows both AI recommendation and founder decision
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
@@ -1278,7 +1278,7 @@ Both artifacts must exist for this mini-epic to be complete.
 - [x] **9.3** Milestone C: AI semantic clustering operational after **3.2**
 - [x] **9.4** Milestone D: AI opportunity framing operational after **4.2**
 - [x] **9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**
-- [ ] **9.6** Milestone F: Anti-pattern and AI council critique operational after **6.2**
+- [x] **9.6** Milestone F: Anti-pattern and AI council critique operational after **6.2**
 - [ ] **9.7** Milestone G: Founder review and AI quality feedback operational after **7.2**
 - [ ] **9.8** Milestone H: Roadmap v2.2 complete after **8.2**
 

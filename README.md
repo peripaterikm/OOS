@@ -374,6 +374,20 @@ The genericness penalty is exposed as a deterministic helper and is reused by id
 
 ---
 
+### Isolated AI council critique
+
+`src/oos/ai_council_critique.py` defines the standalone Roadmap 6.2 council boundary for top idea critique. It makes no live LLM/API calls and is not wired into `run-signal-batch` yet.
+
+Council critique only runs on selected top ideas: scored ideas at or above the council threshold (`total_score >= 12`) or the top fallback idea per opportunity when none cross the threshold. Standard mode caps critique at 3 ideas per opportunity.
+
+Each role is represented as an isolated provider boundary: Skeptic, Market Reality Checker, Founder Bottleneck Checker, Commercialization Critic, and Genericness Detector. Role outputs are validated separately before aggregation.
+
+Structured critiques preserve `idea_id`, linked signal IDs, linked opportunity ID, risks, kill candidates, unsupported claims, weakest assumption, recommendation, explanation, confidence, and AI metadata. Missing or invalid role outputs preserve the idea, mark `critique_unavailable`, and require founder manual review.
+
+If no role finds a serious risk or kill candidate, the summary marks `suspiciously_clean = true`. Founder decision authority remains final; council recommendations are advisory and prepare the Phase 7 founder feedback loop.
+
+---
+
 ### Dev Ledger
 
 `docs/dev_ledger/` is the project memory for Roadmap v2.2 development. It records what was built, why decisions were made, rejected alternatives, validation results, known limitations, and stage-by-stage capability boundaries.

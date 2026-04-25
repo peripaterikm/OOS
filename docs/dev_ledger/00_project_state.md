@@ -7,11 +7,11 @@
 
 ## Current Progress
 
-- Current item: `6.2` ? Isolated AI council critique with suspiciously_clean protection
-- Completed: `11 / 16`
-- Remaining: `5 / 16`
-- Latest completed roadmap item: `6.1` ? Deterministic anti-pattern checks
-- Next planned roadmap item: `6.2` ? Isolated AI council critique with suspiciously_clean protection
+- Current item: `7.1` - Founder override and feedback loop
+- Completed: `12 / 16`
+- Remaining: `4 / 16`
+- Latest completed roadmap item: `6.2` - Isolated AI council critique with suspiciously_clean protection
+- Next planned roadmap item: `7.1` - Founder override and feedback loop
 
 ## Branch And Commit Strategy
 
@@ -28,3 +28,4 @@
 - Support B added autonomous Codex workflow operations docs and local validation/status scripts without changing Roadmap v2.2 counts.
 - Roadmap 5.2 added ideation mode comparison with gates, weighted scoring, genericness penalty, and mode recommendations.
 - Roadmap 6.1 added deterministic anti-pattern checks with findings, severity, penalties, and genericness reuse.
+- Roadmap 6.2 added isolated council critique roles, top-idea selection, suspiciously clean protection, and founder manual-review safeguards.
