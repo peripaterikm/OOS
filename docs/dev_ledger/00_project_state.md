@@ -25,3 +25,4 @@
 - Roadmap status changes only after required validation passes.
 - Provider boundaries, validation, metadata, and fallback behavior come before live LLM/API calls.
 - Heuristic ideation remains baseline/fallback/control until LLM primary ideation work is implemented.
+- Support B added autonomous Codex workflow operations docs and local validation/status scripts without changing Roadmap v2.2 counts.

@@ -358,6 +358,16 @@ Each future mini-epic should update or add a concise record under `docs/dev_ledg
 
 ---
 
+### Autonomous Codex workflow
+
+Autonomous Codex workflow docs live in `docs/dev_ledger/operations/`. They define local-first execution, stop conditions, permissions, validation requirements, and commit policy for approved roadmap scopes.
+
+Use `.\scripts\oos-status.ps1` to inspect branch, recent commits, git status, active roadmap state, and Dev Ledger project state. Use `.\scripts\oos-validate.ps1` to run full unittest discovery followed by `.\scripts\verify.ps1`.
+
+The workflow is local commits first, push later. Codex may create local commits after green validation when approved by the workflow, but must not push or merge unless explicitly requested.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:
