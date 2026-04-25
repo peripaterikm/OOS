@@ -276,6 +276,20 @@ Duplicate signals do not inflate the denominator when the canonical signal set i
 
 ---
 
+### Semantic clustering contract
+
+`src/oos/semantic_clustering.py` defines the Roadmap v2.2 semantic clustering boundary. It accepts canonical `Signal` artifacts and a stubbed provider payload; it does not call a live LLM or API. A future provider can implement the same `SemanticClusteringProvider.cluster(signals)` interface.
+
+Clusters include `cluster_id`, `title`, `summary`, linked `signal_ids`, linked canonical signal IDs, `reasoning`, `confidence`, `uncertainty`, and common AI metadata from `ai_contracts.py`.
+
+Deduplication happens before clustering because duplicate signals should remain traceable but must not inflate recurrence or cluster membership. The clustering layer uses `canonical_signal_set()` by default and records skipped duplicate IDs separately.
+
+Stage-level fallback rule: if all provider clusters have `confidence < 0.4`, or if provider output is empty or invalid, OOS falls back to simple one-signal groupings and marks `low_confidence_clustering = true`. Fallback clusters preserve signal IDs and are clearly marked with fallback metadata.
+
+This layer is standalone for now. It is not required by `run-signal-batch` yet, so existing real-batch behavior remains stable while the semantic clustering contract matures.
+
+---
+
 ### 6. Founder review workflow
 
 После `v1-dry-run` открой:
