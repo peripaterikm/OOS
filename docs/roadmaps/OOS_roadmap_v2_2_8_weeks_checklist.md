@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **6.1**
+- [ ] **0.2.2** Current item: **6.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **10 / 16**
-- [ ] **0.2.5** Remaining: **6 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **11 / 16**
+- [ ] **0.2.5** Remaining: **5 / 16**
 
 ---
 
@@ -884,7 +884,7 @@ The final council-selection threshold should be fixed here after real-batch cali
 # Phase 6 — Anti-Patterns and AI Council
 
 ## 6.1. Deterministic anti-pattern checks
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 6
 
 ### Goal
@@ -909,21 +909,21 @@ It should use rules / keywords / simple structural checks. It should not replace
 
 ### Tasks
 
-- [ ] **6.1.1** Add deterministic anti-pattern library
-- [ ] **6.1.2** Add anti-pattern check to idea evaluation
-- [ ] **6.1.3** Add genericness warning to founder review
-- [ ] **6.1.4** Add penalty to ranking/evaluation
-- [ ] **6.1.5** Keep this layer cheap and non-LLM
-- [ ] **6.1.6** Add tests for common anti-patterns
+- [x] **6.1.1** Add deterministic anti-pattern library
+- [x] **6.1.2** Add anti-pattern check to idea evaluation
+- [x] **6.1.3** Add genericness warning to founder review
+- [x] **6.1.4** Add penalty to ranking/evaluation
+- [x] **6.1.5** Keep this layer cheap and non-LLM
+- [x] **6.1.6** Add tests for common anti-patterns
 
 ### Definition of Done
 
-- [ ] Ideas are checked against deterministic anti-patterns
-- [ ] Generic ideas receive warnings and penalties
-- [ ] Founder sees anti-pattern warnings
-- [ ] LLM calls are not used for this layer
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Ideas are checked against deterministic anti-patterns
+- [x] Generic ideas receive warnings and penalties
+- [x] Founder sees anti-pattern warnings
+- [x] LLM calls are not used for this layer
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 

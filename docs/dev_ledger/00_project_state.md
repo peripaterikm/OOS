@@ -7,11 +7,11 @@
 
 ## Current Progress
 
-- Current item: `6.1` — Deterministic anti-pattern checks
-- Completed: `10 / 16`
-- Remaining: `6 / 16`
-- Latest completed roadmap item: `5.2` — Ideation mode comparison with weighted metrics
-- Next planned roadmap item: `6.1` — Deterministic anti-pattern checks
+- Current item: `6.2` ? Isolated AI council critique with suspiciously_clean protection
+- Completed: `11 / 16`
+- Remaining: `5 / 16`
+- Latest completed roadmap item: `6.1` ? Deterministic anti-pattern checks
+- Next planned roadmap item: `6.2` ? Isolated AI council critique with suspiciously_clean protection
 
 ## Branch And Commit Strategy
 
@@ -27,3 +27,4 @@
 - Heuristic ideation remains baseline/fallback/control until LLM primary ideation work is implemented.
 - Support B added autonomous Codex workflow operations docs and local validation/status scripts without changing Roadmap v2.2 counts.
 - Roadmap 5.2 added ideation mode comparison with gates, weighted scoring, genericness penalty, and mode recommendations.
+- Roadmap 6.1 added deterministic anti-pattern checks with findings, severity, penalties, and genericness reuse.

@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 from statistics import mean
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 
+from .anti_pattern_checks import compute_genericness_penalty_from_text
 from .models import IdeaVariant
 from .pattern_guided_ideation import PatternGuidedIdea
 
@@ -174,13 +175,7 @@ def classify_score(total_score: int, *, gates_pass: bool = True) -> str:
 
 
 def genericness_penalty_for_text(text: str) -> int:
-    normalized = " ".join(text.lower().split())
-    hit_count = sum(1 for term in GENERICNESS_TERMS if term in normalized)
-    if hit_count >= 2:
-        return -2
-    if hit_count == 1:
-        return -1
-    return 0
+    return compute_genericness_penalty_from_text(text)
 
 
 def compare_ideation_modes(

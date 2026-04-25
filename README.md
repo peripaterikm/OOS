@@ -362,6 +362,18 @@ This prepares Phase 6 by producing a deterministic comparison layer before anti-
 
 ---
 
+### Deterministic anti-pattern checks
+
+`src/oos/anti_pattern_checks.py` adds a cheap deterministic pre-filter for weak idea patterns before expensive council critique. It is rule-based, contains no live LLM/API calls, and is not wired into `run-signal-batch` yet.
+
+The current rule set detects generic dashboards, generic chatbots, generic AI assistants, "Uber for X", consulting disguised as product, founder-time-heavy services, unclear buyers, non-urgent pain, and missing or vague first experiments.
+
+Each `AntiPatternFinding` includes the idea ID, anti-pattern ID, label, severity, explanation, matched evidence/fields, recommendation, and penalty. Checks do not delete or mutate source ideas.
+
+The genericness penalty is exposed as a deterministic helper and is reused by ideation mode comparison as a small bridge into Phase 6. Full anti-pattern scoring remains separate from council critique.
+
+---
+
 ### Dev Ledger
 
 `docs/dev_ledger/` is the project memory for Roadmap v2.2 development. It records what was built, why decisions were made, rejected alternatives, validation results, known limitations, and stage-by-stage capability boundaries.
