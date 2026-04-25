@@ -348,6 +348,20 @@ This prepares Roadmap 5.2 by making ideation outputs structured enough to compar
 
 ---
 
+### Ideation mode comparison
+
+`src/oos/ideation_mode_comparison.py` compares ideation modes without live LLM/API calls and is not wired into `run-signal-batch` yet. It evaluates `heuristic_baseline`, `pattern_guided`, and `llm_assisted` / `llm_constrained` idea artifacts as standalone comparison inputs.
+
+Schema validity and traceability are hard gates. Weighted criteria are relevance to input pain x2, novelty/diversity x1, commercial usefulness x2, founder fit x2, testability x1, automation potential x1, hallucination risk subtracted x1, plus a deterministic genericness penalty of `0`, `-1`, or `-2`.
+
+Preliminary thresholds are `score >= 12` for `candidate_for_council_review`, `8-11` for `park_low_priority`, and `< 8` for `auto_park`. Generic dashboard, generic assistant, or vague SaaS language is penalized conservatively until Phase 6 adds explicit anti-pattern checks.
+
+Mode summaries report average score, gate pass counts, candidate/park/auto-park counts, diversity signals, and an explainable preferred-mode recommendation. If LLM-constrained outputs fail gates, the recommendation points back to pattern-guided or heuristic fallback.
+
+This prepares Phase 6 by producing a deterministic comparison layer before anti-pattern checks and council critique are allowed to select top ideas.
+
+---
+
 ### Dev Ledger
 
 `docs/dev_ledger/` is the project memory for Roadmap v2.2 development. It records what was built, why decisions were made, rejected alternatives, validation results, known limitations, and stage-by-stage capability boundaries.

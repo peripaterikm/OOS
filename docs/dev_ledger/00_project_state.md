@@ -7,11 +7,11 @@
 
 ## Current Progress
 
-- Current item: `5.2` — Ideation mode comparison with weighted metrics
-- Completed: `9 / 16`
-- Remaining: `7 / 16`
-- Latest completed roadmap item: `5.1` — Pattern-guided LLM ideation
-- Next planned roadmap item: `5.2` — Ideation mode comparison with weighted metrics
+- Current item: `6.1` — Deterministic anti-pattern checks
+- Completed: `10 / 16`
+- Remaining: `6 / 16`
+- Latest completed roadmap item: `5.2` — Ideation mode comparison with weighted metrics
+- Next planned roadmap item: `6.1` — Deterministic anti-pattern checks
 
 ## Branch And Commit Strategy
 
@@ -26,3 +26,4 @@
 - Provider boundaries, validation, metadata, and fallback behavior come before live LLM/API calls.
 - Heuristic ideation remains baseline/fallback/control until LLM primary ideation work is implemented.
 - Support B added autonomous Codex workflow operations docs and local validation/status scripts without changing Roadmap v2.2 counts.
+- Roadmap 5.2 added ideation mode comparison with gates, weighted scoring, genericness penalty, and mode recommendations.

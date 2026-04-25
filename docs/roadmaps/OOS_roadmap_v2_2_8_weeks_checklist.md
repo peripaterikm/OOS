@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **5.2**
+- [ ] **0.2.2** Current item: **6.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **9 / 16**
-- [ ] **0.2.5** Remaining: **7 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **10 / 16**
+- [ ] **0.2.5** Remaining: **6 / 16**
 
 ---
 
@@ -799,7 +799,7 @@ If fewer than 2 distinct product patterns are produced:
 ---
 
 ## 5.2. Ideation mode comparison with weighted metrics
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 5
 
 ### Goal
@@ -857,27 +857,27 @@ The final council-selection threshold should be fixed here after real-batch cali
 
 ### Tasks
 
-- [ ] **5.2.1** Extend evaluation report to compare all ideation modes
-- [ ] **5.2.2** Implement metric ownership and scales
-- [ ] **5.2.3** Implement weighted aggregate score
-- [ ] **5.2.4** Add genericness penalty
-- [ ] **5.2.5** Add diversity score
-- [ ] **5.2.6** Add commercial usefulness and founder fit scores
-- [ ] **5.2.7** Add rollback / use recommendation
-- [ ] **5.2.8** Add preliminary score thresholds
-- [ ] **5.2.9** Add focused tests
+- [x] **5.2.1** Extend evaluation report to compare all ideation modes
+- [x] **5.2.2** Implement metric ownership and scales
+- [x] **5.2.3** Implement weighted aggregate score
+- [x] **5.2.4** Add genericness penalty
+- [x] **5.2.5** Add diversity score
+- [x] **5.2.6** Add commercial usefulness and founder fit scores
+- [x] **5.2.7** Add rollback / use recommendation
+- [x] **5.2.8** Add preliminary score thresholds
+- [x] **5.2.9** Add focused tests
 
 ### Definition of Done
 
-- [ ] Evaluation report compares modes clearly
-- [ ] Metrics have scorer, scale, and aggregation
-- [ ] Commercial usefulness, founder fit, and relevance have higher weights
-- [ ] Preliminary thresholds are documented and used
-- [ ] Heuristic mode is treated as baseline/control
-- [ ] LLM mode is judged by usefulness, not text prettiness
-- [ ] Report includes recommendation
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Evaluation report compares modes clearly
+- [x] Metrics have scorer, scale, and aggregation
+- [x] Commercial usefulness, founder fit, and relevance have higher weights
+- [x] Preliminary thresholds are documented and used
+- [x] Heuristic mode is treated as baseline/control
+- [x] LLM mode is judged by usefulness, not text prettiness
+- [x] Report includes recommendation
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
@@ -1277,7 +1277,7 @@ Both artifacts must exist for this mini-epic to be complete.
 - [x] **9.2** Milestone B: AI signal understanding operational after **2.2**
 - [x] **9.3** Milestone C: AI semantic clustering operational after **3.2**
 - [x] **9.4** Milestone D: AI opportunity framing operational after **4.2**
-- [ ] **9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**
+- [x] **9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**
 - [ ] **9.6** Milestone F: Anti-pattern and AI council critique operational after **6.2**
 - [ ] **9.7** Milestone G: Founder review and AI quality feedback operational after **7.2**
 - [ ] **9.8** Milestone H: Roadmap v2.2 complete after **8.2**

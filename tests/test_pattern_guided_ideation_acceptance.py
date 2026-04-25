@@ -71,14 +71,14 @@ class TestPatternGuidedIdeationAcceptance(unittest.TestCase):
         self.assertTrue(result.low_diversity_warning)
         self.assertGreaterEqual(len({idea.selected_product_pattern for idea in result.ideas}), 2)
 
-    def test_active_roadmap_is_advanced_to_5_2(self) -> None:
+    def test_active_roadmap_has_completed_5_1_and_not_regressed(self) -> None:
         source = (REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_2_8_weeks_checklist.md").read_text(
             encoding="utf-8"
         )
 
-        self.assertIn("**0.2.2** Current item: **5.2**", source)
-        self.assertIn("**0.2.4** Completed from this roadmap: **9 / 16**", source)
-        self.assertIn("**0.2.5** Remaining: **7 / 16**", source)
+        self.assertRegex(source, re.compile(r"\*\*0\.2\.2\*\* Current item: \*\*(5\.2|6\.1)\*\*"))
+        self.assertRegex(source, re.compile(r"\*\*0\.2\.4\*\* Completed from this roadmap: \*\*(9|10) / 16\*\*"))
+        self.assertRegex(source, re.compile(r"\*\*0\.2\.5\*\* Remaining: \*\*(7|6) / 16\*\*"))
         self.assertRegex(
             source,
             re.compile(
