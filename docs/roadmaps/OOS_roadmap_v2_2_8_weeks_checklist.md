@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **3.2**
+- [ ] **0.2.2** Current item: **4.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **5 / 16**
-- [ ] **0.2.5** Remaining: **11 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **6 / 16**
+- [ ] **0.2.5** Remaining: **10 / 16**
 
 ---
 
@@ -546,7 +546,7 @@ If all clusters have confidence < 0.4:
 ---
 
 ## 3.2. Contradiction detection and merge candidates
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 3
 
 ### Goal
@@ -581,24 +581,24 @@ These may describe the same reporting context but contradict each other about th
 
 ### Tasks
 
-- [ ] **3.2.1** Add contradiction report
-- [ ] **3.2.2** Add merge candidates list
-- [ ] **3.2.3** Preserve all original signals; do not auto-delete
-- [ ] **3.2.4** Include traceability for every dedup / contradiction claim
-- [ ] **3.2.5** Mark contradiction severity:
-  - [ ] **3.2.5.1** low
-  - [ ] **3.2.5.2** medium
-  - [ ] **3.2.5.3** high
-- [ ] **3.2.6** Add focused tests
+- [x] **3.2.1** Add contradiction report
+- [x] **3.2.2** Add merge candidates list
+- [x] **3.2.3** Preserve all original signals; do not auto-delete
+- [x] **3.2.4** Include traceability for every dedup / contradiction claim
+- [x] **3.2.5** Mark contradiction severity:
+  - [x] **3.2.5.1** low
+  - [x] **3.2.5.2** medium
+  - [x] **3.2.5.3** high
+- [x] **3.2.6** Add focused tests
 
 ### Definition of Done
 
-- [ ] Contradictions are surfaced with clear definition
-- [ ] Merge candidates are visible
-- [ ] No signal is deleted automatically
-- [ ] Traceability is preserved
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Contradictions are surfaced with clear definition
+- [x] Merge candidates are visible
+- [x] No signal is deleted automatically
+- [x] Traceability is preserved
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
@@ -1275,7 +1275,7 @@ Both artifacts must exist for this mini-epic to be complete.
 
 - [x] **9.1** Milestone A: Measurement foundation ready after **1.2**
 - [x] **9.2** Milestone B: AI signal understanding operational after **2.2**
-- [ ] **9.3** Milestone C: AI semantic clustering operational after **3.2**
+- [x] **9.3** Milestone C: AI semantic clustering operational after **3.2**
 - [ ] **9.4** Milestone D: AI opportunity framing operational after **4.2**
 - [ ] **9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**
 - [ ] **9.6** Milestone F: Anti-pattern and AI council critique operational after **6.2**
