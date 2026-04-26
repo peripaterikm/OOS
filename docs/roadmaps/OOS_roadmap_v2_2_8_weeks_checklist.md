@@ -1,4 +1,4 @@
-# OOS Roadmap v2.2 — 8 Weeks Checklist
+﻿# OOS Roadmap v2.2 — 8 Weeks Checklist
 
 ## 0. Current Position
 
@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **7.1**
+- [ ] **0.2.2** Current item: **7.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **12 / 16**
-- [ ] **0.2.5** Remaining: **4 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **13 / 16**
+- [ ] **0.2.5** Remaining: **3 / 16**
 
 ---
 
@@ -315,8 +315,8 @@ not good primary ideation engine
 - [x] Dataset can be loaded by tests
 - [x] Heuristic ideation is documented as baseline/fallback/control
 - [x] Idea artifacts clearly show generation mode
-- [x] Tests are green
-- [x] Roadmap updated only after validation
+- [ ] Tests are green
+- [ ] Roadmap updated only after validation
 
 ---
 
@@ -1078,27 +1078,27 @@ artifacts/founder_review/
 
 ### Tasks
 
-- [ ] **7.1.1** Implement package structure
-- [ ] **7.1.2** Add signals section
-- [ ] **7.1.3** Add dedup section
-- [ ] **7.1.4** Add clusters section
-- [ ] **7.1.5** Add opportunities section
-- [ ] **7.1.6** Add ideas section
-- [ ] **7.1.7** Add anti-patterns section
-- [ ] **7.1.8** Add critiques section
-- [ ] **7.1.9** Add decisions section
-- [ ] **7.1.10** Add AI quality section
-- [ ] **7.1.11** Preserve `review_id` decision workflow
-- [ ] **7.1.12** Add focused tests
+- [x] **7.1.1** Implement package structure
+- [x] **7.1.2** Add signals section
+- [x] **7.1.3** Add dedup section
+- [x] **7.1.4** Add clusters section
+- [x] **7.1.5** Add opportunities section
+- [x] **7.1.6** Add ideas section
+- [x] **7.1.7** Add anti-patterns section
+- [x] **7.1.8** Add critiques section
+- [x] **7.1.9** Add decisions section
+- [x] **7.1.10** Add AI quality section
+- [x] **7.1.11** Preserve `review_id` decision workflow
+- [x] **7.1.12** Add focused tests
 
 ### Definition of Done
 
-- [ ] Founder review package has fixed structure
-- [ ] Package can be read without artifact hunting
-- [ ] Every section links back to source artifacts
-- [ ] `review_id` workflow still works
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Founder review package has fixed structure
+- [x] Package can be read without artifact hunting
+- [x] Every section links back to source artifacts
+- [x] `review_id` workflow still works
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
@@ -1357,3 +1357,4 @@ These items are real but not part of the AI Meaning Layer roadmap.
 - Near-duplicate detection threshold must be fixed before implementation
 - Council critique should be expensive, isolated, and limited to selected top ideas
 - Final checkpoint must include both founder-written and system-generated artifacts
+

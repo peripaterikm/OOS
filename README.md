@@ -388,6 +388,16 @@ If no role finds a serious risk or kill candidate, the summary marks `suspicious
 
 ---
 
+### FounderReviewPackage v2
+
+`src/oos/founder_review_package.py` now writes a fixed FounderReviewPackage v2 structure at `artifacts/founder_review/` while preserving the legacy `artifacts/ops/founder_review_index.json` and `record-founder-review --review-id ...` workflow.
+
+The v2 package includes `inbox.md`, `index.json`, and section files for signals, dedup, clusters, opportunities, ideas, anti-patterns, critiques, decisions, and AI quality. Sections link to source artifact IDs where available and show missing optional AI-stage artifacts without crashing generation.
+
+This keeps founder review readable without artifact hunting and prepares Roadmap 7.2 AI-stage quality ratings.
+
+---
+
 ### Dev Ledger
 
 `docs/dev_ledger/` is the project memory for Roadmap v2.2 development. It records what was built, why decisions were made, rejected alternatives, validation results, known limitations, and stage-by-stage capability boundaries.

@@ -43,12 +43,12 @@ class TestAICouncilCritiqueAcceptance(unittest.TestCase):
         self.assertIn("founder_final_authority", source)
         self.assertIn("must remain true", source)
 
-    def test_active_roadmap_is_advanced_to_7_1(self) -> None:
+    def test_active_roadmap_has_completed_6_2_and_not_regressed(self) -> None:
         roadmap = ROADMAP_PATH.read_text(encoding="utf-8")
 
-        self.assertIn("**0.2.2** Current item: **7.1**", roadmap)
-        self.assertIn("**0.2.4** Completed from this roadmap: **12 / 16**", roadmap)
-        self.assertIn("**0.2.5** Remaining: **4 / 16**", roadmap)
+        self.assertRegex(roadmap, r"\*\*0\.2\.2\*\* Current item: \*\*(7\.1|7\.2|8\.1)\*\*")
+        self.assertRegex(roadmap, r"\*\*0\.2\.4\*\* Completed from this roadmap: \*\*(12|13|14) / 16\*\*")
+        self.assertRegex(roadmap, r"\*\*0\.2\.5\*\* Remaining: \*\*(4|3|2) / 16\*\*")
         self.assertIn("## 6.2. Isolated AI council critique with suspiciously_clean protection", roadmap)
         self.assertIn("**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done", roadmap)
         self.assertIn("**9.6** Milestone F: Anti-pattern and AI council critique operational after **6.2**", roadmap)
