@@ -58,9 +58,9 @@ class TestRoadmapV22CompletionCheckpoint(unittest.TestCase):
         state = PROJECT_STATE_PATH.read_text(encoding="utf-8")
 
         self.assertRegex(state, r"Roadmap v2\.2 status: complete|Current item: `(8\.2|Completed / final milestone state)`")
-        self.assertRegex(state, r"Completed: `(15|16|0|1|2|3|4) / 16`")
-        self.assertRegex(state, r"Remaining: `(1|0|16|15|14|13|12) / 16`")
-        self.assertRegex(state, r"Latest completed roadmap item: (Roadmap v2\.(2|3) )?`?(8\.1|8\.2|1\.1|1\.2|2\.1|2\.2)`?")
+        self.assertRegex(state, r"Completed: `(15|16|0|1|2|3|4|5) / 16`")
+        self.assertRegex(state, r"Remaining: `(1|0|16|15|14|13|12|11) / 16`")
+        self.assertRegex(state, r"Latest completed roadmap item: (Roadmap v2\.(2|3) )?`?(8\.1|8\.2|1\.1|1\.2|2\.1|2\.2|3\.1)`?")
 
 
 if __name__ == "__main__":
