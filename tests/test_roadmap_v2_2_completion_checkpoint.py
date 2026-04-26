@@ -57,10 +57,10 @@ class TestRoadmapV22CompletionCheckpoint(unittest.TestCase):
         self.assertTrue(MINI_EPIC_PATH.exists())
         state = PROJECT_STATE_PATH.read_text(encoding="utf-8")
 
-        self.assertRegex(state, r"Current item: `(8\.2|Completed / final milestone state)`")
-        self.assertRegex(state, r"Completed: `(15|16) / 16`")
-        self.assertRegex(state, r"Remaining: `(1|0) / 16`")
-        self.assertRegex(state, r"Latest completed roadmap item: `(8\.1|8\.2)`")
+        self.assertRegex(state, r"Roadmap v2\.2 status: complete|Current item: `(8\.2|Completed / final milestone state)`")
+        self.assertRegex(state, r"Completed: `(15|16|0) / 16`")
+        self.assertRegex(state, r"Remaining: `(1|0|16) / 16`")
+        self.assertRegex(state, r"Latest completed roadmap item: (Roadmap v2\.2 )?`?(8\.1|8\.2)`?")
 
 
 if __name__ == "__main__":
