@@ -9,16 +9,16 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `2.2` - Source Registry and Query Planner
-- Completed: `3 / 16`
-- Remaining: `13 / 16`
-- Latest completed roadmap item: Roadmap v2.3 `2.1` - RawEvidence model and artifact store
-- Next planned roadmap item: Roadmap v2.3 `2.2` - Source Registry and Query Planner
+- Current item: `3.1` - Collection Scheduler, CollectionLimits, and collector interface
+- Completed: `4 / 16`
+- Remaining: `12 / 16`
+- Latest completed roadmap item: Roadmap v2.3 `2.2` - Source Registry and Query Planner
+- Next planned roadmap item: Roadmap v2.3 `3.1` - Collection Scheduler, CollectionLimits, and collector interface
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/2-1-raw-evidence-model-artifact-store`
+- Current branch: `feat/2-2-source-registry-query-planner`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR can be batched at a phase boundary when the local history is coherent.
 - Do not push partial or unvalidated roadmap work.
@@ -38,3 +38,4 @@
 - Roadmap v2.3 item 1.1 finalized the Source Intelligence Layer v0.3 access, privacy, topic, feedback, evidence classification, cleaner, scoring, and traceability policies without implementing product features.
 - Roadmap v2.3 item 1.2 standardized validation run reports, required file-based evidence, and added a Windows-native validation report helper without changing product behavior.
 - Roadmap v2.3 item 2.1 added the canonical RawEvidence model, deterministic normalized content hashing, role/context-only author validation, and artifact-store roundtrip support under `artifacts/raw_evidence/` without collectors, network calls, or live LLM/API calls.
+- Roadmap v2.3 item 2.2 added source registry and topic profile contracts, default Phase B/source-review policies, inactive future topic stubs, and a deterministic bounded query planner without collectors, network calls, or live LLM/API calls.
