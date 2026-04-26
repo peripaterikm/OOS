@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **3.1**
+- [ ] **0.2.2** Current item: **4.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **4 / 16**
-- [ ] **0.2.5** Remaining: **12 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **5 / 16**
+- [ ] **0.2.5** Remaining: **11 / 16**
 
 ---
 
@@ -211,7 +211,7 @@ Create source registry and topic profile config/contracts.
 ---
 
 ## 3.1. Collection Scheduler, CollectionLimits, and collector interface
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 3
 
 ### Goal
@@ -228,10 +228,10 @@ Define scheduling and collector contracts before real collectors.
 
 ### Acceptance
 
-- [ ] Deterministic collection queue.
-- [ ] Disabled sources skipped.
-- [ ] Limits enforced.
-- [ ] No live network in tests.
+- [x] Deterministic collection queue.
+- [x] Disabled sources skipped.
+- [x] Limits enforced.
+- [x] No live network in tests.
 
 ---
 
@@ -548,7 +548,7 @@ Finalize Roadmap v2.3.
 
 - [x] **5.1** Milestone A: Source policy and validation reporting ready after **1.2**
 - [x] **5.2** Milestone B: Raw evidence and bounded query planning ready after **2.2**
-- [ ] **5.3** Milestone C: Collector contracts ready after **3.1**
+- [x] **5.3** Milestone C: Collector contracts ready after **3.1**
 - [ ] **5.4** Milestone D: First public collectors fixture-safe after **4.3**
 - [ ] **5.5** Milestone E: Evidence classification and candidate signals ready after **5.2**
 - [ ] **5.6** Milestone F: Discovery run and yield feedback suggestions ready after **6.2**
