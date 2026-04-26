@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **1.1**
+- [ ] **0.2.2** Current item: **1.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **0 / 16**
-- [ ] **0.2.5** Remaining: **16 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **1 / 16**
+- [ ] **0.2.5** Remaining: **15 / 16**
 
 ---
 
@@ -89,7 +89,7 @@ Stop and ask before continuing if:
 ## 4. Implementation Items
 
 ## 1.1. Source Intelligence spec v0.3 and access policy closure
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 1
 
 ### Goal
@@ -98,25 +98,25 @@ Create and record the final v0.3 implementation spec for the Source Intelligence
 
 ### Tasks
 
-- [ ] **1.1.1** Create `docs/architecture/source_intelligence_layer_v0_3.md`.
-- [ ] **1.1.2** Encode G2 disabled with `access_realistic_for_solo_founder: false`.
-- [ ] **1.1.3** Encode Reddit Phase D / `requires_commercial_review`.
-- [ ] **1.1.4** Encode Stack Exchange registered app key policy.
-- [ ] **1.1.5** Mark Trustpilot/Capterra as later access-review candidates.
-- [ ] **1.1.6** Encode privacy rule for `author_or_context`.
-- [ ] **1.1.7** Encode founder-approved-only feedback.
-- [ ] **1.1.8** Set `ai_cfo_smb` as first active topic.
-- [ ] **1.1.9** Mark undefined/future topics inactive.
-- [ ] **1.1.10** Add focused validation if useful.
+- [x] **1.1.1** Create `docs/architecture/source_intelligence_layer_v0_3.md`.
+- [x] **1.1.2** Encode G2 disabled with `access_realistic_for_solo_founder: false`.
+- [x] **1.1.3** Encode Reddit Phase D / `requires_commercial_review`.
+- [x] **1.1.4** Encode Stack Exchange registered app key policy.
+- [x] **1.1.5** Mark Trustpilot/Capterra as later access-review candidates.
+- [x] **1.1.6** Encode privacy rule for `author_or_context`.
+- [x] **1.1.7** Encode founder-approved-only feedback.
+- [x] **1.1.8** Set `ai_cfo_smb` as first active topic.
+- [x] **1.1.9** Mark undefined/future topics inactive.
+- [x] **1.1.10** Add focused validation if useful.
 
 ### Acceptance
 
-- [ ] v0.3 spec exists.
-- [ ] Source access policy is explicit.
-- [ ] No source is treated as available without access/terms status.
-- [ ] No implementation code yet except tests if necessary.
-- [ ] Dev Ledger mini-epic record exists.
-- [ ] Validation evidence is recorded.
+- [x] v0.3 spec exists.
+- [x] Source access policy is explicit.
+- [x] No source is treated as available without access/terms status.
+- [x] No implementation code yet except tests if necessary.
+- [x] Dev Ledger mini-epic record exists.
+- [x] Validation evidence is recorded.
 
 ---
 
