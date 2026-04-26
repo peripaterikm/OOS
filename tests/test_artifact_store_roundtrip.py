@@ -16,8 +16,10 @@ from oos.models import (
     OpportunityCard,
     PortfolioState,
     PortfolioStateEnum,
+    RawEvidence,
     Signal,
     SignalStatus,
+    compute_raw_evidence_content_hash,
 )
 
 
@@ -26,6 +28,30 @@ class TestArtifactStoreRoundTrip(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             root = Path(tmp) / "artifacts"
             store = ArtifactStore(root_dir=root)
+
+            raw_evidence = RawEvidence(
+                evidence_id="raw_ev_1",
+                source_id="hacker_news_algolia",
+                source_type="public_api",
+                source_name="Hacker News Algolia",
+                source_url="https://news.ycombinator.com/item?id=123",
+                collected_at="2026-04-26T10:00:00+00:00",
+                title="Manual finance workflow",
+                body="SMB owner describes copying bank exports into spreadsheets every week.",
+                language="en",
+                topic_id="ai_cfo_smb",
+                query_kind="pain_search",
+                content_hash=compute_raw_evidence_content_hash(
+                    title="Manual finance workflow",
+                    body="SMB owner describes copying bank exports into spreadsheets every week.",
+                ),
+                author_or_context="SMB owner",
+                raw_metadata={"fixture": True},
+                access_policy="fixture_offline_first",
+                collection_method="fixture",
+            )
+            store.write_model(raw_evidence)
+            self.assertEqual(store.read_model(RawEvidence, "raw_ev_1"), raw_evidence)
 
             signal = Signal(
                 id="sig_1",

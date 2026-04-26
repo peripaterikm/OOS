@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **2.1**
+- [ ] **0.2.2** Current item: **2.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **2 / 16**
-- [ ] **0.2.5** Remaining: **14 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **3 / 16**
+- [ ] **0.2.5** Remaining: **13 / 16**
 
 ---
 
@@ -146,7 +146,7 @@ Prevent manual PowerShell copy/paste validation by making run reports standard.
 ---
 
 ## 2.1. RawEvidence model and artifact store
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 2
 
 ### Goal
@@ -174,11 +174,11 @@ Introduce `RawEvidence` as the canonical stored source object before signal extr
 
 ### Acceptance
 
-- [ ] `RawEvidence` can round-trip through artifact store.
-- [ ] `source_url` is preserved.
-- [ ] `content_hash` is deterministic.
-- [ ] `author_or_context` stores role/context, not usernames/handles by default.
-- [ ] No network required in tests.
+- [x] `RawEvidence` can round-trip through artifact store.
+- [x] `source_url` is preserved.
+- [x] `content_hash` is deterministic.
+- [x] `author_or_context` stores role/context, not usernames/handles by default.
+- [x] No network required in tests.
 
 ---
 

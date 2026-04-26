@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -18,6 +20,25 @@ def _require_list(value: Any, field_name: str) -> None:
 
 def _iso_utc_now_seconds() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+_WHITESPACE_RE = re.compile(r"\s+")
+_AUTHOR_HANDLE_RE = re.compile(r"(^|\s)(@[\w.-]+|u/[\w.-]+|/u/[\w.-]+|username\s*:|handle\s*:|user\s*:)", re.IGNORECASE)
+
+
+def normalize_raw_evidence_content(title: str, body: str) -> str:
+    normalized_title = _WHITESPACE_RE.sub(" ", title.strip())
+    normalized_body = _WHITESPACE_RE.sub(" ", body.strip())
+    return f"{normalized_title}\n{normalized_body}"
+
+
+def compute_raw_evidence_content_hash(title: str, body: str) -> str:
+    content = normalize_raw_evidence_content(title=title, body=body)
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def author_or_context_is_private_safe(author_or_context: str) -> bool:
+    return isinstance(author_or_context, str) and not _AUTHOR_HANDLE_RE.search(author_or_context.strip())
 
 
 class SignalStatus(str, Enum):
@@ -50,6 +71,57 @@ class FounderReviewDecisionEnum(str, Enum):
     Active = "Active"
     Parked = "Parked"
     Killed = "Killed"
+
+
+@dataclass(frozen=True)
+class RawEvidence:
+    evidence_id: str
+    source_id: str
+    source_type: str
+    source_name: str
+    source_url: str
+    collected_at: str
+    title: str
+    body: str
+    language: str
+    topic_id: str
+    query_kind: str
+    content_hash: str
+    author_or_context: str
+    raw_metadata: Dict[str, Any]
+    access_policy: str
+    collection_method: str
+
+    @property
+    def id(self) -> str:
+        return self.evidence_id
+
+    def validate(self) -> None:
+        for field_name in (
+            "evidence_id",
+            "source_id",
+            "source_type",
+            "source_name",
+            "source_url",
+            "collected_at",
+            "title",
+            "body",
+            "language",
+            "topic_id",
+            "query_kind",
+            "content_hash",
+            "author_or_context",
+            "access_policy",
+            "collection_method",
+        ):
+            _require_non_empty(getattr(self, field_name), f"RawEvidence.{field_name}")
+        if not isinstance(self.raw_metadata, dict):
+            raise ValueError("RawEvidence.raw_metadata must be a dict")
+        expected_hash = compute_raw_evidence_content_hash(title=self.title, body=self.body)
+        if self.content_hash != expected_hash:
+            raise ValueError("RawEvidence.content_hash must match normalized title/body content")
+        if not author_or_context_is_private_safe(self.author_or_context):
+            raise ValueError("RawEvidence.author_or_context must store role/context, not username/handle")
 
 
 @dataclass(frozen=True)
@@ -317,6 +389,7 @@ class FounderReviewDecision:
 
 
 MODEL_KIND = {
+    RawEvidence: "raw_evidence",
     Signal: "signals",
     OpportunityCard: "opportunities",
     IdeaVariant: "ideas",
