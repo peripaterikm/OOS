@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **8.1**
+- [ ] **0.2.2** Current item: **8.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **14 / 16**
-- [ ] **0.2.5** Remaining: **2 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **15 / 16**
+- [ ] **0.2.5** Remaining: **1 / 16**
 
 ---
 
@@ -1163,7 +1163,7 @@ Synthetic cases remain allowed only when explicitly labeled.
 # Phase 8 — Final E2E Verification and Completion
 
 ## 8.1. Full AI meaning loop verification
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 8
 
 ### Goal
@@ -1192,28 +1192,28 @@ real signals
 
 ### Tasks
 
-- [ ] **8.1.1** Add final end-to-end AI meaning loop test
-- [ ] **8.1.2** Run full loop on evaluation dataset v1
-- [ ] **8.1.3** Verify traceability from weekly summary back to source signals
-- [ ] **8.1.4** Verify duplicates do not inflate clusters
-- [ ] **8.1.5** Verify founder decision recording
-- [ ] **8.1.6** Verify AI quality ratings appear in weekly summary
-- [ ] **8.1.7** Verify LLM metadata appears in AI artifacts
-- [ ] **8.1.8** Verify prompt versions are logged
-- [ ] **8.1.9** Verify LLM call count is reported
-- [ ] **8.1.10** Run full Windows-native verification
+- [x] **8.1.1** Add final end-to-end AI meaning loop test
+- [x] **8.1.2** Run full loop on evaluation dataset v1
+- [x] **8.1.3** Verify traceability from weekly summary back to source signals
+- [x] **8.1.4** Verify duplicates do not inflate clusters
+- [x] **8.1.5** Verify founder decision recording
+- [x] **8.1.6** Verify AI quality ratings appear in weekly summary
+- [x] **8.1.7** Verify LLM metadata appears in AI artifacts
+- [x] **8.1.8** Verify prompt versions are logged
+- [x] **8.1.9** Verify LLM call count is reported
+- [x] **8.1.10** Run full Windows-native verification
 
 ### Definition of Done
 
-- [ ] Full loop passes on evaluation dataset v1
-- [ ] Traceability is preserved
-- [ ] Duplicate inflation is prevented
-- [ ] Founder decision is recorded
-- [ ] Weekly summary includes AI quality signals
-- [ ] LLM metadata is present
-- [ ] LLM call count is visible
-- [ ] `verify.ps1` is green
-- [ ] Roadmap updated only after validation
+- [x] Full loop passes on evaluation dataset v1
+- [x] Traceability is preserved
+- [x] Duplicate inflation is prevented
+- [x] Founder decision is recorded
+- [x] Weekly summary includes AI quality signals
+- [x] LLM metadata is present
+- [x] LLM call count is visible
+- [x] `verify.ps1` is green
+- [x] Roadmap updated only after validation
 
 ---
 
