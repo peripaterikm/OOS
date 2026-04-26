@@ -1,4 +1,4 @@
-# OOS — Opportunity Operating System
+﻿# OOS — Opportunity Operating System
 
 ## Что это
 
@@ -388,6 +388,25 @@ If no role finds a serious risk or kill candidate, the summary marks `suspicious
 
 ---
 
+### FounderReviewPackage v2
+
+`src/oos/founder_review_package.py` now writes a fixed FounderReviewPackage v2 structure at `artifacts/founder_review/` while preserving the legacy `artifacts/ops/founder_review_index.json` and `record-founder-review --review-id ...` workflow.
+
+The v2 package includes `inbox.md`, `index.json`, and section files for signals, dedup, clusters, opportunities, ideas, anti-patterns, critiques, decisions, and AI quality. Sections link to source artifact IDs where available and show missing optional AI-stage artifacts without crashing generation.
+
+This keeps founder review readable without artifact hunting and prepares Roadmap 7.2 AI-stage quality ratings.
+
+---
+
+### Founder AI-stage ratings and evaluation dataset v1
+
+`src/oos/founder_ai_stage_rating.py` records advisory founder quality ratings for AI-stage outputs. Allowed ratings are `good`, `okay`, `weak`, and `wrong`; allowed stages are `signal understanding`, `clustering`, `opportunity framing`, `ideation`, and `critique`.
+
+Use `record-ai-stage-rating` to write JSON artifacts under `artifacts/ai_stage_ratings/`. Ratings preserve linked artifact IDs and linked signal IDs, appear in FounderReviewPackage v2's `ai_quality` section when present, and are surfaced in weekly review JSON as recent advisory quality signals. They do not update portfolio state or replace founder decisions.
+
+`examples/evaluation_dataset_v1/` expands the early fixture set to 22 explicitly synthetic signals, expected semantic cluster notes, expected opportunity notes, expected idea-quality notes, and founder quality notes. The dataset is loadable through `load_evaluation_dataset_v1()` and is meant to support repeatable comparison across future prompt/model versions.
+
+---
 ### Dev Ledger
 
 `docs/dev_ledger/` is the project memory for Roadmap v2.2 development. It records what was built, why decisions were made, rejected alternatives, validation results, known limitations, and stage-by-stage capability boundaries.
@@ -514,3 +533,4 @@ git push
 2. прочитай релевантные документы в `docs/`
 3. не придумывай новую архитектуру без явного запроса
 4. реализуй только один небольшой scope за раз
+

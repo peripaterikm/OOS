@@ -1,4 +1,4 @@
-# Dev Ledger Project State
+﻿# Dev Ledger Project State
 
 ## Current Roadmap
 
@@ -7,11 +7,11 @@
 
 ## Current Progress
 
-- Current item: `7.1` - Founder override and feedback loop
-- Completed: `12 / 16`
-- Remaining: `4 / 16`
-- Latest completed roadmap item: `6.2` - Isolated AI council critique with suspiciously_clean protection
-- Next planned roadmap item: `7.1` - Founder override and feedback loop
+- Current item: `8.1` - Full AI meaning loop verification
+- Completed: `14 / 16`
+- Remaining: `2 / 16`
+- Latest completed roadmap item: `7.2` - Founder rating by AI stage + evaluation dataset v1 expansion
+- Next planned roadmap item: `8.1` - Full AI meaning loop verification
 
 ## Branch And Commit Strategy
 
@@ -29,3 +29,5 @@
 - Roadmap 5.2 added ideation mode comparison with gates, weighted scoring, genericness penalty, and mode recommendations.
 - Roadmap 6.1 added deterministic anti-pattern checks with findings, severity, penalties, and genericness reuse.
 - Roadmap 6.2 added isolated council critique roles, top-idea selection, suspiciously clean protection, and founder manual-review safeguards.
+
+

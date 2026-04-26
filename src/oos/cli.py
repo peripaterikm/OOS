@@ -9,6 +9,7 @@ from pathlib import Path
 from .ai_ideation_evaluation import evaluate_ai_ideation
 from .artifact_store import ArtifactStore
 from .config import OOSConfig
+from .founder_ai_stage_rating import ALLOWED_AI_RATING_STAGES, ALLOWED_AI_STAGE_RATINGS, record_ai_stage_rating
 from .founder_review_package import FounderReviewIndex
 from .models import FounderReviewDecision, FounderReviewDecisionEnum, PortfolioStateEnum
 from .orchestrator import Orchestrator
@@ -475,6 +476,25 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Required when --decision Killed; existing KillReason id to link to portfolio state.",
     )
 
+    rating_parser = subparsers.add_parser(
+        "record-ai-stage-rating",
+        help="Record an advisory founder rating for an AI-stage artifact.",
+    )
+    rating_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    rating_parser.add_argument("--stage", required=True, choices=sorted(ALLOWED_AI_RATING_STAGES))
+    rating_parser.add_argument("--rating", required=True, choices=sorted(ALLOWED_AI_STAGE_RATINGS))
+    rating_parser.add_argument("--explanation", required=True)
+    rating_parser.add_argument("--linked-artifact-id", action="append", default=[])
+    rating_parser.add_argument("--linked-signal-id", action="append", default=[])
+    rating_parser.add_argument("--rating-id", default=None)
+    rating_parser.add_argument("--created-at", default=None)
+    rating_parser.add_argument("--founder", default="founder")
+
     return parser
 
 
@@ -592,6 +612,28 @@ def main(argv: list[str] | None = None) -> int:
         print("Founder review decision recorded.")
         print(f"decision_artifact: {path}")
         print(f"portfolio_updated: {str(portfolio_updated).lower()}")
+        return 0
+
+    if args.command == "record-ai-stage-rating":
+        try:
+            path = record_ai_stage_rating(
+                project_root=args.project_root,
+                stage=args.stage,
+                rating=args.rating,
+                explanation=args.explanation,
+                linked_artifact_ids=args.linked_artifact_id,
+                linked_signal_ids=args.linked_signal_id,
+                rating_id=args.rating_id,
+                created_at=args.created_at,
+                founder=args.founder,
+            )
+        except ValueError as exc:
+            print(str(exc))
+            return 2
+
+        print("Founder AI-stage rating recorded.")
+        print("advisory_only: true")
+        print(f"rating_artifact: {path}")
         return 0
 
     # In Week 1 there are no other commands.

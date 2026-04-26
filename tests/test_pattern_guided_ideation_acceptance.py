@@ -76,9 +76,9 @@ class TestPatternGuidedIdeationAcceptance(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertRegex(source, re.compile(r"\*\*0\.2\.2\*\* Current item: \*\*(5\.2|6\.1|6\.2|7\.1)\*\*"))
-        self.assertRegex(source, re.compile(r"\*\*0\.2\.4\*\* Completed from this roadmap: \*\*(9|10|11|12) / 16\*\*"))
-        self.assertRegex(source, re.compile(r"\*\*0\.2\.5\*\* Remaining: \*\*(7|6|5|4) / 16\*\*"))
+        self.assertRegex(source, re.compile(r"\*\*0\.2\.2\*\* Current item: \*\*(5\.2|6\.1|6\.2|7\.1|7\.2|8\.1)\*\*"))
+        self.assertRegex(source, re.compile(r"\*\*0\.2\.4\*\* Completed from this roadmap: \*\*(9|10|11|12|13|14) / 16\*\*"))
+        self.assertRegex(source, re.compile(r"\*\*0\.2\.5\*\* Remaining: \*\*(7|6|5|4|3|2) / 16\*\*"))
         self.assertRegex(
             source,
             re.compile(

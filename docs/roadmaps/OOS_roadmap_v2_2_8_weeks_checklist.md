@@ -1,4 +1,4 @@
-# OOS Roadmap v2.2 — 8 Weeks Checklist
+﻿# OOS Roadmap v2.2 — 8 Weeks Checklist
 
 ## 0. Current Position
 
@@ -10,10 +10,10 @@
 - [x] **0.1.6** AI-assisted ideation exists behind a feature flag
 - [x] **0.1.7** AI ideation evaluation and rollback rules exist
 - [ ] **0.2.1** Current phase: **Roadmap v2.2 — AI Meaning Layer**
-- [ ] **0.2.2** Current item: **7.1**
+- [ ] **0.2.2** Current item: **8.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **12 / 16**
-- [ ] **0.2.5** Remaining: **4 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **14 / 16**
+- [ ] **0.2.5** Remaining: **2 / 16**
 
 ---
 
@@ -1051,7 +1051,7 @@ If council role outputs are missing or invalid:
 # Phase 7 — Founder Review and Quality Feedback
 
 ## 7.1. FounderReviewPackage v2 implementation
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 7
 
 ### Goal
@@ -1078,32 +1078,32 @@ artifacts/founder_review/
 
 ### Tasks
 
-- [ ] **7.1.1** Implement package structure
-- [ ] **7.1.2** Add signals section
-- [ ] **7.1.3** Add dedup section
-- [ ] **7.1.4** Add clusters section
-- [ ] **7.1.5** Add opportunities section
-- [ ] **7.1.6** Add ideas section
-- [ ] **7.1.7** Add anti-patterns section
-- [ ] **7.1.8** Add critiques section
-- [ ] **7.1.9** Add decisions section
-- [ ] **7.1.10** Add AI quality section
-- [ ] **7.1.11** Preserve `review_id` decision workflow
-- [ ] **7.1.12** Add focused tests
+- [x] **7.1.1** Implement package structure
+- [x] **7.1.2** Add signals section
+- [x] **7.1.3** Add dedup section
+- [x] **7.1.4** Add clusters section
+- [x] **7.1.5** Add opportunities section
+- [x] **7.1.6** Add ideas section
+- [x] **7.1.7** Add anti-patterns section
+- [x] **7.1.8** Add critiques section
+- [x] **7.1.9** Add decisions section
+- [x] **7.1.10** Add AI quality section
+- [x] **7.1.11** Preserve `review_id` decision workflow
+- [x] **7.1.12** Add focused tests
 
 ### Definition of Done
 
-- [ ] Founder review package has fixed structure
-- [ ] Package can be read without artifact hunting
-- [ ] Every section links back to source artifacts
-- [ ] `review_id` workflow still works
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Founder review package has fixed structure
+- [x] Package can be read without artifact hunting
+- [x] Every section links back to source artifacts
+- [x] `review_id` workflow still works
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
 ## 7.2. Founder rating by AI stage + evaluation dataset v1 expansion
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done  
 **Week:** 7
 
 ### Goal
@@ -1137,26 +1137,26 @@ Synthetic cases remain allowed only when explicitly labeled.
 
 ### Tasks
 
-- [ ] **7.2.1** Add rating artifact model
-- [ ] **7.2.2** Add CLI command to record AI-stage rating
-- [ ] **7.2.3** Show ratings in weekly summary
-- [ ] **7.2.4** Preserve links to related artifacts
-- [ ] **7.2.5** Expand evaluation dataset from v0 to v1
-- [ ] **7.2.6** Add expected-quality notes
-- [ ] **7.2.7** Add repeatable evaluation command
-- [ ] **7.2.8** Add focused tests
+- [x] **7.2.1** Add rating artifact model
+- [x] **7.2.2** Add CLI command to record AI-stage rating
+- [x] **7.2.3** Show ratings in weekly summary
+- [x] **7.2.4** Preserve links to related artifacts
+- [x] **7.2.5** Expand evaluation dataset from v0 to v1
+- [x] **7.2.6** Add expected-quality notes
+- [x] **7.2.7** Add repeatable evaluation command
+- [x] **7.2.8** Add focused tests
 
 ### Definition of Done
 
-- [ ] Founder can rate AI output by stage
-- [ ] Ratings are saved
-- [ ] Weekly summary shows AI quality signals
-- [ ] Dataset v1 exists
-- [ ] Synthetic cases are explicitly labeled
-- [ ] Evaluation can be repeated
-- [ ] Results can be compared across prompt/model versions
-- [ ] Tests are green
-- [ ] Roadmap updated only after validation
+- [x] Founder can rate AI output by stage
+- [x] Ratings are saved
+- [x] Weekly summary shows AI quality signals
+- [x] Dataset v1 exists
+- [x] Synthetic cases are explicitly labeled
+- [x] Evaluation can be repeated
+- [x] Results can be compared across prompt/model versions
+- [x] Tests are green
+- [x] Roadmap updated only after validation
 
 ---
 
@@ -1279,7 +1279,7 @@ Both artifacts must exist for this mini-epic to be complete.
 - [x] **9.4** Milestone D: AI opportunity framing operational after **4.2**
 - [x] **9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**
 - [x] **9.6** Milestone F: Anti-pattern and AI council critique operational after **6.2**
-- [ ] **9.7** Milestone G: Founder review and AI quality feedback operational after **7.2**
+- [x] **9.7** Milestone G: Founder review and AI quality feedback operational after **7.2**
 - [ ] **9.8** Milestone H: Roadmap v2.2 complete after **8.2**
 
 ---
@@ -1357,3 +1357,8 @@ These items are real but not part of the AI Meaning Layer roadmap.
 - Near-duplicate detection threshold must be fixed before implementation
 - Council critique should be expensive, isolated, and limited to selected top ideas
 - Final checkpoint must include both founder-written and system-generated artifacts
+
+
+
+
+
