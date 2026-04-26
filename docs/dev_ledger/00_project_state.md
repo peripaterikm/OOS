@@ -9,16 +9,16 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `2.1` - RawEvidence model and artifact store
-- Completed: `2 / 16`
-- Remaining: `14 / 16`
-- Latest completed roadmap item: Roadmap v2.3 `1.2` - Run-report and validation-log standardization
-- Next planned roadmap item: Roadmap v2.3 `2.1` - RawEvidence model and artifact store
+- Current item: `2.2` - Source Registry and Query Planner
+- Completed: `3 / 16`
+- Remaining: `13 / 16`
+- Latest completed roadmap item: Roadmap v2.3 `2.1` - RawEvidence model and artifact store
+- Next planned roadmap item: Roadmap v2.3 `2.2` - Source Registry and Query Planner
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/1-2-run-report-validation-standardization`
+- Current branch: `feat/2-1-raw-evidence-model-artifact-store`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR can be batched at a phase boundary when the local history is coherent.
 - Do not push partial or unvalidated roadmap work.
@@ -37,3 +37,4 @@
 - Roadmap v2.3 planning created the Source Intelligence Layer checklist and v0.3 source access policy. Implementation starts at item 1.1; no source intelligence product features are implemented by this planning checkpoint.
 - Roadmap v2.3 item 1.1 finalized the Source Intelligence Layer v0.3 access, privacy, topic, feedback, evidence classification, cleaner, scoring, and traceability policies without implementing product features.
 - Roadmap v2.3 item 1.2 standardized validation run reports, required file-based evidence, and added a Windows-native validation report helper without changing product behavior.
+- Roadmap v2.3 item 2.1 added the canonical RawEvidence model, deterministic normalized content hashing, role/context-only author validation, and artifact-store roundtrip support under `artifacts/raw_evidence/` without collectors, network calls, or live LLM/API calls.
