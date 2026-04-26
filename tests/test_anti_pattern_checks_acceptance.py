@@ -28,9 +28,9 @@ class TestAntiPatternChecksAcceptance(unittest.TestCase):
     def test_active_roadmap_has_completed_6_1_and_not_regressed(self) -> None:
         roadmap = (ROOT / "docs/roadmaps/OOS_roadmap_v2_2_8_weeks_checklist.md").read_text(encoding="utf-8")
 
-        self.assertRegex(roadmap, r"\*\*0\.2\.2\*\* Current item: \*\*(6\.2|7\.1|7\.2|8\.1)\*\*")
-        self.assertRegex(roadmap, r"\*\*0\.2\.4\*\* Completed from this roadmap: \*\*(11|12|13|14) / 16\*\*")
-        self.assertRegex(roadmap, r"\*\*0\.2\.5\*\* Remaining: \*\*(5|4|3|2) / 16\*\*")
+        self.assertRegex(roadmap, r"\*\*0\.2\.2\*\* Current item: \*\*(6\.2|7\.1|7\.2|8\.1|8\.2|Completed / final milestone state)\*\*")
+        self.assertRegex(roadmap, r"\*\*0\.2\.4\*\* Completed from this roadmap: \*\*(11|12|13|14|15|16) / 16\*\*")
+        self.assertRegex(roadmap, r"\*\*0\.2\.5\*\* Remaining: \*\*(5|4|3|2|1|0) / 16\*\*")
         self.assertIn("## 6.1. Deterministic anti-pattern checks\n**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done", roadmap)
 
 

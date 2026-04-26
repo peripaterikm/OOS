@@ -21,9 +21,9 @@ class TestIdeationModeComparisonAcceptance(unittest.TestCase):
     def test_active_roadmap_has_completed_5_2_and_not_regressed(self) -> None:
         roadmap = (ROOT / "docs/roadmaps/OOS_roadmap_v2_2_8_weeks_checklist.md").read_text(encoding="utf-8")
 
-        self.assertRegex(roadmap, r"\*\*0\.2\.2\*\* Current item: \*\*(6\.1|6\.2|7\.1|7\.2|8\.1)\*\*")
-        self.assertRegex(roadmap, r"\*\*0\.2\.4\*\* Completed from this roadmap: \*\*(10|11|12|13|14) / 16\*\*")
-        self.assertRegex(roadmap, r"\*\*0\.2\.5\*\* Remaining: \*\*(6|5|4|3|2) / 16\*\*")
+        self.assertRegex(roadmap, r"\*\*0\.2\.2\*\* Current item: \*\*(6\.1|6\.2|7\.1|7\.2|8\.1|8\.2|Completed / final milestone state)\*\*")
+        self.assertRegex(roadmap, r"\*\*0\.2\.4\*\* Completed from this roadmap: \*\*(10|11|12|13|14|15|16) / 16\*\*")
+        self.assertRegex(roadmap, r"\*\*0\.2\.5\*\* Remaining: \*\*(6|5|4|3|2|1|0) / 16\*\*")
         self.assertIn("## 5.2. Ideation mode comparison with weighted metrics\n**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done", roadmap)
         self.assertIn("**9.5** Milestone E: LLM primary ideation and comparison operational after **5.2**", roadmap)
 
