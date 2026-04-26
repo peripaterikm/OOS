@@ -6,11 +6,23 @@ The Source Intelligence Layer is the upstream discovery layer for OOS. Its job i
 
 The founder should define topics, approve sources, review discovery packages, approve or reject suggested priority changes, and make final decisions. The founder should not normally copy posts, browse sources manually, or format JSONL files.
 
+The expected artifact path is:
+
+```text
+RawEvidence
+-> CandidateSignal
+-> existing OOS meaning loop
+-> founder review
+-> founder decision
+```
+
 ## Scope For Roadmap v2.3
 
 Roadmap v2.3 is a fixture-first and offline-test-first implementation of autonomous source discovery. It may add real public collectors only in the specific collector items, and those collectors must be disabled/offline by default in tests.
 
 Roadmap v2.3 does not add live LLM calls, secrets, paid API dependencies, automatic priority changes, or automatic founder decisions.
+
+Item 1.1 is documentation and policy closure only. It does not implement collectors, internet calls, APIs, secrets, live LLM calls, dependencies, or product feature code.
 
 ## Pipeline
 
@@ -43,6 +55,52 @@ Every source must have explicit access and compliance metadata before implementa
 | G2 | Later / access review | no | `access_realistic_for_solo_founder: false`; `enabled: false`; `commercial_review_required: true`. Do not implement a G2 collector in v2.3. |
 | Capterra / Trustpilot | Later / access review | no | Later alternatives requiring access and terms review; not guaranteed free sources. |
 | Reddit | Phase D / later | no | `requires_commercial_review: true`; do not build a Reddit collector in v2.3. |
+| LinkedIn | Out of scope for v2.3 | no | Do not automate without explicit official API and legal approval. |
+| GDELT | Phase D / experimental | no | High noise risk; not a Phase B core source. |
+
+### Phase B source policies
+
+HN Algolia:
+
+- low-friction Phase B source;
+- public search adapter;
+- fixture/offline-first tests;
+- live network disabled by default unless an explicit flag/config allows it.
+
+GitHub Issues:
+
+- low-friction Phase B source;
+- public issues/search adapter;
+- fixture/offline-first tests;
+- no tokens or secrets committed;
+- live network disabled by default unless an explicit flag/config allows it.
+
+Stack Exchange:
+
+- Phase B source;
+- `requires_registered_app_key: true` for production/high-volume use;
+- no API key committed;
+- tests must not require a key;
+- offline fixture mode required.
+
+RSS / regulator / changelog feeds:
+
+- Phase B source;
+- public feed content only;
+- no scraping outside feed content;
+- suitable for regulatory, why-now, competitor changelog, and market-change signals.
+
+### Deferred and disabled sources
+
+Trustpilot and Capterra are later access-review candidates. They are not guaranteed free Phase B sources and require terms/access review before implementation.
+
+G2 is disabled by default. It requires commercial review, is not realistic for a solo founder without explicit access/cost approval, and must not receive a v2.3 collector unless re-approved later.
+
+Reddit is Phase D/later only, requires commercial review, is not part of v2.3 implementation, and must not receive a Reddit collector in v2.3.
+
+LinkedIn automation is out of scope for v2.3 unless explicit official API and legal approval exists.
+
+GDELT is experimental / Phase D because of high noise risk. It is not a Phase B core source.
 
 ## Privacy Policy
 
@@ -212,6 +270,8 @@ Metrics:
 
 Roadmap v2.3 may produce `suggested_priority_updates` only. It must not automatically apply priority changes. Founder approve/reject is required before changes are applied. Automatic feedback application is v2.4+.
 
+Feedback and yield must be tracked at `source_id x topic_id x query_kind`, not only at `source_id`, so weak query kinds do not unfairly demote an entire source.
+
 ## Traceability Requirement
 
 Acceptance tests must prove this chain is preserved:
@@ -224,7 +284,21 @@ weekly_discovery_package
 -> source_url
 ```
 
-Breaking this chain must fail tests.
+Breaking this chain must fail tests and must not be allowed to fail silently.
+
+## Non-Goals For Item 1.1
+
+Item 1.1 does not implement:
+
+- collectors;
+- internet calls;
+- APIs;
+- secrets;
+- live LLM calls;
+- dependencies;
+- product feature code.
+
+Those belong to later Roadmap v2.3 implementation items after the spec and access policy are closed.
 
 ## Run Reports
 
