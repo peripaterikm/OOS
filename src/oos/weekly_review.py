@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from .artifact_store import ArtifactStore
+from .founder_ai_stage_rating import FounderAIStageRating, load_ai_stage_ratings
 from .portfolio_layer import PortfolioManager
 from .models import FounderReviewDecision, PortfolioState, PortfolioStateEnum
 
@@ -51,6 +52,7 @@ class WeeklyReviewPackage:
     may_be_graduated: List[str]
     killed_with_kill_links: Dict[str, str]
     recent_founder_reviews: List[Dict[str, Any]]
+    recent_ai_stage_ratings: List[Dict[str, Any]]
     notes: str = ""
 
 
@@ -93,9 +95,10 @@ class WeeklyReviewGenerator:
             may_be_graduated=sorted(set(may_graduate)),
             killed_with_kill_links=killed_links,
             recent_founder_reviews=self._load_recent_founder_reviews(),
+            recent_ai_stage_ratings=self._load_recent_ai_stage_ratings(),
             notes=(
                 "Deterministic weekly summary. Add explicit tags in PortfolioState.reason to surface decisions. "
-                "Founder review decisions are surfaced from founder_reviews artifacts when present."
+                "Founder review decisions and advisory AI-stage quality ratings are surfaced from artifacts when present."
             ),
         )
 
@@ -150,5 +153,23 @@ class WeeklyReviewGenerator:
             "timestamp": review.timestamp,
             "linked_signal_ids": review.linked_signal_ids,
             "linked_evidence_ids": linked_evidence_ids,
+        }
+
+    def _load_recent_ai_stage_ratings(self) -> List[Dict[str, Any]]:
+        ratings = load_ai_stage_ratings(self.artifacts_root)
+        ratings.sort(key=lambda rating: (rating.created_at, rating.rating_id), reverse=True)
+        return [self._format_ai_stage_rating(rating) for rating in ratings[:10]]
+
+    def _format_ai_stage_rating(self, rating: FounderAIStageRating) -> Dict[str, Any]:
+        return {
+            "rating_id": rating.rating_id,
+            "stage": rating.stage,
+            "rating": rating.rating,
+            "explanation": rating.explanation,
+            "linked_artifact_ids": rating.linked_artifact_ids,
+            "linked_signal_ids": rating.linked_signal_ids,
+            "created_at": rating.created_at,
+            "founder": rating.founder,
+            "advisory_only": rating.advisory_only,
         }
 

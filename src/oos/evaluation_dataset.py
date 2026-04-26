@@ -7,11 +7,21 @@ from typing import Any, Dict, List
 
 EVALUATION_DATASET_V0_DIR = Path(__file__).resolve().parents[2] / "examples" / "evaluation_dataset_v0"
 EVALUATION_DATASET_V0_SIGNALS = EVALUATION_DATASET_V0_DIR / "signals.json"
+EVALUATION_DATASET_V1_DIR = Path(__file__).resolve().parents[2] / "examples" / "evaluation_dataset_v1"
+EVALUATION_DATASET_V1_SIGNALS = EVALUATION_DATASET_V1_DIR / "signals.json"
 
 
 def load_evaluation_dataset_v0(dataset_dir: Path = EVALUATION_DATASET_V0_DIR) -> List[Dict[str, Any]]:
     signals_path = dataset_dir / "signals.json"
-    data = json.loads(signals_path.read_text(encoding="utf-8"))
+    data = json.loads(signals_path.read_text(encoding="utf-8-sig"))
     if not isinstance(data, list):
         raise ValueError("evaluation dataset v0 signals.json must contain a JSON list")
+    return data
+
+
+def load_evaluation_dataset_v1(dataset_dir: Path = EVALUATION_DATASET_V1_DIR) -> List[Dict[str, Any]]:
+    signals_path = dataset_dir / "signals.json"
+    data = json.loads(signals_path.read_text(encoding="utf-8-sig"))
+    if not isinstance(data, list):
+        raise ValueError("evaluation dataset v1 signals.json must contain a JSON list")
     return data
