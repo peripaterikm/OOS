@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **4.1**
+- [ ] **0.2.2** Current item: **4.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **5 / 16**
-- [ ] **0.2.5** Remaining: **11 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **6 / 16**
+- [ ] **0.2.5** Remaining: **10 / 16**
 
 ---
 
@@ -236,7 +236,7 @@ Define scheduling and collector contracts before real collectors.
 ---
 
 ## 4.1. Hacker News Algolia collector
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 4
 
 ### Goal
@@ -254,10 +254,10 @@ Implement the first low-friction public collector.
 
 ### Acceptance
 
-- [ ] Offline fixture test passes.
-- [ ] Raw evidence includes `source_url`.
-- [ ] `query_kind` and `topic_id` preserved.
-- [ ] Ambiguous HN evidence is not classified as noise by default later.
+- [x] Offline fixture test passes.
+- [x] Raw evidence includes `source_url`.
+- [x] `query_kind` and `topic_id` preserved.
+- [x] Ambiguous HN evidence is not classified as noise by default later.
 
 ---
 
