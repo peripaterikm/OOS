@@ -31,8 +31,6 @@ class CollectionResult:
                 raise ValueError("CollectionResult evidence topic_id must match scheduled item")
             if item.query_kind != self.scheduled_item.query_kind:
                 raise ValueError("CollectionResult evidence query_kind must match scheduled item")
-        if self.live_network_used:
-            raise ValueError("CollectionResult.live_network_used must remain false for fixture collectors")
 
 
 class BaseCollector(ABC):
