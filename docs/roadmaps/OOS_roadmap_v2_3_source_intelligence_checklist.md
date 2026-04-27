@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **4.2**
+- [ ] **0.2.2** Current item: **4.3**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **6 / 16**
-- [ ] **0.2.5** Remaining: **10 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **7 / 16**
+- [ ] **0.2.5** Remaining: **9 / 16**
 
 ---
 
@@ -276,7 +276,7 @@ Implement the first low-friction public collector.
 ---
 
 ## 4.2. GitHub Issues collector
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 4
 
 ### Goal
@@ -292,10 +292,10 @@ Collect pain/workaround/feature request evidence from GitHub Issues.
 
 ### Acceptance
 
-- [ ] Issue title/body/comments supported by fixture where useful.
-- [ ] `source_url` preserved.
-- [ ] Issue metadata stored in `raw_metadata`.
-- [ ] Ambiguous GitHub evidence is not classified as noise by default later.
+- [x] Issue title/body/comments supported by fixture where useful.
+- [x] `source_url` preserved.
+- [x] Issue metadata stored in `raw_metadata`.
+- [x] Ambiguous GitHub evidence is not classified as noise by default later.
 
 ---
 
