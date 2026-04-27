@@ -54,7 +54,7 @@ Every source must have explicit access and compliance metadata before implementa
 | RSS / regulator feeds | Phase B | yes, fixture/offline first | Feed-only collection; no scraping beyond feed content. |
 | G2 | Later / access review | no | `access_realistic_for_solo_founder: false`; `enabled: false`; `commercial_review_required: true`. Do not implement a G2 collector in v2.3. |
 | Capterra / Trustpilot | Later / access review | no | Later alternatives requiring access and terms review; not guaranteed free sources. |
-| Reddit | Phase D / later | no | `requires_commercial_review: true`; do not build a Reddit collector in v2.3. |
+| Reddit | Phase C - controlled internal research source | yes after collector implementation | High-value default internal research source; `collector_available: false` until implemented; included in standard discovery runs automatically once collector exists; external productization requires review. |
 | LinkedIn | Out of scope for v2.3 | no | Do not automate without explicit official API and legal approval. |
 | GDELT | Phase D / experimental | no | High noise risk; not a Phase B core source. |
 
@@ -90,13 +90,53 @@ RSS / regulator / changelog feeds:
 - no scraping outside feed content;
 - suitable for regulatory, why-now, competitor changelog, and market-change signals.
 
+### Reddit internal research policy
+
+Reddit is a high-value default internal research source for OOS, not an excluded source. It is a Phase C controlled internal research source with these policy fields:
+
+```yaml
+reddit:
+  phase: "C - controlled internal research source"
+  status: "high-value default source"
+  enabled_by_default: true
+  included_in_standard_discovery_runs: true
+  collector_available: false
+  active_after_collector_implementation: true
+  usage_mode: "internal_research"
+```
+
+Important interpretation:
+
+- `enabled_by_default: true` means Reddit participates in standard discovery runs automatically after a Reddit collector is implemented.
+- `collector_available: false` means the Query Planner must not generate executable Reddit `QueryPlan` records yet.
+- No manual per-run enabling should be required after the Reddit collector exists.
+- External or commercial productization requires a separate review checkpoint.
+
+Hard constraints:
+
+- do not store usernames by default;
+- do not store bulk thread dumps by default;
+- do not redistribute Reddit-derived data to third parties;
+- do not train models on Reddit content;
+- review before external productization.
+
+Storage strategy:
+
+- `source_url` is required;
+- relevant excerpt or summary is required;
+- selected context is allowed;
+- full thread archive is not the default.
+
+Scaling strategy:
+
+- scale by measured source yield;
+- do not reduce signal quality for abstract caution alone.
+
 ### Deferred and disabled sources
 
 Trustpilot and Capterra are later access-review candidates. They are not guaranteed free Phase B sources and require terms/access review before implementation.
 
 G2 is disabled by default. It requires commercial review, is not realistic for a solo founder without explicit access/cost approval, and must not receive a v2.3 collector unless re-approved later.
-
-Reddit is Phase D/later only, requires commercial review, is not part of v2.3 implementation, and must not receive a Reddit collector in v2.3.
 
 LinkedIn automation is out of scope for v2.3 unless explicit official API and legal approval exists.
 
@@ -176,6 +216,11 @@ The Source Registry must track:
 - `access_realistic_for_solo_founder`
 - `offline_fixture_required`
 - `live_collection_allowed_by_default`
+- `enabled_by_default`
+- `included_in_standard_discovery_runs`
+- `collector_available`
+- `active_after_collector_implementation`
+- `usage_mode`
 - rate and collection limits
 
 Topic profiles must track:

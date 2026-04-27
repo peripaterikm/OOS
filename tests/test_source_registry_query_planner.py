@@ -71,8 +71,63 @@ class TestSourceRegistryQueryPlanner(unittest.TestCase):
     def test_disabled_and_deferred_sources_do_not_generate_active_query_plans(self) -> None:
         plan_source_ids = active_plan_source_ids()
 
-        for disabled_source_id in ("g2", "reddit", "linkedin", "gdelt", "trustpilot", "capterra"):
+        for disabled_source_id in ("g2", "linkedin", "gdelt", "trustpilot", "capterra"):
             self.assertNotIn(disabled_source_id, plan_source_ids)
+
+    def test_reddit_policy_is_default_internal_research_source_but_collector_unavailable(self) -> None:
+        reddit = registry_by_id()["reddit"]
+
+        self.assertEqual(reddit.phase, "Phase C - controlled internal research source")
+        self.assertTrue(reddit.enabled)
+        self.assertTrue(reddit.enabled_by_default)
+        self.assertTrue(reddit.included_in_standard_discovery_runs)
+        self.assertFalse(reddit.collector_available)
+        self.assertTrue(reddit.active_after_collector_implementation)
+        self.assertEqual(reddit.usage_mode, "internal_research")
+        self.assertFalse(reddit.commercial_review_required)
+        self.assertIn("ai_cfo_smb", reddit.topic_ids)
+
+    def test_reddit_hard_constraints_are_represented(self) -> None:
+        constraints = registry_by_id()["reddit"].raw_metadata["hard_constraints"]
+        storage = registry_by_id()["reddit"].raw_metadata["storage_strategy"]
+        scaling = registry_by_id()["reddit"].raw_metadata["scaling_strategy"]
+
+        self.assertFalse(constraints["store_usernames_by_default"])
+        self.assertFalse(constraints["store_bulk_thread_dumps"])
+        self.assertFalse(constraints["third_party_distribution"])
+        self.assertFalse(constraints["model_training_on_reddit_content"])
+        self.assertTrue(constraints["external_productization_requires_review"])
+        self.assertTrue(storage["source_url_required"])
+        self.assertTrue(storage["relevant_excerpt_or_summary_required"])
+        self.assertTrue(storage["selected_context_allowed"])
+        self.assertFalse(storage["full_thread_archive_default"])
+        self.assertTrue(scaling["scale_by_measured_yield"])
+        self.assertTrue(scaling["do_not_reduce_signal_quality_for_abstract_caution"])
+
+    def test_reddit_generates_no_query_plans_while_collector_unavailable(self) -> None:
+        plans = QueryPlanner().build_plans(
+            registry=default_source_registry(),
+            topic_profiles=default_topic_profiles(),
+        )
+
+        self.assertNotIn("reddit", {plan.source_id for plan in plans})
+
+    def test_reddit_can_generate_plans_after_collector_available_without_per_run_special_casing(self) -> None:
+        registry = default_source_registry()
+        sources = [
+            replace(source, collector_available=True) if source.source_id == "reddit" else source
+            for source in registry.sources
+        ]
+
+        plans = QueryPlanner(limits=PlanningLimits(max_query_plans_per_source_topic=1)).build_plans(
+            registry=SourceRegistry(sources=sources),
+            topic_profiles=default_topic_profiles(),
+        )
+
+        reddit_plans = [plan for plan in plans if plan.source_id == "reddit"]
+        self.assertEqual(len(reddit_plans), 1)
+        self.assertEqual(reddit_plans[0].source_type, "reddit")
+        self.assertEqual(reddit_plans[0].topic_id, "ai_cfo_smb")
 
     def test_ai_cfo_smb_is_only_first_active_topic(self) -> None:
         profiles = default_topic_profiles()
@@ -149,6 +204,19 @@ class TestSourceRegistryQueryPlanner(unittest.TestCase):
         registry = default_source_registry()
         sources = [
             replace(source, enabled=False) if source.source_id == "hacker_news_algolia" else source
+            for source in registry.sources
+        ]
+        plans = QueryPlanner().build_plans(
+            registry=SourceRegistry(sources=sources),
+            topic_profiles=default_topic_profiles(),
+        )
+
+        self.assertNotIn("hacker_news_algolia", {plan.source_id for plan in plans})
+
+    def test_collector_unavailable_sources_are_skipped(self) -> None:
+        registry = default_source_registry()
+        sources = [
+            replace(source, collector_available=False) if source.source_id == "hacker_news_algolia" else source
             for source in registry.sources
         ]
         plans = QueryPlanner().build_plans(

@@ -196,6 +196,8 @@ class QueryPlanner:
     def _source_can_plan_for_topic(self, *, source: SourceConfig, topic: TopicProfile) -> bool:
         if not source.enabled:
             return False
+        if not source.collector_available:
+            return False
         if source.commercial_review_required:
             return False
         if not source.access_realistic_for_solo_founder:
