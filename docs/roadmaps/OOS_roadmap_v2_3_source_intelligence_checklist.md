@@ -71,7 +71,7 @@ Stop and ask before continuing if:
 
 ## 3. Source And Compliance Rules
 
-- [ ] **3.1** Reddit is Phase D / later only; `requires_commercial_review: true`; no Reddit collector in v2.3.
+- [ ] **3.1** Reddit is Phase C controlled internal research; default standard-discovery source after collector implementation; no executable Reddit `QueryPlan` while `collector_available: false`.
 - [ ] **3.2** G2 is disabled; `access_realistic_for_solo_founder: false`; `commercial_review_required: true`; no G2 collector in v2.3.
 - [ ] **3.3** Capterra and Trustpilot are later access-review candidates, not guaranteed free sources.
 - [ ] **3.4** Stack Exchange is Phase B; `requires_registered_app_key: true` for production/high-volume use; no secrets committed; tests are fixtures/mocks.
@@ -83,6 +83,20 @@ Stop and ask before continuing if:
 - [ ] **3.10** Evidence cleaner v2.3 performs no boilerplate removal.
 - [ ] **3.11** Every scoring dimension defines `measurement_method`: `rule_based`, `llm_stub`, or `founder_manual`.
 - [ ] **3.12** Acceptance tests must prove `weekly_discovery_package -> idea/opportunity -> extracted signal -> raw evidence -> source_url`.
+
+### Reddit controlled internal research policy
+
+- [ ] Reddit is a high-value default internal research source once `collector_available: true`.
+- [ ] Until a Reddit collector exists, Query Planner must not generate executable Reddit `QueryPlan` records.
+- [ ] Standard discovery should include Reddit automatically after collector implementation; no manual per-run enabling should be required.
+- [ ] Reddit-derived data must not store usernames by default.
+- [ ] Reddit-derived data must not store bulk thread dumps by default.
+- [ ] Reddit-derived data must not be distributed to third parties.
+- [ ] Reddit-derived data must not be used for model training.
+- [ ] External/commercial productization of Reddit-derived data requires a separate review checkpoint.
+- [ ] Reddit storage requires `source_url` plus relevant excerpt or summary; selected context is allowed, full thread archive is not the default.
+- [ ] Reddit scaling should follow measured yield, and signal quality should not be reduced for abstract caution alone.
+- [ ] Reddit collector implementation is a candidate after evidence extraction/scoring item **5.2**, unless the owner explicitly reprioritizes.
 
 ---
 
@@ -100,7 +114,7 @@ Create and record the final v0.3 implementation spec for the Source Intelligence
 
 - [x] **1.1.1** Create `docs/architecture/source_intelligence_layer_v0_3.md`.
 - [x] **1.1.2** Encode G2 disabled with `access_realistic_for_solo_founder: false`.
-- [x] **1.1.3** Encode Reddit Phase D / `requires_commercial_review`.
+- [x] **1.1.3** Encode Reddit as Phase C controlled internal research with `collector_available: false` until implemented.
 - [x] **1.1.4** Encode Stack Exchange registered app key policy.
 - [x] **1.1.5** Mark Trustpilot/Capterra as later access-review candidates.
 - [x] **1.1.6** Encode privacy rule for `author_or_context`.
