@@ -30,6 +30,11 @@ class SourceConfig:
     live_network_disabled_by_default: bool
     notes: str = ""
     raw_metadata: Dict[str, Any] = field(default_factory=dict)
+    enabled_by_default: bool = False
+    included_in_standard_discovery_runs: bool = False
+    collector_available: bool = True
+    active_after_collector_implementation: bool = False
+    usage_mode: str = "source_collection"
 
     def validate(self) -> None:
         for field_name in ("source_id", "source_type", "display_name", "phase", "access_policy"):
@@ -47,9 +52,15 @@ class SourceConfig:
             "commercial_review_required",
             "access_realistic_for_solo_founder",
             "live_network_disabled_by_default",
+            "enabled_by_default",
+            "included_in_standard_discovery_runs",
+            "collector_available",
+            "active_after_collector_implementation",
         ):
             if not isinstance(getattr(self, field_name), bool):
                 raise ValueError(f"SourceConfig.{field_name} must be a bool")
+        if not isinstance(self.usage_mode, str) or not self.usage_mode.strip():
+            raise ValueError("SourceConfig.usage_mode must be a non-empty string")
         if not isinstance(self.raw_metadata, dict):
             raise ValueError("SourceConfig.raw_metadata must be a dict")
 
@@ -129,6 +140,10 @@ def default_source_registry() -> SourceRegistry:
                 commercial_review_required=False,
                 access_realistic_for_solo_founder=True,
                 live_network_disabled_by_default=True,
+                enabled_by_default=True,
+                included_in_standard_discovery_runs=True,
+                collector_available=True,
+                active_after_collector_implementation=True,
                 notes="Public search adapter; live network remains disabled unless explicitly enabled later.",
             ),
             SourceConfig(
@@ -145,6 +160,10 @@ def default_source_registry() -> SourceRegistry:
                 commercial_review_required=False,
                 access_realistic_for_solo_founder=True,
                 live_network_disabled_by_default=True,
+                enabled_by_default=True,
+                included_in_standard_discovery_runs=True,
+                collector_available=True,
+                active_after_collector_implementation=True,
                 notes="Public issue search only; tests require no tokens or secrets.",
             ),
             SourceConfig(
@@ -161,6 +180,10 @@ def default_source_registry() -> SourceRegistry:
                 commercial_review_required=False,
                 access_realistic_for_solo_founder=True,
                 live_network_disabled_by_default=True,
+                enabled_by_default=True,
+                included_in_standard_discovery_runs=True,
+                collector_available=True,
+                active_after_collector_implementation=True,
                 notes="Production/high-volume use requires a registered app key; tests do not require a key.",
             ),
             SourceConfig(
@@ -177,6 +200,10 @@ def default_source_registry() -> SourceRegistry:
                 commercial_review_required=False,
                 access_realistic_for_solo_founder=True,
                 live_network_disabled_by_default=True,
+                enabled_by_default=True,
+                included_in_standard_discovery_runs=True,
+                collector_available=True,
+                active_after_collector_implementation=True,
                 notes="Feed content only; no scraping outside feed content.",
             ),
             SourceConfig(
@@ -193,23 +220,55 @@ def default_source_registry() -> SourceRegistry:
                 commercial_review_required=True,
                 access_realistic_for_solo_founder=False,
                 live_network_disabled_by_default=True,
+                enabled_by_default=False,
+                included_in_standard_discovery_runs=False,
+                collector_available=False,
+                active_after_collector_implementation=False,
                 notes="Disabled for v2.3; no G2 collector.",
             ),
             SourceConfig(
                 source_id="reddit",
                 source_type="reddit",
                 display_name="Reddit",
-                phase="Phase D / later",
-                enabled=False,
-                topic_ids=[],
-                supported_query_kinds=[],
-                access_policy="disabled_requires_commercial_review",
+                phase="Phase C - controlled internal research source",
+                enabled=True,
+                topic_ids=["ai_cfo_smb"],
+                supported_query_kinds=list(QUERY_KIND_PRIORITY),
+                access_policy="internal_research_source_productization_review_required",
                 auth_required=True,
                 requires_registered_app_key=False,
-                commercial_review_required=True,
-                access_realistic_for_solo_founder=False,
+                commercial_review_required=False,
+                access_realistic_for_solo_founder=True,
                 live_network_disabled_by_default=True,
-                notes="Disabled for v2.3 and requires commercial review.",
+                enabled_by_default=True,
+                included_in_standard_discovery_runs=True,
+                collector_available=False,
+                active_after_collector_implementation=True,
+                usage_mode="internal_research",
+                notes=(
+                    "High-value default internal research source once collector_available=true; "
+                    "external productization requires review."
+                ),
+                raw_metadata={
+                    "status": "high-value default source",
+                    "hard_constraints": {
+                        "store_usernames_by_default": False,
+                        "store_bulk_thread_dumps": False,
+                        "third_party_distribution": False,
+                        "model_training_on_reddit_content": False,
+                        "external_productization_requires_review": True,
+                    },
+                    "storage_strategy": {
+                        "source_url_required": True,
+                        "relevant_excerpt_or_summary_required": True,
+                        "selected_context_allowed": True,
+                        "full_thread_archive_default": False,
+                    },
+                    "scaling_strategy": {
+                        "scale_by_measured_yield": True,
+                        "do_not_reduce_signal_quality_for_abstract_caution": True,
+                    },
+                },
             ),
             SourceConfig(
                 source_id="linkedin",
@@ -225,6 +284,10 @@ def default_source_registry() -> SourceRegistry:
                 commercial_review_required=True,
                 access_realistic_for_solo_founder=False,
                 live_network_disabled_by_default=True,
+                enabled_by_default=False,
+                included_in_standard_discovery_runs=False,
+                collector_available=False,
+                active_after_collector_implementation=False,
                 notes="Automation out of scope without official API and legal approval.",
             ),
             SourceConfig(
@@ -241,6 +304,10 @@ def default_source_registry() -> SourceRegistry:
                 commercial_review_required=False,
                 access_realistic_for_solo_founder=True,
                 live_network_disabled_by_default=True,
+                enabled_by_default=False,
+                included_in_standard_discovery_runs=False,
+                collector_available=False,
+                active_after_collector_implementation=False,
                 notes="High noise risk; disabled by default and not a Phase B core source.",
             ),
             SourceConfig(
@@ -257,6 +324,10 @@ def default_source_registry() -> SourceRegistry:
                 commercial_review_required=True,
                 access_realistic_for_solo_founder=False,
                 live_network_disabled_by_default=True,
+                enabled_by_default=False,
+                included_in_standard_discovery_runs=False,
+                collector_available=False,
+                active_after_collector_implementation=False,
                 notes="Later access-review candidate; not guaranteed free Phase B source.",
             ),
             SourceConfig(
@@ -273,6 +344,10 @@ def default_source_registry() -> SourceRegistry:
                 commercial_review_required=True,
                 access_realistic_for_solo_founder=False,
                 live_network_disabled_by_default=True,
+                enabled_by_default=False,
+                included_in_standard_discovery_runs=False,
+                collector_available=False,
+                active_after_collector_implementation=False,
                 notes="Later access-review candidate; not guaranteed free Phase B source.",
             ),
         ]
@@ -294,7 +369,7 @@ def default_topic_profiles() -> List[TopicProfile]:
                 "financial operations",
                 "bookkeeping automation",
             ],
-            allowed_source_ids=["hacker_news_algolia", "github_issues", "stack_exchange", "rss_feeds"],
+            allowed_source_ids=["hacker_news_algolia", "github_issues", "reddit", "stack_exchange", "rss_feeds"],
             query_kinds=list(QUERY_KIND_PRIORITY),
             query_templates={
                 "pain_query": [
