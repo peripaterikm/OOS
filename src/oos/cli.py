@@ -9,6 +9,7 @@ from pathlib import Path
 from .ai_ideation_evaluation import evaluate_ai_ideation
 from .artifact_store import ArtifactStore
 from .config import OOSConfig
+from .discovery_weekly import run_discovery_weekly
 from .founder_ai_stage_rating import ALLOWED_AI_RATING_STAGES, ALLOWED_AI_STAGE_RATINGS, record_ai_stage_rating
 from .founder_review_package import FounderReviewIndex
 from .models import FounderReviewDecision, FounderReviewDecisionEnum, PortfolioStateEnum
@@ -385,6 +386,38 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Path to a canonical JSONL signal batch file.",
     )
 
+    discovery_parser = subparsers.add_parser(
+        "run-discovery-weekly",
+        help="Run the offline Source Intelligence MVP weekly discovery loop.",
+    )
+    discovery_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    discovery_parser.add_argument(
+        "--topic",
+        required=True,
+        help="Active topic id to run, e.g. ai_cfo_smb.",
+    )
+    discovery_parser.add_argument(
+        "--run-id",
+        default=None,
+        help="Optional deterministic discovery run id.",
+    )
+    discovery_parser.add_argument(
+        "--input-raw-evidence",
+        type=Path,
+        default=None,
+        help="Optional local RawEvidence JSON file. Defaults to the MVP example fixture.",
+    )
+    discovery_parser.add_argument(
+        "--include-meaning-loop-dry-run",
+        action="store_true",
+        help="Also write adapter-only Source Intelligence -> meaning-loop dry-run artifacts.",
+    )
+
     status_parser = subparsers.add_parser(
         "weekly-cycle-status",
         help="Print operator status for the latest real weekly cycle.",
@@ -551,6 +584,26 @@ def main(argv: list[str] | None = None) -> int:
         print("OOS weekly cycle completed.")
         for k, p in paths.items():
             print(f"{k}: {p}")
+        return 0
+
+    if args.command == "run-discovery-weekly":
+        try:
+            result = run_discovery_weekly(
+                project_root=args.project_root,
+                topic_id=args.topic,
+                run_id=args.run_id,
+                input_raw_evidence=args.input_raw_evidence,
+                include_meaning_loop_dry_run=args.include_meaning_loop_dry_run,
+            )
+        except ValueError as exc:
+            print(str(exc))
+            return 2
+
+        print("OOS Source Intelligence weekly discovery completed.")
+        print(f"run_id: {result.run_id}")
+        print(f"run_dir: {result.run_dir}")
+        for name, path in result.artifact_paths.items():
+            print(f"{name}: {path}")
         return 0
 
     if args.command == "weekly-cycle-status":

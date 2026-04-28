@@ -9,18 +9,19 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `5.1` - Evidence cleaner and classifier
-- Completed: `8 / 16`
-- Remaining: `8 / 16`
-- Latest completed roadmap item: Roadmap v2.3 `4.3` - Stack Exchange and RSS/regulatory collectors
-- Next planned roadmap item: Roadmap v2.3 `5.1` - Evidence cleaner and classifier
+- Current item: `MVP slice complete / next deferred item 6.1`
+- Completed: `13 / 16`
+- Remaining: `3 / 16`
+- Latest completed roadmap item: Roadmap v2.3 `8.1-lite` - Meaning-loop dry run
+- Next planned roadmap item: Roadmap v2.3 `6.1` - full Source Yield Analytics, unless the owner requests the MVP GitHub checkpoint first
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/4-3-stackexchange-rss-collectors`
+- Current branch: `feat/source-intelligence-mvp-discovery-loop`
+- MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
-- GitHub push / PR can be batched at a phase boundary when the local history is coherent.
+- GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
 - Do not push partial or unvalidated roadmap work.
 
 ## Workflow Notes
@@ -44,3 +45,11 @@
 - Reddit source policy amendment reclassified Reddit as a Phase C controlled internal research source that is enabled by default after collector implementation, while Query Planner still skips Reddit until `collector_available=true`; roadmap item, completed, and remaining counters were not advanced by this policy-only amendment.
 - Roadmap v2.3 item 4.2 added the GitHub Issues collector adapter with fixture-first RawEvidence mapping, default-disabled live networking, issue URL traceability, safe metadata preservation, pull request filtering, and author/context privacy without internet/API calls during validation or live LLM/API calls.
 - Roadmap v2.3 item 4.3 added Stack Exchange and RSS/regulatory collector adapters with fixture-first RawEvidence mapping, default-disabled live networking, source URL traceability, safe metadata preservation, and author/context privacy without internet/API calls during validation or live LLM/API calls.
+- Roadmap v2.3 MVP execution overlay created a local-only branch workflow for reaching the first working Source Intelligence loop before the next GitHub checkpoint.
+- Roadmap v2.3 item 5.1 added deterministic RawEvidence cleaning and rule-based evidence classification with HN/GitHub ambiguity defaulting to human review, artifact roundtrip support, and no internet/API or live LLM/API calls during validation.
+- Roadmap v2.3 item 5.2 added deterministic CandidateSignal extraction from CleanedEvidence plus EvidenceClassification, rule-based measurement methods for every signal dimension, source traceability, artifact roundtrip support, and no internet/API or live LLM/API calls during validation.
+- Roadmap v2.3 item 6.2-lite added an offline weekly discovery CLI that loads local RawEvidence fixtures, runs cleaning, classification, and CandidateSignal extraction, and writes discovery run artifacts plus source-yield-lite counters without internet/API or live LLM/API calls during validation.
+- Roadmap v2.3 item 7.1-lite added a founder-facing discovery package JSON and Markdown artifact with deterministic ranking, signal traceability, recommended founder actions, and MVP limitations without automating founder decisions or making internet/API or live LLM/API calls during validation.
+- Roadmap v2.3 item 8.1-lite added an adapter-only meaning-loop dry run for Source Intelligence CandidateSignals, writing `meaning_loop_dry_run.json` and `meaning_loop_dry_run.md` with compatibility status, adapted records, and candidate-signal-to-source traceability without invoking live LLM/API calls.
+- Full Roadmap v2.3 item 6.1 Source Yield Analytics and item 7.2 Traceability/compliance hardening are still deferred for the MVP slice; item 8.2 completion checkpoint is not yet complete.
+- GitHub push / PR remains deferred until the MVP Source Intelligence slice is working and explicitly requested.

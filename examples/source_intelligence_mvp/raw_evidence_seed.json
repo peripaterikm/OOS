@@ -1,0 +1,109 @@
+{
+  "raw_evidence": [
+    {
+      "evidence_id": "raw_mvp_hn_1",
+      "source_id": "hacker_news_algolia",
+      "source_type": "hacker_news_algolia",
+      "source_name": "Hacker News Algolia",
+      "source_url": "https://news.ycombinator.com/item?id=1001",
+      "collected_at": "2026-04-28T00:00:00+00:00",
+      "title": "SMB cashflow reporting is hard",
+      "body": "Founder says cashflow reporting is hard to keep current and frustrating during weekly reviews.",
+      "language": "en",
+      "topic_id": "ai_cfo_smb",
+      "query_kind": "pain_query",
+      "author_or_context": "founder",
+      "raw_metadata": {
+        "fixture": true,
+        "objectID": "1001"
+      },
+      "access_policy": "fixture_offline_public_hn_algolia",
+      "collection_method": "fixture",
+      "content_hash": "72f5d2497b8424fb102328d6251aff9912af6813a15e16ad854202b7bf84d4fd"
+    },
+    {
+      "evidence_id": "raw_mvp_github_1",
+      "source_id": "github_issues",
+      "source_type": "github_issues",
+      "source_name": "GitHub Issues",
+      "source_url": "https://github.com/example/finance-tool/issues/42",
+      "collected_at": "2026-04-28T00:00:00+00:00",
+      "title": "Export workaround",
+      "body": "Our workaround is a manual spreadsheet because the finance export is broken.",
+      "language": "en",
+      "topic_id": "ai_cfo_smb",
+      "query_kind": "workaround_query",
+      "author_or_context": "developer",
+      "raw_metadata": {
+        "fixture": true,
+        "issue_number": 42
+      },
+      "access_policy": "fixture_offline_public_github_issues",
+      "collection_method": "fixture",
+      "content_hash": "91444d25851e8b253245cbe1a58ccfce8b16482d35d83f6d563bbc06c704da36"
+    },
+    {
+      "evidence_id": "raw_mvp_stack_1",
+      "source_id": "stack_exchange",
+      "source_type": "stack_exchange",
+      "source_name": "Stack Exchange",
+      "source_url": "https://stackoverflow.com/questions/1002/finance-automation-tool",
+      "collected_at": "2026-04-28T00:00:00+00:00",
+      "title": "Need a tool for cashflow reports",
+      "body": "Looking for any tool that can automate SMB cashflow reporting and pricing comparisons.",
+      "language": "en",
+      "topic_id": "ai_cfo_smb",
+      "query_kind": "buying_intent_query",
+      "author_or_context": "developer",
+      "raw_metadata": {
+        "fixture": true,
+        "question_id": 1002
+      },
+      "access_policy": "fixture_offline_public_stack_exchange",
+      "collection_method": "fixture",
+      "content_hash": "962a403754703960313ad197c2604510e6f80588a4b818db7d4f0f42bc8a4296"
+    },
+    {
+      "evidence_id": "raw_mvp_rss_1",
+      "source_id": "rss_feeds",
+      "source_type": "rss_feed",
+      "source_name": "RSS / Regulator Feed",
+      "source_url": "https://example.gov/finance-api-change",
+      "collected_at": "2026-04-28T00:00:00+00:00",
+      "title": "New regulation changes finance reporting API",
+      "body": "New regulation and API changed compliance reporting deadlines for small businesses.",
+      "language": "en",
+      "topic_id": "ai_cfo_smb",
+      "query_kind": "trend_trigger_query",
+      "author_or_context": "official/regulatory feed item",
+      "raw_metadata": {
+        "fixture": true,
+        "guid": "rss-1003"
+      },
+      "access_policy": "fixture_offline_public_rss_feed",
+      "collection_method": "fixture",
+      "content_hash": "d6f7ab6dd282a99ce54b5d79be586bc60ad95a3929e6fe7a0148a2ccfcf6cc68"
+    },
+    {
+      "evidence_id": "raw_mvp_github_ambiguous_1",
+      "source_id": "github_issues",
+      "source_type": "github_issues",
+      "source_name": "GitHub Issues",
+      "source_url": "https://github.com/example/finance-tool/issues/43",
+      "collected_at": "2026-04-28T00:00:00+00:00",
+      "title": "Finance export discussion",
+      "body": "Finance export behavior should be discussed with product and accounting teams.",
+      "language": "en",
+      "topic_id": "ai_cfo_smb",
+      "query_kind": "pain_query",
+      "author_or_context": "developer",
+      "raw_metadata": {
+        "fixture": true,
+        "issue_number": 43
+      },
+      "access_policy": "fixture_offline_public_github_issues",
+      "collection_method": "fixture",
+      "content_hash": "15856a8c5833e00503fd90c17fc4e523b0321d15053dae0a55ee95d8eadf81d7"
+    }
+  ]
+}

@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **5.1**
+- [ ] **0.2.2** Current item: **MVP slice complete / next deferred item 6.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **8 / 16**
-- [ ] **0.2.5** Remaining: **8 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **13 / 16**
+- [ ] **0.2.5** Remaining: **3 / 16**
 
 ---
 
@@ -330,7 +330,7 @@ Add the second public API collector and simple RSS collector.
 ---
 
 ## 5.1. Evidence cleaner and classifier
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 5
 
 ### Goal
@@ -356,14 +356,14 @@ Normalize raw evidence and classify whether it may contain useful market signals
 
 ### Acceptance
 
-- [ ] HN/GitHub ambiguity floor tested.
-- [ ] Obvious spam/noise still can be noise.
-- [ ] No source evidence is deleted by classifier.
+- [x] HN/GitHub ambiguity floor tested.
+- [x] Obvious spam/noise still can be noise.
+- [x] No source evidence is deleted by classifier.
 
 ---
 
 ## 5.2. Evidence-to-signal extraction and scoring measurement methods
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 5
 
 ### Goal
@@ -389,17 +389,19 @@ Extract `CandidateSignal` records from `RawEvidence`.
 
 ### Acceptance
 
-- [ ] One `RawEvidence` can yield zero, one, or many `CandidateSignal` records.
-- [ ] Every signal links back to `evidence_id` and `source_url`.
-- [ ] Scoring dimensions expose `measurement_method`.
-- [ ] Unsupported dimensions are not silently treated as measured.
-- [ ] No live LLM calls.
+- [x] One `RawEvidence` can yield zero, one, or many `CandidateSignal` records.
+- [x] Every signal links back to `evidence_id` and `source_url`.
+- [x] Scoring dimensions expose `measurement_method`.
+- [x] Unsupported dimensions are not silently treated as measured.
+- [x] No live LLM calls.
 
 ---
 
 ## 6.1. Source Yield Analytics and founder-approved feedback suggestions
 **Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
 **Phase:** 6
+
+**MVP overlay note:** Full `6.1` Source Yield Analytics is deferred by the MVP execution overlay. `6.2` is completed as MVP weekly discovery CLI lite; full `6.1` remains incomplete.
 
 ### Goal
 
@@ -431,8 +433,10 @@ source_id x topic_id x query_kind
 ---
 
 ## 6.2. Weekly discovery CLI and run reports
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 6
+
+**MVP overlay note:** Completed as MVP weekly discovery CLI lite. Full production hardening and full source yield analytics can be expanded later.
 
 ### Goal
 
@@ -449,20 +453,22 @@ python -m oos.cli run-discovery-weekly `
 
 ### Acceptance
 
-- [ ] Offline fixture mode works.
-- [ ] Collector queue runs.
-- [ ] Raw evidence store is written.
-- [ ] Cleaning/classification runs.
-- [ ] Signal extraction runs.
-- [ ] Source yield report is written.
-- [ ] Run report/log file is written.
-- [ ] No live network unless explicitly enabled.
+- [x] Offline fixture mode works.
+- [x] Local fixture/raw-evidence input path runs; live collector queue remains offline/deferred for MVP lite.
+- [x] Raw evidence store is written.
+- [x] Cleaning/classification runs.
+- [x] Signal extraction runs.
+- [x] Source yield lite counters are written; full `6.1` analytics remains deferred.
+- [x] Run report/log file is written.
+- [x] No live network unless explicitly enabled.
 
 ---
 
 ## 7.1. Founder Discovery Package
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 7
+
+**MVP overlay note:** Completed as Founder Discovery Package lite. Full traceability/compliance hardening remains deferred to `7.2`.
 
 ### Goal
 
@@ -481,15 +487,17 @@ Produce a reviewable founder-facing discovery package.
 
 ### Acceptance
 
-- [ ] Founder package is generated from fixture discovery run.
-- [ ] Founder decisions are not automated.
-- [ ] Suggested priority updates require founder approval.
+- [x] Founder package is generated from fixture discovery run.
+- [x] Founder decisions are not automated.
+- [x] Suggested priority updates require founder approval.
 
 ---
 
 ## 7.2. Traceability, regression, and compliance hardening
 **Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
 **Phase:** 7
+
+**MVP overlay note:** Full `7.2` Traceability/compliance hardening is deferred by the MVP execution overlay. Next MVP target is `8.1-lite` meaning-loop dry run.
 
 ### Goal
 
@@ -517,8 +525,10 @@ weekly_discovery_package
 ---
 
 ## 8.1. Existing meaning-loop integration dry run
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 8
+
+**MVP overlay note:** Completed as MVP meaning-loop dry run lite with adapter-only compatibility reporting. Full downstream production integration, full `6.1` Source Yield Analytics, full `7.2` traceability/compliance hardening, and `8.2` completion checkpoint remain incomplete.
 
 ### Goal
 
@@ -532,10 +542,15 @@ Feed discovered candidate signals into the existing v2.2 meaning loop safely.
 
 ### Acceptance
 
-- [ ] End-to-end fixture run completes.
-- [ ] `source_url` traceability survives to founder review package or index.
-- [ ] No live LLM calls.
-- [ ] No founder decision is automated.
+- [x] End-to-end fixture run completes.
+- [x] `source_url` traceability survives to the meaning-loop dry-run traceability map and founder package outputs.
+- [x] No live LLM calls.
+- [x] No founder decision is automated.
+
+### MVP Slice Status
+
+- [x] The MVP slice now has a working fixture/offline Source Intelligence loop: `RawEvidence -> CleanedEvidence -> EvidenceClassification -> CandidateSignal -> weekly discovery CLI lite -> founder discovery package lite -> meaning-loop dry run lite`.
+- [ ] Deferred items remain: full `6.1` Source Yield Analytics, full `7.2` Traceability/compliance hardening, and `8.2` completion checkpoint.
 
 ---
 
@@ -564,8 +579,8 @@ Finalize Roadmap v2.3.
 - [x] **5.2** Milestone B: Raw evidence and bounded query planning ready after **2.2**
 - [x] **5.3** Milestone C: Collector contracts ready after **3.1**
 - [ ] **5.4** Milestone D: First public collectors fixture-safe after **4.3**
-- [ ] **5.5** Milestone E: Evidence classification and candidate signals ready after **5.2**
-- [ ] **5.6** Milestone F: Discovery run and yield feedback suggestions ready after **6.2**
+- [x] **5.5** Milestone E: Evidence classification and candidate signals ready after **5.2**
+- [x] **5.6** Milestone F: Discovery run and yield feedback suggestions ready after **6.2**
 - [ ] **5.7** Milestone G: Founder discovery package and compliance hardening ready after **7.2**
 - [ ] **5.8** Milestone H: Source Intelligence v2.3 complete after **8.2**
 
