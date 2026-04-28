@@ -14,6 +14,7 @@ class CollectionResult:
     evidence: List[RawEvidence]
     collector_name: str
     live_network_used: bool = False
+    collection_errors: Optional[List[Dict[str, str]]] = None
 
     def validate(self) -> None:
         self.scheduled_item.validate()
@@ -23,6 +24,13 @@ class CollectionResult:
             raise ValueError("CollectionResult.live_network_used must be a bool")
         if not isinstance(self.evidence, list):
             raise ValueError("CollectionResult.evidence must be a list")
+        if self.collection_errors is None:
+            object.__setattr__(self, "collection_errors", [])
+        if not isinstance(self.collection_errors, list):
+            raise ValueError("CollectionResult.collection_errors must be a list")
+        for error in self.collection_errors:
+            if not isinstance(error, dict):
+                raise ValueError("CollectionResult.collection_errors must contain dicts")
         for item in self.evidence:
             item.validate()
             if item.source_id != self.scheduled_item.source_id:

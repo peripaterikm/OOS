@@ -78,11 +78,100 @@ class TestEvidenceCleanerClassifier(unittest.TestCase):
             compute_normalized_content_hash(normalized_title="Manual report", normalized_body="Body text"),
         )
 
+    def test_cleaner_unescapes_html_entities_and_strips_simple_tags(self) -> None:
+        cleaned = clean_evidence(
+            raw_evidence(
+                body="Cash flow doesn&#x27;t work<p>Manual spreadsheet<br><strong>workaround</strong>",
+            )
+        )
+
+        self.assertEqual(cleaned.normalized_body, "Cash flow doesn't work Manual spreadsheet workaround")
+        self.assertNotIn("&#x27;", cleaned.normalized_body)
+        self.assertNotIn("<p>", cleaned.normalized_body)
+
     def test_pain_phrases_classify_as_pain_signal_candidate(self) -> None:
         classification = classify_raw_evidence(raw_evidence(body="This reporting problem is frustrating."))
 
         self.assertEqual(classification.classification, PAIN_SIGNAL_CANDIDATE)
         self.assertFalse(classification.is_noise)
+
+    def test_generic_hn_small_business_without_finance_anchor_is_not_high_confidence_pain(self) -> None:
+        classification = classify_raw_evidence(
+            raw_evidence(
+                source_type="hacker_news_algolia",
+                title="Small business competition",
+                body="Small business owners can't compete with large corporations and unfair competition.",
+            )
+        )
+
+        self.assertNotEqual(classification.classification, PAIN_SIGNAL_CANDIDATE)
+        self.assertLessEqual(classification.confidence, 0.4)
+
+    def test_small_business_alone_is_not_enough_for_ai_cfo_relevance(self) -> None:
+        classification = classify_raw_evidence(
+            raw_evidence(
+                source_type="github_issues",
+                title="Small business calendar",
+                body="Small business content calendar is hard to keep updated.",
+            )
+        )
+
+        self.assertNotEqual(classification.classification, PAIN_SIGNAL_CANDIDATE)
+        self.assertLessEqual(classification.confidence, 0.4)
+
+    def test_linkedin_content_calendar_spreadsheet_is_downgraded(self) -> None:
+        classification = classify_raw_evidence(
+            raw_evidence(
+                source_type="github_issues",
+                title="LinkedIn content plan",
+                body=(
+                    "30-Day LinkedIn Content Calendar with Copy-Paste Ready Posts. "
+                    "Day 1 Post Topic spreadsheet. Day 2 Post Type campaign. Day 3 Post Topic marketing copy."
+                ),
+            )
+        )
+
+        self.assertIn(classification.classification, {NOISE, NEEDS_HUMAN_REVIEW})
+        self.assertLessEqual(classification.confidence, 0.4 if classification.classification == NEEDS_HUMAN_REVIEW else 1.0)
+
+    def test_product_pitch_marketing_artifacts_are_not_high_confidence_pain(self) -> None:
+        examples = [
+            "FraudNet Product pitch Executive Summary Market Context & Zone Analysis Portfolio Position.",
+            "Productico 30-Day LinkedIn Content Calendar Copy-Pasteable LinkedIn Posts Post Topic Post Type.",
+            "Dynamic Creative Personalization engine Campaign variants Competitive Target Landing page marketing copy.",
+        ]
+
+        for body in examples:
+            classification = classify_raw_evidence(
+                raw_evidence(source_type="github_issues", title="Marketing artifact", body=body)
+            )
+
+            self.assertNotEqual(classification.classification, PAIN_SIGNAL_CANDIDATE)
+            if classification.classification == NEEDS_HUMAN_REVIEW:
+                self.assertLessEqual(classification.confidence, 0.35)
+
+    def test_invoice_payment_cycles_manual_spreadsheets_remain_pain_candidate(self) -> None:
+        classification = classify_raw_evidence(
+            raw_evidence(
+                source_type="github_issues",
+                body=(
+                    "Freelancer has irregular invoice payment cycles and can't plan bills from expected "
+                    "incoming payments. Current workaround is manual spreadsheets tracking invoice dates, "
+                    "payment status, and upcoming bill due dates."
+                ),
+            )
+        )
+
+        self.assertEqual(classification.classification, PAIN_SIGNAL_CANDIDATE)
+        self.assertGreaterEqual(classification.confidence, 0.7)
+
+    def test_cash_flow_reporting_pain_remains_relevant(self) -> None:
+        classification = classify_raw_evidence(
+            raw_evidence(body="Cash flow reporting is hard and frustrating for bookkeeping teams.")
+        )
+
+        self.assertEqual(classification.classification, PAIN_SIGNAL_CANDIDATE)
+        self.assertGreaterEqual(classification.confidence, 0.7)
 
     def test_workaround_phrases_classify_as_workaround_signal_candidate(self) -> None:
         classification = classify_raw_evidence(raw_evidence(body="Our workaround is a manual spreadsheet."))

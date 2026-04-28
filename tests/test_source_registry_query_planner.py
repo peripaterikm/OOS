@@ -292,6 +292,28 @@ class TestSourceRegistryQueryPlanner(unittest.TestCase):
         self.assertTrue(all("token" not in plan.query_text.lower() for plan in plans))
         self.assertTrue(all("api key" not in plan.query_text.lower() for plan in plans))
 
+    def test_ai_cfo_smb_hn_query_plans_are_finance_specific(self) -> None:
+        plans = QueryPlanner().build_plans(
+            registry=default_source_registry(),
+            topic_profiles=default_topic_profiles(),
+        )
+        hn_queries = [plan.query_text.lower() for plan in plans if plan.source_id == "hacker_news_algolia"]
+
+        self.assertTrue(any("cash flow" in query for query in hn_queries))
+        self.assertTrue(any("invoice" in query for query in hn_queries))
+        self.assertNotEqual(hn_queries[0].strip('"'), "small business")
+
+    def test_ai_cfo_smb_github_query_plans_are_finance_specific(self) -> None:
+        plans = QueryPlanner().build_plans(
+            registry=default_source_registry(),
+            topic_profiles=default_topic_profiles(),
+        )
+        github_queries = [plan.query_text.lower() for plan in plans if plan.source_id == "github_issues"]
+
+        self.assertTrue(any("invoice payment" in query for query in github_queries))
+        self.assertTrue(any("manual spreadsheet" in query for query in github_queries))
+        self.assertNotEqual(github_queries[0].strip('"'), "small business")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -161,7 +161,7 @@ class HNAlgoliaCollector(BaseCollector):
         query = urlencode({"query": scheduled_item.query_text, "hitsPerPage": scheduled_item.max_results})
         url = f"{HN_ALGOLIA_BASE_URL}/{self.endpoint}?{query}"
         with urlopen(url, timeout=self.timeout_seconds) as response:
-            data = response.read().decode("utf-8")
+            data = response.read().decode("utf-8", errors="replace")
         payload = json.loads(data)
         if not isinstance(payload, dict):
             raise ValueError("HN Algolia response must be a JSON object")

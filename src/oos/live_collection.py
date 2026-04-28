@@ -127,6 +127,10 @@ def collect_raw_evidence_for_topic(
             collectors_failed.append(scheduled_item.source_type)
             collection_errors.append(_collection_error(scheduled_item, str(exc)))
             continue
+        for error in result.collection_errors or []:
+            merged_error = _collection_error(scheduled_item, error.get("error", "collector reported nonfatal error"))
+            merged_error.update({key: str(value) for key, value in error.items()})
+            collection_errors.append(merged_error)
         raw_evidence.extend(result.evidence[: scheduled_item.max_results])
         collectors_succeeded.append(scheduled_item.source_type)
 

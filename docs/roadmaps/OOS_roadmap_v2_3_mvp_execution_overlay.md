@@ -72,6 +72,8 @@ As of `8.1-lite`, the local MVP branch can run the fixture/offline loop through 
 
 The MVP+1 extension adds an explicit, bounded live collection mode for the weekly discovery CLI while preserving fixture/offline mode as the default.
 
+Roadmap v2.4 now owns live signal quality hardening after initial MVP+1 live collection. Item `1.1` covers HTML/entity cleanup, UTF-8 decode hardening, `ai_cfo_smb` relevance gating, anti-marketing downgrades, more discriminative deterministic scoring, finance-specific HN/GitHub query templates, and safe RSS feed URL handling.
+
 ### Command
 
 ```powershell
