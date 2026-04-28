@@ -49,6 +49,38 @@ GITHUB_PAYLOAD = {
     ]
 }
 
+GITHUB_MIXED_QUALITY_PAYLOAD = {
+    "items": [
+        {
+            "id": 90211,
+            "number": 18,
+            "html_url": "https://github.com/example/project/issues/18",
+            "title": "QuickBooks installation guide",
+            "body": "When the installation process is over, the computer will restart and then QuickBooks will launch.",
+            "created_at": "2026-01-02T00:00:00Z",
+            "state": "open",
+            "comments": 0,
+            "labels": [],
+            "user": {"login": "raw_github_login"},
+        },
+        {
+            "id": 90212,
+            "number": 19,
+            "html_url": "https://github.com/example/project/issues/19",
+            "title": "Need spreadsheet workaround for invoices",
+            "body": (
+                "Describe the problem: we would need to maintain a separate spreadsheet "
+                "for invoice reconciliation and payment status."
+            ),
+            "created_at": "2026-01-02T00:00:00Z",
+            "state": "open",
+            "comments": 1,
+            "labels": [{"name": "enhancement"}],
+            "user": {"login": "raw_github_login"},
+        },
+    ]
+}
+
 
 class FailingCollector(BaseCollector):
     def supports(self, scheduled_item: ScheduledCollectionItem) -> bool:
@@ -230,6 +262,38 @@ class TestLiveCollectionMode(unittest.TestCase):
         self.assertEqual(raw_index[0]["source_type"], "github_issues")
         self.assertEqual(raw_index[0]["source_url"], "https://github.com/example/project/issues/17")
         self.assertTrue(signals)
+
+    def test_mixed_github_quality_gate_counts_noise_and_ranks_user_pain(self) -> None:
+        with patch(
+            "oos.github_issues_collector.GitHubIssuesCollector._fetch_live_payload",
+            return_value=GITHUB_MIXED_QUALITY_PAYLOAD,
+        ):
+            exit_code = main(
+                [
+                    "run-discovery-weekly",
+                    "--topic",
+                    "ai_cfo_smb",
+                    "--project-root",
+                    str(self.project_root),
+                    "--run-id",
+                    "github_quality_gate",
+                    "--use-collectors",
+                    "--allow-live-network",
+                    "--source-id",
+                    "github_issues",
+                    "--max-total-queries",
+                    "1",
+                    "--max-results-per-query",
+                    "5",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        summary = self._summary("github_quality_gate")
+        package = self._json("github_quality_gate", "founder_discovery_package.json")
+
+        self.assertGreaterEqual(summary["noise_count"], 1)
+        self.assertEqual(package["top_candidate_signals"][0]["source_url"], "https://github.com/example/project/issues/19")
 
     def test_collector_error_is_recorded_without_killing_whole_run(self) -> None:
         result = collect_raw_evidence_for_topic(

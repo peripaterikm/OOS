@@ -114,6 +114,11 @@ Improve quality of live HN/GitHub/RSS signals before adding LLM layers.
 - [x] **1.1.11** `oos-validate.ps1` passes.
 - [x] **1.1.12** `verify.ps1` passes.
 
+### Follow-up hardening
+
+- [x] **1.1b** Manual live smoke follow-up added founder-package signal deduplication, common mojibake repairs, GitHub install/tutorial/generic-copy downgrades, explicit noise coverage for obvious junk, and ranking tests that keep genuine user pain above generic finance copy.
+- Roadmap counters were not advanced by `1.1b`; this is a narrow quality patch under completed item **1.1** before item **1.2** live acceptance smoke runs.
+
 ### Expected files
 
 - `src/oos/evidence_classifier.py`

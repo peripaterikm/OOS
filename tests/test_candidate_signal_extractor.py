@@ -287,6 +287,25 @@ class TestCandidateSignalExtractor(unittest.TestCase):
 
         self.assertGreater(len({signal.confidence for signal in signals}), 1)
 
+    def test_user_pain_scores_above_installation_tutorial(self) -> None:
+        pain = signal_for(
+            "pain_signal_candidate",
+            body=(
+                "Describe the problem: we would need to maintain a separate spreadsheet "
+                "for invoice reconciliation and payment status."
+            ),
+        )
+        tutorial_cleaned = clean_evidence(
+            raw_evidence(body="When the installation process is over, the computer will restart and QuickBooks will launch.")
+        )
+        tutorial = extract_candidate_signal(
+            tutorial_cleaned,
+            classification_for(tutorial_cleaned, "needs_human_review", confidence=0.35),
+        )
+
+        self.assertGreater(pain.confidence, tutorial.confidence)
+        self.assertLessEqual(tutorial.confidence, 0.35)
+
     def test_candidate_signal_artifact_roundtrip(self) -> None:
         signal = signal_for("pain_signal_candidate")
         tmp = Path("codex_tmp_candidate_signal")

@@ -89,6 +89,18 @@ class TestEvidenceCleanerClassifier(unittest.TestCase):
         self.assertNotIn("&#x27;", cleaned.normalized_body)
         self.assertNotIn("<p>", cleaned.normalized_body)
 
+    def test_cleaner_repairs_common_mojibake_fragments(self) -> None:
+        cleaned = clean_evidence(
+            raw_evidence(
+                body="In todayвЂ™s reporting flow, optionalвЂ”they track invoices рџљЂ manually.",
+            )
+        )
+
+        self.assertIn("today's", cleaned.normalized_body)
+        self.assertIn("optional—they", cleaned.normalized_body)
+        self.assertNotIn("вЂ", cleaned.normalized_body)
+        self.assertNotIn("рџ", cleaned.normalized_body.lower())
+
     def test_pain_phrases_classify_as_pain_signal_candidate(self) -> None:
         classification = classify_raw_evidence(raw_evidence(body="This reporting problem is frustrating."))
 
@@ -149,6 +161,63 @@ class TestEvidenceCleanerClassifier(unittest.TestCase):
             self.assertNotEqual(classification.classification, PAIN_SIGNAL_CANDIDATE)
             if classification.classification == NEEDS_HUMAN_REVIEW:
                 self.assertLessEqual(classification.confidence, 0.35)
+
+    def test_quickbooks_installation_text_is_noise_or_low_confidence_review(self) -> None:
+        classification = classify_raw_evidence(
+            raw_evidence(
+                source_type="github_issues",
+                title="QuickBooks installation guide",
+                body=(
+                    "When the installation process is over, the computer will restart, "
+                    "and then QuickBooks will launch. Click Next and follow these steps."
+                ),
+            )
+        )
+
+        self.assertIn(classification.classification, {NOISE, NEEDS_HUMAN_REVIEW})
+        if classification.classification == NEEDS_HUMAN_REVIEW:
+            self.assertLessEqual(classification.confidence, 0.25)
+
+    def test_generic_finance_consulting_copy_is_downgraded(self) -> None:
+        classification = classify_raw_evidence(
+            raw_evidence(
+                source_type="github_issues",
+                title="Finance consulting article",
+                body=(
+                    "In today's fast-moving business environment, financial records remain accurate and up to date. "
+                    "Financial transparency and strategic reporting are no longer optional. Contact us."
+                ),
+            )
+        )
+
+        self.assertIn(classification.classification, {NOISE, NEEDS_HUMAN_REVIEW})
+        if classification.classification == NEEDS_HUMAN_REVIEW:
+            self.assertLessEqual(classification.confidence, 0.3)
+
+    def test_separate_spreadsheet_issue_remains_valid_user_pain(self) -> None:
+        classification = classify_raw_evidence(
+            raw_evidence(
+                source_type="github_issues",
+                body=(
+                    "Describe the problem: we would need to maintain a separate spreadsheet "
+                    "to reconcile invoices and payment status for accounting."
+                ),
+            )
+        )
+
+        self.assertIn(classification.classification, {PAIN_SIGNAL_CANDIDATE, WORKAROUND_SIGNAL_CANDIDATE})
+        self.assertFalse(classification.is_noise)
+
+    def test_balance_sheet_request_remains_valid_user_pain(self) -> None:
+        classification = classify_raw_evidence(
+            raw_evidence(
+                source_type="github_issues",
+                body="I would like to be able to produce a balance sheet for small business accounting.",
+            )
+        )
+
+        self.assertEqual(classification.classification, PAIN_SIGNAL_CANDIDATE)
+        self.assertFalse(classification.is_noise)
 
     def test_invoice_payment_cycles_manual_spreadsheets_remain_pain_candidate(self) -> None:
         classification = classify_raw_evidence(

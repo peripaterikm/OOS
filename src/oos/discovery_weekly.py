@@ -233,6 +233,25 @@ def rank_candidate_signals(candidate_signals: Iterable[CandidateSignal]) -> List
     )
 
 
+def deduplicate_ranked_candidate_signals(candidate_signals: Iterable[CandidateSignal]) -> List[CandidateSignal]:
+    deduped: Dict[str, CandidateSignal] = {}
+    for signal in rank_candidate_signals(candidate_signals):
+        key = _candidate_signal_dedup_key(signal)
+        if key not in deduped:
+            deduped[key] = signal
+    return list(deduped.values())
+
+
+def _candidate_signal_dedup_key(signal: CandidateSignal) -> str:
+    source_url = signal.source_url.strip().lower()
+    if source_url:
+        return f"url:{signal.source_type}:{source_url}"
+    if signal.evidence_id.strip():
+        return f"evidence:{signal.evidence_id.strip().lower()}"
+    summary = re.sub(r"[^a-z0-9]+", " ", signal.pain_summary.lower()).strip()
+    return f"summary:{signal.source_type}:{summary}"
+
+
 def _build_summary(
     *,
     run_id: str,
@@ -298,7 +317,8 @@ def _build_founder_package(
     candidate_signals: List[CandidateSignal],
 ) -> Dict[str, Any]:
     ranked_signals = rank_candidate_signals(candidate_signals)
-    top_signals = [signal for signal in ranked_signals if signal.signal_type != "needs_human_review"]
+    deduped_ranked_signals = deduplicate_ranked_candidate_signals(candidate_signals)
+    top_signals = [signal for signal in deduped_ranked_signals if signal.signal_type != "needs_human_review"]
     review_signals = [signal for signal in ranked_signals if signal.signal_type == "needs_human_review"]
     return {
         "run_id": summary["run_id"],

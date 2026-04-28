@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from oos.cli import main
-from oos.discovery_weekly import rank_candidate_signals
+from oos.discovery_weekly import deduplicate_ranked_candidate_signals, rank_candidate_signals
 from oos.models import CandidateSignal, compute_raw_evidence_content_hash
 
 
@@ -97,6 +97,31 @@ class TestFounderDiscoveryPackageLite(unittest.TestCase):
 
         self.assertEqual(first, ["candidate_signal_high", "candidate_signal_a", "candidate_signal_z"])
         self.assertEqual(first, second)
+
+    def test_top_candidate_signal_dedup_keeps_highest_confidence_by_source_url(self) -> None:
+        lower = self._candidate_signal("candidate_signal_lower", "pain_signal", 0.72)
+        higher = self._candidate_signal("candidate_signal_higher", "pain_signal", 0.89)
+        duplicate_url = "https://news.ycombinator.com/item?id=12345"
+        lower = self._replace_signal_url(lower, duplicate_url)
+        higher = self._replace_signal_url(higher, duplicate_url)
+
+        deduped = deduplicate_ranked_candidate_signals([lower, higher])
+
+        self.assertEqual([signal.signal_id for signal in deduped], ["candidate_signal_higher"])
+
+    def test_top_candidate_signal_dedup_tie_breaks_by_signal_id(self) -> None:
+        later = self._replace_signal_url(
+            self._candidate_signal("candidate_signal_z", "pain_signal", 0.8),
+            "https://news.ycombinator.com/item?id=67890",
+        )
+        earlier = self._replace_signal_url(
+            self._candidate_signal("candidate_signal_a", "pain_signal", 0.8),
+            "https://news.ycombinator.com/item?id=67890",
+        )
+
+        deduped = deduplicate_ranked_candidate_signals([later, earlier])
+
+        self.assertEqual([signal.signal_id for signal in deduped], ["candidate_signal_a"])
 
     def test_noise_is_counted_but_not_dumped_in_full(self) -> None:
         noise_input = self.project_root / "noise_raw_evidence.json"
@@ -204,6 +229,37 @@ class TestFounderDiscoveryPackageLite(unittest.TestCase):
         )
         signal.validate()
         return signal
+
+    def _replace_signal_url(self, signal: CandidateSignal, source_url: str) -> CandidateSignal:
+        replacement = CandidateSignal(
+            signal_id=signal.signal_id,
+            evidence_id=signal.evidence_id,
+            source_id=signal.source_id,
+            source_type=signal.source_type,
+            source_url=source_url,
+            topic_id=signal.topic_id,
+            query_kind=signal.query_kind,
+            signal_type=signal.signal_type,
+            pain_summary=signal.pain_summary,
+            target_user=signal.target_user,
+            current_workaround=signal.current_workaround,
+            buying_intent_hint=signal.buying_intent_hint,
+            urgency_hint=signal.urgency_hint,
+            confidence=signal.confidence,
+            measurement_methods=dict(signal.measurement_methods),
+            extraction_mode=signal.extraction_mode,
+            classification=signal.classification,
+            classification_confidence=signal.classification_confidence,
+            traceability={
+                "evidence_id": signal.evidence_id,
+                "source_url": source_url,
+                "source_id": signal.source_id,
+                "topic_id": signal.topic_id,
+                "query_kind": signal.query_kind,
+            },
+        )
+        replacement.validate()
+        return replacement
 
     def _noise_raw_evidence(self):
         title = "Hi"

@@ -23,6 +23,15 @@ _HTML_TAG_RE = re.compile(r"<[^>]+>")
 _BR_BLOCK_TAG_RE = re.compile(r"</?(?:p|div|br|li|ul|ol|pre|code|blockquote|h[1-6])\b[^>]*>", re.IGNORECASE)
 _MARKDOWN_PREFIX_RE = re.compile(r"^\s*(?:#{1,6}\s+|\*\*+|```+|[-*_]{3,}\s*)+")
 _DAY_ENTRY_RE = re.compile(r"\bday\s+\d+\b", re.IGNORECASE)
+_BROKEN_EMOJI_RE = re.compile(r"\b[рР]џ\S*", re.IGNORECASE)
+_MOJIBAKE_REPLACEMENTS = {
+    "\u0432\u0402\u2122": "'",
+    "\u0432\u0402\u201d": "\u2014",
+    "\u0432\u0402\u201c": "\u2013",
+    "\u0432\u0402\u045a": '"',
+    "\u0432\u0402\u045c": '"',
+    "\u0432\u0402\u00a6": "...",
+}
 
 _RULES: list[tuple[str, list[str]]] = [
     (
@@ -38,6 +47,11 @@ _RULES: list[tuple[str, list[str]]] = [
             "frustrating",
             "issue",
             "bug",
+            "describe the problem",
+            "i would like to be able to",
+            "i would like",
+            "i want to",
+            "we would need",
         ],
     ),
     (
@@ -97,7 +111,7 @@ _SPAM_PHRASES = (
     "click here",
 )
 
-_MOJIBAKE_FRAGMENTS = ("рџ", "вЂ", "Рџ")
+_MOJIBAKE_FRAGMENTS = ("\u0440\u045f", "\u0432\u0402", "\u0420\u045f")
 
 _AI_CFO_STRONG_ANCHORS = (
     "cash flow",
@@ -171,6 +185,42 @@ _MARKETING_MARKERS = (
     "marketing copy",
     "linkedin's dco",
     "creative personalization engine",
+    "in today's fast-moving business environment",
+    "in todayвЂ™s fast-moving business environment",
+    "are no longer optional",
+    "gain visibility into their operations",
+    "financial transparency",
+    "strategic reporting",
+    "smooth process",
+    "bookkeeping expert",
+    "our services",
+    "contact us",
+    "trusted partner",
+)
+
+_INSTALL_TUTORIAL_MARKERS = (
+    "installation process",
+    "will restart",
+    "will launch",
+    "click next",
+    "download and install",
+    "setup wizard",
+    "follow these steps",
+    "how to install",
+    "installation guide",
+)
+
+_GENUINE_USER_PAIN_MARKERS = (
+    "describe the problem",
+    "describe the solution you'd like",
+    "describe alternatives you've considered",
+    "current workaround",
+    "we would need to maintain a separate spreadsheet",
+    "i would like to be able to",
+    "i want to",
+    "manual spreadsheet",
+    "invoice payment cycles",
+    "balance sheet",
 )
 
 
@@ -181,6 +231,7 @@ def normalize_whitespace(value: str) -> str:
 def normalize_signal_text(value: str) -> str:
     text = str(value or "")
     text = html.unescape(text)
+    text = repair_mojibake(text)
     text = _BR_BLOCK_TAG_RE.sub(" ", text)
     text = _HTML_TAG_RE.sub(" ", text)
     lines = []
@@ -190,6 +241,13 @@ def normalize_signal_text(value: str) -> str:
         if cleaned:
             lines.append(cleaned)
     return normalize_whitespace(" ".join(lines))
+
+
+def repair_mojibake(value: str) -> str:
+    text = str(value or "")
+    for broken, fixed in _MOJIBAKE_REPLACEMENTS.items():
+        text = text.replace(broken, fixed)
+    return _BROKEN_EMOJI_RE.sub("", text)
 
 
 def normalize_url(url: str) -> str:
@@ -271,8 +329,19 @@ def classify_evidence(cleaned: CleanedEvidence) -> EvidenceClassification:
 
     relevance = topic_relevance_score(text, cleaned.topic_id)
     marketing_penalty = anti_marketing_penalty(text)
+    genuine_pain = user_pain_marker_score(text)
     if cleaned.topic_id == "ai_cfo_smb":
-        if marketing_penalty >= 0.7 and relevance < 0.45:
+        if marketing_penalty >= 0.8 and genuine_pain < 0.35:
+            return _classification(
+                cleaned=cleaned,
+                classification=NOISE,
+                confidence=0.92,
+                matched_rules=["noise:install_tutorial_or_generic_marketing"],
+                reason="Install/tutorial or generic marketing markers dominate without genuine user-pain markers.",
+                requires_human_review=False,
+                is_noise=True,
+            )
+        if marketing_penalty >= 0.7 and relevance < 0.45 and genuine_pain < 0.35:
             return _classification(
                 cleaned=cleaned,
                 classification=NOISE,
@@ -289,7 +358,7 @@ def classify_evidence(cleaned: CleanedEvidence) -> EvidenceClassification:
             if cleaned.topic_id == "ai_cfo_smb":
                 if relevance < 0.2:
                     return _low_relevance_review(cleaned, matches)
-                if marketing_penalty >= 0.4 and relevance < 0.6:
+                if marketing_penalty >= 0.4 and relevance < 0.6 and genuine_pain < 0.35:
                     return _classification(
                         cleaned=cleaned,
                         classification=NEEDS_HUMAN_REVIEW,
@@ -304,14 +373,14 @@ def classify_evidence(cleaned: CleanedEvidence) -> EvidenceClassification:
             return _classification(
                 cleaned=cleaned,
                 classification=classification,
-                confidence=_rule_confidence(classification, matches, relevance, marketing_penalty, text),
+                confidence=_rule_confidence(classification, matches, relevance, marketing_penalty, genuine_pain, text),
                 matched_rules=[f"{classification}:{phrase}" for phrase in matches],
                 reason=f"Matched deterministic {classification} keyword rule.",
                 requires_human_review=False,
                 is_noise=False,
             )
 
-    if cleaned.topic_id == "ai_cfo_smb" and marketing_penalty >= 0.4:
+    if cleaned.topic_id == "ai_cfo_smb" and marketing_penalty >= 0.4 and genuine_pain < 0.35:
         return _classification(
             cleaned=cleaned,
             classification=NEEDS_HUMAN_REVIEW,
@@ -371,6 +440,7 @@ def topic_relevance_score(text: str, topic_id: str) -> float:
 def anti_marketing_penalty(text: str) -> float:
     lowered = normalize_whitespace(text).lower()
     marker_hits = sum(1 for marker in _MARKETING_MARKERS if marker in lowered)
+    install_hits = sum(1 for marker in _INSTALL_TUTORIAL_MARKERS if marker in lowered)
     day_hits = len(_DAY_ENTRY_RE.findall(lowered))
     structural_hits = 0
     if lowered.count("post topic") >= 2 or lowered.count("post type") >= 2:
@@ -381,12 +451,34 @@ def anti_marketing_penalty(text: str) -> float:
         structural_hits += 1
     if day_hits >= 5:
         structural_hits += 2
-    return round(min(1.0, marker_hits * 0.18 + structural_hits * 0.16), 2)
+    if "financial records remain accurate" in lowered and "up to date" in lowered:
+        structural_hits += 2
+    return round(min(1.0, marker_hits * 0.18 + install_hits * 0.24 + structural_hits * 0.16), 2)
+
+
+def user_pain_marker_score(text: str) -> float:
+    lowered = normalize_whitespace(text).lower()
+    return round(min(1.0, sum(1 for marker in _GENUINE_USER_PAIN_MARKERS if marker in lowered) * 0.28), 2)
 
 
 def pain_indicator_score(text: str) -> float:
     lowered = str(text or "").lower()
-    pain_terms = ("problem", "pain", "struggle", "hard to", "can't", "doesn't work", "broken", "frustrating", "issue", "bug")
+    pain_terms = (
+        "problem",
+        "pain",
+        "struggle",
+        "hard to",
+        "can't",
+        "doesn't work",
+        "broken",
+        "frustrating",
+        "issue",
+        "bug",
+        "describe the problem",
+        "i would like",
+        "i want to",
+        "we would need",
+    )
     return round(min(1.0, sum(1 for term in pain_terms if term in lowered) * 0.2), 2)
 
 
@@ -435,6 +527,7 @@ def _rule_confidence(
     matches: List[str],
     relevance: float,
     marketing_penalty: float,
+    genuine_pain: float,
     text: str,
 ) -> float:
     base = 0.62 + min(len(matches), 3) * 0.04
@@ -445,6 +538,7 @@ def _rule_confidence(
         base += workaround_indicator_score(text) * 0.08
     if classification == BUYING_INTENT_CANDIDATE:
         base += buying_indicator_score(text) * 0.08
+    base += genuine_pain * 0.12
     base -= marketing_penalty * 0.22
     return round(max(0.25, min(0.92, base)), 2)
 

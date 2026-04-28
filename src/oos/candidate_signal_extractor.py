@@ -18,6 +18,7 @@ from .evidence_classifier import (
     pain_indicator_score,
     topic_relevance_score,
     urgency_indicator_score,
+    user_pain_marker_score,
     workaround_indicator_score,
 )
 from .models import CandidateSignal, CleanedEvidence, EvidenceClassification, RawEvidence
@@ -257,8 +258,9 @@ def _confidence(classification: EvidenceClassification, text: str) -> float:
     base = float(classification.confidence)
     relevance = topic_relevance_score(text, classification.topic_id)
     marketing = anti_marketing_penalty(text)
+    genuine_pain = user_pain_marker_score(text)
     if classification.classification == NEEDS_HUMAN_REVIEW:
-        score = base * 0.65 + relevance * 0.12 - marketing * 0.12
+        score = base * 0.65 + relevance * 0.12 + genuine_pain * 0.08 - marketing * 0.12
         return round(max(0.25, min(0.4, score)), 2)
     pain_score = pain_indicator_score(text)
     workaround_score = workaround_indicator_score(text)
@@ -268,6 +270,7 @@ def _confidence(classification: EvidenceClassification, text: str) -> float:
     score += workaround_score * 0.12
     score += buying_indicator_score(text) * 0.05
     score += urgency_indicator_score(text) * 0.04
+    score += genuine_pain * 0.1
     score -= marketing * 0.22
     if relevance >= 0.45 and (pain_score >= 0.2 or workaround_score >= 0.2):
         score += 0.08
