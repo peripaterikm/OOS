@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **6.2**
+- [ ] **0.2.2** Current item: **7.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **10 / 16**
-- [ ] **0.2.5** Remaining: **6 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **11 / 16**
+- [ ] **0.2.5** Remaining: **5 / 16**
 
 ---
 
@@ -401,7 +401,7 @@ Extract `CandidateSignal` records from `RawEvidence`.
 **Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
 **Phase:** 6
 
-**MVP overlay note:** Full `6.1` Source Yield Analytics is deferred by the MVP execution overlay. The next MVP implementation target is `6.2` weekly discovery CLI lite; full `6.1` remains incomplete.
+**MVP overlay note:** Full `6.1` Source Yield Analytics is deferred by the MVP execution overlay. `6.2` is completed as MVP weekly discovery CLI lite; full `6.1` remains incomplete.
 
 ### Goal
 
@@ -433,8 +433,10 @@ source_id x topic_id x query_kind
 ---
 
 ## 6.2. Weekly discovery CLI and run reports
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 6
+
+**MVP overlay note:** Completed as MVP weekly discovery CLI lite. Full production hardening and full source yield analytics can be expanded later.
 
 ### Goal
 
@@ -451,14 +453,14 @@ python -m oos.cli run-discovery-weekly `
 
 ### Acceptance
 
-- [ ] Offline fixture mode works.
-- [ ] Collector queue runs.
-- [ ] Raw evidence store is written.
-- [ ] Cleaning/classification runs.
-- [ ] Signal extraction runs.
-- [ ] Source yield report is written.
-- [ ] Run report/log file is written.
-- [ ] No live network unless explicitly enabled.
+- [x] Offline fixture mode works.
+- [x] Local fixture/raw-evidence input path runs; live collector queue remains offline/deferred for MVP lite.
+- [x] Raw evidence store is written.
+- [x] Cleaning/classification runs.
+- [x] Signal extraction runs.
+- [x] Source yield lite counters are written; full `6.1` analytics remains deferred.
+- [x] Run report/log file is written.
+- [x] No live network unless explicitly enabled.
 
 ---
 
@@ -567,7 +569,7 @@ Finalize Roadmap v2.3.
 - [x] **5.3** Milestone C: Collector contracts ready after **3.1**
 - [ ] **5.4** Milestone D: First public collectors fixture-safe after **4.3**
 - [x] **5.5** Milestone E: Evidence classification and candidate signals ready after **5.2**
-- [ ] **5.6** Milestone F: Discovery run and yield feedback suggestions ready after **6.2**
+- [x] **5.6** Milestone F: Discovery run and yield feedback suggestions ready after **6.2**
 - [ ] **5.7** Milestone G: Founder discovery package and compliance hardening ready after **7.2**
 - [ ] **5.8** Milestone H: Source Intelligence v2.3 complete after **8.2**
 
