@@ -5,6 +5,7 @@ import html
 import re
 import xml.etree.ElementTree as ET
 from typing import Any, List, Optional
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from .collection_scheduler import ScheduledCollectionItem
@@ -144,14 +145,25 @@ class RSSFeedCollector(BaseCollector):
         xml_text = self.fixture_xml
         collection_method = "rss_feed_fixture"
         live_network_used = False
+        collection_errors: List[dict[str, str]] = []
 
         if xml_text is None:
             if not self.allow_live_network or not scheduled_item.live_network_enabled:
                 xml_text = "<rss><channel></channel></rss>"
             else:
-                xml_text = self._fetch_live_payload(scheduled_item)
-                collection_method = "rss_feed"
-                live_network_used = True
+                feed_url = self._feed_url_for(scheduled_item)
+                if not feed_url:
+                    xml_text = "<rss><channel></channel></rss>"
+                    collection_errors.append(
+                        {
+                            "code": "rss_feed_url_missing",
+                            "error": "RSS live collection skipped because no valid http(s) feed URL was configured.",
+                        }
+                    )
+                else:
+                    xml_text = self._fetch_live_payload(feed_url)
+                    collection_method = "rss_feed"
+                    live_network_used = True
 
         evidence = parse_rss_feed(
             xml_text,
@@ -164,15 +176,22 @@ class RSSFeedCollector(BaseCollector):
             evidence=evidence,
             collector_name="rss_feed_collector",
             live_network_used=live_network_used,
+            collection_errors=collection_errors,
         )
         result.validate()
         return result
 
-    def _fetch_live_payload(self, scheduled_item: ScheduledCollectionItem) -> str:
-        url = _first_non_empty(self.feed_url, scheduled_item.query_text)
+    def _feed_url_for(self, scheduled_item: ScheduledCollectionItem) -> str:
+        for candidate in (self.feed_url, scheduled_item.query_text):
+            text = _first_non_empty(candidate)
+            if _is_valid_http_url(text):
+                return text
+        return ""
+
+    def _fetch_live_payload(self, url: str) -> str:
         request = Request(url, headers={"User-Agent": "OOS-source-intelligence-fixture-first"})
         with urlopen(request, timeout=self.timeout_seconds) as response:
-            return response.read().decode("utf-8")
+            return response.read().decode("utf-8", errors="replace")
 
 
 def _first_non_empty(*values: Any) -> str:
@@ -183,6 +202,11 @@ def _first_non_empty(*values: Any) -> str:
         if text:
             return text
     return ""
+
+
+def _is_valid_http_url(value: str) -> bool:
+    parts = urlsplit(str(value or "").strip())
+    return parts.scheme in {"http", "https"} and bool(parts.netloc)
 
 
 def _local_name(tag: str) -> str:

@@ -1,4 +1,5 @@
 import unittest
+import json
 from dataclasses import replace
 from unittest.mock import patch
 
@@ -234,6 +235,43 @@ class TestGitHubIssuesCollector(unittest.TestCase):
         self.assertTrue(result.evidence)
         self.assertFalse(result.live_network_used)
         self.assertTrue(all(item.collection_method == "github_issues_fixture" for item in result.evidence))
+
+    def test_live_fetch_decodes_utf8_without_mojibake(self) -> None:
+        item = replace(github_scheduled_item(max_results=1), live_network_enabled=True)
+        payload = {
+            "items": [
+                {
+                    "id": 999,
+                    "number": 9,
+                    "html_url": "https://github.com/example/repo/issues/9",
+                    "title": "Cash flow planning 🚀",
+                    "body": "Invoice tracker — manual checklist 📋 for bills.",
+                    "state": "open",
+                }
+            ]
+        }
+
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+        collector = GitHubIssuesCollector(allow_live_network=True)
+        with patch("oos.github_issues_collector.urlopen", return_value=Response()):
+            result = collector.collect(item)
+
+        text = f"{result.evidence[0].title} {result.evidence[0].body}"
+        self.assertIn("🚀", text)
+        self.assertIn("—", text)
+        self.assertIn("📋", text)
+        self.assertNotIn("рџ", text.lower())
+        self.assertNotIn("вЂ", text)
+        self.assertNotIn("Рџ", text)
 
 
 if __name__ == "__main__":

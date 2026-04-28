@@ -181,7 +181,7 @@ class GitHubIssuesCollector(BaseCollector):
             },
         )
         with urlopen(request, timeout=self.timeout_seconds) as response:
-            data = response.read().decode("utf-8")
+            data = response.read().decode("utf-8", errors="replace")
         payload = json.loads(data)
         if not isinstance(payload, dict):
             raise ValueError("GitHub Issues response must be a JSON object")

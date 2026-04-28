@@ -308,6 +308,46 @@ class TestStackExchangeAndRSSCollectors(unittest.TestCase):
         self.assertEqual(result.evidence, [])
         self.assertFalse(result.live_network_used)
 
+    def test_rss_search_text_query_is_skipped_not_fetched(self) -> None:
+        item = replace(
+            scheduled_item_for("rss_feeds"),
+            query_text='"accounting software" "spreadsheet"',
+            live_network_enabled=True,
+        )
+        collector = RSSFeedCollector(allow_live_network=True)
+
+        with patch.object(collector, "_fetch_live_payload", side_effect=AssertionError("network called")):
+            result = collector.collect(item)
+
+        self.assertEqual(result.evidence, [])
+        self.assertFalse(result.live_network_used)
+        self.assertEqual(result.collection_errors[0]["code"], "rss_feed_url_missing")
+        self.assertNotIn("unknown url type", result.collection_errors[0]["error"])
+
+    def test_rss_valid_query_url_uses_mocked_fetch(self) -> None:
+        item = replace(
+            scheduled_item_for("rss_feeds"),
+            query_text="https://feeds.example.test/finance.xml",
+            live_network_enabled=True,
+        )
+        collector = RSSFeedCollector(allow_live_network=True)
+
+        with patch.object(collector, "_fetch_live_payload", return_value=rss_fixture_xml()) as fetch:
+            result = collector.collect(item)
+
+        fetch.assert_called_once_with("https://feeds.example.test/finance.xml")
+        self.assertTrue(result.evidence)
+        self.assertTrue(result.live_network_used)
+
+    def test_rss_missing_feed_url_yields_nonfatal_skip(self) -> None:
+        item = replace(scheduled_item_for("rss_feeds"), live_network_enabled=True)
+        collector = RSSFeedCollector(allow_live_network=True)
+
+        result = collector.collect(item)
+
+        self.assertEqual(result.evidence, [])
+        self.assertEqual(result.collection_errors[0]["code"], "rss_feed_url_missing")
+
     def test_rss_rejects_unsupported_source_type_or_source_id(self) -> None:
         item = replace(scheduled_item_for("rss_feeds"), source_type="github_issues")
 

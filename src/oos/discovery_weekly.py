@@ -10,6 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from .candidate_signal_extractor import extract_candidate_signal
 from .evidence_classifier import classify_evidence, clean_evidence
+from .live_collection import collect_raw_evidence_for_topic
 from .meaning_loop_adapter import build_meaning_loop_dry_run, write_meaning_loop_dry_run_artifacts
 from .models import CandidateSignal, CleanedEvidence, EvidenceClassification, RawEvidence, model_from_dict, model_to_dict
 from .source_registry import default_topic_profiles
@@ -49,12 +50,44 @@ def run_discovery_weekly(
     run_id: str | None = None,
     input_raw_evidence: Path | None = None,
     include_meaning_loop_dry_run: bool = False,
+    use_collectors: bool = False,
+    allow_live_network: bool = False,
+    max_total_queries: int = 4,
+    max_queries_per_source: int = 2,
+    max_queries_per_topic: int | None = None,
+    max_results_per_query: int = 5,
+    source_ids: list[str] | None = None,
+    source_types: list[str] | None = None,
 ) -> DiscoveryRunResult:
     project_root = project_root.resolve()
     _require_active_topic(topic_id)
     resolved_run_id = _resolve_run_id(run_id)
-    evidence_path = _resolve_input_path(project_root=project_root, input_raw_evidence=input_raw_evidence)
-    raw_evidence = _load_raw_evidence(evidence_path)
+    if use_collectors:
+        collection_run = collect_raw_evidence_for_topic(
+            topic_id=topic_id,
+            allow_live_network=allow_live_network,
+            max_total_queries=max_total_queries,
+            max_queries_per_source=max_queries_per_source,
+            max_queries_per_topic=max_queries_per_topic,
+            max_results_per_query=max_results_per_query,
+            allowed_source_ids=set(source_ids or []),
+            allowed_source_types=set(source_types or []),
+        )
+        raw_evidence = collection_run.raw_evidence
+        collection_metadata = collection_run.collection_metadata
+    else:
+        evidence_path = _resolve_input_path(project_root=project_root, input_raw_evidence=input_raw_evidence)
+        raw_evidence = _load_raw_evidence(evidence_path)
+        collection_metadata = {
+            "collection_mode": "fixture",
+            "live_network_enabled": False,
+            "query_plan_count": 0,
+            "scheduled_query_count": 0,
+            "collectors_attempted": [],
+            "collectors_succeeded": [],
+            "collectors_failed": [],
+            "collection_errors": [],
+        }
     topic_evidence = [evidence for evidence in raw_evidence if evidence.topic_id == topic_id]
 
     cleaned_items = [clean_evidence(evidence) for evidence in topic_evidence]
@@ -110,6 +143,7 @@ def run_discovery_weekly(
         classifications=classifications,
         candidate_signals=candidate_signals,
         artifact_paths=artifact_paths,
+        collection_metadata=collection_metadata,
     )
     _write_json(summary_json_path, summary)
     summary_md_path.write_text(_summary_markdown(summary, candidate_signals), encoding="utf-8")
@@ -199,6 +233,25 @@ def rank_candidate_signals(candidate_signals: Iterable[CandidateSignal]) -> List
     )
 
 
+def deduplicate_ranked_candidate_signals(candidate_signals: Iterable[CandidateSignal]) -> List[CandidateSignal]:
+    deduped: Dict[str, CandidateSignal] = {}
+    for signal in rank_candidate_signals(candidate_signals):
+        key = _candidate_signal_dedup_key(signal)
+        if key not in deduped:
+            deduped[key] = signal
+    return list(deduped.values())
+
+
+def _candidate_signal_dedup_key(signal: CandidateSignal) -> str:
+    source_url = signal.source_url.strip().lower()
+    if source_url:
+        return f"url:{signal.source_type}:{source_url}"
+    if signal.evidence_id.strip():
+        return f"evidence:{signal.evidence_id.strip().lower()}"
+    summary = re.sub(r"[^a-z0-9]+", " ", signal.pain_summary.lower()).strip()
+    return f"summary:{signal.source_type}:{summary}"
+
+
 def _build_summary(
     *,
     run_id: str,
@@ -208,16 +261,24 @@ def _build_summary(
     classifications: List[EvidenceClassification],
     candidate_signals: List[CandidateSignal],
     artifact_paths: Dict[str, Path],
+    collection_metadata: Dict[str, Any],
 ) -> Dict[str, Any]:
     classification_counts = Counter(item.classification for item in classifications)
     signal_counts = Counter(item.signal_type for item in candidate_signals)
     source_type_counts = Counter(item.source_type for item in raw_evidence)
     signal_source_counts = Counter(item.source_type for item in candidate_signals)
-    return {
+    summary = {
         "run_id": run_id,
         "topic_id": topic_id,
         "mode": "mvp_cli_lite_offline",
-        "live_network_enabled": False,
+        "collection_mode": collection_metadata.get("collection_mode", "fixture"),
+        "live_network_enabled": bool(collection_metadata.get("live_network_enabled", False)),
+        "query_plan_count": collection_metadata.get("query_plan_count", 0),
+        "scheduled_query_count": collection_metadata.get("scheduled_query_count", 0),
+        "collectors_attempted": collection_metadata.get("collectors_attempted", []),
+        "collectors_succeeded": collection_metadata.get("collectors_succeeded", []),
+        "collectors_failed": collection_metadata.get("collectors_failed", []),
+        "collection_errors": collection_metadata.get("collection_errors", []),
         "raw_evidence_count": len(raw_evidence),
         "cleaned_evidence_count": len(cleaned_items),
         "classification_count": len(classifications),
@@ -233,8 +294,21 @@ def _build_summary(
             "MVP weekly discovery CLI lite.",
             "Full 6.1 Source Yield Analytics is deferred.",
             "No live network, API, or LLM calls are made.",
+            "Live network calls require explicit collector mode and --allow-live-network.",
+            "No live LLM/API calls are made.",
         ],
     }
+    for key in (
+        "source_ids_filter",
+        "source_types_filter",
+        "max_total_queries",
+        "max_queries_per_source",
+        "max_queries_per_topic",
+        "max_results_per_query",
+    ):
+        if key in collection_metadata:
+            summary[key] = collection_metadata[key]
+    return summary
 
 
 def _build_founder_package(
@@ -243,13 +317,16 @@ def _build_founder_package(
     candidate_signals: List[CandidateSignal],
 ) -> Dict[str, Any]:
     ranked_signals = rank_candidate_signals(candidate_signals)
-    top_signals = [signal for signal in ranked_signals if signal.signal_type != "needs_human_review"]
+    deduped_ranked_signals = deduplicate_ranked_candidate_signals(candidate_signals)
+    top_signals = [signal for signal in deduped_ranked_signals if signal.signal_type != "needs_human_review"]
     review_signals = [signal for signal in ranked_signals if signal.signal_type == "needs_human_review"]
     return {
         "run_id": summary["run_id"],
         "topic_id": summary["topic_id"],
         "generated_at": "deterministic_mvp_lite",
         "mode": "founder_discovery_package_lite",
+        "collection_mode": summary["collection_mode"],
+        "live_network_enabled": summary["live_network_enabled"],
         "raw_evidence_count": summary["raw_evidence_count"],
         "candidate_signal_count": summary["candidate_signal_count"],
         "needs_human_review_count": summary["needs_human_review_count"],
@@ -261,6 +338,7 @@ def _build_founder_package(
         "needs_human_review_signals": [_signal_package_item(signal) for signal in review_signals],
         "recommended_founder_actions": list(RECOMMENDED_FOUNDER_ACTIONS),
         "artifact_paths": summary["artifact_paths"],
+        "collection_errors": summary["collection_errors"],
         "limitations": [
             "MVP package lite.",
             "Rule-based only.",
@@ -296,6 +374,8 @@ def _summary_markdown(summary: Dict[str, Any], candidate_signals: List[Candidate
         f"- Run ID: `{summary['run_id']}`",
         f"- Topic: `{summary['topic_id']}`",
         "- Mode: `mvp_cli_lite_offline`",
+        f"- Collection mode: `{summary['collection_mode']}`",
+        f"- Live network enabled: `{str(summary['live_network_enabled']).lower()}`",
         "- Note: This is the compact run summary; Founder Discovery Package lite is generated separately.",
         "",
         "## Counts",
@@ -306,6 +386,10 @@ def _summary_markdown(summary: Dict[str, Any], candidate_signals: List[Candidate
         f"- Candidate signals: `{summary['candidate_signal_count']}`",
         f"- Needs human review: `{summary['needs_human_review_count']}`",
         f"- Noise: `{summary['noise_count']}`",
+        f"- Query plans: `{summary['query_plan_count']}`",
+        f"- Scheduled queries: `{summary['scheduled_query_count']}`",
+        f"- Collectors attempted: `{', '.join(summary['collectors_attempted']) or 'none'}`",
+        f"- Collection errors: `{len(summary['collection_errors'])}`",
         "",
         "## Top Candidate Signals",
         "",
@@ -327,7 +411,7 @@ def _summary_markdown(summary: Dict[str, Any], candidate_signals: List[Candidate
             "",
             "## Safety",
             "",
-            "- Live network disabled.",
+            "- Live network requires explicit collector mode and --allow-live-network.",
             "- No live LLM/API calls.",
             "- Founder Discovery Package lite is generated as a separate artifact.",
         ]
@@ -354,6 +438,8 @@ def _founder_package_markdown(package: Dict[str, Any]) -> str:
         f"- Run ID: `{package['run_id']}`",
         f"- Topic ID: `{package['topic_id']}`",
         f"- Generated at: `{package['generated_at']}`",
+        f"- Collection mode: `{package['collection_mode']}`",
+        f"- Live network enabled: `{str(package['live_network_enabled']).lower()}`",
         f"- Source coverage: {_format_counts(source_counts)}",
         "- Artifact paths:",
     ]

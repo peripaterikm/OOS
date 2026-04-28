@@ -11,8 +11,15 @@ from .evidence_classifier import (
     PAIN_SIGNAL_CANDIDATE,
     TREND_TRIGGER_CANDIDATE,
     WORKAROUND_SIGNAL_CANDIDATE,
+    anti_marketing_penalty,
+    buying_indicator_score,
     classify_raw_evidence,
     clean_evidence,
+    pain_indicator_score,
+    topic_relevance_score,
+    urgency_indicator_score,
+    user_pain_marker_score,
+    workaround_indicator_score,
 )
 from .models import CandidateSignal, CleanedEvidence, EvidenceClassification, RawEvidence
 
@@ -38,6 +45,7 @@ MEASUREMENT_METHODS = {
 
 _SAFE_ID_RE = re.compile(r"[^A-Za-z0-9_.-]+")
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+_MARKDOWN_SUMMARY_RE = re.compile(r"^\s*(?:#{1,6}\s+|\*\*+|```+|[-*_]{3,}\s*)+")
 _WORKAROUND_TERMS = (
     "workaround",
     "manual",
@@ -162,8 +170,37 @@ def _pain_summary(cleaned: CleanedEvidence) -> str:
     content = cleaned.normalized_body or cleaned.normalized_title
     if not content:
         return "unknown"
-    first_sentence = _SENTENCE_SPLIT_RE.split(content, maxsplit=1)[0].strip()
-    summary = first_sentence or content
+    jtbd_match = re.search(r"\bWhen\s+[^.!?]+[.!?]?", content)
+    if jtbd_match:
+        summary = _clean_summary_sentence(jtbd_match.group(0))
+        if len(summary) <= 180:
+            return summary
+        return f"{summary[:177].rstrip()}..."
+    sentences = [_clean_summary_sentence(sentence) for sentence in _SENTENCE_SPLIT_RE.split(content)]
+    preferred_terms = (
+        "jtbd",
+        "when ",
+        "i want",
+        "manual",
+        "spreadsheet",
+        "invoice",
+        "cash flow",
+        "cashflow",
+        "payment",
+        "bill",
+        "bookkeeping",
+        "accounting",
+        "reporting",
+        "workaround",
+    )
+    summary = ""
+    for sentence in sentences:
+        lowered = sentence.lower()
+        if sentence and any(term in lowered for term in preferred_terms):
+            summary = sentence
+            break
+    if not summary:
+        summary = next((sentence for sentence in sentences if sentence), content)
     if len(summary) <= 180:
         return summary
     return f"{summary[:177].rstrip()}..."
@@ -219,10 +256,32 @@ def _urgency_hint(classification: str, text: str) -> str:
 
 def _confidence(classification: EvidenceClassification, text: str) -> float:
     base = float(classification.confidence)
+    relevance = topic_relevance_score(text, classification.topic_id)
+    marketing = anti_marketing_penalty(text)
+    genuine_pain = user_pain_marker_score(text)
     if classification.classification == NEEDS_HUMAN_REVIEW:
-        return round(max(0.2, min(0.45, base * 0.75)), 2)
-    strength_bonus = 0.05 if text else 0.0
-    return round(min(0.95, base * 0.9 + strength_bonus), 2)
+        score = base * 0.65 + relevance * 0.12 + genuine_pain * 0.08 - marketing * 0.12
+        return round(max(0.25, min(0.4, score)), 2)
+    pain_score = pain_indicator_score(text)
+    workaround_score = workaround_indicator_score(text)
+    score = base * 0.55
+    score += relevance * 0.32
+    score += pain_score * 0.08
+    score += workaround_score * 0.12
+    score += buying_indicator_score(text) * 0.05
+    score += urgency_indicator_score(text) * 0.04
+    score += genuine_pain * 0.1
+    score -= marketing * 0.22
+    if relevance >= 0.45 and (pain_score >= 0.2 or workaround_score >= 0.2):
+        score += 0.08
+    if classification.source_type in {"github_issues", "stack_exchange"}:
+        score += 0.02
+    return round(max(0.1, min(0.95, score)), 2)
+
+
+def _clean_summary_sentence(sentence: str) -> str:
+    summary = _MARKDOWN_SUMMARY_RE.sub("", sentence).strip()
+    return summary.strip("*`_ -")
 
 
 def _require_matching_trace(cleaned: CleanedEvidence, classification: EvidenceClassification) -> None:

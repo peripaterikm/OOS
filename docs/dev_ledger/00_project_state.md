@@ -1,24 +1,24 @@
-﻿# Dev Ledger Project State
+# Dev Ledger Project State
 
 ## Current Roadmap
 
 - Roadmap v2.2 status: complete.
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
 - Inactive/archive roadmap files: older roadmap drafts, `docs/roadmaps/OOS_roadmap_v2_2_ai_meaning_layer_checklist_final.md`, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `MVP slice complete / next deferred item 6.1`
-- Completed: `13 / 16`
-- Remaining: `3 / 16`
-- Latest completed roadmap item: Roadmap v2.3 `8.1-lite` - Meaning-loop dry run
-- Next planned roadmap item: Roadmap v2.3 `6.1` - full Source Yield Analytics, unless the owner requests the MVP GitHub checkpoint first
+- Current item: `1.2`
+- Completed: `1 / 17`
+- Remaining: `16 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `1.1` - Live collection relevance hardening
+- Next planned roadmap item: Roadmap v2.4 `1.2` - Live quality acceptance smoke runs
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/source-intelligence-mvp-discovery-loop`
+- Current branch: `feat/source-intelligence-live-collection-mode`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -51,5 +51,8 @@
 - Roadmap v2.3 item 6.2-lite added an offline weekly discovery CLI that loads local RawEvidence fixtures, runs cleaning, classification, and CandidateSignal extraction, and writes discovery run artifacts plus source-yield-lite counters without internet/API or live LLM/API calls during validation.
 - Roadmap v2.3 item 7.1-lite added a founder-facing discovery package JSON and Markdown artifact with deterministic ranking, signal traceability, recommended founder actions, and MVP limitations without automating founder decisions or making internet/API or live LLM/API calls during validation.
 - Roadmap v2.3 item 8.1-lite added an adapter-only meaning-loop dry run for Source Intelligence CandidateSignals, writing `meaning_loop_dry_run.json` and `meaning_loop_dry_run.md` with compatibility status, adapted records, and candidate-signal-to-source traceability without invoking live LLM/API calls.
+- Source Intelligence MVP+1 live collection mode implemented locally on `feat/source-intelligence-live-collection-mode`, adding explicit `--use-collectors` plus `--allow-live-network` gating, bounded collector routing for implemented Phase B collectors, collector-mode reporting, and mocked validation with no live internet/API calls.
 - Full Roadmap v2.3 item 6.1 Source Yield Analytics and item 7.2 Traceability/compliance hardening are still deferred for the MVP slice; item 8.2 completion checkpoint is not yet complete.
-- GitHub push / PR remains deferred until the MVP Source Intelligence slice is working and explicitly requested.
+- Roadmap v2.4 item 1.1 hardened live Source Intelligence relevance with HTML/entity cleanup, UTF-8 decode hardening, ai_cfo_smb relevance gating, anti-marketing downgrades, non-flat deterministic scoring, finance-specific HN/GitHub query templates, RSS feed URL skips, and mocked validation without live internet/API or live LLM/API calls.
+- Roadmap v2.4 item 1.1b follow-up hardened founder-package ranking and deduplication, repaired additional mojibake fragments, downgraded GitHub install/tutorial/generic finance copy, added explicit noise coverage for obvious junk, and preserved roadmap counters at current item 1.2.
+- GitHub push / PR remains deferred until the owner approves after manual live smoke.

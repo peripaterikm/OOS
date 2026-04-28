@@ -196,6 +196,31 @@ class TestCandidateSignalExtractor(unittest.TestCase):
 
         self.assertEqual(signal.current_workaround, "We use a manual spreadsheet as a temporary solution.")
 
+    def test_extracted_summary_removes_html_entities_and_tags(self) -> None:
+        cleaned = clean_evidence(
+            raw_evidence(
+                body="Cash flow doesn&#x27;t work<p>Manual spreadsheet workaround for invoice status.",
+            )
+        )
+        signal = extract_candidate_signal(cleaned, classification_for(cleaned, "pain_signal_candidate"))
+
+        self.assertNotIn("&#x27;", signal.pain_summary)
+        self.assertNotIn("<p>", signal.pain_summary)
+        self.assertIn("doesn't work", signal.pain_summary)
+
+    def test_markdown_heading_does_not_dominate_summary_when_jtbd_sentence_exists(self) -> None:
+        cleaned = clean_evidence(
+            raw_evidence(
+                body=(
+                    "# Huge Product Pitch\n\n"
+                    "When invoice payments arrive irregularly, I want to plan bill due dates from expected cash flow."
+                ),
+            )
+        )
+        signal = extract_candidate_signal(cleaned, classification_for(cleaned, "pain_signal_candidate"))
+
+        self.assertTrue(signal.pain_summary.startswith("When invoice payments"))
+
     def test_buying_intent_hint_detects_buying_text(self) -> None:
         signal = signal_for("pain_signal_candidate", body="This is painful and we need a tool.")
 
@@ -205,6 +230,81 @@ class TestCandidateSignalExtractor(unittest.TestCase):
         signal = signal_for("pain_signal_candidate", body="We are blocked because this critical export is broken.")
 
         self.assertEqual(signal.urgency_hint, "high")
+
+    def test_invoice_cycle_signal_scores_higher_than_marketing_content(self) -> None:
+        strong_cleaned = clean_evidence(
+            raw_evidence(
+                evidence_id="raw_invoice_cycle",
+                body=(
+                    "Freelancer can't plan bills because invoice payment cycles are irregular. "
+                    "Manual spreadsheet tracks invoice dates, payment status, and due dates."
+                ),
+            )
+        )
+        marketing_cleaned = clean_evidence(
+            raw_evidence(
+                evidence_id="raw_marketing",
+                body="Executive Summary Product pitch Market Context & Zone Analysis Priority: P1 Effort: high.",
+            )
+        )
+
+        strong = extract_candidate_signal(strong_cleaned, classification_for(strong_cleaned, "pain_signal_candidate"))
+        marketing = extract_candidate_signal(
+            marketing_cleaned,
+            classification_for(marketing_cleaned, "needs_human_review", confidence=0.35),
+        )
+
+        self.assertGreater(strong.confidence, marketing.confidence)
+        self.assertGreaterEqual(strong.confidence, 0.75)
+        self.assertLessEqual(marketing.confidence, 0.35)
+
+    def test_generic_hn_small_business_scores_lower_than_finance_pain(self) -> None:
+        generic = signal_for(
+            "needs_human_review",
+            source_type="hacker_news_algolia",
+            body="Small business owners can't compete with large corporations.",
+        )
+        finance = signal_for(
+            "pain_signal_candidate",
+            source_type="hacker_news_algolia",
+            body="Cash flow reporting is frustrating and the workaround is a manual spreadsheet.",
+        )
+
+        self.assertLess(generic.confidence, finance.confidence)
+        self.assertLessEqual(generic.confidence, 0.4)
+
+    def test_mixed_fixture_confidence_values_are_not_flat(self) -> None:
+        bodies = [
+            "Invoice payment cycles are broken and manual spreadsheets track due dates.",
+            "Cash flow reporting is hard.",
+            "Teams discuss finance reporting.",
+        ]
+        classifications = ["pain_signal_candidate", "pain_signal_candidate", "needs_human_review"]
+        signals = [
+            signal_for(classification, body=body)
+            for classification, body in zip(classifications, bodies)
+        ]
+
+        self.assertGreater(len({signal.confidence for signal in signals}), 1)
+
+    def test_user_pain_scores_above_installation_tutorial(self) -> None:
+        pain = signal_for(
+            "pain_signal_candidate",
+            body=(
+                "Describe the problem: we would need to maintain a separate spreadsheet "
+                "for invoice reconciliation and payment status."
+            ),
+        )
+        tutorial_cleaned = clean_evidence(
+            raw_evidence(body="When the installation process is over, the computer will restart and QuickBooks will launch.")
+        )
+        tutorial = extract_candidate_signal(
+            tutorial_cleaned,
+            classification_for(tutorial_cleaned, "needs_human_review", confidence=0.35),
+        )
+
+        self.assertGreater(pain.confidence, tutorial.confidence)
+        self.assertLessEqual(tutorial.confidence, 0.35)
 
     def test_candidate_signal_artifact_roundtrip(self) -> None:
         signal = signal_for("pain_signal_candidate")
