@@ -9,16 +9,16 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `4.3` - Stack Exchange and RSS/regulatory collectors
-- Completed: `7 / 16`
-- Remaining: `9 / 16`
-- Latest completed roadmap item: Roadmap v2.3 `4.2` - GitHub Issues collector
-- Next planned roadmap item: Roadmap v2.3 `4.3` - Stack Exchange and RSS/regulatory collectors
+- Current item: `5.1` - Evidence cleaner and classifier
+- Completed: `8 / 16`
+- Remaining: `8 / 16`
+- Latest completed roadmap item: Roadmap v2.3 `4.3` - Stack Exchange and RSS/regulatory collectors
+- Next planned roadmap item: Roadmap v2.3 `5.1` - Evidence cleaner and classifier
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/4-2-github-issues-collector`
+- Current branch: `feat/4-3-stackexchange-rss-collectors`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR can be batched at a phase boundary when the local history is coherent.
 - Do not push partial or unvalidated roadmap work.
@@ -43,3 +43,4 @@
 - Roadmap v2.3 item 4.1 added the Hacker News Algolia collector adapter with fixture-first RawEvidence mapping, default-disabled live networking, HN item URL traceability, and author/context privacy without internet/API calls during validation or live LLM/API calls.
 - Reddit source policy amendment reclassified Reddit as a Phase C controlled internal research source that is enabled by default after collector implementation, while Query Planner still skips Reddit until `collector_available=true`; roadmap item, completed, and remaining counters were not advanced by this policy-only amendment.
 - Roadmap v2.3 item 4.2 added the GitHub Issues collector adapter with fixture-first RawEvidence mapping, default-disabled live networking, issue URL traceability, safe metadata preservation, pull request filtering, and author/context privacy without internet/API calls during validation or live LLM/API calls.
+- Roadmap v2.3 item 4.3 added Stack Exchange and RSS/regulatory collector adapters with fixture-first RawEvidence mapping, default-disabled live networking, source URL traceability, safe metadata preservation, and author/context privacy without internet/API calls during validation or live LLM/API calls.

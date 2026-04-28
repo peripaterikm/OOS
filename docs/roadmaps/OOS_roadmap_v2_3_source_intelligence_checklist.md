@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **4.3**
+- [ ] **0.2.2** Current item: **5.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **7 / 16**
-- [ ] **0.2.5** Remaining: **9 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **8 / 16**
+- [ ] **0.2.5** Remaining: **8 / 16**
 
 ---
 
@@ -300,7 +300,7 @@ Collect pain/workaround/feature request evidence from GitHub Issues.
 ---
 
 ## 4.3. Stack Exchange and RSS/regulatory collectors
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 4
 
 ### Goal
@@ -322,10 +322,10 @@ Add the second public API collector and simple RSS collector.
 
 ### Acceptance
 
-- [ ] Stack Exchange collector disabled or low-limit-safe without key.
-- [ ] RSS collector parses fixture feed.
-- [ ] Raw evidence `source_url` preserved.
-- [ ] No secrets committed.
+- [x] Stack Exchange collector disabled or low-limit-safe without key.
+- [x] RSS collector parses fixture feed.
+- [x] Raw evidence `source_url` preserved.
+- [x] No secrets committed.
 
 ---
 
