@@ -4,7 +4,9 @@ from tempfile import TemporaryDirectory
 
 from oos.artifact_store import ArtifactStore
 from oos.models import (
+    CleanedEvidence,
     CouncilDecision,
+    EvidenceClassification,
     Evidence,
     Experiment,
     FounderReviewDecision,
@@ -52,6 +54,46 @@ class TestArtifactStoreRoundTrip(unittest.TestCase):
             )
             store.write_model(raw_evidence)
             self.assertEqual(store.read_model(RawEvidence, "raw_ev_1"), raw_evidence)
+
+            cleaned = CleanedEvidence(
+                evidence_id="raw_ev_1",
+                source_id="hacker_news_algolia",
+                source_type="public_api",
+                source_url="https://news.ycombinator.com/item?id=123",
+                topic_id="ai_cfo_smb",
+                query_kind="pain_search",
+                title="Manual finance workflow",
+                body="SMB owner describes copying bank exports into spreadsheets every week.",
+                normalized_title="Manual finance workflow",
+                normalized_body="SMB owner describes copying bank exports into spreadsheets every week.",
+                normalized_url="https://news.ycombinator.com/item?id=123",
+                normalized_content_hash=compute_raw_evidence_content_hash(
+                    title="Manual finance workflow",
+                    body="SMB owner describes copying bank exports into spreadsheets every week.",
+                ),
+                language="en",
+                original_content_hash=raw_evidence.content_hash,
+                cleaning_notes=["whitespace_normalized", "url_normalized"],
+            )
+            store.write_model(cleaned)
+            self.assertEqual(store.read_model(CleanedEvidence, "raw_ev_1"), cleaned)
+
+            classification = EvidenceClassification(
+                evidence_id="raw_ev_1",
+                source_id="hacker_news_algolia",
+                source_type="public_api",
+                source_url="https://news.ycombinator.com/item?id=123",
+                topic_id="ai_cfo_smb",
+                query_kind="pain_search",
+                classification="workaround_signal_candidate",
+                confidence=0.75,
+                matched_rules=["workaround_signal_candidate:spreadsheet"],
+                reason="Matched deterministic workaround keyword rule.",
+                requires_human_review=False,
+                is_noise=False,
+            )
+            store.write_model(classification)
+            self.assertEqual(store.read_model(EvidenceClassification, "raw_ev_1"), classification)
 
             signal = Signal(
                 id="sig_1",

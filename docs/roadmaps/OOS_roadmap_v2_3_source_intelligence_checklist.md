@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **5.1**
+- [ ] **0.2.2** Current item: **5.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **8 / 16**
-- [ ] **0.2.5** Remaining: **8 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **9 / 16**
+- [ ] **0.2.5** Remaining: **7 / 16**
 
 ---
 
@@ -330,7 +330,7 @@ Add the second public API collector and simple RSS collector.
 ---
 
 ## 5.1. Evidence cleaner and classifier
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 5
 
 ### Goal
@@ -356,9 +356,9 @@ Normalize raw evidence and classify whether it may contain useful market signals
 
 ### Acceptance
 
-- [ ] HN/GitHub ambiguity floor tested.
-- [ ] Obvious spam/noise still can be noise.
-- [ ] No source evidence is deleted by classifier.
+- [x] HN/GitHub ambiguity floor tested.
+- [x] Obvious spam/noise still can be noise.
+- [x] No source evidence is deleted by classifier.
 
 ---
 
