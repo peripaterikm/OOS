@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **7.1**
+- [ ] **0.2.2** Current item: **8.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **11 / 16**
-- [ ] **0.2.5** Remaining: **5 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **12 / 16**
+- [ ] **0.2.5** Remaining: **4 / 16**
 
 ---
 
@@ -465,8 +465,10 @@ python -m oos.cli run-discovery-weekly `
 ---
 
 ## 7.1. Founder Discovery Package
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 7
+
+**MVP overlay note:** Completed as Founder Discovery Package lite. Full traceability/compliance hardening remains deferred to `7.2`.
 
 ### Goal
 
@@ -485,15 +487,17 @@ Produce a reviewable founder-facing discovery package.
 
 ### Acceptance
 
-- [ ] Founder package is generated from fixture discovery run.
-- [ ] Founder decisions are not automated.
-- [ ] Suggested priority updates require founder approval.
+- [x] Founder package is generated from fixture discovery run.
+- [x] Founder decisions are not automated.
+- [x] Suggested priority updates require founder approval.
 
 ---
 
 ## 7.2. Traceability, regression, and compliance hardening
 **Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
 **Phase:** 7
+
+**MVP overlay note:** Full `7.2` Traceability/compliance hardening is deferred by the MVP execution overlay. Next MVP target is `8.1-lite` meaning-loop dry run.
 
 ### Goal
 

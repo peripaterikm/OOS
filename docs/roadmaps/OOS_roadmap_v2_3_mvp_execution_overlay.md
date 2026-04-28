@@ -43,8 +43,10 @@ RawEvidence
 - `5.1` Evidence cleaner and classifier is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
 - `5.2` Evidence-to-signal extraction and scoring is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
 - `6.2-lite` weekly discovery CLI is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
-- Next MVP target is `7.1` Founder Discovery Package lite.
+- `7.1-lite` Founder Discovery Package is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
+- Next MVP target is `8.1-lite` meaning-loop dry run.
 - Full `6.1` Source Yield Analytics remains deferred until after the MVP loop can run end to end.
+- Full `7.2` Traceability/compliance hardening remains deferred until after the MVP loop can run end to end.
 
 ## Local-Only Workflow
 

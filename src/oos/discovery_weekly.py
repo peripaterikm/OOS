@@ -16,6 +16,22 @@ from .source_registry import default_topic_profiles
 
 DEFAULT_RAW_EVIDENCE_FIXTURE = Path("examples") / "source_intelligence_mvp" / "raw_evidence_seed.json"
 
+SIGNAL_TYPE_RANK = {
+    "buying_intent": 0,
+    "pain_signal": 1,
+    "workaround": 2,
+    "competitor_weakness": 3,
+    "trend_trigger": 4,
+    "needs_human_review": 5,
+}
+
+RECOMMENDED_FOUNDER_ACTIONS = [
+    "Review top candidate signals and open the linked source URLs for the highest-confidence items.",
+    "Mark promising signals as advance, park, or kill in a future founder review flow.",
+    "Use the strongest signals as input for opportunity framing once meaning-loop integration is enabled.",
+    "Treat needs-human-review signals as a queue for quick founder judgment, not as automated decisions.",
+]
+
 
 @dataclass(frozen=True)
 class DiscoveryRunResult:
@@ -74,6 +90,10 @@ def run_discovery_weekly(
     summary_md_path = run_dir / "discovery_run_summary.md"
     artifact_paths["discovery_run_summary_json"] = summary_json_path
     artifact_paths["discovery_run_summary_md"] = summary_md_path
+    founder_package_json_path = run_dir / "founder_discovery_package.json"
+    founder_package_md_path = run_dir / "founder_discovery_package.md"
+    artifact_paths["founder_discovery_package_json"] = founder_package_json_path
+    artifact_paths["founder_discovery_package_md"] = founder_package_md_path
 
     summary = _build_summary(
         run_id=resolved_run_id,
@@ -86,6 +106,9 @@ def run_discovery_weekly(
     )
     _write_json(summary_json_path, summary)
     summary_md_path.write_text(_summary_markdown(summary, candidate_signals), encoding="utf-8")
+    founder_package = _build_founder_package(summary=summary, candidate_signals=candidate_signals)
+    _write_json(founder_package_json_path, founder_package)
+    founder_package_md_path.write_text(_founder_package_markdown(founder_package), encoding="utf-8")
 
     return DiscoveryRunResult(
         run_id=resolved_run_id,
@@ -146,6 +169,17 @@ def _extract_signals(
     return signals
 
 
+def rank_candidate_signals(candidate_signals: Iterable[CandidateSignal]) -> List[CandidateSignal]:
+    return sorted(
+        candidate_signals,
+        key=lambda signal: (
+            -float(signal.confidence),
+            SIGNAL_TYPE_RANK.get(signal.signal_type, 99),
+            signal.signal_id,
+        ),
+    )
+
+
 def _build_summary(
     *,
     run_id: str,
@@ -184,6 +218,58 @@ def _build_summary(
     }
 
 
+def _build_founder_package(
+    *,
+    summary: Dict[str, Any],
+    candidate_signals: List[CandidateSignal],
+) -> Dict[str, Any]:
+    ranked_signals = rank_candidate_signals(candidate_signals)
+    top_signals = [signal for signal in ranked_signals if signal.signal_type != "needs_human_review"]
+    review_signals = [signal for signal in ranked_signals if signal.signal_type == "needs_human_review"]
+    return {
+        "run_id": summary["run_id"],
+        "topic_id": summary["topic_id"],
+        "generated_at": "deterministic_mvp_lite",
+        "mode": "founder_discovery_package_lite",
+        "raw_evidence_count": summary["raw_evidence_count"],
+        "candidate_signal_count": summary["candidate_signal_count"],
+        "needs_human_review_count": summary["needs_human_review_count"],
+        "noise_count": summary["noise_count"],
+        "counts_by_source_type": summary["counts_by_source_type"],
+        "counts_by_classification": summary["counts_by_classification"],
+        "counts_by_signal_type": summary["counts_by_signal_type"],
+        "top_candidate_signals": [_signal_package_item(signal) for signal in top_signals[:10]],
+        "needs_human_review_signals": [_signal_package_item(signal) for signal in review_signals],
+        "recommended_founder_actions": list(RECOMMENDED_FOUNDER_ACTIONS),
+        "artifact_paths": summary["artifact_paths"],
+        "limitations": [
+            "MVP package lite.",
+            "Rule-based only.",
+            "No live LLM/API calls.",
+            "No Reddit collector yet.",
+            "No full source yield analytics yet.",
+            "No final 7.2 traceability/compliance hardening yet.",
+        ],
+    }
+
+
+def _signal_package_item(signal: CandidateSignal) -> Dict[str, Any]:
+    return {
+        "signal_id": signal.signal_id,
+        "signal_type": signal.signal_type,
+        "source_type": signal.source_type,
+        "source_url": signal.source_url,
+        "pain_summary": signal.pain_summary,
+        "target_user": signal.target_user,
+        "current_workaround": signal.current_workaround,
+        "buying_intent_hint": signal.buying_intent_hint,
+        "urgency_hint": signal.urgency_hint,
+        "confidence": signal.confidence,
+        "evidence_id": signal.evidence_id,
+        "query_kind": signal.query_kind,
+    }
+
+
 def _summary_markdown(summary: Dict[str, Any], candidate_signals: List[CandidateSignal]) -> str:
     lines = [
         "# Discovery Run Summary - MVP CLI Lite",
@@ -191,7 +277,7 @@ def _summary_markdown(summary: Dict[str, Any], candidate_signals: List[Candidate
         f"- Run ID: `{summary['run_id']}`",
         f"- Topic: `{summary['topic_id']}`",
         "- Mode: `mvp_cli_lite_offline`",
-        "- Note: This is MVP CLI lite, not the final founder discovery package.",
+        "- Note: This is the compact run summary; Founder Discovery Package lite is generated separately.",
         "",
         "## Counts",
         "",
@@ -224,10 +310,127 @@ def _summary_markdown(summary: Dict[str, Any], candidate_signals: List[Candidate
             "",
             "- Live network disabled.",
             "- No live LLM/API calls.",
-            "- Full founder discovery package is not generated by this lite command.",
+            "- Founder Discovery Package lite is generated as a separate artifact.",
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _founder_package_markdown(package: Dict[str, Any]) -> str:
+    source_counts = package["counts_by_source_type"]
+    classification_counts = package["counts_by_classification"]
+    signal_counts = package["counts_by_signal_type"]
+    lines = [
+        "# Founder Discovery Package",
+        "",
+        "## Executive summary",
+        "",
+        (
+            f"This MVP package processed `{package['raw_evidence_count']}` raw evidence items "
+            f"and surfaced `{package['candidate_signal_count']}` candidate signals for founder review."
+        ),
+        "",
+        "## Run context",
+        "",
+        f"- Run ID: `{package['run_id']}`",
+        f"- Topic ID: `{package['topic_id']}`",
+        f"- Generated at: `{package['generated_at']}`",
+        f"- Source coverage: {_format_counts(source_counts)}",
+        "- Artifact paths:",
+    ]
+    for name, path in sorted(package["artifact_paths"].items()):
+        lines.append(f"  - `{name}`: `{path}`")
+
+    lines.extend(
+        [
+            "",
+            "## Signal overview",
+            "",
+            f"- Classifications: {_format_counts(classification_counts)}",
+            f"- Signal types: {_format_counts(signal_counts)}",
+            f"- Needs human review: `{package['needs_human_review_count']}`",
+            f"- Noise: `{package['noise_count']}`",
+            "",
+            "## Top candidate signals",
+            "",
+        ]
+    )
+    if package["top_candidate_signals"]:
+        lines.extend(
+            [
+                "| Signal | Confidence | Summary | Source | Buying intent | Urgency | Evidence |",
+                "| --- | ---: | --- | --- | --- | --- | --- |",
+            ]
+        )
+        for signal in package["top_candidate_signals"]:
+            lines.append(
+                "| "
+                f"`{signal['signal_type']}` | "
+                f"`{signal['confidence']}` | "
+                f"{_md_cell(signal['pain_summary'])} | "
+                f"{_md_cell(signal['source_type'])} / {signal['source_url']} | "
+                f"`{signal['buying_intent_hint']}` | "
+                f"`{signal['urgency_hint']}` | "
+                f"`{signal['evidence_id']}` |"
+            )
+    else:
+        lines.append("- No candidate signals extracted.")
+
+    lines.extend(
+        [
+            "",
+            "## Needs human review",
+            "",
+        ]
+    )
+    if package["needs_human_review_signals"]:
+        for signal in package["needs_human_review_signals"]:
+            lines.extend(
+                [
+                    f"- `{signal['signal_id']}`",
+                    f"  - Summary: {signal['pain_summary']}",
+                    f"  - Source: {signal['source_type']} / {signal['source_url']}",
+                    f"  - Evidence ID: `{signal['evidence_id']}`",
+                ]
+            )
+    else:
+        lines.append("- No signals currently require human review.")
+
+    lines.extend(
+        [
+            "",
+            "## Noise / low-signal summary",
+            "",
+            f"- Noise count: `{package['noise_count']}`",
+            "- Noise evidence is counted only and not dumped in full in this MVP package.",
+            "",
+            "## Recommended founder actions",
+            "",
+        ]
+    )
+    for action in package["recommended_founder_actions"]:
+        lines.append(f"- {action}")
+
+    lines.extend(
+        [
+            "",
+            "## Limitations",
+            "",
+        ]
+    )
+    for limitation in package["limitations"]:
+        lines.append(f"- {limitation}")
+    return "\n".join(lines) + "\n"
+
+
+def _format_counts(counts: Dict[str, Any]) -> str:
+    if not counts:
+        return "`none`"
+    return ", ".join(f"`{name}: {count}`" for name, count in sorted(counts.items()))
+
+
+def _md_cell(value: Any) -> str:
+    return str(value).replace("|", "\\|").replace("\n", " ").strip()
 
 
 def _write_json(path: Path, payload: Any) -> None:

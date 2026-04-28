@@ -83,7 +83,7 @@ class TestDiscoveryWeeklyCli(unittest.TestCase):
 
         summary = (self._run_dir("weekly_summary_md") / "discovery_run_summary.md").read_text(encoding="utf-8")
         self.assertIn("Discovery Run Summary - MVP CLI Lite", summary)
-        self.assertIn("not the final founder discovery package", summary)
+        self.assertIn("Founder Discovery Package lite is generated separately", summary)
 
     def test_summary_counts_are_correct_for_fixture_input(self) -> None:
         self._run_cli("--run-id", "weekly_counts")
