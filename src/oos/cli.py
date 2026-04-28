@@ -39,6 +39,16 @@ def _safe_artifact_id_part(value: str) -> str:
     return "".join(ch if ch.isalnum() or ch in {"_", "-"} else "_" for ch in value)
 
 
+def _split_repeated_csv(values: list[str]) -> list[str]:
+    parsed: list[str] = []
+    for value in values:
+        for item in str(value).split(","):
+            item = item.strip()
+            if item:
+                parsed.append(item)
+    return parsed
+
+
 def _artifact_path(root_dir: Path, kind: str, artifact_id_or_filename: str) -> Path:
     artifact_id_or_filename = artifact_id_or_filename.strip()
     path_fragment = Path(artifact_id_or_filename)
@@ -413,6 +423,52 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Optional local RawEvidence JSON file. Defaults to the MVP example fixture.",
     )
     discovery_parser.add_argument(
+        "--use-collectors",
+        action="store_true",
+        help="Build query plans and collect RawEvidence through registered collectors instead of fixture input.",
+    )
+    discovery_parser.add_argument(
+        "--allow-live-network",
+        action="store_true",
+        help="Allow live collectors to make bounded network calls. Requires --use-collectors.",
+    )
+    discovery_parser.add_argument(
+        "--max-total-queries",
+        type=int,
+        default=4,
+        help="Maximum scheduled collector queries in collector mode.",
+    )
+    discovery_parser.add_argument(
+        "--max-queries-per-source",
+        type=int,
+        default=2,
+        help="Maximum scheduled collector queries per source in collector mode.",
+    )
+    discovery_parser.add_argument(
+        "--max-queries-per-topic",
+        type=int,
+        default=None,
+        help="Maximum scheduled collector queries per topic in collector mode.",
+    )
+    discovery_parser.add_argument(
+        "--max-results-per-query",
+        type=int,
+        default=5,
+        help="Maximum RawEvidence results per scheduled collector query.",
+    )
+    discovery_parser.add_argument(
+        "--source-id",
+        action="append",
+        default=[],
+        help="Optional source_id filter for collector mode; repeat or comma-separate.",
+    )
+    discovery_parser.add_argument(
+        "--source-type",
+        action="append",
+        default=[],
+        help="Optional source_type filter for collector mode; repeat or comma-separate.",
+    )
+    discovery_parser.add_argument(
         "--include-meaning-loop-dry-run",
         action="store_true",
         help="Also write adapter-only Source Intelligence -> meaning-loop dry-run artifacts.",
@@ -594,6 +650,14 @@ def main(argv: list[str] | None = None) -> int:
                 run_id=args.run_id,
                 input_raw_evidence=args.input_raw_evidence,
                 include_meaning_loop_dry_run=args.include_meaning_loop_dry_run,
+                use_collectors=args.use_collectors,
+                allow_live_network=args.allow_live_network,
+                max_total_queries=args.max_total_queries,
+                max_queries_per_source=args.max_queries_per_source,
+                max_queries_per_topic=args.max_queries_per_topic,
+                max_results_per_query=args.max_results_per_query,
+                source_ids=_split_repeated_csv(args.source_id),
+                source_types=_split_repeated_csv(args.source_type),
             )
         except ValueError as exc:
             print(str(exc))

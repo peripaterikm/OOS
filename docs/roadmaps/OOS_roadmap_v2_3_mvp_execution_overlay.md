@@ -65,3 +65,57 @@ A command should eventually exist that can run a discovery loop from available f
 The MVP succeeds when that loop is deterministic, fixture-safe, source-traceable, and runnable without live internet/API calls, live LLM calls, secrets, or new dependencies.
 
 As of `8.1-lite`, the local MVP branch can run the fixture/offline loop through an adapter-only meaning-loop dry run and produce founder-readable package artifacts plus meaning-loop compatibility artifacts. The GitHub checkpoint remains deferred until explicitly requested.
+
+## MVP+1 Live Collection Mode
+
+### Purpose
+
+The MVP+1 extension adds an explicit, bounded live collection mode for the weekly discovery CLI while preserving fixture/offline mode as the default.
+
+### Command
+
+```powershell
+.\.venv\Scripts\python.exe -m oos.cli run-discovery-weekly `
+  --topic ai_cfo_smb `
+  --project-root . `
+  --run-id live_smoke_001 `
+  --use-collectors `
+  --allow-live-network `
+  --max-total-queries 4 `
+  --max-results-per-query 5 `
+  --include-meaning-loop-dry-run
+```
+
+### Safety Flags
+
+- Default weekly discovery still uses fixture/local `RawEvidence` input.
+- `--use-collectors` switches the input stage to query planning, scheduling, and collector routing.
+- `--allow-live-network` is required before live collectors may perform network calls.
+- Live network therefore requires both `--use-collectors` and `--allow-live-network`.
+- Query and result caps are explicit through `--max-total-queries`, `--max-queries-per-source`, `--max-queries-per-topic`, and `--max-results-per-query`.
+- `--source-id` and `--source-type` can limit manual smoke runs to a specific source.
+
+### Scope
+
+- Live collector routing covers implemented Phase B collectors: HN Algolia, GitHub Issues, Stack Exchange, and RSS feeds.
+- Reddit collector is not implemented.
+- Trustpilot, Capterra, G2, LinkedIn, and GDELT collectors remain out of scope.
+- Tests and validation remain fixture/mocked only and do not make internet/API calls.
+- Manual live smoke is required before PR/release decisions.
+
+### Manual Live Smoke
+
+After the local commit, the owner may manually run the command above or a narrower first pass such as:
+
+```powershell
+.\.venv\Scripts\python.exe -m oos.cli run-discovery-weekly `
+  --topic ai_cfo_smb `
+  --project-root . `
+  --run-id live_hn_smoke_001 `
+  --use-collectors `
+  --allow-live-network `
+  --source-type hacker_news_algolia `
+  --max-total-queries 1 `
+  --max-results-per-query 3 `
+  --include-meaning-loop-dry-run
+```
