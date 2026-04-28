@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **8.1**
+- [ ] **0.2.2** Current item: **MVP slice complete / next deferred item 6.1**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **12 / 16**
-- [ ] **0.2.5** Remaining: **4 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **13 / 16**
+- [ ] **0.2.5** Remaining: **3 / 16**
 
 ---
 
@@ -525,8 +525,10 @@ weekly_discovery_package
 ---
 
 ## 8.1. Existing meaning-loop integration dry run
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 8
+
+**MVP overlay note:** Completed as MVP meaning-loop dry run lite with adapter-only compatibility reporting. Full downstream production integration, full `6.1` Source Yield Analytics, full `7.2` traceability/compliance hardening, and `8.2` completion checkpoint remain incomplete.
 
 ### Goal
 
@@ -540,10 +542,15 @@ Feed discovered candidate signals into the existing v2.2 meaning loop safely.
 
 ### Acceptance
 
-- [ ] End-to-end fixture run completes.
-- [ ] `source_url` traceability survives to founder review package or index.
-- [ ] No live LLM calls.
-- [ ] No founder decision is automated.
+- [x] End-to-end fixture run completes.
+- [x] `source_url` traceability survives to the meaning-loop dry-run traceability map and founder package outputs.
+- [x] No live LLM calls.
+- [x] No founder decision is automated.
+
+### MVP Slice Status
+
+- [x] The MVP slice now has a working fixture/offline Source Intelligence loop: `RawEvidence -> CleanedEvidence -> EvidenceClassification -> CandidateSignal -> weekly discovery CLI lite -> founder discovery package lite -> meaning-loop dry run lite`.
+- [ ] Deferred items remain: full `6.1` Source Yield Analytics, full `7.2` Traceability/compliance hardening, and `8.2` completion checkpoint.
 
 ---
 

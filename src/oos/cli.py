@@ -412,6 +412,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional local RawEvidence JSON file. Defaults to the MVP example fixture.",
     )
+    discovery_parser.add_argument(
+        "--include-meaning-loop-dry-run",
+        action="store_true",
+        help="Also write adapter-only Source Intelligence -> meaning-loop dry-run artifacts.",
+    )
 
     status_parser = subparsers.add_parser(
         "weekly-cycle-status",
@@ -588,6 +593,7 @@ def main(argv: list[str] | None = None) -> int:
                 topic_id=args.topic,
                 run_id=args.run_id,
                 input_raw_evidence=args.input_raw_evidence,
+                include_meaning_loop_dry_run=args.include_meaning_loop_dry_run,
             )
         except ValueError as exc:
             print(str(exc))

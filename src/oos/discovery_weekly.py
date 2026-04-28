@@ -10,6 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from .candidate_signal_extractor import extract_candidate_signal
 from .evidence_classifier import classify_evidence, clean_evidence
+from .meaning_loop_adapter import build_meaning_loop_dry_run, write_meaning_loop_dry_run_artifacts
 from .models import CandidateSignal, CleanedEvidence, EvidenceClassification, RawEvidence, model_from_dict, model_to_dict
 from .source_registry import default_topic_profiles
 
@@ -47,6 +48,7 @@ def run_discovery_weekly(
     topic_id: str,
     run_id: str | None = None,
     input_raw_evidence: Path | None = None,
+    include_meaning_loop_dry_run: bool = False,
 ) -> DiscoveryRunResult:
     project_root = project_root.resolve()
     _require_active_topic(topic_id)
@@ -94,6 +96,11 @@ def run_discovery_weekly(
     founder_package_md_path = run_dir / "founder_discovery_package.md"
     artifact_paths["founder_discovery_package_json"] = founder_package_json_path
     artifact_paths["founder_discovery_package_md"] = founder_package_md_path
+    if include_meaning_loop_dry_run:
+        meaning_loop_json_path = run_dir / "meaning_loop_dry_run.json"
+        meaning_loop_md_path = run_dir / "meaning_loop_dry_run.md"
+        artifact_paths["meaning_loop_dry_run_json"] = meaning_loop_json_path
+        artifact_paths["meaning_loop_dry_run_md"] = meaning_loop_md_path
 
     summary = _build_summary(
         run_id=resolved_run_id,
@@ -109,6 +116,18 @@ def run_discovery_weekly(
     founder_package = _build_founder_package(summary=summary, candidate_signals=candidate_signals)
     _write_json(founder_package_json_path, founder_package)
     founder_package_md_path.write_text(_founder_package_markdown(founder_package), encoding="utf-8")
+    if include_meaning_loop_dry_run:
+        meaning_loop_report = build_meaning_loop_dry_run(
+            run_id=resolved_run_id,
+            topic_id=topic_id,
+            candidate_signals=candidate_signals,
+            artifact_paths=artifact_paths,
+        )
+        write_meaning_loop_dry_run_artifacts(
+            report=meaning_loop_report,
+            json_path=artifact_paths["meaning_loop_dry_run_json"],
+            markdown_path=artifact_paths["meaning_loop_dry_run_md"],
+        )
 
     return DiscoveryRunResult(
         run_id=resolved_run_id,

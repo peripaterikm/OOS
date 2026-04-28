@@ -44,7 +44,8 @@ RawEvidence
 - `5.2` Evidence-to-signal extraction and scoring is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
 - `6.2-lite` weekly discovery CLI is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
 - `7.1-lite` Founder Discovery Package is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
-- Next MVP target is `8.1-lite` meaning-loop dry run.
+- `8.1-lite` meaning-loop dry run is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
+- MVP slice implementation is complete locally; next deferred roadmap target is full `6.1` Source Yield Analytics unless the owner requests the GitHub checkpoint first.
 - Full `6.1` Source Yield Analytics remains deferred until after the MVP loop can run end to end.
 - Full `7.2` Traceability/compliance hardening remains deferred until after the MVP loop can run end to end.
 
@@ -62,3 +63,5 @@ RawEvidence
 A command should eventually exist that can run a discovery loop from available fixture/offline `RawEvidence` or fixture/offline collectors and produce a founder-readable package.
 
 The MVP succeeds when that loop is deterministic, fixture-safe, source-traceable, and runnable without live internet/API calls, live LLM calls, secrets, or new dependencies.
+
+As of `8.1-lite`, the local MVP branch can run the fixture/offline loop through an adapter-only meaning-loop dry run and produce founder-readable package artifacts plus meaning-loop compatibility artifacts. The GitHub checkpoint remains deferred until explicitly requested.
