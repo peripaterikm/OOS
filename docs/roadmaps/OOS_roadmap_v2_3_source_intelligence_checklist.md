@@ -5,10 +5,10 @@
 - [x] **0.1.1** Roadmap v2.2 completed: **16 / 16 mini-epics**
 - [x] **0.1.2** Roadmap v2.2 final state: **Completed / final milestone state**
 - [ ] **0.2.1** Current phase: **Roadmap v2.3 - Autonomous Source Intelligence Layer**
-- [ ] **0.2.2** Current item: **5.2**
+- [ ] **0.2.2** Current item: **6.2**
 - [ ] **0.2.3** Total mini-epics in this roadmap: **16**
-- [ ] **0.2.4** Completed from this roadmap: **9 / 16**
-- [ ] **0.2.5** Remaining: **7 / 16**
+- [ ] **0.2.4** Completed from this roadmap: **10 / 16**
+- [ ] **0.2.5** Remaining: **6 / 16**
 
 ---
 
@@ -363,7 +363,7 @@ Normalize raw evidence and classify whether it may contain useful market signals
 ---
 
 ## 5.2. Evidence-to-signal extraction and scoring measurement methods
-**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
+**Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [x] Done
 **Phase:** 5
 
 ### Goal
@@ -389,17 +389,19 @@ Extract `CandidateSignal` records from `RawEvidence`.
 
 ### Acceptance
 
-- [ ] One `RawEvidence` can yield zero, one, or many `CandidateSignal` records.
-- [ ] Every signal links back to `evidence_id` and `source_url`.
-- [ ] Scoring dimensions expose `measurement_method`.
-- [ ] Unsupported dimensions are not silently treated as measured.
-- [ ] No live LLM calls.
+- [x] One `RawEvidence` can yield zero, one, or many `CandidateSignal` records.
+- [x] Every signal links back to `evidence_id` and `source_url`.
+- [x] Scoring dimensions expose `measurement_method`.
+- [x] Unsupported dimensions are not silently treated as measured.
+- [x] No live LLM calls.
 
 ---
 
 ## 6.1. Source Yield Analytics and founder-approved feedback suggestions
 **Status:** [ ] Not started  [ ] In progress  [ ] Blocked  [ ] Done  
 **Phase:** 6
+
+**MVP overlay note:** Full `6.1` Source Yield Analytics is deferred by the MVP execution overlay. The next MVP implementation target is `6.2` weekly discovery CLI lite; full `6.1` remains incomplete.
 
 ### Goal
 
@@ -564,7 +566,7 @@ Finalize Roadmap v2.3.
 - [x] **5.2** Milestone B: Raw evidence and bounded query planning ready after **2.2**
 - [x] **5.3** Milestone C: Collector contracts ready after **3.1**
 - [ ] **5.4** Milestone D: First public collectors fixture-safe after **4.3**
-- [ ] **5.5** Milestone E: Evidence classification and candidate signals ready after **5.2**
+- [x] **5.5** Milestone E: Evidence classification and candidate signals ready after **5.2**
 - [ ] **5.6** Milestone F: Discovery run and yield feedback suggestions ready after **6.2**
 - [ ] **5.7** Milestone G: Founder discovery package and compliance hardening ready after **7.2**
 - [ ] **5.8** Milestone H: Source Intelligence v2.3 complete after **8.2**

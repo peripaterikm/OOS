@@ -226,6 +226,100 @@ class EvidenceClassification:
 
 
 @dataclass(frozen=True)
+class CandidateSignal:
+    signal_id: str
+    evidence_id: str
+    source_id: str
+    source_type: str
+    source_url: str
+    topic_id: str
+    query_kind: str
+    signal_type: str
+    pain_summary: str
+    target_user: str
+    current_workaround: str
+    buying_intent_hint: str
+    urgency_hint: str
+    confidence: float
+    measurement_methods: Dict[str, str]
+    extraction_mode: str
+    classification: str
+    classification_confidence: float
+    traceability: Dict[str, str]
+
+    @property
+    def id(self) -> str:
+        return self.signal_id
+
+    def validate(self) -> None:
+        for field_name in (
+            "signal_id",
+            "evidence_id",
+            "source_id",
+            "source_type",
+            "source_url",
+            "topic_id",
+            "query_kind",
+            "signal_type",
+            "pain_summary",
+            "target_user",
+            "current_workaround",
+            "buying_intent_hint",
+            "urgency_hint",
+            "extraction_mode",
+            "classification",
+        ):
+            _require_non_empty(getattr(self, field_name), f"CandidateSignal.{field_name}")
+        allowed_signal_types = {
+            "pain_signal",
+            "workaround",
+            "buying_intent",
+            "competitor_weakness",
+            "trend_trigger",
+            "needs_human_review",
+        }
+        if self.signal_type not in allowed_signal_types:
+            raise ValueError("CandidateSignal.signal_type must be an allowed value")
+        allowed_classifications = {
+            "pain_signal_candidate",
+            "workaround_signal_candidate",
+            "buying_intent_candidate",
+            "competitor_weakness_candidate",
+            "trend_trigger_candidate",
+            "needs_human_review",
+        }
+        if self.classification not in allowed_classifications:
+            raise ValueError("CandidateSignal.classification must be a signal-producing classification")
+        for field_name in ("confidence", "classification_confidence"):
+            value = getattr(self, field_name)
+            if not isinstance(value, (int, float)) or not 0 <= float(value) <= 1:
+                raise ValueError(f"CandidateSignal.{field_name} must be between 0 and 1")
+        if not isinstance(self.measurement_methods, dict):
+            raise ValueError("CandidateSignal.measurement_methods must be a dict")
+        required_methods = {
+            "signal_type",
+            "pain_summary",
+            "target_user",
+            "current_workaround",
+            "buying_intent_hint",
+            "urgency_hint",
+            "confidence",
+        }
+        missing_methods = sorted(required_methods - set(self.measurement_methods))
+        if missing_methods:
+            raise ValueError(f"CandidateSignal.measurement_methods missing: {', '.join(missing_methods)}")
+        allowed_methods = {"rule_based", "llm_stub", "founder_manual"}
+        for dimension, method in self.measurement_methods.items():
+            if method not in allowed_methods:
+                raise ValueError(f"CandidateSignal.measurement_methods[{dimension}] must be explicit")
+        if not isinstance(self.traceability, dict):
+            raise ValueError("CandidateSignal.traceability must be a dict")
+        for field_name in ("evidence_id", "source_url", "source_id", "topic_id", "query_kind"):
+            if self.traceability.get(field_name) != getattr(self, field_name):
+                raise ValueError(f"CandidateSignal.traceability.{field_name} must match the signal field")
+
+
+@dataclass(frozen=True)
 class Signal:
     id: str
     source: str
@@ -493,6 +587,7 @@ MODEL_KIND = {
     RawEvidence: "raw_evidence",
     CleanedEvidence: "cleaned_evidence",
     EvidenceClassification: "evidence_classifications",
+    CandidateSignal: "candidate_signals",
     Signal: "signals",
     OpportunityCard: "opportunities",
     IdeaVariant: "ideas",

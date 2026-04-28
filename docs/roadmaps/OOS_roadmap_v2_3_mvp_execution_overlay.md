@@ -38,6 +38,13 @@ RawEvidence
 - Live-network operating mode
 - v2.3 completion checkpoint
 
+## Current MVP Progress
+
+- `5.1` Evidence cleaner and classifier is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
+- `5.2` Evidence-to-signal extraction and scoring is complete locally on `feat/source-intelligence-mvp-discovery-loop`.
+- Next MVP target is `6.2-lite` weekly discovery CLI.
+- Full `6.1` Source Yield Analytics remains deferred until after the MVP loop can run end to end.
+
 ## Local-Only Workflow
 
 - Work on one long-lived local MVP branch: `feat/source-intelligence-mvp-discovery-loop`.

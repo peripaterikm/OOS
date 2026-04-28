@@ -9,11 +9,11 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `5.2` - Evidence-to-signal extraction and scoring measurement methods
-- Completed: `9 / 16`
-- Remaining: `7 / 16`
-- Latest completed roadmap item: Roadmap v2.3 `5.1` - Evidence cleaner and classifier
-- Next planned roadmap item: Roadmap v2.3 `5.2` - Evidence-to-signal extraction and scoring measurement methods
+- Current item: `6.2` - MVP weekly discovery CLI lite; full `6.1` Source Yield Analytics deferred by MVP overlay
+- Completed: `10 / 16`
+- Remaining: `6 / 16`
+- Latest completed roadmap item: Roadmap v2.3 `5.2` - Evidence-to-signal extraction and scoring measurement methods
+- Next planned roadmap item: Roadmap v2.3 `6.2-lite` - MVP weekly discovery CLI
 
 ## Branch And Commit Strategy
 
@@ -47,3 +47,6 @@
 - Roadmap v2.3 item 4.3 added Stack Exchange and RSS/regulatory collector adapters with fixture-first RawEvidence mapping, default-disabled live networking, source URL traceability, safe metadata preservation, and author/context privacy without internet/API calls during validation or live LLM/API calls.
 - Roadmap v2.3 MVP execution overlay created a local-only branch workflow for reaching the first working Source Intelligence loop before the next GitHub checkpoint.
 - Roadmap v2.3 item 5.1 added deterministic RawEvidence cleaning and rule-based evidence classification with HN/GitHub ambiguity defaulting to human review, artifact roundtrip support, and no internet/API or live LLM/API calls during validation.
+- Roadmap v2.3 item 5.2 added deterministic CandidateSignal extraction from CleanedEvidence plus EvidenceClassification, rule-based measurement methods for every signal dimension, source traceability, artifact roundtrip support, and no internet/API or live LLM/API calls during validation.
+- Full Roadmap v2.3 item 6.1 Source Yield Analytics is deferred for the MVP slice; the next local implementation target is 6.2-lite weekly discovery CLI.
+- GitHub push / PR remains deferred until the MVP Source Intelligence slice is working and explicitly requested.

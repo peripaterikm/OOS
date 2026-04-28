@@ -1,9 +1,10 @@
 import unittest
 from pathlib import Path
-from tempfile import TemporaryDirectory
+import shutil
 
 from oos.artifact_store import ArtifactStore
 from oos.models import (
+    CandidateSignal,
     CleanedEvidence,
     CouncilDecision,
     EvidenceClassification,
@@ -27,8 +28,11 @@ from oos.models import (
 
 class TestArtifactStoreRoundTrip(unittest.TestCase):
     def test_roundtrip_all_models_and_utf8(self) -> None:
-        with TemporaryDirectory() as tmp:
-            root = Path(tmp) / "artifacts"
+        tmp = Path("codex_tmp_artifact_store_roundtrip")
+        if tmp.exists():
+            shutil.rmtree(tmp)
+        try:
+            root = tmp / "artifacts"
             store = ArtifactStore(root_dir=root)
 
             raw_evidence = RawEvidence(
@@ -94,6 +98,47 @@ class TestArtifactStoreRoundTrip(unittest.TestCase):
             )
             store.write_model(classification)
             self.assertEqual(store.read_model(EvidenceClassification, "raw_ev_1"), classification)
+
+            candidate_signal = CandidateSignal(
+                signal_id="candidate_signal_raw_ev_1_workaround_signal_candidate",
+                evidence_id="raw_ev_1",
+                source_id="hacker_news_algolia",
+                source_type="public_api",
+                source_url="https://news.ycombinator.com/item?id=123",
+                topic_id="ai_cfo_smb",
+                query_kind="pain_search",
+                signal_type="workaround",
+                pain_summary="SMB owner describes copying bank exports into spreadsheets every week.",
+                target_user="founder",
+                current_workaround="copying bank exports into spreadsheets every week",
+                buying_intent_hint="not_detected",
+                urgency_hint="low",
+                confidence=0.73,
+                measurement_methods={
+                    "signal_type": "rule_based",
+                    "pain_summary": "rule_based",
+                    "target_user": "rule_based",
+                    "current_workaround": "rule_based",
+                    "buying_intent_hint": "rule_based",
+                    "urgency_hint": "rule_based",
+                    "confidence": "rule_based",
+                },
+                extraction_mode="rule_based_v1",
+                classification="workaround_signal_candidate",
+                classification_confidence=0.75,
+                traceability={
+                    "evidence_id": "raw_ev_1",
+                    "source_url": "https://news.ycombinator.com/item?id=123",
+                    "source_id": "hacker_news_algolia",
+                    "topic_id": "ai_cfo_smb",
+                    "query_kind": "pain_search",
+                },
+            )
+            store.write_model(candidate_signal)
+            self.assertEqual(
+                store.read_model(CandidateSignal, "candidate_signal_raw_ev_1_workaround_signal_candidate"),
+                candidate_signal,
+            )
 
             signal = Signal(
                 id="sig_1",
@@ -241,6 +286,10 @@ class TestArtifactStoreRoundTrip(unittest.TestCase):
             opp_path = store.path_for("opportunities", "opp_1")
             text = opp_path.read_text(encoding="utf-8")
             self.assertIn("Сократить ручной ввод", text)
+
+        finally:
+            if tmp.exists():
+                shutil.rmtree(tmp)
 
 
 if __name__ == "__main__":
