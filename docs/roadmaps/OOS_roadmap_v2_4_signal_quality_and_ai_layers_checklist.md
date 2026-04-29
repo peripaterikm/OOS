@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **3.2**
+- [ ] **0.2.2** Current item: **4.1**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **5 / 17**
-- [ ] **0.2.5** Remaining: **12 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **6 / 17**
+- [ ] **0.2.5** Remaining: **11 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -360,21 +360,27 @@ Add semantic relevance support through a provider boundary without forcing new d
 
 ### Acceptance criteria
 
-- [ ] **3.2.1** Semantic provider interface exists.
-- [ ] **3.2.2** Stub provider works in tests.
-- [ ] **3.2.3** Disabled mode sets `semantic_relevance_score = 0`.
-- [ ] **3.2.4** Scoring redistributes weights correctly in disabled mode.
-- [ ] **3.2.5** No external dependencies added.
-- [ ] **3.2.6** No external API calls.
-- [ ] **3.2.7** Full validation passes.
+- [x] **3.2.1** Semantic provider interface exists.
+- [x] **3.2.2** Stub provider works in tests.
+- [x] **3.2.3** Disabled mode sets `semantic_relevance_score = 0`.
+- [x] **3.2.4** Scoring redistributes weights correctly in disabled mode.
+- [x] **3.2.5** No external dependencies added.
+- [x] **3.2.6** No external API calls.
+- [x] **3.2.7** Full validation passes.
 
 ### Expected files
 
 - `src/oos/semantic_relevance.py`
-- `src/oos/scoring.py`
-- `tests/test_semantic_relevance.py`
+- `src/oos/signal_scoring.py`
+- `tests/test_semantic_relevance_provider_boundary.py`
 - `docs/dev_ledger/02_mini_epics/3.2-semantic-relevance-provider-boundary.md`
 - `docs/dev_ledger/03_run_reports/3.2-semantic-relevance-provider-boundary.md`
+
+### Completion notes
+
+- Completed as a provider-boundary-only implementation: disabled provider is default and `keyword_stub` is deterministic local preview/test support only.
+- Scoring model v2 records semantic relevance diagnostics while preserving embeddings-disabled default scoring behavior.
+- No embeddings, vector database, external API, live internet, or live LLM calls were added.
 
 ---
 
@@ -715,7 +721,7 @@ Prevent the system from repeatedly elevating patterns that resemble already-kill
 ### Expected files
 
 - `src/oos/kill_archive_feedback.py`
-- `src/oos/scoring.py`
+- `src/oos/signal_scoring.py`
 - `tests/test_kill_archive_feedback.py`
 - `docs/dev_ledger/02_mini_epics/7.1-kill-archive-feedback.md`
 - `docs/dev_ledger/03_run_reports/7.1-kill-archive-feedback.md`

@@ -65,6 +65,9 @@ class SignalScoringInput:
     classification_confidence: float = 0.0
     matched_rules: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    semantic_relevance_score: float | None = None
+    semantic_relevance_provider_id: str | None = None
+    semantic_relevance_available: bool = False
 
 
 @dataclass(frozen=True)
@@ -76,6 +79,9 @@ class SignalScoreBreakdown:
     urgency_score: float
     source_quality_weight: float
     customer_voice_match_bonus: float
+    semantic_relevance_score: float
+    semantic_relevance_provider_id: str
+    semantic_relevance_available: bool
     anti_marketing_penalty: float
     signal_type_multiplier: float
     classification_confidence_factor: float
@@ -97,6 +103,7 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
     text = _combined_text(scoring_input)
     explanation: List[str] = ["embeddings_disabled_formula"]
 
+    semantic_score, semantic_provider_id, semantic_available = _semantic_relevance_diagnostic(scoring_input)
     topic_score = topic_relevance_score(text, scoring_input.topic_id)
     pain_score = _pain_strength_score(text, scoring_input)
     workaround_score = _workaround_score(text, scoring_input)
@@ -166,6 +173,10 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
             explanation.append(f"persona:{scoring_input.metadata['persona_id']}")
     if marketing_penalty > 0:
         explanation.append("anti_marketing_penalty")
+    if semantic_available:
+        explanation.append(f"semantic_relevance:diagnostic_only:{semantic_provider_id}")
+    else:
+        explanation.append("semantic_relevance:disabled")
 
     return SignalScoreBreakdown(
         topic_relevance_score=topic_score,
@@ -175,6 +186,9 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
         urgency_score=urgency_score,
         source_quality_weight=source_weight,
         customer_voice_match_bonus=customer_voice_bonus,
+        semantic_relevance_score=semantic_score,
+        semantic_relevance_provider_id=semantic_provider_id,
+        semantic_relevance_available=semantic_available,
         anti_marketing_penalty=marketing_penalty,
         signal_type_multiplier=signal_multiplier,
         classification_confidence_factor=classification_factor,
@@ -196,6 +210,17 @@ def customer_voice_match_bonus(scoring_input: SignalScoringInput) -> float:
     if scoring_input.metadata.get("persona_id") or scoring_input.metadata.get("customer_voice_query_id"):
         bonus += 0.02
     return round(min(0.10, bonus), 2)
+
+
+def _semantic_relevance_diagnostic(scoring_input: SignalScoringInput) -> tuple[float, str, bool]:
+    provider_id = scoring_input.semantic_relevance_provider_id or "disabled"
+    if not scoring_input.semantic_relevance_available or scoring_input.semantic_relevance_score is None:
+        return 0.0, provider_id, False
+    try:
+        score = float(scoring_input.semantic_relevance_score)
+    except (TypeError, ValueError):
+        return 0.0, provider_id, False
+    return round(max(0.0, min(1.0, score)), 2), provider_id, True
 
 
 def _combined_text(scoring_input: SignalScoringInput) -> str:
