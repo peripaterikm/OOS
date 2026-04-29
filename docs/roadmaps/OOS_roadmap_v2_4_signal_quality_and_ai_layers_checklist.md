@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **4.1**
+- [ ] **0.2.2** Current item: **4.2**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **6 / 17**
-- [ ] **0.2.5** Remaining: **11 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **7 / 17**
+- [ ] **0.2.5** Remaining: **10 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -420,22 +420,27 @@ Add provider contracts and budgets for future LLM use without enabling live call
 
 ### Acceptance criteria
 
-- [ ] **4.1.1** Role-specific budgets exist.
-- [ ] **4.1.2** Global circuit breaker exists.
-- [ ] **4.1.3** Default provider is `none` or `noop`.
-- [ ] **4.1.4** Stub provider deterministic in tests.
-- [ ] **4.1.5** Budget exhaustion fails closed.
-- [ ] **4.1.6** No secrets required.
-- [ ] **4.1.7** No live LLM calls in tests.
-- [ ] **4.1.8** Full validation passes.
+- [x] **4.1.1** Role-specific budgets exist.
+- [x] **4.1.2** Global circuit breaker exists.
+- [x] **4.1.3** Default provider is `none` or `noop`.
+- [x] **4.1.4** Stub provider deterministic in tests.
+- [x] **4.1.5** Budget exhaustion fails closed.
+- [x] **4.1.6** No secrets required.
+- [x] **4.1.7** No live LLM calls in tests.
+- [x] **4.1.8** Full validation passes.
 
 ### Expected files
 
-- `src/oos/llm_provider.py`
-- `src/oos/llm_budget.py`
-- `tests/test_llm_provider_budget.py`
-- `docs/dev_ledger/02_mini_epics/4.1-llm-provider-contracts-budgets.md`
-- `docs/dev_ledger/03_run_reports/4.1-llm-provider-contracts-budgets.md`
+- `src/oos/llm_contracts.py`
+- `tests/test_llm_contracts_and_budgets.py`
+- `docs/dev_ledger/02_mini_epics/4.1-llm-provider-contracts-and-budgets.md`
+- `docs/dev_ledger/03_run_reports/4.1-llm-provider-contracts-and-budgets.md`
+
+### Completion notes
+
+- Completed as an infrastructure contract only: `disabled` is default and `deterministic_mock` is local/test-only.
+- Budget policies, budget state, token/cost estimation, and fail-closed circuit breaker behavior were added without real provider clients.
+- No secrets, dependencies, internet/API calls, or live LLM calls were added.
 
 ---
 

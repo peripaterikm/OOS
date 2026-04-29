@@ -9,16 +9,16 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `4.1`
-- Completed: `6 / 17`
-- Remaining: `11 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `3.2` - Semantic relevance provider boundary
-- Next planned roadmap item: Roadmap v2.4 `4.1` - Role-based LLM provider contracts and budgets
+- Current item: `4.2`
+- Completed: `7 / 17`
+- Remaining: `10 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `4.1` - LLM provider contracts and budgets
+- Next planned roadmap item: Roadmap v2.4 `4.2` - PII stripping and prompt safety envelope
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/3-2-semantic-relevance-provider-boundary`
+- Current branch: `feat/4-x-llm-infrastructure-contracts`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -62,3 +62,5 @@
 - Roadmap v2.4 item 2.2 added approval-gated Customer Voice QueryPlanner integration with deterministic preview plans, source-fit filtering, Reddit/source-policy gating, and a JSON/Markdown preview CLI without running collectors, internet/API calls, or live LLM/API calls during validation.
 - Roadmap v2.4 item 3.1 added deterministic Scoring model v2 with component score breakdowns, embeddings-disabled weights, soft signal-type multipliers, caps/penalties, `CandidateSignal` scoring metadata, and no embeddings, internet/API, or live LLM/API calls during validation.
 - Roadmap v2.4 item 3.2 added a semantic relevance provider boundary with disabled-by-default behavior, a deterministic keyword stub for local tests/previews, scoring v2 diagnostics, and no embeddings, external API, internet, or live LLM/API calls during validation.
+- Roadmap v2.4 item 4.1 added LLM provider request/response contracts, disabled-by-default provider behavior, deterministic local mock provider, fail-closed budget policies/state, token/cost estimation, and circuit breaker controls without secrets, dependencies, internet/API calls, or live LLM/API calls during validation.
+- Roadmap v2.4 4.x work is continuing locally on `feat/4-x-llm-infrastructure-contracts`; push/PR/merge remains deferred until items 4.1-4.3 are complete and explicitly approved.
