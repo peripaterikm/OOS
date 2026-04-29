@@ -9,16 +9,16 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `1.2`
-- Completed: `1 / 17`
-- Remaining: `16 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `1.1` - Live collection relevance hardening
-- Next planned roadmap item: Roadmap v2.4 `1.2` - Live quality acceptance smoke runs
+- Current item: `2.1`
+- Completed: `2 / 17`
+- Remaining: `15 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `1.2` - Live quality acceptance smoke
+- Next planned roadmap item: Roadmap v2.4 `2.1` - Customer Voice Query Generator contract and artifacts
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/source-intelligence-live-collection-mode`
+- Current branch: `feat/1-2-live-quality-acceptance-smoke`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -56,3 +56,5 @@
 - Roadmap v2.4 item 1.1 hardened live Source Intelligence relevance with HTML/entity cleanup, UTF-8 decode hardening, ai_cfo_smb relevance gating, anti-marketing downgrades, non-flat deterministic scoring, finance-specific HN/GitHub query templates, RSS feed URL skips, and mocked validation without live internet/API or live LLM/API calls.
 - Roadmap v2.4 item 1.1b follow-up hardened founder-package ranking and deduplication, repaired additional mojibake fragments, downgraded GitHub install/tutorial/generic finance copy, added explicit noise coverage for obvious junk, and preserved roadmap counters at current item 1.2.
 - GitHub push / PR remains deferred until the owner approves after manual live smoke.
+
+- Roadmap v2.4 item 1.2 formalized live quality acceptance smoke with a deterministic artifact-only checker, CLI report writer, RSS controlled-skip checks, duplicate/mojibake/install-copy gates, and documented known limitations without live internet/API or live LLM/API calls during validation.
