@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **4.3**
+- [ ] **0.2.2** Current item: **5.1**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **8 / 17**
-- [ ] **0.2.5** Remaining: **9 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **9 / 17**
+- [ ] **0.2.5** Remaining: **8 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -520,21 +520,28 @@ Define structured LLM review output for CandidateSignals without live calls by d
 
 ### Acceptance criteria
 
-- [ ] **4.3.1** LLMSignalReview model exists.
-- [ ] **4.3.2** JTBD structure includes `when`, `want_to`, `so_that`, `confidence`.
-- [ ] **4.3.3** `evidence_cited` required.
-- [ ] **4.3.4** Stub review deterministic.
-- [ ] **4.3.5** No live LLM calls by default.
-- [ ] **4.3.6** Founder package can optionally display stub/review outputs.
-- [ ] **4.3.7** Full validation passes.
+- [x] **4.3.1** LLMSignalReview model exists.
+- [x] **4.3.2** JTBD structure includes `when`, `want_to`, `so_that`, `confidence`.
+- [x] **4.3.3** `evidence_cited` required.
+- [x] **4.3.4** Stub review deterministic.
+- [x] **4.3.5** No live LLM calls by default.
+- [x] **4.3.6** Founder package can optionally display stub/review outputs.
+- [x] **4.3.7** Full validation passes.
 
 ### Expected files
 
 - `src/oos/llm_signal_review.py`
-- `src/oos/llm_prompts.py`
-- `tests/test_llm_signal_review_contract.py`
-- `docs/dev_ledger/02_mini_epics/4.3-llm-signal-review-jtbd-contract.md`
-- `docs/dev_ledger/03_run_reports/4.3-llm-signal-review-jtbd-contract.md`
+- `tests/test_llm_signal_review_contracts.py`
+- `docs/dev_ledger/02_mini_epics/4.3-llm-signal-review-jtbd-contracts.md`
+- `docs/dev_ledger/03_run_reports/4.3-llm-signal-review-jtbd-contracts.md`
+
+### Completion notes
+
+- Completed as a contract boundary only: no real provider calls, no live discovery integration, and no production LLM review execution.
+- Added evidence-bound signal review input/output models, JTBD statement contracts, prompt builders, safe request construction, JSON parsing, and fail-closed output validation.
+- Added a deterministic mock review flow for tests/local preview only.
+- Added `llm_signal_review` as an allowed local-preview budget task type.
+- No secrets, dependencies, internet/API calls, or live LLM calls were added.
 
 ---
 

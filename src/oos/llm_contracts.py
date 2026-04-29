@@ -272,6 +272,7 @@ def default_local_preview_llm_budget_policy() -> LLMBudgetPolicy:
         allowed_task_types=[
             "query_generator",
             "signal_review",
+            "llm_signal_review",
             "cluster_synthesis",
             "query_refinement_advisor",
             "implied_burden_detection",

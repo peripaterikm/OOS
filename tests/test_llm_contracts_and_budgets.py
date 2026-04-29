@@ -162,6 +162,18 @@ class TestLLMContractsAndBudgets(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_llm_provider("openai")
 
+    def test_local_preview_budget_allows_llm_signal_review_task_type(self) -> None:
+        policy = default_local_preview_llm_budget_policy()
+        review_request = LLMRequest(
+            task_type="llm_signal_review",
+            messages=[LLMMessage("user", "review this signal")],
+        )
+
+        allowed, reasons = check_llm_budget(policy, LLMBudgetState(), review_request, estimated_output_tokens=20)
+
+        self.assertTrue(allowed)
+        self.assertEqual(reasons, [])
+
     def test_no_network_api_or_llm_calls_are_made(self) -> None:
         result = DeterministicMockLLMProvider().complete(request("No external call, just a fixture."))
 
