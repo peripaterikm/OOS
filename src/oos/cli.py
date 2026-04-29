@@ -3,13 +3,18 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
 from .ai_ideation_evaluation import evaluate_ai_ideation
 from .artifact_store import ArtifactStore
 from .config import OOSConfig
-from .customer_voice_queries import generate_customer_voice_queries, write_customer_voice_query_preview
+from .customer_voice_queries import (
+    approve_customer_voice_query,
+    generate_customer_voice_queries,
+    write_customer_voice_query_preview,
+)
 from .discovery_weekly import run_discovery_weekly
 from .founder_ai_stage_rating import ALLOWED_AI_RATING_STAGES, ALLOWED_AI_STAGE_RATINGS, record_ai_stage_rating
 from .founder_review_package import FounderReviewIndex
@@ -17,6 +22,8 @@ from .live_quality_smoke import build_live_quality_smoke_report, write_live_qual
 from .models import FounderReviewDecision, FounderReviewDecisionEnum, PortfolioStateEnum
 from .orchestrator import Orchestrator
 from .portfolio_layer import PortfolioManager
+from .query_planner import QueryPlan, build_customer_voice_query_plans
+from .source_registry import default_source_registry
 from .weekly_review import WeeklyReviewGenerator
 
 
@@ -49,6 +56,102 @@ def _split_repeated_csv(values: list[str]) -> list[str]:
             if item:
                 parsed.append(item)
     return parsed
+
+
+def _customer_voice_plan_preview_payload(
+    *,
+    topic_id: str,
+    generated_queries_count: int,
+    approved_queries_count: int,
+    query_plans: list[QueryPlan],
+    source_type_filter: list[str],
+    approve_generated_preview_queries: bool,
+) -> dict[str, object]:
+    skipped_reasons: list[str] = []
+    if not approve_generated_preview_queries:
+        skipped_reasons.append("approval_required")
+    elif generated_queries_count > 0 and approved_queries_count > 0 and not query_plans:
+        skipped_reasons.append("source_policy_or_filter_excluded")
+
+    return {
+        "topic_id": topic_id,
+        "approval_required_before_active_use": True,
+        "approve_generated_preview_queries": approve_generated_preview_queries,
+        "generated_queries_count": generated_queries_count,
+        "approved_queries_count": approved_queries_count,
+        "query_plans_count": len(query_plans),
+        "source_type_filter": source_type_filter,
+        "query_plans": [asdict(plan) for plan in query_plans],
+        "skipped_reasons": skipped_reasons,
+        "safety": {
+            "collectors_run": False,
+            "live_network_calls": False,
+            "llm_calls": False,
+        },
+    }
+
+
+def _customer_voice_plan_preview_markdown(payload: dict[str, object]) -> str:
+    query_plans = payload["query_plans"]
+    assert isinstance(query_plans, list)
+    skipped_reasons = payload["skipped_reasons"]
+    assert isinstance(skipped_reasons, list)
+    source_type_filter = payload["source_type_filter"]
+    assert isinstance(source_type_filter, list)
+
+    lines = [
+        "# Customer Voice Query Plan Preview",
+        "",
+        "## Summary",
+        f"- Topic: `{payload['topic_id']}`",
+        f"- Generated queries: `{payload['generated_queries_count']}`",
+        f"- Approved queries: `{payload['approved_queries_count']}`",
+        f"- Query plans: `{payload['query_plans_count']}`",
+        "",
+        "## Approval State",
+        f"- Approval required before active use: `{str(payload['approval_required_before_active_use']).lower()}`",
+        f"- Approved generated preview queries: `{str(payload['approve_generated_preview_queries']).lower()}`",
+        "",
+        "## Source Filters",
+        f"- Source type filter: `{', '.join(source_type_filter) if source_type_filter else 'none'}`",
+        "",
+        "## Query Plans",
+    ]
+    if not query_plans:
+        lines.append("- None")
+    for item in query_plans:
+        assert isinstance(item, dict)
+        metadata = item.get("raw_metadata", {})
+        persona_id = metadata.get("persona_id", "unknown") if isinstance(metadata, dict) else "unknown"
+        lines.append(
+            f"- `{item['query_plan_id']}` `{item['source_type']}` `{persona_id}`: {item['query_text']}"
+        )
+    lines.extend(["", "## Skipped / Reasons"])
+    if not skipped_reasons:
+        lines.append("- None")
+    for reason in skipped_reasons:
+        lines.append(f"- `{reason}`")
+    lines.extend([
+        "",
+        "## Safety",
+        "- Collectors run: `false`",
+        "- Live network calls: `false`",
+        "- LLM calls: `false`",
+    ])
+    return "\n".join(lines) + "\n"
+
+
+def _write_customer_voice_plan_preview(
+    *,
+    payload: dict[str, object],
+    output_json: Path,
+    output_md: Path,
+) -> tuple[Path, Path]:
+    output_json.parent.mkdir(parents=True, exist_ok=True)
+    output_md.parent.mkdir(parents=True, exist_ok=True)
+    output_json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output_md.write_text(_customer_voice_plan_preview_markdown(payload), encoding="utf-8")
+    return output_json, output_md
 
 
 def _artifact_path(root_dir: Path, kind: str, artifact_id_or_filename: str) -> Path:
@@ -551,6 +654,65 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Path for deterministic Markdown query preview.",
     )
 
+    customer_voice_plan_parser = subparsers.add_parser(
+        "preview-customer-voice-query-plans",
+        help="Preview approval-gated QueryPlans from deterministic customer-voice queries without running collectors.",
+    )
+    customer_voice_plan_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    customer_voice_plan_parser.add_argument("--topic", required=True, help="Topic id, e.g. ai_cfo_smb.")
+    customer_voice_plan_parser.add_argument(
+        "--persona-id",
+        action="append",
+        default=[],
+        help="Optional persona_id filter; repeat or comma-separate.",
+    )
+    customer_voice_plan_parser.add_argument(
+        "--source-type",
+        action="append",
+        default=[],
+        help="Optional source_type/source_id filter; repeat or comma-separate.",
+    )
+    customer_voice_plan_parser.add_argument(
+        "--max-queries-per-persona",
+        type=int,
+        default=None,
+        help="Maximum approved customer voice query texts per persona to convert.",
+    )
+    customer_voice_plan_parser.add_argument(
+        "--max-total-queries",
+        type=int,
+        default=None,
+        help="Maximum QueryPlans to emit across all personas/sources.",
+    )
+    customer_voice_plan_parser.add_argument(
+        "--max-results-per-query",
+        type=int,
+        default=25,
+        help="Max results per generated QueryPlan.",
+    )
+    customer_voice_plan_parser.add_argument(
+        "--approve-generated-preview-queries",
+        action="store_true",
+        help="Approve deterministic generated queries only for this preview; required before any plans are emitted.",
+    )
+    customer_voice_plan_parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("artifacts") / "customer_voice_queries" / "ai_cfo_smb_customer_voice_query_plans.json",
+        help="Path for deterministic JSON QueryPlan preview.",
+    )
+    customer_voice_plan_parser.add_argument(
+        "--output-md",
+        type=Path,
+        default=Path("artifacts") / "customer_voice_queries" / "ai_cfo_smb_customer_voice_query_plans.md",
+        help="Path for deterministic Markdown QueryPlan preview.",
+    )
+
     status_parser = subparsers.add_parser(
         "weekly-cycle-status",
         help="Print operator status for the latest real weekly cycle.",
@@ -808,6 +970,57 @@ def main(argv: list[str] | None = None) -> int:
         print(f"query_count: {len(queries)}")
         print(f"query_preview_json: {json_path}")
         print(f"query_preview_md: {md_path}")
+        return 0
+
+    if args.command == "preview-customer-voice-query-plans":
+        source_type_filter = _split_repeated_csv(args.source_type)
+        try:
+            generated_queries = generate_customer_voice_queries(
+                topic_id=args.topic,
+                persona_ids=_split_repeated_csv(args.persona_id),
+                source_type_filter=source_type_filter,
+            )
+            approved_queries = (
+                [approve_customer_voice_query(query) for query in generated_queries]
+                if args.approve_generated_preview_queries
+                else []
+            )
+            query_plans = build_customer_voice_query_plans(
+                topic_id=args.topic,
+                customer_voice_queries=approved_queries,
+                source_registry=default_source_registry(),
+                source_type_filter=source_type_filter,
+                max_queries_per_persona=args.max_queries_per_persona,
+                max_total_queries=args.max_total_queries,
+                max_results_per_query=args.max_results_per_query,
+                live_network_enabled=False,
+            )
+        except ValueError as exc:
+            print(str(exc))
+            return 2
+
+        payload = _customer_voice_plan_preview_payload(
+            topic_id=args.topic,
+            generated_queries_count=len(generated_queries),
+            approved_queries_count=len(approved_queries),
+            query_plans=query_plans,
+            source_type_filter=source_type_filter,
+            approve_generated_preview_queries=args.approve_generated_preview_queries,
+        )
+        output = args.output if args.output.is_absolute() else args.project_root / args.output
+        output_md = args.output_md if args.output_md.is_absolute() else args.project_root / args.output_md
+        json_path, md_path = _write_customer_voice_plan_preview(
+            payload=payload,
+            output_json=output,
+            output_md=output_md,
+        )
+        print("OOS customer voice query plan preview completed.")
+        print(f"topic: {args.topic}")
+        print(f"generated_queries_count: {len(generated_queries)}")
+        print(f"approved_queries_count: {len(approved_queries)}")
+        print(f"query_plans_count: {len(query_plans)}")
+        print(f"query_plan_preview_json: {json_path}")
+        print(f"query_plan_preview_md: {md_path}")
         return 0
 
     if args.command == "weekly-cycle-status":

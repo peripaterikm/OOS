@@ -1,4 +1,4 @@
-# OOS Roadmap v2.4 РІР‚вЂќ Signal Quality, Customer Voice, and AI Layers Checklist
+# OOS Roadmap v2.4 Р Р†Р вЂљРІР‚Сњ Signal Quality, Customer Voice, and AI Layers Checklist
 
 ## 0.1 Purpose
 
@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **2.2**
+- [ ] **0.2.2** Current item: **3.1**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **3 / 17**
-- [ ] **0.2.5** Remaining: **14 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **4 / 17**
+- [ ] **0.2.5** Remaining: **13 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -73,7 +73,7 @@ From live collection runs:
 
 ---
 
-# Milestone A РІР‚вЂќ Live Signal Quality Hardening
+# Milestone A Р Р†Р вЂљРІР‚Сњ Live Signal Quality Hardening
 
 ## 1.1 Live collection relevance hardening
 
@@ -103,7 +103,7 @@ Improve quality of live HN/GitHub/RSS signals before adding LLM layers.
 
 - [x] **1.1.1** HTML entities such as `&#x27;` are cleaned.
 - [x] **1.1.2** Simple tags such as `<p>` do not appear in `pain_summary`.
-- [x] **1.1.3** Mojibake fragments such as `РЎР‚РЎСџ`, `Р Р†Р вЂљ`, `Р В РЎСџ` do not appear in normalized summaries from mocked collector responses.
+- [x] **1.1.3** Mojibake fragments such as `Р РЋР вЂљР РЋРЎСџ`, `Р В Р вЂ Р В РІР‚С™`, `Р В Р’В Р РЋРЎСџ` do not appear in normalized summaries from mocked collector responses.
 - [x] **1.1.4** Generic small-business HN text without finance anchors is not high-confidence `pain_signal`.
 - [x] **1.1.5** GitHub marketing/content-calendar/product-pitch text is downgraded to `noise` or low-confidence `needs_human_review`.
 - [x] **1.1.6** Invoice/payment-cycle/manual-spreadsheet signal remains high-priority.
@@ -192,7 +192,7 @@ $env:PYTHONPATH="src"
 
 ---
 
-# Milestone B РІР‚вЂќ Customer Voice Query Generation
+# Milestone B Р Р†Р вЂљРІР‚Сњ Customer Voice Query Generation
 
 ## 2.1 Customer Voice Query Generator contract and artifacts
 
@@ -204,9 +204,9 @@ Add a query generation layer that searches in customer language, not only founde
 
 Founder-language queries such as `cash flow forecasting` miss latent pain. Customers may say:
 
-- РІР‚СљI donРІР‚в„ўt know where the money went.РІР‚Сњ
-- РІР‚СљMy bookkeeper quit and I need to close the month.РІР‚Сњ
-- РІР‚СљHow do I know which invoices will be paid before rent is due?РІР‚Сњ
+- Р Р†Р вЂљРЎС™I donР Р†Р вЂљРІвЂћСћt know where the money went.Р Р†Р вЂљРЎСљ
+- Р Р†Р вЂљРЎС™My bookkeeper quit and I need to close the month.Р Р†Р вЂљРЎСљ
+- Р Р†Р вЂљРЎС™How do I know which invoices will be paid before rent is due?Р Р†Р вЂљРЎСљ
 
 ### Scope
 
@@ -267,13 +267,18 @@ Allow approved customer voice queries to participate in QueryPlanner without rep
 
 ### Acceptance criteria
 
-- [ ] **2.2.1** QueryPlanner can include approved customer voice queries.
-- [ ] **2.2.2** Unapproved queries are ignored.
-- [ ] **2.2.3** Query plans remain deterministic and bounded.
-- [ ] **2.2.4** Source filters still work.
-- [ ] **2.2.5** Customer voice query yield is separated in summary metrics.
-- [ ] **2.2.6** Existing QueryPlanner tests remain green.
-- [ ] **2.2.7** Full validation passes.
+- [x] **2.2.1** QueryPlanner can include approved customer voice queries.
+- [x] **2.2.2** Unapproved queries are ignored.
+- [x] **2.2.3** Query plans remain deterministic and bounded.
+- [x] **2.2.4** Source filters still work.
+- [x] **2.2.5** Customer voice query yield is separated in summary metrics.
+- [x] **2.2.6** Existing QueryPlanner tests remain green.
+- [x] **2.2.7** Full validation passes.
+### Implementation notes
+
+- [x] **2.2.8** Customer Voice QueryPlans are emitted only from `approval_state=approved` queries; proposed, rejected, and retired queries remain non-executable.
+- [x] **2.2.9** Preview CLI writes deterministic JSON/Markdown with generated, approved, and plan counts while reporting `collectors_run=false`, `live_network_calls=false`, and `llm_calls=false`.
+- [x] **2.2.10** Source fit, source filters, collector availability, and Reddit gating are enforced before Customer Voice QueryPlans are emitted.
 
 ### Expected files
 
@@ -285,7 +290,7 @@ Allow approved customer voice queries to participate in QueryPlanner without rep
 
 ---
 
-# Milestone C РІР‚вЂќ Semantic Relevance and Scoring v2
+# Milestone C Р Р†Р вЂљРІР‚Сњ Semantic Relevance and Scoring v2
 
 ## 3.1 Scoring model v2 and relevance dimensions
 
@@ -370,7 +375,7 @@ Add semantic relevance support through a provider boundary without forcing new d
 
 ---
 
-# Milestone D РІР‚вЂќ LLM Provider Boundaries and Safe Signal Review
+# Milestone D Р Р†Р вЂљРІР‚Сњ LLM Provider Boundaries and Safe Signal Review
 
 ## 4.1 Role-based LLM provider contracts and budgets
 
@@ -512,13 +517,13 @@ Define structured LLM review output for CandidateSignals without live calls by d
 
 ---
 
-# Milestone E РІР‚вЂќ Implied Burden and Price Signals
+# Milestone E Р Р†Р вЂљРІР‚Сњ Implied Burden and Price Signals
 
 ## 5.1 Implied burden detection
 
 ### Goal
 
-Detect hidden operational burden even when the text does not explicitly say РІР‚СљproblemРІР‚Сњ or РІР‚Сљpain.РІР‚Сњ
+Detect hidden operational burden even when the text does not explicitly say Р Р†Р вЂљРЎС™problemР Р†Р вЂљРЎСљ or Р Р†Р вЂљРЎС™pain.Р Р†Р вЂљРЎСљ
 
 ### Scope
 
@@ -579,7 +584,7 @@ Extract budget/spend/willingness-to-pay hints from evidence.
 
 - [ ] **5.2.1** Model exists.
 - [ ] **5.2.2** Dollar/month/hour hints extracted when explicit.
-- [ ] **5.2.3** Effort hints such as РІР‚Сљ20 hours/monthРІР‚Сњ extracted.
+- [ ] **5.2.3** Effort hints such as Р Р†Р вЂљРЎС™20 hours/monthР Р†Р вЂљРЎСљ extracted.
 - [ ] **5.2.4** No invented budgets.
 - [ ] **5.2.5** Founder package can display price hints.
 - [ ] **5.2.6** Full validation passes.
@@ -593,7 +598,7 @@ Extract budget/spend/willingness-to-pay hints from evidence.
 
 ---
 
-# Milestone F РІР‚вЂќ Pattern Intelligence
+# Milestone F Р Р†Р вЂљРІР‚Сњ Pattern Intelligence
 
 ## 6.1 Weak signal aggregation protocol
 
@@ -645,7 +650,7 @@ Define cluster-level LLM synthesis that summarizes patterns, not individual sign
 ### Scope
 
 - Add `ClusterSynthesis` model.
-- Input: 5РІР‚вЂњ10 signals from one cluster.
+- Input: 5Р Р†Р вЂљРІР‚Сљ10 signals from one cluster.
 - Output:
   - `emerging_pain_pattern`;
   - `strongest_evidence_ids`;
@@ -676,7 +681,7 @@ Define cluster-level LLM synthesis that summarizes patterns, not individual sign
 
 ---
 
-# Milestone G РІР‚вЂќ Feedback From Kills and Founder Decisions
+# Milestone G Р Р†Р вЂљРІР‚Сњ Feedback From Kills and Founder Decisions
 
 ## 7.1 Kill Archive feedback into scoring
 
@@ -752,7 +757,7 @@ Add sections:
 
 ---
 
-# Milestone H РІР‚вЂќ End-to-End Validation and Completion
+# Milestone H Р Р†Р вЂљРІР‚Сњ End-to-End Validation and Completion
 
 ## 8.1 v2.4 end-to-end fixture and live-smoke validation
 
