@@ -10,6 +10,10 @@ __pycache__/
 # Generated outputs
 artifacts/
 reports/
+codex_tmp*/
+.test-tmp/
+.tmp_tests/
+.tmp_unittest/
 
 # IDE
 .vscode/
