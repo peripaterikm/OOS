@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **3.1**
+- [ ] **0.2.2** Current item: **3.2**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **4 / 17**
-- [ ] **0.2.5** Remaining: **13 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **5 / 17**
+- [ ] **0.2.5** Remaining: **12 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -315,18 +315,21 @@ Make scoring explicit, normalized, and extensible before adding embeddings or LL
 
 ### Acceptance criteria
 
-- [ ] **3.1.1** Scoring weights sum correctly for enabled/disabled modes.
-- [ ] **3.1.2** No double-counting of keyword relevance when embeddings are disabled.
-- [ ] **3.1.3** `signal_type_weight` is a soft multiplier, not hard sort priority.
-- [ ] **3.1.4** Scoring remains deterministic.
-- [ ] **3.1.5** Mixed fixtures produce non-flat confidence distribution.
-- [ ] **3.1.6** Full validation passes.
+- [x] **3.1.1** Scoring weights sum correctly for enabled/disabled modes.
+- [x] **3.1.2** No double-counting of keyword relevance when embeddings are disabled.
+- [x] **3.1.3** `signal_type_weight` is a soft multiplier, not hard sort priority.
+- [x] **3.1.4** Scoring remains deterministic.
+- [x] **3.1.5** Mixed fixtures produce non-flat confidence distribution.
+- [x] **3.1.6** Full validation passes.
+- [x] **3.1.7** `SignalScoreBreakdown` records component scores, caps, penalties, final score, and explanation.
+- [x] **3.1.8** `CandidateSignal` artifacts include `scoring_model_version` and `scoring_breakdown` without requiring external providers.
+- [x] **3.1.9** Semantic relevance, embeddings, and LLM review remain deferred to later roadmap items.
 
 ### Expected files
 
 - `src/oos/candidate_signal_extractor.py`
-- `src/oos/scoring.py`
-- `tests/test_signal_scoring_v2.py`
+- `src/oos/signal_scoring.py`
+- `tests/test_signal_scoring_model_v2.py`
 - `docs/dev_ledger/02_mini_epics/3.1-scoring-model-v2.md`
 - `docs/dev_ledger/03_run_reports/3.1-scoring-model-v2.md`
 

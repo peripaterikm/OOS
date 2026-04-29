@@ -9,16 +9,16 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `3.1`
-- Completed: `4 / 17`
-- Remaining: `13 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `2.2` - Customer voice query planner integration
-- Next planned roadmap item: Roadmap v2.4 `3.1` - Scoring model v2 and relevance dimensions
+- Current item: `3.2`
+- Completed: `5 / 17`
+- Remaining: `12 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `3.1` - Scoring model v2 and relevance dimensions
+- Next planned roadmap item: Roadmap v2.4 `3.2` - Semantic relevance provider boundary
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/2-2-customer-voice-query-planner-integration`
+- Current branch: `feat/3-1-scoring-model-v2`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -60,3 +60,4 @@
 - Roadmap v2.4 item 1.2 formalized live quality acceptance smoke with a deterministic artifact-only checker, CLI report writer, RSS controlled-skip checks, duplicate/mojibake/install-copy gates, and documented known limitations without live internet/API or live LLM/API calls during validation.
 - Roadmap v2.4 item 2.1 added deterministic persona-based Customer Voice Query generation for `ai_cfo_smb`, inactive future-topic stubs, proposed-by-default approval state, a disabled future LLM prompt contract, and a JSON/Markdown CLI preview without live internet/API or live LLM/API calls during validation.
 - Roadmap v2.4 item 2.2 added approval-gated Customer Voice QueryPlanner integration with deterministic preview plans, source-fit filtering, Reddit/source-policy gating, and a JSON/Markdown preview CLI without running collectors, internet/API calls, or live LLM/API calls during validation.
+- Roadmap v2.4 item 3.1 added deterministic Scoring model v2 with component score breakdowns, embeddings-disabled weights, soft signal-type multipliers, caps/penalties, `CandidateSignal` scoring metadata, and no embeddings, internet/API, or live LLM/API calls during validation.

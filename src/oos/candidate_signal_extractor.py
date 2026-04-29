@@ -11,17 +11,11 @@ from .evidence_classifier import (
     PAIN_SIGNAL_CANDIDATE,
     TREND_TRIGGER_CANDIDATE,
     WORKAROUND_SIGNAL_CANDIDATE,
-    anti_marketing_penalty,
-    buying_indicator_score,
     classify_raw_evidence,
     clean_evidence,
-    pain_indicator_score,
-    topic_relevance_score,
-    urgency_indicator_score,
-    user_pain_marker_score,
-    workaround_indicator_score,
 )
 from .models import CandidateSignal, CleanedEvidence, EvidenceClassification, RawEvidence
+from .signal_scoring import SCORING_MODEL_VERSION, SignalScoringInput, build_signal_score_breakdown
 
 
 SIGNAL_TYPE_BY_CLASSIFICATION = {
@@ -98,6 +92,28 @@ def extract_candidate_signal(
 
     signal_type = SIGNAL_TYPE_BY_CLASSIFICATION[classification.classification]
     text = _combined_text(cleaned)
+    pain_summary = _pain_summary(cleaned)
+    current_workaround = _current_workaround(cleaned, text)
+    buying_intent_hint = _buying_intent_hint(classification.classification, text)
+    urgency_hint = _urgency_hint(classification.classification, text)
+    score_breakdown = build_signal_score_breakdown(
+        SignalScoringInput(
+            topic_id=cleaned.topic_id,
+            source_type=cleaned.source_type,
+            query_kind=cleaned.query_kind,
+            classification_label=classification.classification,
+            signal_type=signal_type,
+            title=cleaned.normalized_title,
+            body=cleaned.normalized_body,
+            pain_summary=pain_summary,
+            current_workaround=current_workaround,
+            buying_intent_hint=buying_intent_hint,
+            urgency_hint=urgency_hint,
+            classification_confidence=float(classification.confidence),
+            matched_rules=list(classification.matched_rules),
+            metadata=dict(classification.raw_metadata) if hasattr(classification, "raw_metadata") else {},
+        )
+    )
     signal = CandidateSignal(
         signal_id=_signal_id(cleaned.evidence_id, classification.classification),
         evidence_id=cleaned.evidence_id,
@@ -107,14 +123,14 @@ def extract_candidate_signal(
         topic_id=cleaned.topic_id,
         query_kind=cleaned.query_kind,
         signal_type=signal_type,
-        pain_summary=_pain_summary(cleaned),
+        pain_summary=pain_summary,
         target_user=_target_user(cleaned, text),
-        current_workaround=_current_workaround(cleaned, text),
-        buying_intent_hint=_buying_intent_hint(classification.classification, text),
-        urgency_hint=_urgency_hint(classification.classification, text),
-        confidence=_confidence(classification, text),
+        current_workaround=current_workaround,
+        buying_intent_hint=buying_intent_hint,
+        urgency_hint=urgency_hint,
+        confidence=score_breakdown.final_score,
         measurement_methods=dict(MEASUREMENT_METHODS),
-        extraction_mode="rule_based_v1",
+        extraction_mode="rule_based_v2",
         classification=classification.classification,
         classification_confidence=float(classification.confidence),
         traceability={
@@ -124,6 +140,8 @@ def extract_candidate_signal(
             "topic_id": cleaned.topic_id,
             "query_kind": cleaned.query_kind,
         },
+        scoring_model_version=SCORING_MODEL_VERSION,
+        scoring_breakdown=score_breakdown.to_dict(),
     )
     signal.validate()
     return signal
@@ -252,31 +270,6 @@ def _urgency_hint(classification: str, text: str) -> str:
     if classification == NEEDS_HUMAN_REVIEW:
         return "unknown"
     return "low"
-
-
-def _confidence(classification: EvidenceClassification, text: str) -> float:
-    base = float(classification.confidence)
-    relevance = topic_relevance_score(text, classification.topic_id)
-    marketing = anti_marketing_penalty(text)
-    genuine_pain = user_pain_marker_score(text)
-    if classification.classification == NEEDS_HUMAN_REVIEW:
-        score = base * 0.65 + relevance * 0.12 + genuine_pain * 0.08 - marketing * 0.12
-        return round(max(0.25, min(0.4, score)), 2)
-    pain_score = pain_indicator_score(text)
-    workaround_score = workaround_indicator_score(text)
-    score = base * 0.55
-    score += relevance * 0.32
-    score += pain_score * 0.08
-    score += workaround_score * 0.12
-    score += buying_indicator_score(text) * 0.05
-    score += urgency_indicator_score(text) * 0.04
-    score += genuine_pain * 0.1
-    score -= marketing * 0.22
-    if relevance >= 0.45 and (pain_score >= 0.2 or workaround_score >= 0.2):
-        score += 0.08
-    if classification.source_type in {"github_issues", "stack_exchange"}:
-        score += 0.02
-    return round(max(0.1, min(0.95, score)), 2)
 
 
 def _clean_summary_sentence(sentence: str) -> str:

@@ -342,8 +342,10 @@ class TestCandidateSignalExtractor(unittest.TestCase):
             raw_evidence(body="This issue is broken and frustrating.")
         )
 
-        self.assertEqual(signal.extraction_mode, "rule_based_v1")
+        self.assertEqual(signal.extraction_mode, "rule_based_v2")
         self.assertEqual(signal.measurement_methods["confidence"], "rule_based")
+        self.assertEqual(signal.scoring_model_version, "signal_scoring_v2_embeddings_disabled")
+        self.assertEqual(signal.scoring_breakdown["final_score"], signal.confidence)
 
 
 if __name__ == "__main__":

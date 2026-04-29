@@ -246,6 +246,8 @@ class CandidateSignal:
     classification: str
     classification_confidence: float
     traceability: Dict[str, str]
+    scoring_model_version: str = ""
+    scoring_breakdown: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -317,6 +319,10 @@ class CandidateSignal:
         for field_name in ("evidence_id", "source_url", "source_id", "topic_id", "query_kind"):
             if self.traceability.get(field_name) != getattr(self, field_name):
                 raise ValueError(f"CandidateSignal.traceability.{field_name} must match the signal field")
+        if self.scoring_model_version and not isinstance(self.scoring_model_version, str):
+            raise ValueError("CandidateSignal.scoring_model_version must be a string")
+        if not isinstance(self.scoring_breakdown, dict):
+            raise ValueError("CandidateSignal.scoring_breakdown must be a dict")
 
 
 @dataclass(frozen=True)
