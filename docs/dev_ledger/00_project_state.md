@@ -9,16 +9,16 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `2.1`
-- Completed: `2 / 17`
-- Remaining: `15 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `1.2` - Live quality acceptance smoke
-- Next planned roadmap item: Roadmap v2.4 `2.1` - Customer Voice Query Generator contract and artifacts
+- Current item: `2.2`
+- Completed: `3 / 17`
+- Remaining: `14 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `2.1` - Customer Voice Query Generator contract and artifacts
+- Next planned roadmap item: Roadmap v2.4 `2.2` - Customer voice query planner integration
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/1-2-live-quality-acceptance-smoke`
+- Current branch: `feat/2-1-customer-voice-query-generator`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -58,3 +58,4 @@
 - GitHub push / PR remains deferred until the owner approves after manual live smoke.
 
 - Roadmap v2.4 item 1.2 formalized live quality acceptance smoke with a deterministic artifact-only checker, CLI report writer, RSS controlled-skip checks, duplicate/mojibake/install-copy gates, and documented known limitations without live internet/API or live LLM/API calls during validation.
+- Roadmap v2.4 item 2.1 added deterministic persona-based Customer Voice Query generation for `ai_cfo_smb`, inactive future-topic stubs, proposed-by-default approval state, a disabled future LLM prompt contract, and a JSON/Markdown CLI preview without live internet/API or live LLM/API calls during validation.
