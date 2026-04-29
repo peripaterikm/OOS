@@ -9,6 +9,7 @@ from pathlib import Path
 from .ai_ideation_evaluation import evaluate_ai_ideation
 from .artifact_store import ArtifactStore
 from .config import OOSConfig
+from .customer_voice_queries import generate_customer_voice_queries, write_customer_voice_query_preview
 from .discovery_weekly import run_discovery_weekly
 from .founder_ai_stage_rating import ALLOWED_AI_RATING_STAGES, ALLOWED_AI_STAGE_RATINGS, record_ai_stage_rating
 from .founder_review_package import FounderReviewIndex
@@ -508,6 +509,48 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Path for Markdown smoke report.",
     )
 
+    customer_voice_parser = subparsers.add_parser(
+        "generate-customer-voice-queries",
+        help="Generate deterministic customer-voice query previews for a Source Intelligence topic.",
+    )
+    customer_voice_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    customer_voice_parser.add_argument("--topic", required=True, help="Topic id, e.g. ai_cfo_smb.")
+    customer_voice_parser.add_argument(
+        "--persona-id",
+        action="append",
+        default=[],
+        help="Optional persona_id filter; repeat or comma-separate.",
+    )
+    customer_voice_parser.add_argument(
+        "--source-type",
+        action="append",
+        default=[],
+        help="Optional expected source_type filter; repeat or comma-separate.",
+    )
+    customer_voice_parser.add_argument(
+        "--max-queries-per-persona",
+        type=int,
+        default=None,
+        help="Optional cap per persona.",
+    )
+    customer_voice_parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("artifacts") / "customer_voice_queries" / "ai_cfo_smb_customer_voice_queries.json",
+        help="Path for deterministic JSON query preview.",
+    )
+    customer_voice_parser.add_argument(
+        "--output-md",
+        type=Path,
+        default=Path("artifacts") / "customer_voice_queries" / "ai_cfo_smb_customer_voice_queries.md",
+        help="Path for deterministic Markdown query preview.",
+    )
+
     status_parser = subparsers.add_parser(
         "weekly-cycle-status",
         help="Print operator status for the latest real weekly cycle.",
@@ -739,6 +782,33 @@ def main(argv: list[str] | None = None) -> int:
         print(f"report_json: {json_path}")
         print(f"report_md: {md_path}")
         return 0 if aggregate.aggregate_status != "fail" else 1
+
+    if args.command == "generate-customer-voice-queries":
+        try:
+            queries = generate_customer_voice_queries(
+                topic_id=args.topic,
+                persona_ids=_split_repeated_csv(args.persona_id),
+                max_queries_per_persona=args.max_queries_per_persona,
+                source_type_filter=_split_repeated_csv(args.source_type),
+            )
+        except ValueError as exc:
+            print(str(exc))
+            return 2
+
+        output = args.output if args.output.is_absolute() else args.project_root / args.output
+        output_md = args.output_md if args.output_md.is_absolute() else args.project_root / args.output_md
+        json_path, md_path = write_customer_voice_query_preview(
+            topic_id=args.topic,
+            queries=queries,
+            output_json=output,
+            output_md=output_md,
+        )
+        print("OOS customer voice query preview completed.")
+        print(f"topic: {args.topic}")
+        print(f"query_count: {len(queries)}")
+        print(f"query_preview_json: {json_path}")
+        print(f"query_preview_md: {md_path}")
+        return 0
 
     if args.command == "weekly-cycle-status":
         return _print_weekly_cycle_status(project_root=args.project_root)
