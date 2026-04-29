@@ -20,3 +20,7 @@ reports/
 Thumbs.db
 
 *.egg-info/
+.test-tmp/
+.tmp_tests/
+.tmp_unittest/
+tmp*/
