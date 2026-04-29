@@ -12,6 +12,7 @@ from .config import OOSConfig
 from .discovery_weekly import run_discovery_weekly
 from .founder_ai_stage_rating import ALLOWED_AI_RATING_STAGES, ALLOWED_AI_STAGE_RATINGS, record_ai_stage_rating
 from .founder_review_package import FounderReviewIndex
+from .live_quality_smoke import build_live_quality_smoke_report, write_live_quality_smoke_reports
 from .models import FounderReviewDecision, FounderReviewDecisionEnum, PortfolioStateEnum
 from .orchestrator import Orchestrator
 from .portfolio_layer import PortfolioManager
@@ -474,6 +475,39 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Also write adapter-only Source Intelligence -> meaning-loop dry-run artifacts.",
     )
 
+    live_smoke_parser = subparsers.add_parser(
+        "validate-live-quality-smoke",
+        help="Validate already-generated live Source Intelligence discovery run artifacts.",
+    )
+    live_smoke_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    live_smoke_parser.add_argument(
+        "--run-id",
+        action="append",
+        default=[],
+        help="General live smoke run id under artifacts/discovery_runs; repeat for multiple.",
+    )
+    live_smoke_parser.add_argument("--hn-run-id", action="append", default=[], help="HN live smoke run id.")
+    live_smoke_parser.add_argument("--github-run-id", action="append", default=[], help="GitHub live smoke run id.")
+    live_smoke_parser.add_argument("--mixed-run-id", action="append", default=[], help="Mixed live smoke run id.")
+    live_smoke_parser.add_argument("--rss-run-id", action="append", default=[], help="RSS controlled-skip smoke run id.")
+    live_smoke_parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("artifacts") / "discovery_runs" / "live_quality_acceptance_smoke.json",
+        help="Path for JSON smoke report.",
+    )
+    live_smoke_parser.add_argument(
+        "--output-md",
+        type=Path,
+        default=Path("artifacts") / "discovery_runs" / "live_quality_acceptance_smoke.md",
+        help="Path for Markdown smoke report.",
+    )
+
     status_parser = subparsers.add_parser(
         "weekly-cycle-status",
         help="Print operator status for the latest real weekly cycle.",
@@ -669,6 +703,42 @@ def main(argv: list[str] | None = None) -> int:
         for name, path in result.artifact_paths.items():
             print(f"{name}: {path}")
         return 0
+
+    if args.command == "validate-live-quality-smoke":
+        run_roles = {}
+        for run_id in args.hn_run_id:
+            run_roles[run_id] = "hn"
+        for run_id in args.github_run_id:
+            run_roles[run_id] = "github"
+        for run_id in args.mixed_run_id:
+            run_roles[run_id] = "mixed"
+        for run_id in args.rss_run_id:
+            run_roles[run_id] = "rss"
+        run_ids = [
+            *args.run_id,
+            *args.hn_run_id,
+            *args.github_run_id,
+            *args.mixed_run_id,
+            *args.rss_run_id,
+        ]
+        aggregate = build_live_quality_smoke_report(
+            project_root=args.project_root,
+            run_ids=run_ids,
+            run_roles=run_roles,
+        )
+        output = args.output if args.output.is_absolute() else args.project_root / args.output
+        output_md = args.output_md if args.output_md.is_absolute() else args.project_root / args.output_md
+        json_path, md_path = write_live_quality_smoke_reports(
+            aggregate=aggregate,
+            output_json=output,
+            output_md=output_md,
+        )
+        print("OOS live quality acceptance smoke completed.")
+        print(f"aggregate_status: {aggregate.aggregate_status}")
+        print(f"runs_checked: {len(aggregate.runs)}")
+        print(f"report_json: {json_path}")
+        print(f"report_md: {md_path}")
+        return 0 if aggregate.aggregate_status != "fail" else 1
 
     if args.command == "weekly-cycle-status":
         return _print_weekly_cycle_status(project_root=args.project_root)

@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **1.2**
+- [ ] **0.2.2** Current item: **2.1**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **1 / 17**
-- [ ] **0.2.5** Remaining: **16 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **2 / 17**
+- [ ] **0.2.5** Remaining: **15 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -156,14 +156,21 @@ Manual runs:
 
 ### Acceptance criteria
 
-- [ ] **1.2.1** `live_hn_002` run completed.
-- [ ] **1.2.2** `live_github_002` run completed.
-- [ ] **1.2.3** `live_mix_002` run completed.
-- [ ] **1.2.4** Top results show fewer HTML/encoding artifacts.
-- [ ] **1.2.5** At least one finance-relevant pain signal appears in GitHub or HN.
-- [ ] **1.2.6** Marketing/generated-content false positives no longer dominate top results.
-- [ ] **1.2.7** Result summary is recorded in Dev Ledger.
-- [ ] **1.2.8** No runtime artifacts are committed.
+- [x] **1.2.1** `live_hn_002` run completed.
+- [x] **1.2.2** `live_github_003` run completed.
+- [x] **1.2.3** `live_mix_003` run completed.
+- [x] **1.2.4** Top results show fewer HTML/encoding artifacts.
+- [x] **1.2.5** At least one finance-relevant pain signal appears in GitHub or HN.
+- [x] **1.2.6** Marketing/generated-content false positives no longer dominate top results.
+- [x] **1.2.7** Result summary is recorded in Dev Ledger.
+- [x] **1.2.8** No runtime artifacts are committed.
+
+
+### Acceptance smoke formalization
+
+- [x] **1.2.9** Deterministic local smoke checker validates already-generated live discovery artifacts without running collectors.
+- [x] **1.2.10** RSS missing-feed behavior is accepted only as controlled `rss_feed_url_missing` skip, not `unknown url type`.
+- [x] **1.2.11** Known limitation recorded: generic finance/consulting copy can still rank too high until semantic/LLM layers are added.
 
 ### Manual commands
 
