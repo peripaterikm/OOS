@@ -9,11 +9,11 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `4.2`
-- Completed: `7 / 17`
-- Remaining: `10 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `4.1` - LLM provider contracts and budgets
-- Next planned roadmap item: Roadmap v2.4 `4.2` - PII stripping and prompt safety envelope
+- Current item: `4.3`
+- Completed: `8 / 17`
+- Remaining: `9 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `4.2` - PII stripping and prompt safety envelope
+- Next planned roadmap item: Roadmap v2.4 `4.3` - LLM Signal Review and JTBD extraction contracts
 
 ## Branch And Commit Strategy
 
@@ -63,4 +63,5 @@
 - Roadmap v2.4 item 3.1 added deterministic Scoring model v2 with component score breakdowns, embeddings-disabled weights, soft signal-type multipliers, caps/penalties, `CandidateSignal` scoring metadata, and no embeddings, internet/API, or live LLM/API calls during validation.
 - Roadmap v2.4 item 3.2 added a semantic relevance provider boundary with disabled-by-default behavior, a deterministic keyword stub for local tests/previews, scoring v2 diagnostics, and no embeddings, external API, internet, or live LLM/API calls during validation.
 - Roadmap v2.4 item 4.1 added LLM provider request/response contracts, disabled-by-default provider behavior, deterministic local mock provider, fail-closed budget policies/state, token/cost estimation, and circuit breaker controls without secrets, dependencies, internet/API calls, or live LLM/API calls during validation.
+- Roadmap v2.4 item 4.2 added deterministic prompt-safety and PII redaction helpers, fail-closed blocking for secrets/private keys/cards, safe `LLMRequest` builders, and a safety envelope with asymmetric prior and evidence citation requirements without secrets, dependencies, internet/API calls, or live LLM/API calls during validation.
 - Roadmap v2.4 4.x work is continuing locally on `feat/4-x-llm-infrastructure-contracts`; push/PR/merge remains deferred until items 4.1-4.3 are complete and explicitly approved.

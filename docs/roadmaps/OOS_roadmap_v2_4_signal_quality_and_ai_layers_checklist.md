@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **4.2**
+- [ ] **0.2.2** Current item: **4.3**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **7 / 17**
-- [ ] **0.2.5** Remaining: **10 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **8 / 17**
+- [ ] **0.2.5** Remaining: **9 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -470,21 +470,28 @@ Protect evidence excerpts before any future external LLM prompt.
 
 ### Acceptance criteria
 
-- [ ] **4.2.1** PII stripping exists.
-- [ ] **4.2.2** Redacted excerpt is generated before LLM prompt.
-- [ ] **4.2.3** Original evidence remains unchanged.
-- [ ] **4.2.4** Prompt includes asymmetric prior.
-- [ ] **4.2.5** Prompt requires `evidence_cited = true`.
-- [ ] **4.2.6** No external calls.
-- [ ] **4.2.7** Full validation passes.
+- [x] **4.2.1** PII stripping exists.
+- [x] **4.2.2** Redacted excerpt is generated before LLM prompt.
+- [x] **4.2.3** Original evidence remains unchanged.
+- [x] **4.2.4** Prompt includes asymmetric prior.
+- [x] **4.2.5** Prompt requires `evidence_cited = true`.
+- [x] **4.2.6** No external calls.
+- [x] **4.2.7** Full validation passes.
 
 ### Expected files
 
-- `src/oos/pii_redaction.py`
-- `src/oos/llm_prompts.py`
-- `tests/test_pii_redaction_prompt_safety.py`
-- `docs/dev_ledger/02_mini_epics/4.2-pii-redaction-prompt-safety.md`
-- `docs/dev_ledger/03_run_reports/4.2-pii-redaction-prompt-safety.md`
+- `src/oos/prompt_safety.py`
+- `tests/test_prompt_safety_pii.py`
+- `docs/dev_ledger/02_mini_epics/4.2-pii-stripping-and-prompt-safety.md`
+- `docs/dev_ledger/03_run_reports/4.2-pii-stripping-and-prompt-safety.md`
+
+### Completion notes
+
+- Completed as a deterministic prompt-safety helper layer; it is not connected to live discovery or real LLM providers by default.
+- Email, phone, URL, IPv4, card, Israeli ID, IBAN, bank-account-like long digits, secret-token, and private-key patterns are detected and redacted with stdlib-only logic.
+- Secrets, private keys, and valid credit-card-like numbers block fail-closed by default.
+- The safe LLM request builder preserves request metadata and roles while returning `None` for blocked prompts.
+- No secrets, dependencies, internet/API calls, or live LLM calls were added.
 
 ---
 
