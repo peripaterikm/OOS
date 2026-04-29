@@ -1,4 +1,4 @@
-# OOS Roadmap v2.4 Р Р†Р вЂљРІР‚Сњ Signal Quality, Customer Voice, and AI Layers Checklist
+﻿# OOS Roadmap v2.4 Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Signal Quality, Customer Voice, and AI Layers Checklist
 
 ## 0.1 Purpose
 
@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **5.1**
+- [ ] **0.2.2** Current item: **5.2**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **9 / 17**
-- [ ] **0.2.5** Remaining: **8 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **10 / 17**
+- [ ] **0.2.5** Remaining: **7 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -73,7 +73,7 @@ From live collection runs:
 
 ---
 
-# Milestone A Р Р†Р вЂљРІР‚Сњ Live Signal Quality Hardening
+# Milestone A Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Live Signal Quality Hardening
 
 ## 1.1 Live collection relevance hardening
 
@@ -103,7 +103,7 @@ Improve quality of live HN/GitHub/RSS signals before adding LLM layers.
 
 - [x] **1.1.1** HTML entities such as `&#x27;` are cleaned.
 - [x] **1.1.2** Simple tags such as `<p>` do not appear in `pain_summary`.
-- [x] **1.1.3** Mojibake fragments such as `Р РЋР вЂљР РЋРЎСџ`, `Р В Р вЂ Р В РІР‚С™`, `Р В Р’В Р РЋРЎСџ` do not appear in normalized summaries from mocked collector responses.
+- [x] **1.1.3** Mojibake fragments such as `Р В Р Р‹Р В РІР‚С™Р В Р Р‹Р РЋРЎСџ`, `Р В Р’В Р В РІР‚В Р В Р’В Р Р†Р вЂљРЎв„ў`, `Р В Р’В Р вЂ™Р’В Р В Р Р‹Р РЋРЎСџ` do not appear in normalized summaries from mocked collector responses.
 - [x] **1.1.4** Generic small-business HN text without finance anchors is not high-confidence `pain_signal`.
 - [x] **1.1.5** GitHub marketing/content-calendar/product-pitch text is downgraded to `noise` or low-confidence `needs_human_review`.
 - [x] **1.1.6** Invoice/payment-cycle/manual-spreadsheet signal remains high-priority.
@@ -192,7 +192,7 @@ $env:PYTHONPATH="src"
 
 ---
 
-# Milestone B Р Р†Р вЂљРІР‚Сњ Customer Voice Query Generation
+# Milestone B Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Customer Voice Query Generation
 
 ## 2.1 Customer Voice Query Generator contract and artifacts
 
@@ -204,9 +204,9 @@ Add a query generation layer that searches in customer language, not only founde
 
 Founder-language queries such as `cash flow forecasting` miss latent pain. Customers may say:
 
-- Р Р†Р вЂљРЎС™I donР Р†Р вЂљРІвЂћСћt know where the money went.Р Р†Р вЂљРЎСљ
-- Р Р†Р вЂљРЎС™My bookkeeper quit and I need to close the month.Р Р†Р вЂљРЎСљ
-- Р Р†Р вЂљРЎС™How do I know which invoices will be paid before rent is due?Р Р†Р вЂљРЎСљ
+- Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўI donР В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›t know where the money went.Р В Р вЂ Р В РІР‚С™Р РЋРЎС™
+- Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўMy bookkeeper quit and I need to close the month.Р В Р вЂ Р В РІР‚С™Р РЋРЎС™
+- Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўHow do I know which invoices will be paid before rent is due?Р В Р вЂ Р В РІР‚С™Р РЋРЎС™
 
 ### Scope
 
@@ -290,7 +290,7 @@ Allow approved customer voice queries to participate in QueryPlanner without rep
 
 ---
 
-# Milestone C Р Р†Р вЂљРІР‚Сњ Semantic Relevance and Scoring v2
+# Milestone C Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Semantic Relevance and Scoring v2
 
 ## 3.1 Scoring model v2 and relevance dimensions
 
@@ -384,7 +384,7 @@ Add semantic relevance support through a provider boundary without forcing new d
 
 ---
 
-# Milestone D Р Р†Р вЂљРІР‚Сњ LLM Provider Boundaries and Safe Signal Review
+# Milestone D Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ LLM Provider Boundaries and Safe Signal Review
 
 ## 4.1 Role-based LLM provider contracts and budgets
 
@@ -545,46 +545,50 @@ Define structured LLM review output for CandidateSignals without live calls by d
 
 ---
 
-# Milestone E Р Р†Р вЂљРІР‚Сњ Implied Burden and Price Signals
+# Milestone E - Offline LLM Review and Price Signals
 
-## 5.1 Implied burden detection
+## 5.1 LLM Signal Review offline dry-run
 
 ### Goal
 
-Detect hidden operational burden even when the text does not explicitly say Р Р†Р вЂљРЎС™problemР Р†Р вЂљРЎСљ or Р Р†Р вЂљРЎС™pain.Р Р†Р вЂљРЎСљ
+Run the LLM Signal Review and JTBD contracts against existing discovery artifacts without real provider calls.
 
 ### Scope
 
-- Add `ImpliedBurdenSignal` model.
-- Add deterministic/stub extractor.
-- Add LLM prompt contract for future use.
-- Extract:
-  - `process_name`;
-  - `estimated_effort_hint`;
-  - `frequency`;
-  - `team_involved`;
-  - `current_tool_or_workaround`;
-  - `trigger_for_this_effort`;
-  - `confidence`;
-  - `evidence_cited`.
-- Add signal_type: `implied_burden`.
+- Read existing discovery run artifacts or explicit local artifact paths.
+- Select CandidateSignals deterministically.
+- Build evidence-bound `LLMSignalReviewInput` records.
+- Build safe `LLMRequest` objects through prompt safety.
+- Run deterministic mock review only.
+- Validate structured `LLMSignalReviewOutput` / JTBD contracts.
+- Write JSON and Markdown dry-run reports.
+- Preserve candidate signal, evidence, source type, and source URL traceability.
 
 ### Acceptance criteria
 
-- [ ] **5.1.1** Model exists.
-- [ ] **5.1.2** Text describing recurring manual effort produces implied burden.
-- [ ] **5.1.3** Text with no burden returns null/no signal.
-- [ ] **5.1.4** Extractor does not invent effort numbers.
-- [ ] **5.1.5** Evidence traceability preserved.
-- [ ] **5.1.6** Founder package can show implied burden section.
-- [ ] **5.1.7** Full validation passes.
+- [x] **5.1.1** Offline dry-run model and report structures exist.
+- [x] **5.1.2** Existing discovery run artifacts can be loaded.
+- [x] **5.1.3** Candidate signal selection is deterministic and bounded.
+- [x] **5.1.4** Safe LLM requests are built through prompt safety.
+- [x] **5.1.5** Prompt-safety-blocked items fail closed and produce no review output.
+- [x] **5.1.6** Deterministic mock review validates evidence citations and JTBD output contracts.
+- [x] **5.1.7** JSON and Markdown dry-run reports are written deterministically.
+- [x] **5.1.8** CLI command writes reports without live collection, provider calls, network calls, or live LLM/API calls.
+- [x] **5.1.9** Full validation passes.
 
 ### Expected files
 
-- `src/oos/implied_burden.py`
-- `tests/test_implied_burden_detection.py`
-- `docs/dev_ledger/02_mini_epics/5.1-implied-burden-detection.md`
-- `docs/dev_ledger/03_run_reports/5.1-implied-burden-detection.md`
+- `src/oos/llm_signal_review_dry_run.py`
+- `src/oos/cli.py`
+- `tests/test_llm_signal_review_dry_run.py`
+- `docs/dev_ledger/02_mini_epics/5.1-llm-signal-review-offline-dry-run.md`
+- `docs/dev_ledger/03_run_reports/5.1-llm-signal-review-offline-dry-run.md`
+
+### Completion notes
+
+- Completed as an offline deterministic dry-run only; no real provider calls, live discovery integration, or production LLM review execution were added.
+- The dry-run reads existing `candidate_signals.json` and `cleaned_evidence.json` artifacts, builds safe review requests, runs the deterministic mock review, validates output contracts, and writes traceable reports.
+- No secrets, dependencies, internet/API calls, provider `.complete()` calls, or live LLM calls were added.
 
 ---
 
@@ -612,7 +616,7 @@ Extract budget/spend/willingness-to-pay hints from evidence.
 
 - [ ] **5.2.1** Model exists.
 - [ ] **5.2.2** Dollar/month/hour hints extracted when explicit.
-- [ ] **5.2.3** Effort hints such as Р Р†Р вЂљРЎС™20 hours/monthР Р†Р вЂљРЎСљ extracted.
+- [ ] **5.2.3** Effort hints such as Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ў20 hours/monthР В Р вЂ Р В РІР‚С™Р РЋРЎС™ extracted.
 - [ ] **5.2.4** No invented budgets.
 - [ ] **5.2.5** Founder package can display price hints.
 - [ ] **5.2.6** Full validation passes.
@@ -626,7 +630,7 @@ Extract budget/spend/willingness-to-pay hints from evidence.
 
 ---
 
-# Milestone F Р Р†Р вЂљРІР‚Сњ Pattern Intelligence
+# Milestone F Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Pattern Intelligence
 
 ## 6.1 Weak signal aggregation protocol
 
@@ -678,7 +682,7 @@ Define cluster-level LLM synthesis that summarizes patterns, not individual sign
 ### Scope
 
 - Add `ClusterSynthesis` model.
-- Input: 5Р Р†Р вЂљРІР‚Сљ10 signals from one cluster.
+- Input: 5Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎС™10 signals from one cluster.
 - Output:
   - `emerging_pain_pattern`;
   - `strongest_evidence_ids`;
@@ -709,7 +713,7 @@ Define cluster-level LLM synthesis that summarizes patterns, not individual sign
 
 ---
 
-# Milestone G Р Р†Р вЂљРІР‚Сњ Feedback From Kills and Founder Decisions
+# Milestone G Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Feedback From Kills and Founder Decisions
 
 ## 7.1 Kill Archive feedback into scoring
 
@@ -785,7 +789,7 @@ Add sections:
 
 ---
 
-# Milestone H Р Р†Р вЂљРІР‚Сњ End-to-End Validation and Completion
+# Milestone H Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ End-to-End Validation and Completion
 
 ## 8.1 v2.4 end-to-end fixture and live-smoke validation
 
@@ -957,7 +961,7 @@ If Codex usage is constrained, prioritize:
 2. **1.2 Live quality acceptance smoke**
 3. **2.1 Customer Voice Query Generator**
 4. **2.2 Customer Voice Query Planner Integration**
-5. **5.1 Implied Burden Detection**
+5. **5.1 LLM Signal Review Offline Dry-Run**
 6. **5.2 Price Signal Extraction**
 7. **7.2 Founder Package Quality Upgrade**
 

@@ -1,4 +1,4 @@
-# Dev Ledger Project State
+﻿# Dev Ledger Project State
 
 ## Current Roadmap
 
@@ -9,16 +9,16 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `5.1`
-- Completed: `9 / 17`
-- Remaining: `8 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `4.3` - LLM Signal Review and JTBD extraction contracts
-- Next planned roadmap item: Roadmap v2.4 `5.1` - Implied burden detection
+- Current item: `5.2`
+- Completed: `10 / 17`
+- Remaining: `7 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `5.1` - LLM Signal Review offline dry-run
+- Next planned roadmap item: Roadmap v2.4 `5.2` - Price signal extraction
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/4-x-llm-infrastructure-contracts`
+- Current branch: `feat/5-x-llm-review-offline-dry-run`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -55,7 +55,7 @@
 - Full Roadmap v2.3 item 6.1 Source Yield Analytics and item 7.2 Traceability/compliance hardening are still deferred for the MVP slice; item 8.2 completion checkpoint is not yet complete.
 - Roadmap v2.4 item 1.1 hardened live Source Intelligence relevance with HTML/entity cleanup, UTF-8 decode hardening, ai_cfo_smb relevance gating, anti-marketing downgrades, non-flat deterministic scoring, finance-specific HN/GitHub query templates, RSS feed URL skips, and mocked validation without live internet/API or live LLM/API calls.
 - Roadmap v2.4 item 1.1b follow-up hardened founder-package ranking and deduplication, repaired additional mojibake fragments, downgraded GitHub install/tutorial/generic finance copy, added explicit noise coverage for obvious junk, and preserved roadmap counters at current item 1.2.
-- GitHub push / PR remains deferred until the owner approves after manual live smoke.
+- GitHub push / PR remains deferred until the selected 5.x offline review block is complete and the owner explicitly approves.
 
 - Roadmap v2.4 item 1.2 formalized live quality acceptance smoke with a deterministic artifact-only checker, CLI report writer, RSS controlled-skip checks, duplicate/mojibake/install-copy gates, and documented known limitations without live internet/API or live LLM/API calls during validation.
 - Roadmap v2.4 item 2.1 added deterministic persona-based Customer Voice Query generation for `ai_cfo_smb`, inactive future-topic stubs, proposed-by-default approval state, a disabled future LLM prompt contract, and a JSON/Markdown CLI preview without live internet/API or live LLM/API calls during validation.
@@ -66,3 +66,4 @@
 - Roadmap v2.4 item 4.2 added deterministic prompt-safety and PII redaction helpers, fail-closed blocking for secrets/private keys/cards, safe `LLMRequest` builders, and a safety envelope with asymmetric prior and evidence citation requirements without secrets, dependencies, internet/API calls, or live LLM/API calls during validation.
 - Roadmap v2.4 item 4.3 added LLM signal review and JTBD extraction contracts, deterministic prompt builders, prompt-safety integration, JSON parsing/validation, and a deterministic mock review flow for tests/local preview only without real LLM providers, secrets, dependencies, internet/API calls, or live LLM/API calls.
 - Roadmap v2.4 4.x work is complete locally on `feat/4-x-llm-infrastructure-contracts`; push/PR/merge remains deferred until explicitly approved.
+- Roadmap v2.4 item 5.1 added an offline deterministic LLM Signal Review dry-run that reads existing discovery artifacts, builds safe review requests, runs deterministic mock review only, validates structured review/JTBD outputs, and writes JSON/Markdown reports without real provider calls, internet/API calls, or live LLM/API calls.
