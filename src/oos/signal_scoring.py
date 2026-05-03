@@ -68,6 +68,8 @@ class SignalScoringInput:
     semantic_relevance_score: float | None = None
     semantic_relevance_provider_id: str | None = None
     semantic_relevance_available: bool = False
+    price_signal_explicit: bool = False
+    price_signal_confidence: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -79,6 +81,7 @@ class SignalScoreBreakdown:
     urgency_score: float
     source_quality_weight: float
     customer_voice_match_bonus: float
+    price_signal_boost: float
     semantic_relevance_score: float
     semantic_relevance_provider_id: str
     semantic_relevance_available: bool
@@ -111,6 +114,7 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
     urgency_score = _urgency_score(text, scoring_input)
     source_weight = source_quality_weight(scoring_input.source_type)
     customer_voice_bonus = customer_voice_match_bonus(scoring_input)
+    price_boost = explicit_price_signal_boost(scoring_input)
     marketing_penalty = anti_marketing_penalty(text)
     signal_multiplier = SIGNAL_TYPE_MULTIPLIERS.get(scoring_input.signal_type, 1.0)
     classification_factor = _classification_confidence_factor(scoring_input.classification_confidence)
@@ -136,6 +140,9 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
         explanation.append("synergy:urgency_with_finance_context")
     if customer_voice_bonus > 0:
         score += customer_voice_bonus * 0.20
+    if price_boost > 0:
+        score += price_boost
+        explanation.append("price_signal:explicit_evidence_boost")
     score -= marketing_penalty * 0.32
 
     if topic_score < 0.20 and scoring_input.topic_id == "ai_cfo_smb":
@@ -186,6 +193,7 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
         urgency_score=urgency_score,
         source_quality_weight=source_weight,
         customer_voice_match_bonus=customer_voice_bonus,
+        price_signal_boost=price_boost,
         semantic_relevance_score=semantic_score,
         semantic_relevance_provider_id=semantic_provider_id,
         semantic_relevance_available=semantic_available,
@@ -210,6 +218,18 @@ def customer_voice_match_bonus(scoring_input: SignalScoringInput) -> float:
     if scoring_input.metadata.get("persona_id") or scoring_input.metadata.get("customer_voice_query_id"):
         bonus += 0.02
     return round(min(0.10, bonus), 2)
+
+
+def explicit_price_signal_boost(scoring_input: SignalScoringInput) -> float:
+    if not scoring_input.price_signal_explicit:
+        return 0.0
+    try:
+        confidence = float(scoring_input.price_signal_confidence)
+    except (TypeError, ValueError):
+        return 0.0
+    if confidence < 0.35:
+        return 0.0
+    return round(min(0.05, 0.02 + confidence * 0.04), 2)
 
 
 def _semantic_relevance_diagnostic(scoring_input: SignalScoringInput) -> tuple[float, str, bool]:

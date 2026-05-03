@@ -63,11 +63,11 @@ class TestRoadmapV22CompletionCheckpoint(unittest.TestCase):
         )
         self.assertRegex(
             state,
-            r"Completed: `((15|16|0|1|2|3|4|5|6|7|8|9|10|11|12|13) / 16|([1-9]|10) / 17)`",
+            r"Completed: `((15|16|0|1|2|3|4|5|6|7|8|9|10|11|12|13) / 16|([1-9]|10|11) / 17)`",
         )
         self.assertRegex(
             state,
-            r"Remaining: `((1|0|16|15|14|13|12|11|10|9|8|7|6|5|4|3) / 16|([7-9]|10|1[1234567]) / 17)`",
+            r"Remaining: `((1|0|16|15|14|13|12|11|10|9|8|7|6|5|4|3) / 16|([6-9]|10|1[1234567]) / 17)`",
         )
         self.assertRegex(
             state,

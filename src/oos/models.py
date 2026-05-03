@@ -326,6 +326,59 @@ class CandidateSignal:
 
 
 @dataclass(frozen=True)
+class PriceSignal:
+    price_signal_id: str
+    evidence_id: str
+    source_id: str
+    source_type: str
+    source_url: str
+    topic_id: str
+    query_kind: str
+    current_spend_hint: Optional[str]
+    effort_cost_hint: Optional[str]
+    price_complaint: Optional[str]
+    willingness_to_pay_indicator: str
+    evidence_cited: str
+    confidence: float
+    extraction_mode: str = "rule_based_price_signal_v1"
+
+    @property
+    def id(self) -> str:
+        return self.price_signal_id
+
+    def validate(self) -> None:
+        for field_name in (
+            "price_signal_id",
+            "evidence_id",
+            "source_id",
+            "source_type",
+            "source_url",
+            "topic_id",
+            "query_kind",
+            "willingness_to_pay_indicator",
+            "extraction_mode",
+        ):
+            _require_non_empty(getattr(self, field_name), f"PriceSignal.{field_name}")
+        if self.willingness_to_pay_indicator not in {"present", "possible", "not_detected"}:
+            raise ValueError("PriceSignal.willingness_to_pay_indicator must be present, possible, or not_detected")
+        if not isinstance(self.confidence, (int, float)) or not 0 <= float(self.confidence) <= 1:
+            raise ValueError("PriceSignal.confidence must be between 0 and 1")
+        if self.has_explicit_signal and not str(self.evidence_cited or "").strip():
+            raise ValueError("PriceSignal.evidence_cited is required when a price signal is present")
+
+    @property
+    def has_explicit_signal(self) -> bool:
+        return any(
+            (
+                self.current_spend_hint,
+                self.effort_cost_hint,
+                self.price_complaint,
+                self.willingness_to_pay_indicator != "not_detected",
+            )
+        )
+
+
+@dataclass(frozen=True)
 class Signal:
     id: str
     source: str
@@ -594,6 +647,7 @@ MODEL_KIND = {
     CleanedEvidence: "cleaned_evidence",
     EvidenceClassification: "evidence_classifications",
     CandidateSignal: "candidate_signals",
+    PriceSignal: "price_signals",
     Signal: "signals",
     OpportunityCard: "opportunities",
     IdeaVariant: "ideas",

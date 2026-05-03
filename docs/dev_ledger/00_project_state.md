@@ -9,11 +9,11 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `5.2`
-- Completed: `10 / 17`
-- Remaining: `7 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `5.1` - LLM Signal Review offline dry-run
-- Next planned roadmap item: Roadmap v2.4 `5.2` - Price signal extraction
+- Current item: `7.2`
+- Completed: `11 / 17`
+- Remaining: `6 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `5.2` - Price signal extraction
+- Next planned roadmap item: Roadmap v2.4 `7.2` - Founder Package Quality Upgrade
 
 ## Branch And Commit Strategy
 
@@ -67,3 +67,4 @@
 - Roadmap v2.4 item 4.3 added LLM signal review and JTBD extraction contracts, deterministic prompt builders, prompt-safety integration, JSON parsing/validation, and a deterministic mock review flow for tests/local preview only without real LLM providers, secrets, dependencies, internet/API calls, or live LLM/API calls.
 - Roadmap v2.4 4.x work is complete locally on `feat/4-x-llm-infrastructure-contracts`; push/PR/merge remains deferred until explicitly approved.
 - Roadmap v2.4 item 5.1 added an offline deterministic LLM Signal Review dry-run that reads existing discovery artifacts, builds safe review requests, runs deterministic mock review only, validates structured review/JTBD outputs, and writes JSON/Markdown reports without real provider calls, internet/API calls, or live LLM/API calls.
+- Roadmap v2.4 item 5.2 added a deterministic evidence-only PriceSignal extractor, future LLM prompt contract, explicit-price scoring boost, price signal artifacts in discovery runs, and founder discovery package price hints without dependencies, internet/API calls, or live LLM/API calls.

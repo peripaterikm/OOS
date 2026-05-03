@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **5.2**
+- [ ] **0.2.2** Current item: **7.2**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **10 / 17**
-- [ ] **0.2.5** Remaining: **7 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **11 / 17**
+- [ ] **0.2.5** Remaining: **6 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -614,12 +614,12 @@ Extract budget/spend/willingness-to-pay hints from evidence.
 
 ### Acceptance criteria
 
-- [ ] **5.2.1** Model exists.
-- [ ] **5.2.2** Dollar/month/hour hints extracted when explicit.
-- [ ] **5.2.3** Effort hints such as Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ў20 hours/monthР В Р вЂ Р В РІР‚С™Р РЋРЎС™ extracted.
-- [ ] **5.2.4** No invented budgets.
-- [ ] **5.2.5** Founder package can display price hints.
-- [ ] **5.2.6** Full validation passes.
+- [x] **5.2.1** Model exists.
+- [x] **5.2.2** Dollar/month/hour hints extracted when explicit.
+- [x] **5.2.3** Effort hints such as `20 hours/month` extracted.
+- [x] **5.2.4** No invented budgets.
+- [x] **5.2.5** Founder package can display price hints.
+- [x] **5.2.6** Full validation passes.
 
 ### Expected files
 
@@ -627,6 +627,13 @@ Extract budget/spend/willingness-to-pay hints from evidence.
 - `tests/test_price_signal_extractor.py`
 - `docs/dev_ledger/02_mini_epics/5.2-price-signal-extraction.md`
 - `docs/dev_ledger/03_run_reports/5.2-price-signal-extraction.md`
+
+### Completion notes
+
+- Added a serializable `PriceSignal` model and deterministic evidence-only extractor for explicit spend, effort cost, price complaint, and willingness-to-pay hints.
+- Added a future-only LLM prompt contract that requires exact evidence citation, null/low-confidence fields when unsure, and no invented budgets.
+- Added a narrow explicit-price scoring boost and founder discovery package display for price hints without overriding core signal quality.
+- No dependencies, secrets, internet/API calls, live LLM/API calls, provider `.complete()` calls, push, PR, merge, or tag/release were added.
 
 ---
 
