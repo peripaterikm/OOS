@@ -220,13 +220,24 @@ def _normalize_optional_item(item: dict[str, Any], *, fallback_prefix: str) -> d
     item_id = item.get("id") or item.get("warning_id") or item.get("pattern_id") or item.get("candidate_id")
     item_id = item_id or item.get("review_id") or item.get("query_id") or fallback_prefix
     summary = item.get("summary") or item.get("warning") or item.get("reason") or item.get("description") or "Optional artifact item."
+    if fallback_prefix == "kill_archive_warnings":
+        details = []
+        if item.get("similar_killed_opportunity"):
+            details.append(f"similar killed opportunity: {item['similar_killed_opportunity']}")
+        if item.get("kill_reason"):
+            details.append(f"kill reason: {item['kill_reason']}")
+        if item.get("kill_pattern_penalty") not in (None, "", []):
+            details.append(f"penalty: {item['kill_pattern_penalty']}")
+        if details:
+            summary = f"{summary} ({'; '.join(details)})"
+    evidence_linkage = item.get("evidence_linkage") if isinstance(item.get("evidence_linkage"), dict) else {}
     return {
         "id": str(item_id),
         "summary": str(summary),
-        "evidence_id": item.get("evidence_id") or item.get("evidence_ids"),
-        "source_url": item.get("source_url"),
+        "evidence_id": item.get("evidence_id") or item.get("evidence_ids") or evidence_linkage.get("evidence_id"),
+        "source_url": item.get("source_url") or evidence_linkage.get("source_url"),
         "confidence": item.get("confidence") or item.get("score"),
-        "risk_note": item.get("risk_note") or item.get("risk") or item.get("severity"),
+        "risk_note": item.get("risk_note") or item.get("risk") or item.get("severity") or item.get("kill_pattern_penalty"),
         "evidence_cited": item.get("evidence_cited"),
     }
 
