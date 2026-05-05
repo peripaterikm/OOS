@@ -13,6 +13,7 @@ from .evidence_classifier import classify_evidence, clean_evidence
 from .live_collection import collect_raw_evidence_for_topic
 from .meaning_loop_adapter import build_meaning_loop_dry_run, write_meaning_loop_dry_run_artifacts
 from .models import CandidateSignal, CleanedEvidence, EvidenceClassification, RawEvidence, model_from_dict, model_to_dict
+from .price_signal_extractor import extract_price_signal
 from .source_registry import default_topic_profiles
 
 
@@ -93,6 +94,7 @@ def run_discovery_weekly(
     cleaned_items = [clean_evidence(evidence) for evidence in topic_evidence]
     classifications = [classify_evidence(cleaned) for cleaned in cleaned_items]
     candidate_signals = _extract_signals(cleaned_items, classifications)
+    price_signals = [price_signal for cleaned in cleaned_items if (price_signal := extract_price_signal(cleaned)) is not None]
 
     run_dir = project_root / "artifacts" / "discovery_runs" / resolved_run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -114,6 +116,7 @@ def run_discovery_weekly(
         "cleaned_evidence": [model_to_dict(item) for item in cleaned_items],
         "evidence_classifications": [model_to_dict(item) for item in classifications],
         "candidate_signals": [model_to_dict(item) for item in candidate_signals],
+        "price_signals": [model_to_dict(item) for item in price_signals],
     }
     artifact_paths: Dict[str, Path] = {}
     for artifact_name, payload in artifact_payloads.items():
@@ -142,6 +145,7 @@ def run_discovery_weekly(
         cleaned_items=cleaned_items,
         classifications=classifications,
         candidate_signals=candidate_signals,
+        price_signal_count=len(price_signals),
         artifact_paths=artifact_paths,
         collection_metadata=collection_metadata,
     )
@@ -262,6 +266,7 @@ def _build_summary(
     candidate_signals: List[CandidateSignal],
     artifact_paths: Dict[str, Path],
     collection_metadata: Dict[str, Any],
+    price_signal_count: int = 0,
 ) -> Dict[str, Any]:
     classification_counts = Counter(item.classification for item in classifications)
     signal_counts = Counter(item.signal_type for item in candidate_signals)
@@ -283,6 +288,7 @@ def _build_summary(
         "cleaned_evidence_count": len(cleaned_items),
         "classification_count": len(classifications),
         "candidate_signal_count": len(candidate_signals),
+        "price_signal_count": price_signal_count,
         "counts_by_source_type": dict(sorted(source_type_counts.items())),
         "candidate_signal_counts_by_source_type": dict(sorted(signal_source_counts.items())),
         "counts_by_classification": dict(sorted(classification_counts.items())),
@@ -329,6 +335,7 @@ def _build_founder_package(
         "live_network_enabled": summary["live_network_enabled"],
         "raw_evidence_count": summary["raw_evidence_count"],
         "candidate_signal_count": summary["candidate_signal_count"],
+        "price_signal_count": summary.get("price_signal_count", 0),
         "needs_human_review_count": summary["needs_human_review_count"],
         "noise_count": summary["noise_count"],
         "counts_by_source_type": summary["counts_by_source_type"],
@@ -351,6 +358,7 @@ def _build_founder_package(
 
 
 def _signal_package_item(signal: CandidateSignal) -> Dict[str, Any]:
+    price_signal = signal.scoring_breakdown.get("price_signal") if isinstance(signal.scoring_breakdown, dict) else None
     return {
         "signal_id": signal.signal_id,
         "signal_type": signal.signal_type,
@@ -364,6 +372,7 @@ def _signal_package_item(signal: CandidateSignal) -> Dict[str, Any]:
         "confidence": signal.confidence,
         "evidence_id": signal.evidence_id,
         "query_kind": signal.query_kind,
+        "price_signal": price_signal if isinstance(price_signal, dict) else None,
     }
 
 
@@ -384,6 +393,7 @@ def _summary_markdown(summary: Dict[str, Any], candidate_signals: List[Candidate
         f"- Cleaned evidence: `{summary['cleaned_evidence_count']}`",
         f"- Classifications: `{summary['classification_count']}`",
         f"- Candidate signals: `{summary['candidate_signal_count']}`",
+        f"- Price signals: `{summary.get('price_signal_count', 0)}`",
         f"- Needs human review: `{summary['needs_human_review_count']}`",
         f"- Noise: `{summary['noise_count']}`",
         f"- Query plans: `{summary['query_plan_count']}`",
@@ -453,18 +463,19 @@ def _founder_package_markdown(package: Dict[str, Any]) -> str:
             "",
             f"- Classifications: {_format_counts(classification_counts)}",
             f"- Signal types: {_format_counts(signal_counts)}",
-            f"- Needs human review: `{package['needs_human_review_count']}`",
-            f"- Noise: `{package['noise_count']}`",
-            "",
-            "## Top candidate signals",
+        f"- Needs human review: `{package['needs_human_review_count']}`",
+        f"- Noise: `{package['noise_count']}`",
+        f"- Price signals: `{package.get('price_signal_count', 0)}`",
+        "",
+        "## Top candidate signals",
             "",
         ]
     )
     if package["top_candidate_signals"]:
         lines.extend(
             [
-                "| Signal | Confidence | Summary | Source | Buying intent | Urgency | Evidence |",
-                "| --- | ---: | --- | --- | --- | --- | --- |",
+                "| Signal | Confidence | Summary | Source | Buying intent | Urgency | Price hints | Evidence |",
+                "| --- | ---: | --- | --- | --- | --- | --- | --- |",
             ]
         )
         for signal in package["top_candidate_signals"]:
@@ -476,6 +487,7 @@ def _founder_package_markdown(package: Dict[str, Any]) -> str:
                 f"{_md_cell(signal['source_type'])} / {signal['source_url']} | "
                 f"`{signal['buying_intent_hint']}` | "
                 f"`{signal['urgency_hint']}` | "
+                f"{_md_cell(_format_price_hint(signal.get('price_signal')))} | "
                 f"`{signal['evidence_id']}` |"
             )
     else:
@@ -536,6 +548,22 @@ def _format_counts(counts: Dict[str, Any]) -> str:
 
 def _md_cell(value: Any) -> str:
     return str(value).replace("|", "\\|").replace("\n", " ").strip()
+
+
+def _format_price_hint(price_signal: Any) -> str:
+    if not isinstance(price_signal, dict):
+        return "none"
+    parts = []
+    for key in ("current_spend_hint", "effort_cost_hint", "price_complaint"):
+        value = price_signal.get(key)
+        if value:
+            parts.append(str(value))
+    wtp = price_signal.get("willingness_to_pay_indicator")
+    if wtp and wtp != "not_detected":
+        parts.append(f"wtp:{wtp}")
+    if not parts:
+        return "none"
+    return "; ".join(parts)
 
 
 def _write_json(path: Path, payload: Any) -> None:

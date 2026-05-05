@@ -15,6 +15,7 @@ from .evidence_classifier import (
     clean_evidence,
 )
 from .models import CandidateSignal, CleanedEvidence, EvidenceClassification, RawEvidence
+from .price_signal_extractor import extract_price_signal
 from .signal_scoring import SCORING_MODEL_VERSION, SignalScoringInput, build_signal_score_breakdown
 
 
@@ -96,6 +97,7 @@ def extract_candidate_signal(
     current_workaround = _current_workaround(cleaned, text)
     buying_intent_hint = _buying_intent_hint(classification.classification, text)
     urgency_hint = _urgency_hint(classification.classification, text)
+    price_signal = extract_price_signal(cleaned)
     score_breakdown = build_signal_score_breakdown(
         SignalScoringInput(
             topic_id=cleaned.topic_id,
@@ -112,8 +114,21 @@ def extract_candidate_signal(
             classification_confidence=float(classification.confidence),
             matched_rules=list(classification.matched_rules),
             metadata=dict(classification.raw_metadata) if hasattr(classification, "raw_metadata") else {},
+            price_signal_explicit=bool(price_signal and price_signal.has_explicit_signal),
+            price_signal_confidence=price_signal.confidence if price_signal else 0.0,
         )
     )
+    score_breakdown_dict = score_breakdown.to_dict()
+    if price_signal is not None:
+        score_breakdown_dict["price_signal"] = {
+            "price_signal_id": price_signal.price_signal_id,
+            "current_spend_hint": price_signal.current_spend_hint,
+            "effort_cost_hint": price_signal.effort_cost_hint,
+            "price_complaint": price_signal.price_complaint,
+            "willingness_to_pay_indicator": price_signal.willingness_to_pay_indicator,
+            "evidence_cited": price_signal.evidence_cited,
+            "confidence": price_signal.confidence,
+        }
     signal = CandidateSignal(
         signal_id=_signal_id(cleaned.evidence_id, classification.classification),
         evidence_id=cleaned.evidence_id,
@@ -141,7 +156,7 @@ def extract_candidate_signal(
             "query_kind": cleaned.query_kind,
         },
         scoring_model_version=SCORING_MODEL_VERSION,
-        scoring_breakdown=score_breakdown.to_dict(),
+        scoring_breakdown=score_breakdown_dict,
     )
     signal.validate()
     return signal

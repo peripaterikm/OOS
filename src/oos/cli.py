@@ -19,6 +19,12 @@ from .discovery_weekly import run_discovery_weekly
 from .founder_ai_stage_rating import ALLOWED_AI_RATING_STAGES, ALLOWED_AI_STAGE_RATINGS, record_ai_stage_rating
 from .founder_review_package import FounderReviewIndex
 from .live_quality_smoke import build_live_quality_smoke_report, write_live_quality_smoke_reports
+from .llm_signal_review_dry_run import (
+    LLMSignalReviewDryRunInput,
+    default_llm_signal_review_dry_run_output_dir,
+    run_llm_signal_review_dry_run,
+    write_llm_signal_review_dry_run_report,
+)
 from .models import FounderReviewDecision, FounderReviewDecisionEnum, PortfolioStateEnum
 from .orchestrator import Orchestrator
 from .portfolio_layer import PortfolioManager
@@ -713,6 +719,58 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Path for deterministic Markdown QueryPlan preview.",
     )
 
+    llm_review_dry_run_parser = subparsers.add_parser(
+        "run-llm-signal-review-dry-run",
+        help="Run an offline deterministic LLM signal review dry-run from existing discovery artifacts.",
+    )
+    llm_review_dry_run_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    llm_review_dry_run_parser.add_argument(
+        "--discovery-run-id",
+        default=None,
+        help="Discovery run id under artifacts/discovery_runs.",
+    )
+    llm_review_dry_run_parser.add_argument(
+        "--input-candidate-signals",
+        type=Path,
+        default=None,
+        help="Explicit candidate_signals.json path.",
+    )
+    llm_review_dry_run_parser.add_argument(
+        "--input-cleaned-evidence",
+        type=Path,
+        default=None,
+        help="Explicit cleaned_evidence.json path.",
+    )
+    llm_review_dry_run_parser.add_argument(
+        "--review-run-id",
+        required=True,
+        help="Deterministic review run id for output paths and review ids.",
+    )
+    llm_review_dry_run_parser.add_argument("--topic", default="ai_cfo_smb", help="Topic id.")
+    llm_review_dry_run_parser.add_argument("--max-signals", type=int, default=5, help="Max signals to review.")
+    llm_review_dry_run_parser.add_argument(
+        "--min-confidence",
+        type=float,
+        default=0.0,
+        help="Minimum CandidateSignal confidence to include.",
+    )
+    llm_review_dry_run_parser.add_argument(
+        "--include-needs-human-review",
+        action="store_true",
+        help="Include CandidateSignals whose signal_type is needs_human_review.",
+    )
+    llm_review_dry_run_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Output directory for JSON/Markdown dry-run reports.",
+    )
+
     status_parser = subparsers.add_parser(
         "weekly-cycle-status",
         help="Print operator status for the latest real weekly cycle.",
@@ -1021,6 +1079,46 @@ def main(argv: list[str] | None = None) -> int:
         print(f"query_plans_count: {len(query_plans)}")
         print(f"query_plan_preview_json: {json_path}")
         print(f"query_plan_preview_md: {md_path}")
+        return 0
+
+    if args.command == "run-llm-signal-review-dry-run":
+        dry_run_input = LLMSignalReviewDryRunInput(
+            project_root=args.project_root,
+            discovery_run_id=args.discovery_run_id,
+            input_candidate_signals_path=args.input_candidate_signals,
+            input_cleaned_evidence_path=args.input_cleaned_evidence,
+            review_run_id=args.review_run_id,
+            topic_id=args.topic,
+            max_signals=args.max_signals,
+            min_confidence=args.min_confidence,
+            include_needs_human_review=args.include_needs_human_review,
+            output_dir=args.output_dir,
+        )
+        try:
+            report = run_llm_signal_review_dry_run(dry_run_input)
+        except ValueError as exc:
+            print(str(exc))
+            return 2
+        output_dir = (
+            args.output_dir
+            if args.output_dir is not None and args.output_dir.is_absolute()
+            else args.project_root / args.output_dir
+            if args.output_dir is not None
+            else default_llm_signal_review_dry_run_output_dir(
+                project_root=args.project_root,
+                review_run_id=args.review_run_id,
+            )
+        )
+        json_path, md_path = write_llm_signal_review_dry_run_report(report, output_dir=output_dir)
+        print("OOS LLM signal review offline dry-run completed.")
+        print(f"review_run_id: {report.review_run_id}")
+        print(f"review_items_created: {report.review_items_created}")
+        print(f"valid_reviews: {report.valid_reviews}")
+        print(f"blocked_by_prompt_safety: {report.blocked_by_prompt_safety}")
+        print(f"llm_calls_made: {str(report.llm_calls_made).lower()}")
+        print(f"external_calls_made: {str(report.external_calls_made).lower()}")
+        print(f"report_json: {json_path}")
+        print(f"report_md: {md_path}")
         return 0
 
     if args.command == "weekly-cycle-status":
