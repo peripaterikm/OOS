@@ -9,16 +9,16 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `7.2`
-- Completed: `11 / 17`
-- Remaining: `6 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `5.2` - Price signal extraction
-- Next planned roadmap item: Roadmap v2.4 `7.2` - Founder Package Quality Upgrade
+- Current item: `8.1`
+- Completed: `12 / 17`
+- Remaining: `5 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `7.2` - Founder Package Quality Upgrade
+- Next planned roadmap item: Roadmap v2.4 `8.1` - v2.4 end-to-end fixture and live-smoke validation
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/5-x-llm-review-offline-dry-run`
+- Current branch: `feat/7-2-founder-package-quality-upgrade`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -68,3 +68,4 @@
 - Roadmap v2.4 4.x work is complete locally on `feat/4-x-llm-infrastructure-contracts`; push/PR/merge remains deferred until explicitly approved.
 - Roadmap v2.4 item 5.1 added an offline deterministic LLM Signal Review dry-run that reads existing discovery artifacts, builds safe review requests, runs deterministic mock review only, validates structured review/JTBD outputs, and writes JSON/Markdown reports without real provider calls, internet/API calls, or live LLM/API calls.
 - Roadmap v2.4 item 5.2 added a deterministic evidence-only PriceSignal extractor, future LLM prompt contract, explicit-price scoring boost, price signal artifacts in discovery runs, and founder discovery package price hints without dependencies, internet/API calls, or live LLM/API calls.
+- Roadmap v2.4 item 7.2 upgraded founder discovery packages with deterministic quality sections for time-sensitive opportunities, implied burdens, explicit price signals, optional weak-pattern and kill-archive artifacts, customer voice query yield, advisory offline LLM review outputs, and evidence confidence/risk notes without dependencies, internet/API calls, or live LLM/API calls.
