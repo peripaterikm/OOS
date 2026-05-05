@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `1.4 Candidate signal dedup before founder package`
+- Current item: `1.5 Mojibake cleanup regression test`
 - Roadmap state: `active / planned`
-- Completed: `3 / 24`
-- Remaining: `21 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `1.3` - PriceSignal false-positive hardening
-- Next planned roadmap item: Roadmap v2.5 `1.4` - Candidate signal dedup before founder package
+- Completed: `4 / 24`
+- Remaining: `20 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `1.4` - Candidate signal dedup before founder package
+- Next planned roadmap item: Roadmap v2.5 `1.5` - Mojibake cleanup regression test
 
 ## Branch And Commit Strategy
 
@@ -97,3 +97,4 @@
 
 - Roadmap v2.5 item 1.2 added deterministic GitHub vendor-promo/SEO suppression with classification downgrade, scoring caps, founder-package risk notes, and fixture-only tests against first-run false positives without live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 1.3 hardened PriceSignal extraction against receipt thresholds, tax/deduction/regulatory limits, `$1.25M` truncation, and weak vendor-commercial WTP phrases while preserving organic affordability complaints without live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 1.4 added deterministic CandidateSignal dedup before founder-facing packages and weak-pattern aggregation, preserving duplicate evidence/signal/source metadata while keeping raw artifacts intact and avoiding live internet/API or live LLM/API calls.

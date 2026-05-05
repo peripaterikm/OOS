@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **1.4 Candidate signal dedup before founder package**
+- [ ] **0.2** Current item: **1.5 Mojibake cleanup regression test**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **3 / 24**
-- [ ] **0.5** Remaining: **21 / 24**
+- [ ] **0.4** Completed from this roadmap: **4 / 24**
+- [ ] **0.5** Remaining: **20 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -214,21 +214,21 @@ Prevent duplicate candidate signals from appearing in founder review and inflati
 
 ### Expected files
 
-- `src/oos/signal_dedup.py`
-- `src/oos/founder_package.py`
+- `src/oos/candidate_signal_dedup.py`
+- `src/oos/discovery_weekly.py`
 - `src/oos/weak_signal_aggregation.py`
-- `tests/test_candidate_signal_dedup_founder_package.py`
-- `docs/dev_ledger/02_mini_epics/1.4-candidate-signal-dedup-founder-package.md`
-- `docs/dev_ledger/03_run_reports/1.4-candidate-signal-dedup-founder-package.md`
+- `tests/test_candidate_signal_dedup.py`
+- `docs/dev_ledger/02_mini_epics/1.4-candidate-signal-dedup.md`
+- `docs/dev_ledger/03_run_reports/1.4-candidate-signal-dedup.md`
 
 ### Acceptance criteria
 
-- [ ] **1.4.1** Duplicate candidates collapse in founder package display.
-- [ ] **1.4.2** Canonical candidate preserves duplicate evidence IDs.
-- [ ] **1.4.3** Dedup does not remove distinct pains from the same source.
-- [ ] **1.4.4** Weak pattern aggregation uses canonical signals.
-- [ ] **1.4.5** Output ordering is deterministic.
-- [ ] **1.4.6** Full validation passes.
+- [x] **1.4.1** Duplicate candidates collapse in founder package display.
+- [x] **1.4.2** Canonical candidate preserves duplicate evidence IDs.
+- [x] **1.4.3** Dedup does not remove distinct pains from the same source.
+- [x] **1.4.4** Weak pattern aggregation uses canonical signals.
+- [x] **1.4.5** Output ordering is deterministic.
+- [x] **1.4.6** Full validation passes.
 
 ### Validation expectations
 

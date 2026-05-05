@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
+from .candidate_signal_dedup import deduplicate_candidate_signals, deduplicate_ranked_candidate_signals
 from .candidate_signal_extractor import extract_candidate_signal
 from .evidence_classifier import classify_evidence, clean_evidence
 from .founder_package import build_founder_package_quality_sections, render_founder_package_quality_sections
@@ -100,7 +101,9 @@ def run_discovery_weekly(
     price_signals = [price_signal for cleaned in cleaned_items if (price_signal := extract_price_signal(cleaned)) is not None]
     kill_feedback = apply_kill_archive_feedback(candidate_signals, project_root=project_root)
     candidate_signals = kill_feedback.candidate_signals
-    weak_pattern_candidates = aggregate_weak_pattern_candidates(candidate_signals)
+    dedup_result = deduplicate_candidate_signals(candidate_signals)
+    canonical_candidate_signals = dedup_result.canonical_signals
+    weak_pattern_candidates = aggregate_weak_pattern_candidates(canonical_candidate_signals)
 
     run_dir = project_root / "artifacts" / "discovery_runs" / resolved_run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -122,6 +125,7 @@ def run_discovery_weekly(
         "cleaned_evidence": [model_to_dict(item) for item in cleaned_items],
         "evidence_classifications": [model_to_dict(item) for item in classifications],
         "candidate_signals": [model_to_dict(item) for item in candidate_signals],
+        "candidate_signal_dedup": dedup_result.to_dict(),
         "price_signals": [model_to_dict(item) for item in price_signals],
     }
     weak_pattern_path = run_dir / "weak_pattern_candidates.json"
@@ -166,15 +170,16 @@ def run_discovery_weekly(
         classifications=classifications,
         candidate_signals=candidate_signals,
         price_signal_count=len(price_signals),
+        candidate_signal_dedup=dedup_result.to_dict(),
         weak_pattern_candidate_count=len(weak_pattern_candidates),
         artifact_paths=artifact_paths,
         collection_metadata=collection_metadata,
     )
     _write_json(summary_json_path, summary)
-    summary_md_path.write_text(_summary_markdown(summary, candidate_signals), encoding="utf-8")
+    summary_md_path.write_text(_summary_markdown(summary, canonical_candidate_signals), encoding="utf-8")
     founder_package = _build_founder_package(
         summary=summary,
-        candidate_signals=candidate_signals,
+        candidate_signals=canonical_candidate_signals,
         classifications=classifications,
         price_signals=price_signals,
         run_dir=run_dir,
@@ -265,25 +270,6 @@ def rank_candidate_signals(candidate_signals: Iterable[CandidateSignal]) -> List
     )
 
 
-def deduplicate_ranked_candidate_signals(candidate_signals: Iterable[CandidateSignal]) -> List[CandidateSignal]:
-    deduped: Dict[str, CandidateSignal] = {}
-    for signal in rank_candidate_signals(candidate_signals):
-        key = _candidate_signal_dedup_key(signal)
-        if key not in deduped:
-            deduped[key] = signal
-    return list(deduped.values())
-
-
-def _candidate_signal_dedup_key(signal: CandidateSignal) -> str:
-    source_url = signal.source_url.strip().lower()
-    if source_url:
-        return f"url:{signal.source_type}:{source_url}"
-    if signal.evidence_id.strip():
-        return f"evidence:{signal.evidence_id.strip().lower()}"
-    summary = re.sub(r"[^a-z0-9]+", " ", signal.pain_summary.lower()).strip()
-    return f"summary:{signal.source_type}:{summary}"
-
-
 def _build_summary(
     *,
     run_id: str,
@@ -295,6 +281,7 @@ def _build_summary(
     artifact_paths: Dict[str, Path],
     collection_metadata: Dict[str, Any],
     price_signal_count: int = 0,
+    candidate_signal_dedup: Dict[str, Any] | None = None,
     weak_pattern_candidate_count: int = 0,
 ) -> Dict[str, Any]:
     classification_counts = Counter(item.classification for item in classifications)
@@ -317,6 +304,9 @@ def _build_summary(
         "cleaned_evidence_count": len(cleaned_items),
         "classification_count": len(classifications),
         "candidate_signal_count": len(candidate_signals),
+        "canonical_candidate_signal_count": (candidate_signal_dedup or {}).get("canonical_signal_count", len(candidate_signals)),
+        "suppressed_duplicate_candidate_signal_count": (candidate_signal_dedup or {}).get("suppressed_duplicate_count", 0),
+        "duplicate_candidate_group_count": (candidate_signal_dedup or {}).get("duplicate_group_count", 0),
         "price_signal_count": price_signal_count,
         "weak_pattern_candidate_count": weak_pattern_candidate_count,
         "counts_by_source_type": dict(sorted(source_type_counts.items())),
@@ -326,6 +316,14 @@ def _build_summary(
         "needs_human_review_count": classification_counts.get("needs_human_review", 0),
         "noise_count": classification_counts.get("noise", 0),
         "artifact_paths": {name: str(path) for name, path in sorted(artifact_paths.items())},
+        "candidate_signal_dedup": candidate_signal_dedup or {
+            "version": "candidate_signal_dedup_v1",
+            "canonical_signal_count": len(candidate_signals),
+            "suppressed_duplicate_count": 0,
+            "duplicate_group_count": 0,
+            "canonical_signal_ids": [signal.signal_id for signal in candidate_signals],
+            "suppressed_duplicate_signal_ids": [],
+        },
         "notes": [
             "MVP weekly discovery CLI lite.",
             "Full 6.1 Source Yield Analytics is deferred.",
@@ -356,10 +354,9 @@ def _build_founder_package(
     run_dir: Path | None = None,
     collection_metadata: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
-    ranked_signals = rank_candidate_signals(candidate_signals)
-    deduped_ranked_signals = deduplicate_ranked_candidate_signals(candidate_signals)
+    deduped_ranked_signals = rank_candidate_signals(candidate_signals)
     top_signals = [signal for signal in deduped_ranked_signals if signal.signal_type != "needs_human_review"]
-    review_signals = [signal for signal in ranked_signals if signal.signal_type == "needs_human_review"]
+    review_signals = [signal for signal in deduped_ranked_signals if signal.signal_type == "needs_human_review"]
     quality_sections = build_founder_package_quality_sections(
         candidate_signals=candidate_signals,
         classifications=classifications or [],
@@ -376,6 +373,9 @@ def _build_founder_package(
         "live_network_enabled": summary["live_network_enabled"],
         "raw_evidence_count": summary["raw_evidence_count"],
         "candidate_signal_count": summary["candidate_signal_count"],
+        "canonical_candidate_signal_count": summary.get("canonical_candidate_signal_count", summary["candidate_signal_count"]),
+        "suppressed_duplicate_candidate_signal_count": summary.get("suppressed_duplicate_candidate_signal_count", 0),
+        "duplicate_candidate_group_count": summary.get("duplicate_candidate_group_count", 0),
         "price_signal_count": summary.get("price_signal_count", 0),
         "weak_pattern_candidate_count": summary.get("weak_pattern_candidate_count", 0),
         "needs_human_review_count": summary["needs_human_review_count"],
@@ -383,6 +383,7 @@ def _build_founder_package(
         "counts_by_source_type": summary["counts_by_source_type"],
         "counts_by_classification": summary["counts_by_classification"],
         "counts_by_signal_type": summary["counts_by_signal_type"],
+        "candidate_signal_dedup": summary.get("candidate_signal_dedup", {}),
         "top_candidate_signals": [_signal_package_item(signal) for signal in top_signals[:10]],
         "needs_human_review_signals": [_signal_package_item(signal) for signal in review_signals],
         "quality_sections": quality_sections,
@@ -402,6 +403,7 @@ def _build_founder_package(
 
 def _signal_package_item(signal: CandidateSignal) -> Dict[str, Any]:
     price_signal = signal.scoring_breakdown.get("price_signal") if isinstance(signal.scoring_breakdown, dict) else None
+    dedup_metadata = signal.scoring_breakdown.get("candidate_dedup") if isinstance(signal.scoring_breakdown, dict) else None
     return {
         "signal_id": signal.signal_id,
         "signal_type": signal.signal_type,
@@ -416,6 +418,7 @@ def _signal_package_item(signal: CandidateSignal) -> Dict[str, Any]:
         "evidence_id": signal.evidence_id,
         "query_kind": signal.query_kind,
         "price_signal": price_signal if isinstance(price_signal, dict) else None,
+        "dedup": dedup_metadata if isinstance(dedup_metadata, dict) else None,
     }
 
 
@@ -436,6 +439,8 @@ def _summary_markdown(summary: Dict[str, Any], candidate_signals: List[Candidate
         f"- Cleaned evidence: `{summary['cleaned_evidence_count']}`",
         f"- Classifications: `{summary['classification_count']}`",
         f"- Candidate signals: `{summary['candidate_signal_count']}`",
+        f"- Canonical candidate signals: `{summary.get('canonical_candidate_signal_count', summary['candidate_signal_count'])}`",
+        f"- Suppressed duplicate candidates: `{summary.get('suppressed_duplicate_candidate_signal_count', 0)}`",
         f"- Price signals: `{summary.get('price_signal_count', 0)}`",
         f"- Weak pattern candidates: `{summary.get('weak_pattern_candidate_count', 0)}`",
         f"- Needs human review: `{summary['needs_human_review_count']}`",
@@ -510,6 +515,8 @@ def _founder_package_markdown(package: Dict[str, Any]) -> str:
         f"- Needs human review: `{package['needs_human_review_count']}`",
         f"- Noise: `{package['noise_count']}`",
         f"- Price signals: `{package.get('price_signal_count', 0)}`",
+        f"- Canonical candidate signals: `{package.get('canonical_candidate_signal_count', package['candidate_signal_count'])}`",
+        f"- Suppressed duplicate candidates: `{package.get('suppressed_duplicate_candidate_signal_count', 0)}`",
         "",
         "## Top candidate signals",
             "",
@@ -532,7 +539,7 @@ def _founder_package_markdown(package: Dict[str, Any]) -> str:
                 f"`{signal['buying_intent_hint']}` | "
                 f"`{signal['urgency_hint']}` | "
                 f"{_md_cell(_format_price_hint(signal.get('price_signal')))} | "
-                f"`{signal['evidence_id']}` |"
+                f"{_md_cell(_format_evidence_with_duplicate_note(signal))} |"
             )
     else:
         lines.append("- No candidate signals extracted.")
@@ -612,6 +619,27 @@ def _format_price_hint(price_signal: Any) -> str:
     if not parts:
         return "none"
     return "; ".join(parts)
+
+
+def _format_evidence_with_duplicate_note(signal: Dict[str, Any]) -> str:
+    evidence_id = str(signal.get("evidence_id", "unknown"))
+    duplicate_note = _format_duplicate_note(signal.get("dedup"))
+    if duplicate_note:
+        return f"{evidence_id}; {duplicate_note}"
+    return evidence_id
+
+
+def _format_duplicate_note(dedup: Any) -> str:
+    if not isinstance(dedup, dict):
+        return ""
+    suppressed = int(dedup.get("suppressed_duplicate_count") or 0)
+    if suppressed <= 0:
+        return ""
+    duplicate_ids = dedup.get("duplicate_evidence_ids")
+    duplicate_text = ", ".join(str(item) for item in duplicate_ids) if isinstance(duplicate_ids, list) else ""
+    if duplicate_text:
+        return f"collapsed {suppressed} duplicate source entries: {duplicate_text}"
+    return f"collapsed {suppressed} duplicate source entries"
 
 
 def _write_json(path: Path, payload: Any) -> None:
