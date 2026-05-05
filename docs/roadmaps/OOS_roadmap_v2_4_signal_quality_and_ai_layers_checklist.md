@@ -19,7 +19,7 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
 - [ ] **0.2.2** Current item: **8.2**
-- [ ] **0.2.3** Roadmap state: `planned`
+- [ ] **0.2.3** Roadmap state: `blocked`
 - [ ] **0.2.4** Completed from this roadmap: **13 / 17**
 - [ ] **0.2.5** Remaining: **4 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
@@ -864,22 +864,34 @@ Close Roadmap v2.4 with a clean final state.
 
 ### Acceptance criteria
 
-- [ ] **8.2.1** Full unittest discovery passes.
-- [ ] **8.2.2** `oos-validate.ps1` passes.
+- [x] **8.2.1** Full unittest discovery passes.
+- [x] **8.2.2** `oos-validate.ps1` passes.
 - [ ] **8.2.3** `verify.ps1` passes.
-- [ ] **8.2.4** `git diff --check` passes.
+- [x] **8.2.4** `git diff --check` passes.
 - [ ] **8.2.5** Roadmap status updated:
   - Current item: `Completed / final milestone state`.
   - Completed: `17 / 17`.
   - Remaining: `0 / 17`.
-- [ ] **8.2.6** Dev Ledger final state updated.
-- [ ] **8.2.7** No push/merge/tag/release unless explicitly approved.
+- [x] **8.2.6** Dev Ledger final state updated.
+- [x] **8.2.7** No push/merge/tag/release unless explicitly approved.
 
 ### Expected files
 
 - `docs/dev_ledger/02_mini_epics/8.2-roadmap-v2-4-completion-checkpoint.md`
 - `docs/dev_ledger/03_run_reports/roadmap-v2-4-completion-checkpoint.md`
 - `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
+
+### Checkpoint notes
+
+- Full unittest discovery passed with `Ran 653 tests`.
+- `scripts/oos-validate.ps1` passed with `Ran 653 tests`.
+- `verify.ps1` could not be run because no root-level `verify.ps1` file exists in this repository checkout.
+- `git diff --check` passed for the checkpoint changes.
+- Final `17 / 17` roadmap closure is not marked because Roadmap v2.4 items `6.1`, `6.2`, and `7.1` remain unchecked and lack the expected implementation/report evidence:
+  - `6.1` expected `src/oos/weak_signal_aggregation.py`, `tests/test_weak_signal_aggregation.py`, and matching ledger files.
+  - `6.2` expected `src/oos/cluster_synthesis.py`, `tests/test_cluster_synthesis_contract.py`, and matching ledger files.
+  - `7.1` expected `src/oos/kill_archive_feedback.py`, `tests/test_kill_archive_feedback.py`, and matching ledger files.
+- No release tag was created.
 
 ---
 
