@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **6.2**
+- [ ] **0.2.2** Current item: **8.2**
 - [ ] **0.2.3** Roadmap state: `blocked`
-- [ ] **0.2.4** Completed from this roadmap: **14 / 17**
-- [ ] **0.2.5** Remaining: **3 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **16 / 17**
+- [ ] **0.2.5** Remaining: **1 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -683,7 +683,7 @@ then:
 - Added `WeakPatternCandidate` model and deterministic `weak_signal_aggregation` protocol.
 - Discovery runs now write `weak_pattern_candidates.json` before founder package rendering.
 - Existing founder package quality sections render weak pattern candidates from that artifact.
-- Final Roadmap v2.4 closure remains blocked by `6.2`, `7.1`, and the `8.2` final checkpoint.
+- Final Roadmap v2.4 closure remains blocked by the `8.2` final checkpoint.
 
 ---
 
@@ -716,7 +716,7 @@ Define cluster-level LLM synthesis that summarizes patterns, not individual sign
 - [x] **6.2.3** Evidence IDs preserved.
 - [x] **6.2.4** Prompt uses cluster context, not isolated signal.
 - [x] **6.2.5** No live LLM calls by default.
-- [ ] **6.2.6** Full validation passes.
+- [x] **6.2.6** Full validation passes.
 
 ### Expected files
 
@@ -732,8 +732,8 @@ Define cluster-level LLM synthesis that summarizes patterns, not individual sign
 - Future LLM prompt contract requires cluster-level context, evidence citations, low confidence under uncertainty, and no isolated single-signal synthesis.
 - `cluster_synthesis` already exists as an allowed local-preview budget role and remains disabled under the default fail-closed budget policy.
 - No provider calls or live LLM/API calls were added.
-- Full validation remains blocked in this session by Windows temp-directory ACL cleanup errors, so `6.2.6` is not marked complete.
-- Final Roadmap v2.4 closure remains blocked by full validation for `6.2`, `7.1`, and the `8.2` final checkpoint.
+- Full validation passed during the subsequent 7.1 gap-closure run, so `6.2.6` is complete.
+- Final Roadmap v2.4 closure remains blocked by the `8.2` final checkpoint.
 
 ---
 
@@ -758,12 +758,12 @@ Prevent the system from repeatedly elevating patterns that resemble already-kill
 
 ### Acceptance criteria
 
-- [ ] **7.1.1** Kill Archive lookup integrated.
-- [ ] **7.1.2** Similar killed pattern triggers flag.
-- [ ] **7.1.3** Similar killed pattern reduces score.
-- [ ] **7.1.4** Founder package explains penalty.
-- [ ] **7.1.5** No auto-kill.
-- [ ] **7.1.6** Full validation passes.
+- [x] **7.1.1** Kill Archive lookup integrated.
+- [x] **7.1.2** Similar killed pattern triggers flag.
+- [x] **7.1.3** Similar killed pattern reduces score.
+- [x] **7.1.4** Founder package explains penalty.
+- [x] **7.1.5** No auto-kill.
+- [x] **7.1.6** Full validation passes.
 
 ### Expected files
 
@@ -772,6 +772,15 @@ Prevent the system from repeatedly elevating patterns that resemble already-kill
 - `tests/test_kill_archive_feedback.py`
 - `docs/dev_ledger/02_mini_epics/7.1-kill-archive-feedback.md`
 - `docs/dev_ledger/03_run_reports/7.1-kill-archive-feedback.md`
+
+### Completion notes
+
+- Added deterministic Kill Archive feedback lookup for candidate signals using normalized-token overlap against existing `KillReason` artifacts.
+- Similar killed patterns now set `kill_pattern_flag`, apply a conservative `kill_pattern_penalty`, and preserve linked evidence/source details.
+- Discovery runs write `kill_archive_warnings.json`; founder packages render the similar killed opportunity, kill reason, penalty, and evidence linkage through the existing quality section.
+- The feedback downgrades scores only; it does not auto-kill or change portfolio state.
+- No dependencies, internet/API calls, or live LLM calls were added.
+- Final Roadmap v2.4 closure remains blocked by the `8.2` final checkpoint.
 
 ---
 
@@ -904,9 +913,7 @@ Close Roadmap v2.4 with a clean final state.
 - `scripts/oos-validate.ps1` passed with `Ran 653 tests`.
 - `verify.ps1` could not be run because no root-level `verify.ps1` file exists in this repository checkout.
 - `git diff --check` passed for the checkpoint changes.
-- Final `17 / 17` roadmap closure is not marked because Roadmap v2.4 items `6.2` and `7.1` remain unchecked or lack complete validation evidence:
-  - `6.2` expected implementation/report evidence is present, but full validation is still blocked by Windows temp-directory ACL cleanup errors in this session.
-  - `7.1` expected `src/oos/kill_archive_feedback.py`, `tests/test_kill_archive_feedback.py`, and matching ledger files.
+- Final `17 / 17` roadmap closure is not marked because the final `8.2` completion checkpoint still needs to be re-run after gap closure.
 - No release tag was created.
 
 ---

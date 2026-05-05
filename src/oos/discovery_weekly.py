@@ -11,6 +11,7 @@ from typing import Any, Dict, Iterable, List
 from .candidate_signal_extractor import extract_candidate_signal
 from .evidence_classifier import classify_evidence, clean_evidence
 from .founder_package import build_founder_package_quality_sections, render_founder_package_quality_sections
+from .kill_archive_feedback import apply_kill_archive_feedback
 from .live_collection import collect_raw_evidence_for_topic
 from .meaning_loop_adapter import build_meaning_loop_dry_run, write_meaning_loop_dry_run_artifacts
 from .models import CandidateSignal, CleanedEvidence, EvidenceClassification, RawEvidence, model_from_dict, model_to_dict
@@ -97,6 +98,8 @@ def run_discovery_weekly(
     classifications = [classify_evidence(cleaned) for cleaned in cleaned_items]
     candidate_signals = _extract_signals(cleaned_items, classifications)
     price_signals = [price_signal for cleaned in cleaned_items if (price_signal := extract_price_signal(cleaned)) is not None]
+    kill_feedback = apply_kill_archive_feedback(candidate_signals, project_root=project_root)
+    candidate_signals = kill_feedback.candidate_signals
     weak_pattern_candidates = aggregate_weak_pattern_candidates(candidate_signals)
 
     run_dir = project_root / "artifacts" / "discovery_runs" / resolved_run_id
@@ -128,6 +131,13 @@ def run_discovery_weekly(
         artifact_payloads["weak_pattern_candidates"] = json.loads(weak_pattern_path.read_text(encoding="utf-8"))
     else:
         artifact_payloads["weak_pattern_candidates"] = {"items": []}
+    kill_warnings_path = run_dir / "kill_archive_warnings.json"
+    if kill_feedback.warnings:
+        artifact_payloads["kill_archive_warnings"] = {"items": [item.to_dict() for item in kill_feedback.warnings]}
+    elif kill_warnings_path.exists():
+        artifact_payloads["kill_archive_warnings"] = json.loads(kill_warnings_path.read_text(encoding="utf-8"))
+    else:
+        artifact_payloads["kill_archive_warnings"] = {"items": []}
     artifact_paths: Dict[str, Path] = {}
     for artifact_name, payload in artifact_payloads.items():
         path = run_dir / f"{artifact_name}.json"
