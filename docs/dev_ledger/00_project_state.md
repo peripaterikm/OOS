@@ -9,11 +9,11 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `8.2`
-- Completed: `16 / 17`
-- Remaining: `1 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `7.1` - Kill Archive feedback into scoring
-- Next planned roadmap item: Roadmap v2.4 `8.2` - final completion checkpoint rerun
+- Current item: `Completed / final milestone state`
+- Completed: `17 / 17`
+- Remaining: `0 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `8.2` - Roadmap v2.4 completion checkpoint rerun
+- Next planned roadmap item: none - Roadmap v2.4 complete
 
 ## Branch And Commit Strategy
 
@@ -70,7 +70,20 @@
 - Roadmap v2.4 item 5.2 added a deterministic evidence-only PriceSignal extractor, future LLM prompt contract, explicit-price scoring boost, price signal artifacts in discovery runs, and founder discovery package price hints without dependencies, internet/API calls, or live LLM/API calls.
 - Roadmap v2.4 item 7.2 upgraded founder discovery packages with deterministic quality sections for time-sensitive opportunities, implied burdens, explicit price signals, optional weak-pattern and kill-archive artifacts, customer voice query yield, advisory offline LLM review outputs, and evidence confidence/risk notes without dependencies, internet/API calls, or live LLM/API calls.
 - Roadmap v2.4 item 8.1 recorded fixture and bounded live-smoke validation for HN, GitHub, and mixed HN/GitHub runs through the existing discovery pipeline and founder package, with no live LLM/API calls and live internet/API calls limited to explicit smoke validation only.
-- Roadmap v2.4 item 8.2 checkpoint validation passed full unittest discovery and `scripts/oos-validate.ps1`, but final `17 / 17` closure is blocked because root-level `verify.ps1` is absent and the final checkpoint must be re-run after gap closure; no release tag was created.
+- Roadmap v2.4 item 8.2 final checkpoint rerun passed full unittest discovery, `scripts/oos-validate.ps1`, and `git diff --check`; root-level `verify.ps1` is absent and recorded as controlled unavailable; Roadmap v2.4 is complete at `17 / 17`; no push, PR, merge, tag, release, live internet/API call, or live LLM/API call was performed.
 - Roadmap v2.4 gap item 6.1 added deterministic weak signal aggregation, the `WeakPatternCandidate` model, discovery-run `weak_pattern_candidates.json` artifacts, and founder package rendering through existing quality sections without live internet/API calls or live LLM/API calls.
 - Roadmap v2.4 gap item 6.2 added the `ClusterSynthesis` model, deterministic cluster synthesis stub, future-only prompt contract, and local-preview `cluster_synthesis` budget-role validation without live internet/API calls or live LLM/API calls.
 - Roadmap v2.4 gap item 7.1 added deterministic Kill Archive feedback into scoring, `kill_pattern_flag`/`kill_pattern_penalty`, discovery-run `kill_archive_warnings.json` artifacts, and founder package warning details without auto-killing, live internet/API calls, or live LLM/API calls.
+
+## Roadmap v2.4 Final Branch Notes
+
+- Final branch: `feat/v2-4-final-validation-and-gap-closure`.
+- Local 8.x / gap-closure commits recorded on this branch:
+  - `21e44fb Add v2.4 end-to-end validation report`
+  - `4fcd7b0 Close roadmap v2.4 completion checkpoint`
+  - `8ab1e94 Add weak signal aggregation protocol`
+  - `c804404 Add cluster synthesis contract`
+  - `620332a Add kill archive scoring feedback`
+  - final 8.2 checkpoint rerun commit follows this project-state update.
+- No release tag was created.
+- No push, PR, or merge was performed by Codex.
