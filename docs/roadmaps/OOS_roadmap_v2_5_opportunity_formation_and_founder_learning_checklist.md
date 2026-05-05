@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **1.3 PriceSignal false-positive hardening**
+- [ ] **0.2** Current item: **1.4 Candidate signal dedup before founder package**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **2 / 24**
-- [ ] **0.5** Remaining: **22 / 24**
+- [ ] **0.4** Completed from this roadmap: **3 / 24**
+- [ ] **0.5** Remaining: **21 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -182,12 +182,12 @@ Avoid treating tax thresholds, deduction limits, receipt thresholds, and random 
 
 ### Acceptance criteria
 
-- [ ] **1.3.1** Receipt thresholds are not extracted as current spend.
-- [ ] **1.3.2** Tax/deduction limits are not truncated into fake spend hints.
-- [ ] **1.3.3** Generic `affordable pricing` remains low-confidence and does not imply budget.
-- [ ] **1.3.4** Explicit spend and price complaints still extract correctly.
-- [ ] **1.3.5** Evidence citation remains required.
-- [ ] **1.3.6** Full validation passes.
+- [x] **1.3.1** Receipt thresholds are not extracted as current spend.
+- [x] **1.3.2** Tax/deduction limits are not truncated into fake spend hints.
+- [x] **1.3.3** Generic `affordable pricing` remains low-confidence and does not imply budget.
+- [x] **1.3.4** Explicit spend and price complaints still extract correctly.
+- [x] **1.3.5** Evidence citation remains required.
+- [x] **1.3.6** Full validation passes.
 
 ### Validation expectations
 

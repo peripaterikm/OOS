@@ -17,8 +17,8 @@ _SAFE_ID_RE = re.compile(r"[^A-Za-z0-9_.-]+")
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 
 _DOLLAR_AMOUNT_RE = re.compile(
-    r"\b(?:USD|US\$)\s*\d[\d,]*(?:\.\d{1,2})?\s*(?:/(?:mo|month|hr|hour|user)|per\s+(?:month|mo|hour|hr|user(?:/month)?|user\s+per\s+month))?"
-    r"|(?<!\w)\$\s*\d[\d,]*(?:\.\d{1,2})?\s*(?:/(?:mo|month|hr|hour|user)|per\s+(?:month|mo|hour|hr|user(?:/month)?|user\s+per\s+month))?",
+    r"\b(?:USD|US\$)\s*\d[\d,]*(?:\.\d{1,2})?\s*(?:[kmb]\b|million\b|billion\b)?\s*(?:/(?:mo|month|hr|hour|user)|per\s+(?:month|mo|hour|hr|user(?:/month)?|user\s+per\s+month))?"
+    r"|(?<!\w)\$\s*\d[\d,]*(?:\.\d{1,2})?\s*(?:[kmb]\b|million\b|billion\b)?\s*(?:/(?:mo|month|hr|hour|user)|per\s+(?:month|mo|hour|hr|user(?:/month)?|user\s+per\s+month))?",
     re.IGNORECASE,
 )
 _BARE_PERIOD_SPEND_RE = re.compile(
@@ -38,6 +38,33 @@ _WTP_PRESENT_RE = re.compile(
     re.IGNORECASE,
 )
 _WTP_POSSIBLE_RE = re.compile(r"\b(?:pricing|quote|license|subscription|plan)\b", re.IGNORECASE)
+
+_NON_SPEND_MONEY_CONTEXT_RE = re.compile(
+    r"\b(?:"
+    r"receipt(?:s)?(?:\s+(?:threshold|lesser\s+than|less\s+than|under|below))?|"
+    r"recovering receipts|"
+    r"tax\s+limit|"
+    r"deduction\s+limit|"
+    r"section\s+179|"
+    r"macrs|"
+    r"bonus\s+depreciation|"
+    r"luxury\s+vehicle\s+caps?|"
+    r"irs\s+rules?|"
+    r"statutory\s+threshold|"
+    r"compliance\s+threshold|"
+    r"limit\s+for\s+\d{4}|"
+    r"\d{4}\s+limit|"
+    r"deduction|"
+    r"depreciation|"
+    r"tax\s+code|"
+    r"tax\s+threshold"
+    r")\b",
+    re.IGNORECASE,
+)
+_WEAK_COMMERCIAL_WTP_CONTEXT_RE = re.compile(
+    r"\b(?:free\s+demo|consultation|professional\s+training|technical\s+assistance)\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -74,7 +101,7 @@ def extract_price_signal(cleaned: CleanedEvidence) -> PriceSignal | None:
     if not text.strip():
         return None
 
-    current_spend_hint = _first_match(text, (_DOLLAR_AMOUNT_RE, _BARE_PERIOD_SPEND_RE))
+    current_spend_hint = _first_valid_money_match(text, (_DOLLAR_AMOUNT_RE, _BARE_PERIOD_SPEND_RE))
     effort_cost_hint = _first_match(text, (_EFFORT_RE,))
     price_complaint = _first_match(text, (_PRICE_COMPLAINT_RE,))
     willingness_to_pay_indicator = _willingness_to_pay_indicator(text)
@@ -188,12 +215,30 @@ def _first_match(text: str, patterns: tuple[re.Pattern[str], ...]) -> str | None
     return None
 
 
+def _first_valid_money_match(text: str, patterns: tuple[re.Pattern[str], ...]) -> str | None:
+    for pattern in patterns:
+        for match in pattern.finditer(text):
+            if _is_non_spend_money_context(text, match.start(), match.end()):
+                continue
+            return _normalize_hint(match.group(0))
+    return None
+
+
 def _willingness_to_pay_indicator(text: str) -> str:
     if _WTP_PRESENT_RE.search(text):
         return "present"
     if _WTP_POSSIBLE_RE.search(text):
+        if _WEAK_COMMERCIAL_WTP_CONTEXT_RE.search(text):
+            return "not_detected"
         return "possible"
     return "not_detected"
+
+
+def _is_non_spend_money_context(text: str, start: int, end: int) -> bool:
+    window_start = max(0, start - 120)
+    window_end = min(len(text), end + 120)
+    window = text[window_start:window_end]
+    return bool(_NON_SPEND_MONEY_CONTEXT_RE.search(window))
 
 
 def _confidence(
