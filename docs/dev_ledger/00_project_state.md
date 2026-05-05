@@ -18,7 +18,7 @@
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-4-final-validation-and-gap-closure`
+- Current branch: `feat/v2-5-roadmap-planning`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -74,6 +74,7 @@
 - Roadmap v2.4 gap item 6.1 added deterministic weak signal aggregation, the `WeakPatternCandidate` model, discovery-run `weak_pattern_candidates.json` artifacts, and founder package rendering through existing quality sections without live internet/API calls or live LLM/API calls.
 - Roadmap v2.4 gap item 6.2 added the `ClusterSynthesis` model, deterministic cluster synthesis stub, future-only prompt contract, and local-preview `cluster_synthesis` budget-role validation without live internet/API calls or live LLM/API calls.
 - Roadmap v2.4 gap item 7.1 added deterministic Kill Archive feedback into scoring, `kill_pattern_flag`/`kill_pattern_penalty`, discovery-run `kill_archive_warnings.json` artifacts, and founder package warning details without auto-killing, live internet/API calls, or live LLM/API calls.
+- First real open-source signal run v1 executed a bounded HN + GitHub Issues pass with existing v2.4 capabilities, generated founder package artifacts under `artifacts/discovery_runs/first_real_open_source_signal_run_v1/`, and recorded protocol/run-report docs without live LLM/API calls, source-code feature changes, or tracked runtime artifacts.
 
 ## Roadmap v2.4 Final Branch Notes
 
