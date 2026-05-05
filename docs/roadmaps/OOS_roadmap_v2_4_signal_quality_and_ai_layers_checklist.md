@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **8.1**
+- [ ] **0.2.2** Current item: **8.2**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **12 / 17**
-- [ ] **0.2.5** Remaining: **5 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **13 / 17**
+- [ ] **0.2.5** Remaining: **4 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -822,20 +822,27 @@ Prove the v2.4 signal quality system works from live/fixture evidence through fo
 
 ### Acceptance criteria
 
-- [ ] **8.1.1** Fixture run passes.
-- [ ] **8.1.2** HN live smoke passes.
-- [ ] **8.1.3** GitHub live smoke passes.
-- [ ] **8.1.4** Mixed live smoke passes.
-- [ ] **8.1.5** Top-3 signals include at least one real finance pain.
-- [ ] **8.1.6** Marketing/generated false positives do not dominate top results.
-- [ ] **8.1.7** `needs_human_review` is used for ambiguity.
-- [ ] **8.1.8** Git status clean after runtime artifact handling.
-- [ ] **8.1.9** Validation report recorded.
+- [x] **8.1.1** Fixture run passes.
+- [x] **8.1.2** HN live smoke passes.
+- [x] **8.1.3** GitHub live smoke passes.
+- [x] **8.1.4** Mixed live smoke passes.
+- [x] **8.1.5** Top-3 signals include at least one real finance pain.
+- [x] **8.1.6** Marketing/generated false positives do not dominate top results.
+- [x] **8.1.7** `needs_human_review` is used for ambiguity.
+- [x] **8.1.8** Git status clean after runtime artifact handling.
+- [x] **8.1.9** Validation report recorded.
 
 ### Expected files
 
 - `docs/dev_ledger/03_run_reports/8.1-v2-4-end-to-end-validation.md`
 - `docs/dev_ledger/02_mini_epics/8.1-v2-4-end-to-end-validation.md`
+
+### Completion notes
+
+- Completed as a validation/report package only; no pipeline redesign, source expansion, unit-test live network calls, or live LLM/API calls were added.
+- Fixture validation exercised evidence, cleaning/classification, candidate signals, price signals, founder package quality sections, and meaning-loop dry-run artifacts.
+- Bounded live HN, GitHub, and mixed HN/GitHub smokes completed through existing collector mode with small query/result limits.
+- Final live smoke validation produced no failed checks and one warning for GitHub top-3 user-pain-like count below threshold; mixed top-3 included finance pain, `needs_human_review` appeared in live GitHub/mixed outputs, and marketing/install/generic false positives did not dominate top results.
 
 ---
 
