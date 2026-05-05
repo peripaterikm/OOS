@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **8.2**
+- [ ] **0.2.2** Current item: **6.2**
 - [ ] **0.2.3** Roadmap state: `blocked`
-- [ ] **0.2.4** Completed from this roadmap: **13 / 17**
-- [ ] **0.2.5** Remaining: **4 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **14 / 17**
+- [ ] **0.2.5** Remaining: **3 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -665,11 +665,11 @@ then:
 
 ### Acceptance criteria
 
-- [ ] **6.1.1** Weak pattern model exists.
-- [ ] **6.1.2** Weak signals from multiple sources can elevate cluster review priority.
-- [ ] **6.1.3** Single weak signal does not elevate.
-- [ ] **6.1.4** Founder package has weak pattern section.
-- [ ] **6.1.5** Full validation passes.
+- [x] **6.1.1** Weak pattern model exists.
+- [x] **6.1.2** Weak signals from multiple sources can elevate cluster review priority.
+- [x] **6.1.3** Single weak signal does not elevate.
+- [x] **6.1.4** Founder package has weak pattern section.
+- [x] **6.1.5** Full validation passes.
 
 ### Expected files
 
@@ -677,6 +677,13 @@ then:
 - `tests/test_weak_signal_aggregation.py`
 - `docs/dev_ledger/02_mini_epics/6.1-weak-signal-aggregation.md`
 - `docs/dev_ledger/03_run_reports/6.1-weak-signal-aggregation.md`
+
+### Completion notes
+
+- Added `WeakPatternCandidate` model and deterministic `weak_signal_aggregation` protocol.
+- Discovery runs now write `weak_pattern_candidates.json` before founder package rendering.
+- Existing founder package quality sections render weak pattern candidates from that artifact.
+- Final Roadmap v2.4 closure remains blocked by `6.2`, `7.1`, and the `8.2` final checkpoint.
 
 ---
 
@@ -887,8 +894,7 @@ Close Roadmap v2.4 with a clean final state.
 - `scripts/oos-validate.ps1` passed with `Ran 653 tests`.
 - `verify.ps1` could not be run because no root-level `verify.ps1` file exists in this repository checkout.
 - `git diff --check` passed for the checkpoint changes.
-- Final `17 / 17` roadmap closure is not marked because Roadmap v2.4 items `6.1`, `6.2`, and `7.1` remain unchecked and lack the expected implementation/report evidence:
-  - `6.1` expected `src/oos/weak_signal_aggregation.py`, `tests/test_weak_signal_aggregation.py`, and matching ledger files.
+- Final `17 / 17` roadmap closure is not marked because Roadmap v2.4 items `6.2` and `7.1` remain unchecked and lack the expected implementation/report evidence:
   - `6.2` expected `src/oos/cluster_synthesis.py`, `tests/test_cluster_synthesis_contract.py`, and matching ledger files.
   - `7.1` expected `src/oos/kill_archive_feedback.py`, `tests/test_kill_archive_feedback.py`, and matching ledger files.
 - No release tag was created.

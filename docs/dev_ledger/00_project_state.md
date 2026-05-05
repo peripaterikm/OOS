@@ -9,11 +9,11 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `8.2`
-- Completed: `13 / 17`
-- Remaining: `4 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `8.1` - v2.4 end-to-end fixture and live-smoke validation
-- Next planned roadmap item: Roadmap v2.4 `8.2` - Roadmap v2.4 completion checkpoint
+- Current item: `6.2`
+- Completed: `14 / 17`
+- Remaining: `3 / 17`
+- Latest completed roadmap item: Roadmap v2.4 `6.1` - Weak signal aggregation protocol
+- Next planned roadmap item: Roadmap v2.4 `6.2` - Cluster synthesis LLM contract
 
 ## Branch And Commit Strategy
 
@@ -70,4 +70,5 @@
 - Roadmap v2.4 item 5.2 added a deterministic evidence-only PriceSignal extractor, future LLM prompt contract, explicit-price scoring boost, price signal artifacts in discovery runs, and founder discovery package price hints without dependencies, internet/API calls, or live LLM/API calls.
 - Roadmap v2.4 item 7.2 upgraded founder discovery packages with deterministic quality sections for time-sensitive opportunities, implied burdens, explicit price signals, optional weak-pattern and kill-archive artifacts, customer voice query yield, advisory offline LLM review outputs, and evidence confidence/risk notes without dependencies, internet/API calls, or live LLM/API calls.
 - Roadmap v2.4 item 8.1 recorded fixture and bounded live-smoke validation for HN, GitHub, and mixed HN/GitHub runs through the existing discovery pipeline and founder package, with no live LLM/API calls and live internet/API calls limited to explicit smoke validation only.
-- Roadmap v2.4 item 8.2 checkpoint validation passed full unittest discovery and `scripts/oos-validate.ps1`, but final `17 / 17` closure is blocked because root-level `verify.ps1` is absent and Roadmap v2.4 items `6.1`, `6.2`, and `7.1` remain unchecked without their expected implementation/report evidence; no release tag was created.
+- Roadmap v2.4 item 8.2 checkpoint validation passed full unittest discovery and `scripts/oos-validate.ps1`, but final `17 / 17` closure is blocked because root-level `verify.ps1` is absent and Roadmap v2.4 items `6.2` and `7.1` remain unchecked without their expected implementation/report evidence; no release tag was created.
+- Roadmap v2.4 gap item 6.1 added deterministic weak signal aggregation, the `WeakPatternCandidate` model, discovery-run `weak_pattern_candidates.json` artifacts, and founder package rendering through existing quality sections without live internet/API calls or live LLM/API calls.

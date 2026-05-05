@@ -379,6 +379,63 @@ class PriceSignal:
 
 
 @dataclass(frozen=True)
+class WeakPatternCandidate:
+    pattern_id: str
+    classification: str
+    review_priority: str
+    signal_ids: List[str]
+    signal_count: int
+    avg_confidence: float
+    max_confidence: float
+    source_diversity: int
+    sources: List[str]
+    evidence_ids: List[str]
+    summary: str
+    confidence: float
+    cluster_key: str
+    extraction_mode: str = "rule_based_weak_signal_aggregation_v1"
+
+    @property
+    def id(self) -> str:
+        return self.pattern_id
+
+    def validate(self) -> None:
+        for field_name in (
+            "pattern_id",
+            "classification",
+            "review_priority",
+            "summary",
+            "cluster_key",
+            "extraction_mode",
+        ):
+            _require_non_empty(getattr(self, field_name), f"WeakPatternCandidate.{field_name}")
+        if self.classification != "weak_pattern_candidate":
+            raise ValueError("WeakPatternCandidate.classification must be weak_pattern_candidate")
+        if self.review_priority != "elevated":
+            raise ValueError("WeakPatternCandidate.review_priority must be elevated")
+        for field_name in ("signal_ids", "sources", "evidence_ids"):
+            _require_list(getattr(self, field_name), f"WeakPatternCandidate.{field_name}")
+            if any(not str(item).strip() for item in getattr(self, field_name)):
+                raise ValueError(f"WeakPatternCandidate.{field_name} must contain non-empty strings")
+        if self.signal_count != len(self.signal_ids):
+            raise ValueError("WeakPatternCandidate.signal_count must match signal_ids length")
+        if self.source_diversity != len(set(self.sources)):
+            raise ValueError("WeakPatternCandidate.source_diversity must match distinct sources")
+        for field_name in ("avg_confidence", "max_confidence", "confidence"):
+            value = getattr(self, field_name)
+            if not isinstance(value, (int, float)) or not 0 <= float(value) <= 1:
+                raise ValueError(f"WeakPatternCandidate.{field_name} must be between 0 and 1")
+        if self.signal_count < 5:
+            raise ValueError("WeakPatternCandidate.signal_count must be at least 5")
+        if self.avg_confidence < 0.30:
+            raise ValueError("WeakPatternCandidate.avg_confidence must be at least 0.30")
+        if self.source_diversity < 2:
+            raise ValueError("WeakPatternCandidate.source_diversity must be at least 2")
+        if self.max_confidence >= 0.60:
+            raise ValueError("WeakPatternCandidate.max_confidence must be below 0.60")
+
+
+@dataclass(frozen=True)
 class Signal:
     id: str
     source: str
@@ -648,6 +705,7 @@ MODEL_KIND = {
     EvidenceClassification: "evidence_classifications",
     CandidateSignal: "candidate_signals",
     PriceSignal: "price_signals",
+    WeakPatternCandidate: "weak_pattern_candidates",
     Signal: "signals",
     OpportunityCard: "opportunities",
     IdeaVariant: "ideas",
