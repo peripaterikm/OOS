@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **1.1 Founder manual review labels for first real run**
+- [ ] **0.2** Current item: **1.2 GitHub vendor-promo / SEO suppressor**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **0 / 24**
-- [ ] **0.5** Remaining: **24 / 24**
+- [ ] **0.4** Completed from this roadmap: **1 / 24**
+- [ ] **0.5** Remaining: **23 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -89,19 +89,20 @@ Create structured founder labels for the 18 first-run candidate signals.
 
 ### Expected files
 
-- `src/oos/founder_signal_review.py`
-- `tests/test_founder_signal_review.py`
+- `examples/first_real_open_source_signal_run_v1/founder_manual_labels.json`
+- `examples/first_real_open_source_signal_run_v1/founder_manual_labels.md`
+- `tests/test_first_real_run_founder_labels.py`
 - `docs/dev_ledger/02_mini_epics/1.1-founder-manual-review-labels.md`
 - `docs/dev_ledger/03_run_reports/1.1-founder-manual-review-labels.md`
 
 ### Acceptance criteria
 
-- [ ] **1.1.1** Founder label model exists and serializes.
-- [ ] **1.1.2** All seven label values are supported.
-- [ ] **1.1.3** Labels preserve candidate/evidence/source traceability.
-- [ ] **1.1.4** Duplicate/vendor/price-false-positive labels are representable.
-- [ ] **1.1.5** First-run review fixture can be loaded without live network calls.
-- [ ] **1.1.6** Full validation passes.
+- [x] **1.1.1** Founder label artifact exists and serializes.
+- [x] **1.1.2** All seven label values are supported.
+- [x] **1.1.3** Labels preserve candidate/evidence/source traceability.
+- [x] **1.1.4** Duplicate/vendor/price-false-positive labels are representable.
+- [x] **1.1.5** First-run review fixture can be loaded without live network calls.
+- [x] **1.1.6** Full validation passes.
 
 ### Validation expectations
 

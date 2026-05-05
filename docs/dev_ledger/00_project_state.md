@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `1.1 Founder manual review labels for first real run`
+- Current item: `1.2 GitHub vendor-promo / SEO suppressor`
 - Roadmap state: `active / planned`
-- Completed: `0 / 24`
-- Remaining: `24 / 24`
-- Latest completed roadmap item: Roadmap v2.5 planning checkpoint
-- Next planned roadmap item: Roadmap v2.5 `1.1` - Founder manual review labels for first real run
+- Completed: `1 / 24`
+- Remaining: `23 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `1.1` - Founder manual review labels for first real run
+- Next planned roadmap item: Roadmap v2.5 `1.2` - GitHub vendor-promo / SEO suppressor
 
 ## Branch And Commit Strategy
 
@@ -77,6 +77,7 @@
 - Roadmap v2.4 gap item 7.1 added deterministic Kill Archive feedback into scoring, `kill_pattern_flag`/`kill_pattern_penalty`, discovery-run `kill_archive_warnings.json` artifacts, and founder package warning details without auto-killing, live internet/API calls, or live LLM/API calls.
 - First real open-source signal run v1 executed a bounded HN + GitHub Issues pass with existing v2.4 capabilities, generated founder package artifacts under `artifacts/discovery_runs/first_real_open_source_signal_run_v1/`, and recorded protocol/run-report docs without live LLM/API calls, source-code feature changes, or tracked runtime artifacts.
 - Roadmap v2.5 planning created the Opportunity Formation & Founder Learning checklist from first-run lessons: GitHub vendor-promo noise, candidate duplicates, mojibake, price false positives, and the strongest unpaid-invoice/SMB cash-collection pain. Implementation starts at item `1.1`; no source code features, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
+- Roadmap v2.5 item 1.1 added tracked founder manual labels for all 18 first-run candidate signals under `examples/first_real_open_source_signal_run_v1/`, preserving duplicate evidence IDs, source URLs, classifications, founder labels, recommended actions, and issue tags for future source-quality hardening without additional live collection, source-code feature implementation, live internet/API calls, or live LLM/API calls.
 
 ## Roadmap v2.4 Final Branch Notes
 
