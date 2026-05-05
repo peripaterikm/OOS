@@ -3,17 +3,18 @@
 ## Current Roadmap
 
 - Roadmap v2.2 status: complete.
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
 - Inactive/archive roadmap files: older roadmap drafts, `docs/roadmaps/OOS_roadmap_v2_2_ai_meaning_layer_checklist_final.md`, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `Completed / final milestone state`
-- Completed: `17 / 17`
-- Remaining: `0 / 17`
-- Latest completed roadmap item: Roadmap v2.4 `8.2` - Roadmap v2.4 completion checkpoint rerun
-- Next planned roadmap item: none - Roadmap v2.4 complete
+- Current item: `1.1 Founder manual review labels for first real run`
+- Roadmap state: `active / planned`
+- Completed: `0 / 24`
+- Remaining: `24 / 24`
+- Latest completed roadmap item: Roadmap v2.5 planning checkpoint
+- Next planned roadmap item: Roadmap v2.5 `1.1` - Founder manual review labels for first real run
 
 ## Branch And Commit Strategy
 
@@ -75,10 +76,14 @@
 - Roadmap v2.4 gap item 6.2 added the `ClusterSynthesis` model, deterministic cluster synthesis stub, future-only prompt contract, and local-preview `cluster_synthesis` budget-role validation without live internet/API calls or live LLM/API calls.
 - Roadmap v2.4 gap item 7.1 added deterministic Kill Archive feedback into scoring, `kill_pattern_flag`/`kill_pattern_penalty`, discovery-run `kill_archive_warnings.json` artifacts, and founder package warning details without auto-killing, live internet/API calls, or live LLM/API calls.
 - First real open-source signal run v1 executed a bounded HN + GitHub Issues pass with existing v2.4 capabilities, generated founder package artifacts under `artifacts/discovery_runs/first_real_open_source_signal_run_v1/`, and recorded protocol/run-report docs without live LLM/API calls, source-code feature changes, or tracked runtime artifacts.
+- Roadmap v2.5 planning created the Opportunity Formation & Founder Learning checklist from first-run lessons: GitHub vendor-promo noise, candidate duplicates, mojibake, price false positives, and the strongest unpaid-invoice/SMB cash-collection pain. Implementation starts at item `1.1`; no source code features, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
 
 ## Roadmap v2.4 Final Branch Notes
 
 - Final branch: `feat/v2-4-final-validation-and-gap-closure`.
+- Completed: `17 / 17`.
+- Remaining: `0 / 17`.
+- Latest completed roadmap item: Roadmap v2.4 `8.2`.
 - Local 8.x / gap-closure commits recorded on this branch:
   - `21e44fb Add v2.4 end-to-end validation report`
   - `4fcd7b0 Close roadmap v2.4 completion checkpoint`
