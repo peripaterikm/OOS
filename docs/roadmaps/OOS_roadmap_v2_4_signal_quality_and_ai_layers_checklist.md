@@ -711,11 +711,11 @@ Define cluster-level LLM synthesis that summarizes patterns, not individual sign
 
 ### Acceptance criteria
 
-- [ ] **6.2.1** ClusterSynthesis model exists.
-- [ ] **6.2.2** Stub synthesis deterministic.
-- [ ] **6.2.3** Evidence IDs preserved.
-- [ ] **6.2.4** Prompt uses cluster context, not isolated signal.
-- [ ] **6.2.5** No live LLM calls by default.
+- [x] **6.2.1** ClusterSynthesis model exists.
+- [x] **6.2.2** Stub synthesis deterministic.
+- [x] **6.2.3** Evidence IDs preserved.
+- [x] **6.2.4** Prompt uses cluster context, not isolated signal.
+- [x] **6.2.5** No live LLM calls by default.
 - [ ] **6.2.6** Full validation passes.
 
 ### Expected files
@@ -724,6 +724,16 @@ Define cluster-level LLM synthesis that summarizes patterns, not individual sign
 - `tests/test_cluster_synthesis_contract.py`
 - `docs/dev_ledger/02_mini_epics/6.2-cluster-synthesis-llm-contract.md`
 - `docs/dev_ledger/03_run_reports/6.2-cluster-synthesis-llm-contract.md`
+
+### Implementation notes
+
+- Added `ClusterSynthesis` model and deterministic `cluster_synthesis` contract/stub module.
+- Stub synthesis accepts 5-10 cluster signals, preserves evidence IDs, and selects strongest evidence deterministically.
+- Future LLM prompt contract requires cluster-level context, evidence citations, low confidence under uncertainty, and no isolated single-signal synthesis.
+- `cluster_synthesis` already exists as an allowed local-preview budget role and remains disabled under the default fail-closed budget policy.
+- No provider calls or live LLM/API calls were added.
+- Full validation remains blocked in this session by Windows temp-directory ACL cleanup errors, so `6.2.6` is not marked complete.
+- Final Roadmap v2.4 closure remains blocked by full validation for `6.2`, `7.1`, and the `8.2` final checkpoint.
 
 ---
 
@@ -894,8 +904,8 @@ Close Roadmap v2.4 with a clean final state.
 - `scripts/oos-validate.ps1` passed with `Ran 653 tests`.
 - `verify.ps1` could not be run because no root-level `verify.ps1` file exists in this repository checkout.
 - `git diff --check` passed for the checkpoint changes.
-- Final `17 / 17` roadmap closure is not marked because Roadmap v2.4 items `6.2` and `7.1` remain unchecked and lack the expected implementation/report evidence:
-  - `6.2` expected `src/oos/cluster_synthesis.py`, `tests/test_cluster_synthesis_contract.py`, and matching ledger files.
+- Final `17 / 17` roadmap closure is not marked because Roadmap v2.4 items `6.2` and `7.1` remain unchecked or lack complete validation evidence:
+  - `6.2` expected implementation/report evidence is present, but full validation is still blocked by Windows temp-directory ACL cleanup errors in this session.
   - `7.1` expected `src/oos/kill_archive_feedback.py`, `tests/test_kill_archive_feedback.py`, and matching ledger files.
 - No release tag was created.
 

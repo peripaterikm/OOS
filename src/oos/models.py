@@ -436,6 +436,51 @@ class WeakPatternCandidate:
 
 
 @dataclass(frozen=True)
+class ClusterSynthesis:
+    cluster_id: str
+    emerging_pain_pattern: str
+    strongest_evidence_ids: List[str]
+    icp_synthesis: str
+    opportunity_sketch: str
+    why_now_signal: str
+    confidence: float
+    evidence_cited: List[Dict[str, str]]
+    signal_ids: List[str] = field(default_factory=list)
+    synthesis_mode: str = "deterministic_cluster_synthesis_stub_v1"
+
+    @property
+    def id(self) -> str:
+        return self.cluster_id
+
+    def validate(self) -> None:
+        for field_name in (
+            "cluster_id",
+            "emerging_pain_pattern",
+            "icp_synthesis",
+            "opportunity_sketch",
+            "why_now_signal",
+            "synthesis_mode",
+        ):
+            _require_non_empty(getattr(self, field_name), f"ClusterSynthesis.{field_name}")
+        _require_list(self.strongest_evidence_ids, "ClusterSynthesis.strongest_evidence_ids")
+        _require_list(self.evidence_cited, "ClusterSynthesis.evidence_cited")
+        _require_list(self.signal_ids, "ClusterSynthesis.signal_ids")
+        if not self.strongest_evidence_ids:
+            raise ValueError("ClusterSynthesis.strongest_evidence_ids must be non-empty")
+        if any(not str(item).strip() for item in self.strongest_evidence_ids):
+            raise ValueError("ClusterSynthesis.strongest_evidence_ids must contain non-empty strings")
+        if any(not str(item).strip() for item in self.signal_ids):
+            raise ValueError("ClusterSynthesis.signal_ids must contain non-empty strings")
+        for item in self.evidence_cited:
+            if not isinstance(item, dict):
+                raise ValueError("ClusterSynthesis.evidence_cited items must be dicts")
+            for key in ("evidence_id", "citation"):
+                _require_non_empty(str(item.get(key, "")), f"ClusterSynthesis.evidence_cited.{key}")
+        if not isinstance(self.confidence, (int, float)) or not 0 <= float(self.confidence) <= 1:
+            raise ValueError("ClusterSynthesis.confidence must be between 0 and 1")
+
+
+@dataclass(frozen=True)
 class Signal:
     id: str
     source: str
@@ -706,6 +751,7 @@ MODEL_KIND = {
     CandidateSignal: "candidate_signals",
     PriceSignal: "price_signals",
     WeakPatternCandidate: "weak_pattern_candidates",
+    ClusterSynthesis: "cluster_syntheses",
     Signal: "signals",
     OpportunityCard: "opportunities",
     IdeaVariant: "ideas",
