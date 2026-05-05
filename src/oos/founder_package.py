@@ -199,6 +199,9 @@ def _evidence_confidence_risk_notes(
             risk_notes.append("classification requires human review")
         if classification and classification.is_noise:
             risk_notes.append("classified noise")
+        scoring_breakdown = signal.scoring_breakdown if isinstance(signal.scoring_breakdown, dict) else {}
+        if scoring_breakdown.get("vendor_promo_flag"):
+            risk_notes.append("vendor promo/SEO suppression cap")
         if not risk_notes:
             continue
         items.append(_signal_item(signal, risk_note=", ".join(risk_notes)))

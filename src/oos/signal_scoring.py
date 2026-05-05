@@ -14,6 +14,7 @@ from .evidence_classifier import (
     user_pain_marker_score,
     workaround_indicator_score,
 )
+from .vendor_promo_suppressor import assess_vendor_promo
 
 
 SCORING_MODEL_VERSION = "signal_scoring_v2_embeddings_disabled"
@@ -72,6 +73,7 @@ class SignalScoringInput:
     price_signal_confidence: float = 0.0
     kill_pattern_flag: bool = False
     kill_pattern_penalty: float = 0.0
+    vendor_promo_flag: bool = False
 
 
 @dataclass(frozen=True)
@@ -90,6 +92,9 @@ class SignalScoreBreakdown:
     semantic_relevance_provider_id: str
     semantic_relevance_available: bool
     anti_marketing_penalty: float
+    vendor_promo_flag: bool
+    vendor_promo_confidence: float
+    vendor_promo_scoring_cap: float
     signal_type_multiplier: float
     classification_confidence_factor: float
     human_review_cap_applied: bool
@@ -121,6 +126,11 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
     price_boost = explicit_price_signal_boost(scoring_input)
     kill_penalty = kill_pattern_penalty(scoring_input)
     marketing_penalty = anti_marketing_penalty(text)
+    vendor_promo = assess_vendor_promo(
+        title=scoring_input.title,
+        body=scoring_input.body,
+        source_type=scoring_input.source_type,
+    )
     signal_multiplier = SIGNAL_TYPE_MULTIPLIERS.get(scoring_input.signal_type, 1.0)
     classification_factor = _classification_confidence_factor(scoring_input.classification_confidence)
 
@@ -159,6 +169,11 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
     if marketing_penalty >= 0.50:
         score = min(score, _MARKETING_REVIEW_CAP)
         explanation.append("anti_marketing_cap")
+    vendor_promo_flag = bool(scoring_input.vendor_promo_flag or vendor_promo.is_vendor_promo)
+    vendor_promo_cap = vendor_promo.scoring_cap if vendor_promo_flag else 0.99
+    if vendor_promo_flag:
+        score = min(score, vendor_promo_cap)
+        explanation.append("vendor_promo_suppressor_cap")
 
     human_review_cap_applied = False
     if scoring_input.classification_label == NEEDS_HUMAN_REVIEW or scoring_input.signal_type == "needs_human_review":
@@ -208,6 +223,9 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
         semantic_relevance_provider_id=semantic_provider_id,
         semantic_relevance_available=semantic_available,
         anti_marketing_penalty=marketing_penalty,
+        vendor_promo_flag=vendor_promo_flag,
+        vendor_promo_confidence=vendor_promo.suppressor_confidence,
+        vendor_promo_scoring_cap=vendor_promo_cap,
         signal_type_multiplier=signal_multiplier,
         classification_confidence_factor=classification_factor,
         human_review_cap_applied=human_review_cap_applied,

@@ -9,17 +9,17 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `1.2 GitHub vendor-promo / SEO suppressor`
+- Current item: `1.3 PriceSignal false-positive hardening`
 - Roadmap state: `active / planned`
-- Completed: `1 / 24`
-- Remaining: `23 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `1.1` - Founder manual review labels for first real run
-- Next planned roadmap item: Roadmap v2.5 `1.2` - GitHub vendor-promo / SEO suppressor
+- Completed: `2 / 24`
+- Remaining: `22 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `1.2` - GitHub vendor-promo / SEO suppressor
+- Next planned roadmap item: Roadmap v2.5 `1.3` - PriceSignal false-positive hardening
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-5-roadmap-planning`
+- Current branch: `feat/v2-5-block-1-first-run-quality-hardening`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -94,3 +94,5 @@
   - final 8.2 checkpoint rerun commit follows this project-state update.
 - No release tag was created.
 - No push, PR, or merge was performed by Codex.
+
+- Roadmap v2.5 item 1.2 added deterministic GitHub vendor-promo/SEO suppression with classification downgrade, scoring caps, founder-package risk notes, and fixture-only tests against first-run false positives without live collection, live internet/API calls, or live LLM/API calls.

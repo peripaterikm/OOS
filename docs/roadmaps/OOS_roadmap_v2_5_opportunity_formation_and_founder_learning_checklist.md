@@ -1,14 +1,14 @@
-# OOS Roadmap v2.5 - Opportunity Formation & Founder Learning
+﻿# OOS Roadmap v2.5 - Opportunity Formation & Founder Learning
 
 ## 0. Roadmap Overview
 
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **1.2 GitHub vendor-promo / SEO suppressor**
+- [ ] **0.2** Current item: **1.3 PriceSignal false-positive hardening**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **1 / 24**
-- [ ] **0.5** Remaining: **23 / 24**
+- [ ] **0.4** Completed from this roadmap: **2 / 24**
+- [ ] **0.5** Remaining: **22 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -132,21 +132,22 @@ Reduce false positives from GitHub Issues where SEO/vendor/product-promo text is
 
 ### Expected files
 
+- `src/oos/vendor_promo_suppressor.py`
 - `src/oos/evidence_classifier.py`
-- `src/oos/candidate_signal_extractor.py`
 - `src/oos/signal_scoring.py`
-- `tests/test_github_vendor_promo_suppressor.py`
+- `src/oos/founder_package.py`
+- `tests/test_vendor_promo_suppressor.py`
 - `docs/dev_ledger/02_mini_epics/1.2-github-vendor-promo-seo-suppressor.md`
 - `docs/dev_ledger/03_run_reports/1.2-github-vendor-promo-seo-suppressor.md`
 
 ### Acceptance criteria
 
-- [ ] **1.2.1** Known vendor-promo examples are downgraded or marked `needs_human_review`.
-- [ ] **1.2.2** Product listing/submission text does not rank as strong pain.
-- [ ] **1.2.3** Real feature requests, such as the YNAB balance-sheet need, remain eligible.
-- [ ] **1.2.4** Founder package explains suppression when useful.
-- [ ] **1.2.5** No live internet/API calls in tests.
-- [ ] **1.2.6** Full validation passes.
+- [x] **1.2.1** Known vendor-promo examples are downgraded or marked `needs_human_review`.
+- [x] **1.2.2** Product listing/submission text does not rank as strong pain.
+- [x] **1.2.3** Real feature requests, such as the YNAB balance-sheet need, remain eligible.
+- [x] **1.2.4** Founder package explains suppression when useful.
+- [x] **1.2.5** No live internet/API calls in tests.
+- [x] **1.2.6** Full validation passes.
 
 ### Validation expectations
 

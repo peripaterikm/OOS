@@ -7,6 +7,7 @@ from typing import Iterable, List
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from .models import CleanedEvidence, EvidenceClassification, RawEvidence
+from .vendor_promo_suppressor import assess_vendor_promo
 
 
 PAIN_SIGNAL_CANDIDATE = "pain_signal_candidate"
@@ -330,7 +331,28 @@ def classify_evidence(cleaned: CleanedEvidence) -> EvidenceClassification:
     relevance = topic_relevance_score(text, cleaned.topic_id)
     marketing_penalty = anti_marketing_penalty(text)
     genuine_pain = user_pain_marker_score(text)
+    vendor_promo = assess_vendor_promo(
+        title=cleaned.normalized_title,
+        body=cleaned.normalized_body,
+        source_type=cleaned.source_type,
+        source_url=cleaned.source_url,
+    )
     if cleaned.topic_id == "ai_cfo_smb":
+        if vendor_promo.is_vendor_promo:
+            confidence = (
+                min(0.3, vendor_promo.suppressor_confidence)
+                if vendor_promo.recommended_classification == NEEDS_HUMAN_REVIEW
+                else vendor_promo.suppressor_confidence
+            )
+            return _classification(
+                cleaned=cleaned,
+                classification=vendor_promo.recommended_classification,
+                confidence=confidence,
+                matched_rules=["vendor_promo_suppressor"] + vendor_promo.matched_patterns,
+                reason=vendor_promo.reason,
+                requires_human_review=vendor_promo.recommended_classification == NEEDS_HUMAN_REVIEW,
+                is_noise=vendor_promo.recommended_classification == NOISE,
+            )
         if marketing_penalty >= 0.8 and genuine_pain < 0.35:
             return _classification(
                 cleaned=cleaned,
