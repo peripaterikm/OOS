@@ -10,6 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from .candidate_signal_extractor import extract_candidate_signal
 from .evidence_classifier import classify_evidence, clean_evidence
+from .founder_package import build_founder_package_quality_sections, render_founder_package_quality_sections
 from .live_collection import collect_raw_evidence_for_topic
 from .meaning_loop_adapter import build_meaning_loop_dry_run, write_meaning_loop_dry_run_artifacts
 from .models import CandidateSignal, CleanedEvidence, EvidenceClassification, RawEvidence, model_from_dict, model_to_dict
@@ -151,7 +152,14 @@ def run_discovery_weekly(
     )
     _write_json(summary_json_path, summary)
     summary_md_path.write_text(_summary_markdown(summary, candidate_signals), encoding="utf-8")
-    founder_package = _build_founder_package(summary=summary, candidate_signals=candidate_signals)
+    founder_package = _build_founder_package(
+        summary=summary,
+        candidate_signals=candidate_signals,
+        classifications=classifications,
+        price_signals=price_signals,
+        run_dir=run_dir,
+        collection_metadata=collection_metadata,
+    )
     _write_json(founder_package_json_path, founder_package)
     founder_package_md_path.write_text(_founder_package_markdown(founder_package), encoding="utf-8")
     if include_meaning_loop_dry_run:
@@ -321,11 +329,22 @@ def _build_founder_package(
     *,
     summary: Dict[str, Any],
     candidate_signals: List[CandidateSignal],
+    classifications: List[EvidenceClassification] | None = None,
+    price_signals: List[Any] | None = None,
+    run_dir: Path | None = None,
+    collection_metadata: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     ranked_signals = rank_candidate_signals(candidate_signals)
     deduped_ranked_signals = deduplicate_ranked_candidate_signals(candidate_signals)
     top_signals = [signal for signal in deduped_ranked_signals if signal.signal_type != "needs_human_review"]
     review_signals = [signal for signal in ranked_signals if signal.signal_type == "needs_human_review"]
+    quality_sections = build_founder_package_quality_sections(
+        candidate_signals=candidate_signals,
+        classifications=classifications or [],
+        price_signals=price_signals or [],
+        run_dir=run_dir,
+        collection_metadata=collection_metadata or {},
+    )
     return {
         "run_id": summary["run_id"],
         "topic_id": summary["topic_id"],
@@ -343,6 +362,7 @@ def _build_founder_package(
         "counts_by_signal_type": summary["counts_by_signal_type"],
         "top_candidate_signals": [_signal_package_item(signal) for signal in top_signals[:10]],
         "needs_human_review_signals": [_signal_package_item(signal) for signal in review_signals],
+        "quality_sections": quality_sections,
         "recommended_founder_actions": list(RECOMMENDED_FOUNDER_ACTIONS),
         "artifact_paths": summary["artifact_paths"],
         "collection_errors": summary["collection_errors"],
@@ -352,7 +372,7 @@ def _build_founder_package(
             "No live LLM/API calls.",
             "No Reddit collector yet.",
             "No full source yield analytics yet.",
-            "No final 7.2 traceability/compliance hardening yet.",
+            "Quality sections are deterministic and evidence-bound.",
         ],
     }
 
@@ -512,6 +532,10 @@ def _founder_package_markdown(package: Dict[str, Any]) -> str:
             )
     else:
         lines.append("- No signals currently require human review.")
+
+    quality_sections = package.get("quality_sections")
+    if isinstance(quality_sections, dict):
+        lines.extend(["", render_founder_package_quality_sections(quality_sections).rstrip()])
 
     lines.extend(
         [

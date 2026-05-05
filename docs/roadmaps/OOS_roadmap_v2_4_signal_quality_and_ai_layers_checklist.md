@@ -18,10 +18,10 @@ This roadmap is intentionally focused on **quality and intelligence**, not on ad
 ## 0.2 Status
 
 - [ ] **0.2.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_4_signal_quality_and_ai_layers_checklist.md`
-- [ ] **0.2.2** Current item: **7.2**
+- [ ] **0.2.2** Current item: **8.1**
 - [ ] **0.2.3** Roadmap state: `planned`
-- [ ] **0.2.4** Completed from this roadmap: **11 / 17**
-- [ ] **0.2.5** Remaining: **6 / 17**
+- [ ] **0.2.4** Completed from this roadmap: **12 / 17**
+- [ ] **0.2.5** Remaining: **5 / 17**
 - [ ] **0.2.6** Primary design reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 - [ ] **0.2.7** Source Intelligence architecture reference: `docs/architecture/source_intelligence_layer_v0_3.md`
 
@@ -779,12 +779,12 @@ Add sections:
 
 ### Acceptance criteria
 
-- [ ] **7.2.1** Founder package shows implied burden signals.
-- [ ] **7.2.2** Founder package shows price signals.
-- [ ] **7.2.3** Founder package shows weak patterns.
-- [ ] **7.2.4** Founder package shows kill archive warnings.
-- [ ] **7.2.5** Founder package remains readable and deterministic.
-- [ ] **7.2.6** Full validation passes.
+- [x] **7.2.1** Founder package shows implied burden signals.
+- [x] **7.2.2** Founder package shows price signals.
+- [x] **7.2.3** Founder package shows weak patterns.
+- [x] **7.2.4** Founder package shows kill archive warnings.
+- [x] **7.2.5** Founder package remains readable and deterministic.
+- [x] **7.2.6** Full validation passes.
 
 ### Expected files
 
@@ -793,6 +793,13 @@ Add sections:
 - `tests/test_founder_package_quality_upgrade.py`
 - `docs/dev_ledger/02_mini_epics/7.2-founder-package-quality-upgrade.md`
 - `docs/dev_ledger/03_run_reports/7.2-founder-package-quality-upgrade.md`
+
+### Completion notes
+
+- Completed as a deterministic founder-package display upgrade with compact quality sections for time sensitivity, implied burdens, price signals, weak patterns, kill archive warnings, customer voice query yield, offline LLM review outputs, and evidence confidence/risk notes.
+- Optional upstream artifacts are rendered when present and otherwise produce clear empty states; no new weak-pattern, kill-archive, or LLM execution engines were added.
+- Price hints remain evidence-only and preserve citations from the 5.2 price signal extractor without inventing budgets.
+- No dependencies, internet/API calls, or live LLM calls were added.
 
 ---
 
