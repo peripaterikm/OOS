@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `2.2 Evidence pack builder`
+- Current item: `2.3 Evidence pack display in founder package`
 - Roadmap state: `active / planned`
-- Completed: `7 / 24`
-- Remaining: `17 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `2.1` - Cluster evidence pack contract
-- Next planned roadmap item: Roadmap v2.5 `2.2` - Evidence pack builder
+- Completed: `8 / 24`
+- Remaining: `16 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `2.2` - Evidence pack builder
+- Next planned roadmap item: Roadmap v2.5 `2.3` - Evidence pack display in founder package
 
 ## Branch And Commit Strategy
 
@@ -101,3 +101,4 @@
 - Roadmap v2.5 item 1.5 extended deterministic mojibake repair for founder-facing evidence, candidate summaries, and founder package outputs, preserving raw evidence traceability without additional live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 1.6 ran a second bounded HN + GitHub live comparison after Block 1 hardening, recorded ignored runtime artifacts under `artifacts/discovery_runs/second_controlled_open_source_signal_run_v1/`, and confirmed vendor-promo, price false-positive, duplicate, and mojibake behavior before moving to evidence packs.
 - Roadmap v2.5 item 2.1 added the deterministic `EvidencePack` contract with serializable evidence items, source summaries, risk notes, optional price/weak-pattern/kill-warning IDs, explicit insufficient-evidence representation, and traceability-preserving validation without live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 2.2 added a deterministic EvidencePack builder that consumes existing candidate signals, price signals, weak patterns, kill archive warnings, and discovery artifacts, writes `evidence_packs.json` in discovery runs, preserves traceability, and records risk notes without live collection, live internet/API calls, or live LLM/API calls.

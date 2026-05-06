@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **2.2 Evidence pack builder**
+- [ ] **0.2** Current item: **2.3 Evidence pack display in founder package**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **7 / 24**
-- [ ] **0.5** Remaining: **17 / 24**
+- [ ] **0.4** Completed from this roadmap: **8 / 24**
+- [ ] **0.5** Remaining: **16 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -370,12 +370,12 @@ Build deterministic evidence packs from signals, clusters, price signals, weak p
 
 ### Acceptance criteria
 
-- [ ] **2.2.1** Builder reads existing discovery artifacts.
-- [ ] **2.2.2** Evidence IDs/source URLs are preserved.
-- [ ] **2.2.3** Price signals attach only when evidence-bound.
-- [ ] **2.2.4** Kill archive warnings attach without auto-kill.
-- [ ] **2.2.5** Builder output is deterministic.
-- [ ] **2.2.6** Full validation passes.
+- [x] **2.2.1** Builder reads existing discovery artifacts.
+- [x] **2.2.2** Evidence IDs/source URLs are preserved.
+- [x] **2.2.3** Price signals attach only when evidence-bound.
+- [x] **2.2.4** Kill archive warnings attach without auto-kill.
+- [x] **2.2.5** Builder output is deterministic.
+- [x] **2.2.6** Full validation passes.
 
 ### Validation expectations
 
