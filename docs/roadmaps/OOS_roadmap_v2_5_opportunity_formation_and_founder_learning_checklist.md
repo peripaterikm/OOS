@@ -4,11 +4,11 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [x] **0.2** Current item: **6.1 Weekly opportunity review package**
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
+- [ ] **0.2** Current item: **6.2 Next best founder actions**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [x] **0.4** Completed from this roadmap: **18 / 24**
-- [x] **0.5** Remaining: **6 / 24**
+- [x] **0.4** Completed from this roadmap: **19 / 24**
+- [x] **0.5** Remaining: **5 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -810,11 +810,11 @@ Sections:
 
 ### Acceptance criteria
 
-- [ ] **6.1.1** Weekly review package model exists.
-- [ ] **6.1.2** All required sections render deterministically.
-- [ ] **6.1.3** Empty sections have clear empty states.
-- [ ] **6.1.4** Package cites opportunity/evidence IDs.
-- [ ] **6.1.5** Full validation passes.
+- [x] **6.1.1** Weekly review package model exists.
+- [x] **6.1.2** All required sections render deterministically.
+- [x] **6.1.3** Empty sections have clear empty states.
+- [x] **6.1.4** Package cites opportunity/evidence IDs.
+- [x] **6.1.5** Full validation passes.
 
 ### Validation expectations
 

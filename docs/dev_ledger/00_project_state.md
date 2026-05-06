@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `6.1 Weekly opportunity review package`
+- Current item: `6.2 Next best founder actions`
 - Roadmap state: `active / planned`
-- Completed: `18 / 24`
-- Remaining: `6 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `5.3` - Founder preference profile draft
-- Next planned roadmap item: Roadmap v2.5 `6.1` - Weekly opportunity review package
+- Completed: `19 / 24`
+- Remaining: `5 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `6.1` - Weekly opportunity review package
+- Next planned roadmap item: Roadmap v2.5 `6.2` - Next best founder actions
 
 ## Branch And Commit Strategy
 
