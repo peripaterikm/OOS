@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **4.1 Post-synthesis quality gate**
+- [ ] **0.2** Current item: **4.2 Evidence sufficiency scoring**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **12 / 24**
-- [ ] **0.5** Remaining: **12 / 24**
+- [ ] **0.4** Completed from this roadmap: **13 / 24**
+- [ ] **0.5** Remaining: **11 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -566,11 +566,11 @@ Create a deterministic gate after opportunity synthesis.
 
 ### Acceptance criteria
 
-- [ ] **4.1.1** Gate returns pass/park/reject deterministically.
-- [ ] **4.1.2** Gate never auto-promotes.
-- [ ] **4.1.3** Gate preserves founder-decision authority.
-- [ ] **4.1.4** Unsupported assumptions push toward park/reject.
-- [ ] **4.1.5** Full validation passes.
+- [x] **4.1.1** Gate returns pass/park/reject deterministically.
+- [x] **4.1.2** Gate never auto-promotes.
+- [x] **4.1.3** Gate preserves founder-decision authority.
+- [x] **4.1.4** Unsupported assumptions push toward park/reject.
+- [x] **4.1.5** Full validation passes.
 
 ### Validation expectations
 

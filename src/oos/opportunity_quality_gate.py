@@ -1,350 +1,496 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List, Optional
+import hashlib
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
-from .ai_contracts import AI_METADATA_REQUIRED_FIELDS, AIStageStatus, PromptIdentity, build_ai_metadata
-from .opportunity_framing import OpportunityCard
+from .evidence_pack import EvidencePack, evidence_pack_from_dict
+from .opportunity_sketch import UNKNOWN, OpportunityCandidate, opportunity_sketch_from_dict
 
 
-OPPORTUNITY_GATE_PROMPT = PromptIdentity(
-    prompt_name="opportunity_quality_gate",
-    prompt_version="opportunity_quality_gate_v1",
+OPPORTUNITY_QUALITY_GATE_SCHEMA_VERSION = "opportunity_quality_gate.v1"
+FOUNDER_DECISION_AUTHORITY_NOTE = "Founder decision remains final"
+
+PASS = "pass"
+PARK = "park"
+REJECT = "reject"
+
+FOUNDER_REVIEW = "founder_review"
+COLLECT_MORE_EVIDENCE = "collect_more_evidence"
+CLARIFY_BUYER = "clarify_buyer"
+CLARIFY_WORKAROUND = "clarify_workaround"
+SUPPRESS_AS_FALSE_POSITIVE = "suppress_as_false_positive"
+REJECT_AS_NOISE = "reject_as_noise"
+
+ALLOWED_GATE_DECISIONS = {PASS, PARK, REJECT}
+ALLOWED_NEXT_ACTIONS = {
+    FOUNDER_REVIEW,
+    COLLECT_MORE_EVIDENCE,
+    CLARIFY_BUYER,
+    CLARIFY_WORKAROUND,
+    SUPPRESS_AS_FALSE_POSITIVE,
+    REJECT_AS_NOISE,
+}
+
+FATAL_RISK_MARKERS = (
+    "vendor",
+    "vendor_promo",
+    "seo",
+    "generic_accounting_copy",
+    "generic accounting",
+    "source_quality_issue",
+    "false_positive",
+    "product_submission",
+    "reject_as_noise",
 )
-OPPORTUNITY_GATE_MODEL_ID = "deterministic_opportunity_quality_gate"
-OPPORTUNITY_GATE_STATUSES = {"pass", "park", "reject"}
+
+INSUFFICIENT_RISK_MARKERS = (
+    "insufficient",
+    "missing_source_url",
+    "missing evidence",
+    "duplicate",
+    "needs_more_evidence",
+)
+
+STRONG_PAIN_MARKERS = (
+    "unpaid invoice",
+    "invoice follow",
+    "cash collection",
+    "payment follow",
+    "balance sheet",
+    "month-end",
+    "month end",
+    "reporting",
+    "sticky notes",
+    "spreadsheet",
+)
 
 
 @dataclass(frozen=True)
-class OpportunityGateCriterionResult:
-    criterion: str
-    passed: bool
-    explanation: str
-    severity: str = "info"
+class OpportunityGateReason:
+    code: str
+    message: str
+    severity: str = "medium"
 
-    def validate(self) -> None:
-        for field_name in ("criterion", "explanation", "severity"):
-            value = getattr(self, field_name)
-            if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"{field_name} must be a non-empty string")
-        if not isinstance(self.passed, bool):
-            raise ValueError("passed must be a bool")
-        if self.severity not in {"info", "warning", "blocking"}:
-            raise ValueError("severity must be info, warning, or blocking")
-
-    def to_dict(self) -> Dict[str, Any]:
-        self.validate()
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
-
-@dataclass(frozen=True)
-class OpportunityGateDecision:
-    opportunity_id: str
-    status: str
-    explanation: str
-    criteria_results: List[OpportunityGateCriterionResult]
-    missing_fields: List[str]
-    weaknesses: List[str]
-    recommendation: str
-    next_action: str
-    confidence: float
-    linked_signal_ids: List[str]
-    linked_cluster_id: str
-    source_opportunity_id: str
-    source_signal_ids: List[str]
-    source_cluster_id: str
-    founder_override_status: Optional[str] = None
-    ai_metadata: Optional[Dict[str, Any]] = None
-
-    def validate(self) -> None:
-        for field_name in (
-            "opportunity_id",
-            "status",
-            "explanation",
-            "recommendation",
-            "next_action",
-            "linked_cluster_id",
-            "source_opportunity_id",
-            "source_cluster_id",
-        ):
-            value = getattr(self, field_name)
-            if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"{field_name} must be a non-empty string")
-        if self.status not in OPPORTUNITY_GATE_STATUSES:
-            raise ValueError("status must be pass, park, or reject")
-        if not isinstance(self.confidence, (int, float)) or not 0 <= float(self.confidence) <= 1:
-            raise ValueError("confidence must be a number between 0 and 1")
-        if not self.linked_signal_ids or any(not str(value).strip() for value in self.linked_signal_ids):
-            raise ValueError("linked_signal_ids must contain non-empty strings")
-        if self.source_signal_ids != self.linked_signal_ids:
-            raise ValueError("source_signal_ids must preserve linked_signal_ids")
-        if self.source_cluster_id != self.linked_cluster_id:
-            raise ValueError("source_cluster_id must preserve linked_cluster_id")
-        for criterion in self.criteria_results:
-            criterion.validate()
-        if self.founder_override_status is not None and self.founder_override_status not in OPPORTUNITY_GATE_STATUSES:
-            raise ValueError("founder_override_status must be pass, park, reject, or None")
-        if self.ai_metadata is not None:
-            for field_name in AI_METADATA_REQUIRED_FIELDS:
-                if field_name not in self.ai_metadata:
-                    raise ValueError(f"ai_metadata missing required field: {field_name}")
-
-    def to_dict(self) -> Dict[str, Any]:
-        self.validate()
-        data = asdict(self)
-        data["confidence"] = float(data["confidence"])
-        data["criteria_results"] = [criterion.to_dict() for criterion in self.criteria_results]
-        return data
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> OpportunityGateReason:
+        return cls(
+            code=str(data.get("code", "")),
+            message=str(data.get("message", "")),
+            severity=str(data.get("severity", "medium")),
+        )
 
 
 @dataclass(frozen=True)
 class OpportunityGateResult:
-    decisions: List[OpportunityGateDecision]
-    source_opportunity_ids: List[str]
-    stage_status: str
-    fallback_used: bool
-    rejected_record_errors: List[str]
-    ai_metadata: Dict[str, Any]
+    gate_result_id: str
+    opportunity_id: str
+    evidence_pack_id: str
+    decision: str
+    confidence: float
+    reasons: list[OpportunityGateReason]
+    blocking_issues: list[str]
+    missing_evidence: list[str]
+    recommended_next_action: str
+    evidence_ids: list[str]
+    source_signal_ids: list[str]
+    source_urls: list[str]
+    founder_override_status: str = "not_applied"
+    founder_decision_authority_note: str = FOUNDER_DECISION_AUTHORITY_NOTE
+    auto_promote: bool = False
+    founder_decision_required: bool = True
+    schema_version: str = OPPORTUNITY_QUALITY_GATE_SCHEMA_VERSION
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "gate_result_id": self.gate_result_id,
+            "opportunity_id": self.opportunity_id,
+            "evidence_pack_id": self.evidence_pack_id,
+            "decision": self.decision,
+            "confidence": self.confidence,
+            "reasons": [reason.to_dict() for reason in self.reasons],
+            "blocking_issues": list(self.blocking_issues),
+            "missing_evidence": list(self.missing_evidence),
+            "recommended_next_action": self.recommended_next_action,
+            "evidence_ids": list(self.evidence_ids),
+            "source_signal_ids": list(self.source_signal_ids),
+            "source_urls": list(self.source_urls),
+            "founder_override_status": self.founder_override_status,
+            "founder_decision_authority_note": self.founder_decision_authority_note,
+            "auto_promote": self.auto_promote,
+            "founder_decision_required": self.founder_decision_required,
+            "schema_version": self.schema_version,
+        }
 
     def validate(self) -> None:
-        if self.stage_status not in {status.value for status in AIStageStatus}:
-            raise ValueError("stage_status must be success, failed, or degraded")
-        if not isinstance(self.fallback_used, bool):
-            raise ValueError("fallback_used must be a bool")
-        for field_name in AI_METADATA_REQUIRED_FIELDS:
-            if field_name not in self.ai_metadata:
-                raise ValueError(f"ai_metadata missing required field: {field_name}")
-        if len(self.decisions) != len(self.source_opportunity_ids):
-            raise ValueError("gate result should preserve one decision per source opportunity")
-        for decision in self.decisions:
-            decision.validate()
+        validate_opportunity_gate_result(self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        self.validate()
+
+@dataclass(frozen=True)
+class OpportunityBatchGateDecision:
+    opportunity_id: str
+    status: str
+    confidence: float
+    reasons: list[str]
+    linked_signal_ids: list[str]
+    founder_override_status: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class OpportunityBatchGateResult:
+    decisions: list[OpportunityBatchGateDecision]
+    schema_version: str = OPPORTUNITY_QUALITY_GATE_SCHEMA_VERSION
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "decisions": [decision.to_dict() for decision in self.decisions],
-            "source_opportunity_ids": self.source_opportunity_ids,
-            "stage_status": self.stage_status,
-            "fallback_used": self.fallback_used,
-            "rejected_record_errors": self.rejected_record_errors,
-            "ai_metadata": self.ai_metadata,
+            "schema_version": self.schema_version,
         }
 
 
-def _non_empty(value: Any) -> bool:
-    return isinstance(value, str) and bool(value.strip())
+def evaluate_opportunity_quality(
+    opportunity: OpportunityCandidate | dict[str, Any],
+    evidence_pack: EvidencePack | dict[str, Any] | None = None,
+) -> OpportunityGateResult:
+    candidate = opportunity_sketch_from_dict(opportunity) if isinstance(opportunity, dict) else opportunity
+    pack = evidence_pack_from_dict(evidence_pack) if isinstance(evidence_pack, dict) else evidence_pack
+    if pack is not None:
+        pack.validate()
+        if candidate.evidence_pack_id and candidate.evidence_pack_id != pack.evidence_pack_id:
+            raise ValueError("opportunity and evidence_pack must reference the same evidence_pack_id")
 
+    evidence_ids = _ordered_strings(candidate.evidence_ids)
+    source_signal_ids = _ordered_strings(candidate.source_signal_ids)
+    source_urls = _ordered_strings(candidate.source_urls)
+    risk_notes = _risk_notes(candidate, pack)
+    unsupported = _ordered_strings(candidate.unsupported_assumptions)
+    missing_evidence = _missing_evidence(candidate, pack)
+    reasons: list[OpportunityGateReason] = []
+    blocking_issues: list[str] = []
 
-def _metadata_for(
-    *,
-    opportunities: List[OpportunityCard],
-    linked_input_ids: List[str],
-    fallback_used: bool,
-    stage_confidence: float,
-    stage_status: AIStageStatus,
-    failure_reason: str = "",
-) -> Dict[str, Any]:
-    return build_ai_metadata(
-        prompt=OPPORTUNITY_GATE_PROMPT,
-        model_id=OPPORTUNITY_GATE_MODEL_ID,
-        input_payload=[asdict(opportunity) for opportunity in opportunities],
-        generation_mode="deterministic_gate",
-        linked_input_ids=linked_input_ids,
-        fallback_used=fallback_used,
-        stage_confidence=stage_confidence,
-        stage_status=stage_status,
-        failure_reason=failure_reason,
-        fallback_recommendation="Founder decision remains final; use this deterministic recommendation as advisory only.",
-        degraded_mode=fallback_used or stage_status == AIStageStatus.degraded,
-    ).to_dict()
+    _add_traceability_reasons(reasons, blocking_issues, missing_evidence, evidence_ids, source_urls)
+    _add_problem_reasons(reasons, blocking_issues, candidate)
+    _add_risk_reasons(reasons, blocking_issues, risk_notes)
+    _add_unsupported_reasons(reasons, unsupported)
+    _add_support_reasons(reasons, candidate, pack)
 
-
-def _criterion(name: str, passed: bool, explanation: str, *, severity: str = "info") -> OpportunityGateCriterionResult:
-    return OpportunityGateCriterionResult(
-        criterion=name,
-        passed=passed,
-        explanation=explanation,
-        severity=severity,
-    )
-
-
-def _safe_ids(values: Any) -> List[str]:
-    if not isinstance(values, list):
-        return []
-    return [str(value).strip() for value in values if str(value).strip()]
-
-
-def _safe_reject_decision(opportunity: OpportunityCard, *, reason: str) -> OpportunityGateDecision:
-    opportunity_id = str(getattr(opportunity, "opportunity_id", "") or "invalid_opportunity").strip()
-    linked_signal_ids = _safe_ids(getattr(opportunity, "linked_signal_ids", [])) or ["unknown_signal"]
-    linked_cluster_id = str(getattr(opportunity, "linked_cluster_id", "") or "unknown_cluster").strip()
-    return OpportunityGateDecision(
-        opportunity_id=opportunity_id,
-        status="reject",
-        explanation=f"Opportunity failed quality gate validation: {reason}",
-        criteria_results=[
-            _criterion("valid_opportunity_contract", False, reason, severity="blocking"),
-        ],
-        missing_fields=["valid_opportunity_contract"],
-        weaknesses=[reason],
-        recommendation="Reject until the opportunity card contract is valid.",
-        next_action="Regenerate or repair the opportunity card before founder review.",
-        confidence=0.0,
-        linked_signal_ids=linked_signal_ids,
-        linked_cluster_id=linked_cluster_id,
-        source_opportunity_id=opportunity_id,
-        source_signal_ids=linked_signal_ids,
-        source_cluster_id=linked_cluster_id,
-    )
-
-
-def evaluate_opportunity(opportunity: OpportunityCard) -> OpportunityGateDecision:
-    linked_signal_ids = list(opportunity.linked_signal_ids)
-    linked_cluster_id = opportunity.linked_cluster_id
-    criteria: List[OpportunityGateCriterionResult] = []
-    missing_fields: List[str] = []
-    weaknesses: List[str] = []
-
-    checks = [
-        ("clear_user", _non_empty(opportunity.target_user), "target_user is present", "target_user is missing", "target_user", "blocking"),
-        ("concrete_pain", _non_empty(opportunity.pain), "pain is present", "pain is missing", "pain", "blocking"),
-        (
-            "evidence",
-            bool(opportunity.evidence) and not opportunity.evidence_missing,
-            "linked evidence is present",
-            "linked evidence is missing",
-            "evidence",
-            "blocking",
-        ),
-        (
-            "urgency_or_cost",
-            _non_empty(opportunity.urgency) or _non_empty(opportunity.monetization_hypothesis),
-            "urgency or cost signal is present",
-            "urgency or cost signal is missing",
-            "urgency_or_cost",
-            "warning",
-        ),
-        (
-            "possible_product_angle",
-            _non_empty(opportunity.possible_wedge),
-            "possible wedge/product angle is present",
-            "possible wedge/product angle is missing",
-            "possible_wedge",
-            "warning",
-        ),
-        (
-            "risks_uncertainty",
-            bool(opportunity.risks) or bool(opportunity.assumptions),
-            "risks or assumptions are present",
-            "risks and uncertainty are missing",
-            "risks_uncertainty",
-            "warning",
-        ),
-        (
-            "traceability",
-            bool(opportunity.linked_signal_ids) and _non_empty(opportunity.linked_cluster_id),
-            "signal and cluster traceability is present",
-            "signal or cluster traceability is missing",
-            "traceability",
-            "blocking",
-        ),
-    ]
-
-    for criterion_name, passed, ok_message, fail_message, field_name, severity in checks:
-        criteria.append(_criterion(criterion_name, passed, ok_message if passed else fail_message, severity=severity if not passed else "info"))
-        if not passed:
-            missing_fields.append(field_name)
-            weaknesses.append(fail_message)
-
-    blocking_failures = [criterion for criterion in criteria if not criterion.passed and criterion.severity == "blocking"]
-    warning_failures = [criterion for criterion in criteria if not criterion.passed and criterion.severity == "warning"]
-    if any(criterion.criterion in {"clear_user", "concrete_pain", "traceability"} for criterion in blocking_failures):
-        status = "reject"
-        recommendation = "Reject until core user, pain, and traceability are repaired."
-        next_action = "Regenerate the opportunity card or return to signal analysis."
-        confidence = 0.2
-    elif any(criterion.criterion == "evidence" for criterion in blocking_failures):
-        status = "park"
-        recommendation = "Park until linked evidence is added."
-        next_action = "Attach evidence or reject if evidence cannot be found."
-        confidence = 0.35
-    elif warning_failures:
-        status = "park"
-        recommendation = "Park until the missing product angle, urgency, or uncertainty is clarified."
-        next_action = "Add the missing fields before ideation."
-        confidence = 0.55
-    else:
-        status = "pass"
-        recommendation = "Pass to pattern-guided ideation."
-        next_action = "Use as input for Roadmap 5.1 ideation."
-        confidence = 0.9
-
-    explanation = (
-        "Opportunity passes the deterministic quality gate."
-        if status == "pass"
-        else "Opportunity does not yet meet the deterministic quality gate: " + "; ".join(weaknesses)
-    )
-    return OpportunityGateDecision(
-        opportunity_id=opportunity.opportunity_id,
-        status=status,
-        explanation=explanation,
-        criteria_results=criteria,
-        missing_fields=missing_fields,
-        weaknesses=weaknesses,
-        recommendation=recommendation,
-        next_action=next_action,
+    confidence = _gate_confidence(candidate, pack, reasons, blocking_issues, missing_evidence)
+    decision = _decision(candidate, pack, confidence, reasons, blocking_issues, missing_evidence, unsupported)
+    recommended_next_action = _recommended_next_action(decision, missing_evidence, reasons)
+    result = OpportunityGateResult(
+        gate_result_id=make_gate_result_id(candidate.opportunity_id or candidate.evidence_pack_id),
+        opportunity_id=candidate.opportunity_id,
+        evidence_pack_id=candidate.evidence_pack_id,
+        decision=decision,
         confidence=confidence,
+        reasons=sorted(reasons, key=lambda reason: (reason.severity, reason.code, reason.message)),
+        blocking_issues=_ordered_strings(blocking_issues),
+        missing_evidence=_ordered_strings(missing_evidence),
+        recommended_next_action=recommended_next_action,
+        evidence_ids=evidence_ids,
+        source_signal_ids=source_signal_ids,
+        source_urls=source_urls,
+    )
+    result.validate()
+    return result
+
+
+def evaluate_opportunity_batch(opportunities: list[Any]) -> OpportunityBatchGateResult:
+    decisions = [_evaluate_legacy_opportunity_card(opportunity) for opportunity in opportunities]
+    return OpportunityBatchGateResult(
+        decisions=sorted(decisions, key=lambda decision: (decision.opportunity_id, decision.status))
+    )
+
+
+def make_gate_result_id(opportunity_id: str) -> str:
+    value = str(opportunity_id).strip()
+    if not value:
+        value = "unknown_opportunity"
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
+    return f"opportunity_gate_{digest}"
+
+
+def _evaluate_legacy_opportunity_card(opportunity: Any) -> OpportunityBatchGateDecision:
+    opportunity_id = str(_get_value(opportunity, "opportunity_id", "unknown_opportunity"))
+    linked_signal_ids = _ordered_strings(list(_get_value(opportunity, "linked_signal_ids", []) or []))
+    confidence = float(_get_value(opportunity, "confidence", 0.0) or 0.0)
+    evidence_missing = bool(_get_value(opportunity, "evidence_missing", False))
+    risks = " ".join(str(item) for item in (_get_value(opportunity, "risks", []) or [])).lower()
+    assumptions = _get_value(opportunity, "assumptions", []) or []
+    reasons: list[str] = []
+    status = PASS
+    if evidence_missing:
+        status = PARK
+        reasons.append("evidence_missing")
+    if confidence < 0.35:
+        status = REJECT
+        reasons.append("very_low_confidence")
+    elif confidence < 0.65 and status == PASS:
+        status = PARK
+        reasons.append("confidence_needs_review")
+    if assumptions:
+        reasons.append("unsupported_assumptions_require_founder_review")
+        if status == PASS and confidence < 0.8:
+            status = PARK
+    if any(marker in risks for marker in FATAL_RISK_MARKERS):
+        status = REJECT
+        reasons.append("vendor_or_generic_risk")
+    if not linked_signal_ids:
+        status = REJECT
+        reasons.append("missing_linked_signal_ids")
+    if not reasons:
+        reasons.append("traceable_candidate_ready_for_founder_review")
+    return OpportunityBatchGateDecision(
+        opportunity_id=opportunity_id,
+        status=status,
+        confidence=round(max(0.0, min(1.0, confidence)), 3),
+        reasons=_ordered_strings(reasons),
         linked_signal_ids=linked_signal_ids,
-        linked_cluster_id=linked_cluster_id,
-        source_opportunity_id=opportunity.opportunity_id,
-        source_signal_ids=linked_signal_ids,
-        source_cluster_id=linked_cluster_id,
         founder_override_status=None,
     )
 
 
-def evaluate_opportunity_batch(opportunities: List[OpportunityCard]) -> OpportunityGateResult:
-    decisions: List[OpportunityGateDecision] = []
-    rejected_record_errors: List[str] = []
-    for index, opportunity in enumerate(opportunities):
-        try:
-            decision = evaluate_opportunity(opportunity)
-            decision.validate()
-            decisions.append(decision)
-        except Exception as exc:
-            rejected_record_errors.append(f"opportunities[{index}]: {exc}")
-            decisions.append(_safe_reject_decision(opportunity, reason=str(exc)))
+def validate_opportunity_gate_result(result: OpportunityGateResult) -> None:
+    for field_name in (
+        "gate_result_id",
+        "opportunity_id",
+        "evidence_pack_id",
+        "decision",
+        "recommended_next_action",
+        "founder_override_status",
+        "founder_decision_authority_note",
+    ):
+        _require_non_empty(getattr(result, field_name), f"OpportunityGateResult.{field_name}")
+    if result.founder_decision_authority_note != FOUNDER_DECISION_AUTHORITY_NOTE:
+        raise ValueError("Founder decision authority note must be preserved")
+    if result.schema_version != OPPORTUNITY_QUALITY_GATE_SCHEMA_VERSION:
+        raise ValueError("OpportunityGateResult.schema_version must be opportunity_quality_gate.v1")
+    if result.decision not in ALLOWED_GATE_DECISIONS:
+        raise ValueError("OpportunityGateResult.decision must be pass, park, or reject")
+    if result.recommended_next_action not in ALLOWED_NEXT_ACTIONS:
+        raise ValueError("OpportunityGateResult.recommended_next_action is not allowed")
+    if result.auto_promote:
+        raise ValueError("Opportunity quality gate must never auto-promote")
+    if not result.founder_decision_required:
+        raise ValueError("Founder decision authority must be preserved")
+    if not 0 <= float(result.confidence) <= 1:
+        raise ValueError("OpportunityGateResult.confidence must be between 0 and 1")
+    for field_name in ("blocking_issues", "missing_evidence", "evidence_ids", "source_signal_ids", "source_urls"):
+        if not isinstance(getattr(result, field_name), list):
+            raise ValueError(f"OpportunityGateResult.{field_name} must be a list")
+        _require_string_list(getattr(result, field_name), f"OpportunityGateResult.{field_name}")
+    if not isinstance(result.reasons, list):
+        raise ValueError("OpportunityGateResult.reasons must be a list")
+    for reason in result.reasons:
+        _require_non_empty(reason.code, "OpportunityGateReason.code")
+        _require_non_empty(reason.message, "OpportunityGateReason.message")
+        _require_non_empty(reason.severity, "OpportunityGateReason.severity")
 
-    source_opportunity_ids = [decision.source_opportunity_id for decision in decisions]
-    fallback_used = bool(rejected_record_errors)
-    stage_status = AIStageStatus.degraded if fallback_used else AIStageStatus.success
-    stage_confidence = min([decision.confidence for decision in decisions] + [1.0])
-    failure_reason = "; ".join(rejected_record_errors)
-    metadata = _metadata_for(
-        opportunities=opportunities,
-        linked_input_ids=source_opportunity_ids,
-        fallback_used=fallback_used,
-        stage_confidence=stage_confidence,
-        stage_status=stage_status,
-        failure_reason=failure_reason,
-    )
-    decisions_with_metadata = [
-        OpportunityGateDecision(
-            **{
-                **decision.to_dict(),
-                "criteria_results": decision.criteria_results,
-                "ai_metadata": metadata,
-            }
+
+def _decision(
+    candidate: OpportunityCandidate,
+    pack: EvidencePack | None,
+    confidence: float,
+    reasons: list[OpportunityGateReason],
+    blocking_issues: list[str],
+    missing_evidence: list[str],
+    unsupported: list[str],
+) -> str:
+    if blocking_issues:
+        return REJECT
+    fatal_reasons = [reason for reason in reasons if reason.severity == "fatal"]
+    if fatal_reasons or confidence < 0.2:
+        return REJECT
+    if missing_evidence:
+        return PARK
+    if confidence < 0.55 or len(unsupported) > 2:
+        return PARK
+    if _unknown(candidate.possible_buyer) or _unknown(candidate.product_wedge):
+        return PARK
+    if pack is not None and pack.source_diversity < 1:
+        return PARK
+    return PASS
+
+
+def _recommended_next_action(
+    decision: str,
+    missing_evidence: list[str],
+    reasons: list[OpportunityGateReason],
+) -> str:
+    reason_codes = {reason.code for reason in reasons}
+    if decision == REJECT:
+        if any(code in reason_codes for code in ("vendor_or_generic_risk", "generic_problem")):
+            return SUPPRESS_AS_FALSE_POSITIVE
+        return REJECT_AS_NOISE
+    if "buyer_unknown" in reason_codes or "possible_buyer" in missing_evidence:
+        return CLARIFY_BUYER
+    if "workaround_unknown" in reason_codes or "current_workaround" in missing_evidence:
+        return CLARIFY_WORKAROUND
+    if decision == PARK:
+        return COLLECT_MORE_EVIDENCE
+    return FOUNDER_REVIEW
+
+
+def _gate_confidence(
+    candidate: OpportunityCandidate,
+    pack: EvidencePack | None,
+    reasons: list[OpportunityGateReason],
+    blocking_issues: list[str],
+    missing_evidence: list[str],
+) -> float:
+    confidence = max(0.0, min(1.0, float(candidate.confidence)))
+    if pack is not None and pack.confidence_values:
+        pack_confidence = sum(float(value) for value in pack.confidence_values) / len(pack.confidence_values)
+        confidence = (confidence + pack_confidence) / 2
+    confidence -= 0.08 * len(missing_evidence)
+    confidence -= 0.12 * len(blocking_issues)
+    confidence -= 0.08 * sum(1 for reason in reasons if reason.severity == "high")
+    confidence -= 0.18 * sum(1 for reason in reasons if reason.severity == "fatal")
+    confidence += 0.05 * sum(1 for reason in reasons if reason.severity == "positive")
+    return round(max(0.0, min(0.95, confidence)), 3)
+
+
+def _add_traceability_reasons(
+    reasons: list[OpportunityGateReason],
+    blocking_issues: list[str],
+    missing_evidence: list[str],
+    evidence_ids: list[str],
+    source_urls: list[str],
+) -> None:
+    if not evidence_ids:
+        blocking_issues.append("missing_evidence_ids")
+        missing_evidence.append("evidence_ids")
+        reasons.append(OpportunityGateReason("missing_evidence_ids", "No evidence IDs are attached.", "fatal"))
+    if not source_urls:
+        blocking_issues.append("missing_source_urls")
+        missing_evidence.append("source_urls")
+        reasons.append(OpportunityGateReason("missing_source_urls", "No source URLs are attached.", "fatal"))
+
+
+def _add_problem_reasons(
+    reasons: list[OpportunityGateReason],
+    blocking_issues: list[str],
+    candidate: OpportunityCandidate,
+) -> None:
+    problem_text = candidate.problem_statement.lower()
+    if _unknown(candidate.problem_statement) or problem_text in {"generic", "generic problem"}:
+        blocking_issues.append("generic_or_unknown_problem")
+        reasons.append(OpportunityGateReason("generic_problem", "Problem statement is unknown or generic.", "fatal"))
+    elif any(marker in problem_text for marker in STRONG_PAIN_MARKERS):
+        reasons.append(OpportunityGateReason("concrete_problem", "Problem statement includes concrete finance pain.", "positive"))
+    else:
+        reasons.append(OpportunityGateReason("problem_needs_review", "Problem statement is plausible but not strongly specific.", "medium"))
+    if _unknown(candidate.current_workaround):
+        reasons.append(OpportunityGateReason("workaround_unknown", "Current workaround is unknown.", "medium"))
+    else:
+        reasons.append(OpportunityGateReason("workaround_present", "Current workaround evidence is present.", "positive"))
+    if _unknown(candidate.possible_buyer):
+        reasons.append(OpportunityGateReason("buyer_unknown", "Possible buyer is unknown.", "medium"))
+    if _unknown(candidate.product_wedge):
+        reasons.append(OpportunityGateReason("product_wedge_unknown", "Product wedge is unknown.", "medium"))
+
+
+def _add_risk_reasons(
+    reasons: list[OpportunityGateReason],
+    blocking_issues: list[str],
+    risk_notes: list[str],
+) -> None:
+    risk_text = " ".join(risk_notes).lower()
+    if any(marker in risk_text for marker in FATAL_RISK_MARKERS):
+        blocking_issues.append("vendor_or_generic_risk")
+        reasons.append(OpportunityGateReason("vendor_or_generic_risk", "Vendor, SEO, generic, or false-positive risk dominates.", "fatal"))
+    elif any(marker in risk_text for marker in INSUFFICIENT_RISK_MARKERS):
+        reasons.append(OpportunityGateReason("insufficient_or_duplicate_risk", "Evidence has insufficient, duplicate, or needs-more-evidence risk.", "high"))
+
+
+def _add_unsupported_reasons(
+    reasons: list[OpportunityGateReason],
+    unsupported: list[str],
+) -> None:
+    if not unsupported:
+        reasons.append(OpportunityGateReason("unsupported_assumptions_limited", "No unsupported assumptions are listed.", "positive"))
+        return
+    severity = "high" if len(unsupported) > 2 else "medium"
+    reasons.append(
+        OpportunityGateReason(
+            "unsupported_assumptions_present",
+            f"Unsupported assumptions require founder review: {', '.join(unsupported)}.",
+            severity,
         )
-        for decision in decisions
-    ]
-    result = OpportunityGateResult(
-        decisions=decisions_with_metadata,
-        source_opportunity_ids=source_opportunity_ids,
-        stage_status=stage_status.value,
-        fallback_used=fallback_used,
-        rejected_record_errors=rejected_record_errors,
-        ai_metadata=metadata,
     )
-    result.validate()
-    return result
+
+
+def _add_support_reasons(
+    reasons: list[OpportunityGateReason],
+    candidate: OpportunityCandidate,
+    pack: EvidencePack | None,
+) -> None:
+    combined = f"{candidate.problem_statement} {candidate.opportunity_sketch} {candidate.why_now}".lower()
+    if any(marker in combined for marker in STRONG_PAIN_MARKERS):
+        reasons.append(OpportunityGateReason("pain_evidence_present", "Evidence supports a concrete pain pattern.", "positive"))
+    if pack is None:
+        return
+    if pack.is_insufficient_evidence or pack.recurrence_count < 2:
+        reasons.append(OpportunityGateReason("insufficient_evidence", "Evidence pack is thin or explicitly insufficient.", "high"))
+    if pack.source_diversity < 2:
+        reasons.append(OpportunityGateReason("low_source_diversity", "Source diversity is limited.", "medium"))
+    else:
+        reasons.append(OpportunityGateReason("source_diversity_present", "Evidence spans multiple source types.", "positive"))
+
+
+def _missing_evidence(candidate: OpportunityCandidate, pack: EvidencePack | None) -> list[str]:
+    missing = []
+    if _unknown(candidate.possible_buyer):
+        missing.append("possible_buyer")
+    if _unknown(candidate.product_wedge):
+        missing.append("product_wedge")
+    if _unknown(candidate.current_workaround):
+        missing.append("current_workaround")
+    if _unknown(candidate.why_now):
+        missing.append("why_now")
+    if pack is not None:
+        if pack.is_insufficient_evidence:
+            missing.append("sufficient_evidence")
+        if pack.source_diversity < 2:
+            missing.append("source_diversity")
+        if not pack.price_signal_ids:
+            missing.append("price_or_willingness_to_pay")
+    return _ordered_strings(missing)
+
+
+def _risk_notes(candidate: OpportunityCandidate, pack: EvidencePack | None) -> list[str]:
+    notes = list(candidate.risk_notes)
+    if pack is not None:
+        notes.extend(f"{note.risk_type}/{note.severity}: {note.note}" for note in pack.risk_notes)
+    return _ordered_strings(notes)
+
+
+def _get_value(item: Any, field_name: str, default: Any = None) -> Any:
+    if isinstance(item, dict):
+        return item.get(field_name, default)
+    return getattr(item, field_name, default)
+
+
+def _unknown(value: str) -> bool:
+    clean = str(value).strip().lower()
+    return not clean or clean == UNKNOWN or clean in {"n/a", "none"}
+
+
+def _ordered_strings(values: list[str]) -> list[str]:
+    return sorted(dict.fromkeys(str(item).strip() for item in values if str(item).strip()))
+
+
+def _require_non_empty(value: str, field_name: str) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+
+
+def _require_string_list(values: list[str], field_name: str) -> None:
+    if any(not isinstance(item, str) or not item.strip() for item in values):
+        raise ValueError(f"{field_name} must contain non-empty strings")
