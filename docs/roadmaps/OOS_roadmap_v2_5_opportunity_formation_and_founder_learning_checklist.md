@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **3.1 Deterministic opportunity sketch baseline**
+- [ ] **0.2** Current item: **4.1 Post-synthesis quality gate**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **9 / 24**
-- [ ] **0.5** Remaining: **15 / 24**
+- [ ] **0.4** Completed from this roadmap: **12 / 24**
+- [ ] **0.5** Remaining: **12 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -443,11 +443,11 @@ Create a no-LLM baseline opportunity sketch from evidence pack.
 
 ### Acceptance criteria
 
-- [ ] **3.1.1** Opportunity sketch model exists and serializes.
-- [ ] **3.1.2** Baseline sketch cites evidence IDs.
-- [ ] **3.1.3** Missing buyer/price/product assumptions remain unknown.
-- [ ] **3.1.4** Output is stable across repeated runs.
-- [ ] **3.1.5** Full validation passes.
+- [x] **3.1.1** Opportunity sketch model exists and serializes.
+- [x] **3.1.2** Baseline sketch cites evidence IDs.
+- [x] **3.1.3** Missing buyer/price/product assumptions remain unknown.
+- [x] **3.1.4** Output is stable across repeated runs.
+- [x] **3.1.5** Full validation passes.
 
 ### Validation expectations
 
@@ -481,20 +481,20 @@ Define a future-only LLM contract for opportunity synthesis from evidence pack.
 
 ### Expected files
 
-- `src/oos/opportunity_synthesis_contract.py`
-- `src/oos/llm_budget.py`
-- `tests/test_opportunity_synthesis_contract.py`
+- `src/oos/llm_opportunity_synthesis_contract.py`
+- `src/oos/llm_contracts.py`
+- `tests/test_llm_opportunity_synthesis_contract.py`
 - `docs/dev_ledger/02_mini_epics/3.2-llm-opportunity-synthesis-contract.md`
 - `docs/dev_ledger/03_run_reports/3.2-llm-opportunity-synthesis-contract.md`
 
 ### Acceptance criteria
 
-- [ ] **3.2.1** Contract model/prompt exists.
-- [ ] **3.2.2** Prompt requires evidence pack context.
-- [ ] **3.2.3** Prompt forbids invented buyer/price/market/product/strategy claims.
-- [ ] **3.2.4** Prompt requires evidence IDs and unsupported assumption fields.
-- [ ] **3.2.5** No live provider call is made by default.
-- [ ] **3.2.6** Full validation passes.
+- [x] **3.2.1** Contract model/prompt exists.
+- [x] **3.2.2** Prompt requires evidence pack context.
+- [x] **3.2.3** Prompt forbids invented buyer/price/market/product/strategy claims.
+- [x] **3.2.4** Prompt requires evidence IDs and unsupported assumption fields.
+- [x] **3.2.5** No live provider call is made by default.
+- [x] **3.2.6** Full validation passes.
 
 ### Validation expectations
 
@@ -520,20 +520,20 @@ Run synthesis through deterministic/mock provider only.
 
 ### Expected files
 
-- `src/oos/opportunity_synthesis_dry_run.py`
+- `src/oos/llm_opportunity_synthesis_dry_run.py`
 - `src/oos/cli.py`
-- `tests/test_opportunity_synthesis_dry_run.py`
-- `docs/dev_ledger/02_mini_epics/3.3-offline-opportunity-synthesis-dry-run.md`
-- `docs/dev_ledger/03_run_reports/3.3-offline-opportunity-synthesis-dry-run.md`
+- `tests/test_llm_opportunity_synthesis_dry_run.py`
+- `docs/dev_ledger/02_mini_epics/3.3-offline-llm-opportunity-synthesis-dry-run.md`
+- `docs/dev_ledger/03_run_reports/3.3-offline-llm-opportunity-synthesis-dry-run.md`
 
 ### Acceptance criteria
 
-- [ ] **3.3.1** Dry-run reads local evidence packs.
-- [ ] **3.3.2** Dry-run uses deterministic/mock provider only.
-- [ ] **3.3.3** Output preserves evidence IDs.
-- [ ] **3.3.4** Invalid/unsupported fields fail closed or mark low confidence.
-- [ ] **3.3.5** No live LLM/API calls.
-- [ ] **3.3.6** Full validation passes.
+- [x] **3.3.1** Dry-run reads local evidence packs.
+- [x] **3.3.2** Dry-run uses deterministic/mock provider only.
+- [x] **3.3.3** Output preserves evidence IDs.
+- [x] **3.3.4** Invalid/unsupported fields fail closed or mark low confidence.
+- [x] **3.3.5** No live LLM/API calls.
+- [x] **3.3.6** Full validation passes.
 
 ### Validation expectations
 

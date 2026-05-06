@@ -277,6 +277,7 @@ def default_local_preview_llm_budget_policy() -> LLMBudgetPolicy:
             "query_refinement_advisor",
             "implied_burden_detection",
             "price_signal_extraction",
+            "opportunity_synthesis",
             "experiment_blueprint",
             "test_task",
         ],

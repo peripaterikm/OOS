@@ -9,17 +9,17 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `3.1 Deterministic opportunity sketch baseline`
+- Current item: `4.1 Post-synthesis quality gate`
 - Roadmap state: `active / planned`
-- Completed: `9 / 24`
-- Remaining: `15 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `2.3` - Evidence pack display in founder package
-- Next planned roadmap item: Roadmap v2.5 `3.1` - Deterministic opportunity sketch baseline
+- Completed: `12 / 24`
+- Remaining: `12 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `3.3` - Offline LLM opportunity synthesis dry-run
+- Next planned roadmap item: Roadmap v2.5 `4.1` - Post-synthesis quality gate
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-5-block-2-evidence-pack-layer`
+- Current branch: `feat/v2-5-block-3-opportunity-formation`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -103,3 +103,6 @@
 - Roadmap v2.5 item 2.1 added the deterministic `EvidencePack` contract with serializable evidence items, source summaries, risk notes, optional price/weak-pattern/kill-warning IDs, explicit insufficient-evidence representation, and traceability-preserving validation without live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 2.2 added a deterministic EvidencePack builder that consumes existing candidate signals, price signals, weak patterns, kill archive warnings, and discovery artifacts, writes `evidence_packs.json` in discovery runs, preserves traceability, and records risk notes without live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 2.3 displayed deterministic EvidencePack sections in founder package JSON/Markdown outputs with compact counts, evidence IDs, source URLs, linked price/weak-pattern/kill-warning IDs, and risk notes while preserving existing quality sections without live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 3.1 added a no-LLM deterministic OpportunityCandidate baseline from EvidencePack inputs, preserving evidence IDs, signal IDs, source URLs, unsupported assumptions, conservative confidence, and risk notes without live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 3.2 added a future-only LLM opportunity synthesis contract from EvidencePack and deterministic OpportunityCandidate inputs, with evidence-bound prompt/schema validation, advisory-only response checks, and local-preview `opportunity_synthesis` budget-role support without live collection, live internet/API calls, live LLM/API calls, or provider execution.
+- Roadmap v2.5 item 3.3 added an offline deterministic/mock opportunity synthesis dry-run that builds the 3.1 baseline, constructs the 3.2 synthesis request, validates a schema-compliant evidence-bound mock response, records prompt hash/preview and no-live-provider flags, and avoids live collection, live internet/API calls, live LLM/API calls, and provider execution.
