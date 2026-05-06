@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `4.2 Evidence sufficiency scoring`
+- Current item: `4.3 False-positive opportunity suppressor`
 - Roadmap state: `active / planned`
-- Completed: `13 / 24`
-- Remaining: `11 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `4.1` - Post-synthesis quality gate
-- Next planned roadmap item: Roadmap v2.5 `4.2` - Evidence sufficiency scoring
+- Completed: `14 / 24`
+- Remaining: `10 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `4.2` - Evidence sufficiency scoring
+- Next planned roadmap item: Roadmap v2.5 `4.3` - False-positive opportunity suppressor
 
 ## Branch And Commit Strategy
 

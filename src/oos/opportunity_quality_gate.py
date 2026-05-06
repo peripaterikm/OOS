@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from .evidence_pack import EvidencePack, evidence_pack_from_dict
+from .evidence_sufficiency_scoring import EvidenceSufficiencyScore, score_evidence_sufficiency
 from .opportunity_sketch import UNKNOWN, OpportunityCandidate, opportunity_sketch_from_dict
 
 
@@ -98,6 +99,7 @@ class OpportunityGateResult:
     evidence_ids: list[str]
     source_signal_ids: list[str]
     source_urls: list[str]
+    evidence_sufficiency_score: dict[str, Any] | None = None
     founder_override_status: str = "not_applied"
     founder_decision_authority_note: str = FOUNDER_DECISION_AUTHORITY_NOTE
     auto_promote: bool = False
@@ -118,6 +120,7 @@ class OpportunityGateResult:
             "evidence_ids": list(self.evidence_ids),
             "source_signal_ids": list(self.source_signal_ids),
             "source_urls": list(self.source_urls),
+            "evidence_sufficiency_score": self.evidence_sufficiency_score,
             "founder_override_status": self.founder_override_status,
             "founder_decision_authority_note": self.founder_decision_authority_note,
             "auto_promote": self.auto_promote,
@@ -179,9 +182,11 @@ def evaluate_opportunity_quality(
     _add_risk_reasons(reasons, blocking_issues, risk_notes)
     _add_unsupported_reasons(reasons, unsupported)
     _add_support_reasons(reasons, candidate, pack)
+    sufficiency_score = score_evidence_sufficiency(candidate, pack, extra_risk_notes=risk_notes)
+    _add_sufficiency_reasons(reasons, sufficiency_score)
 
-    confidence = _gate_confidence(candidate, pack, reasons, blocking_issues, missing_evidence)
-    decision = _decision(candidate, pack, confidence, reasons, blocking_issues, missing_evidence, unsupported)
+    confidence = _gate_confidence(candidate, pack, reasons, blocking_issues, missing_evidence, sufficiency_score)
+    decision = _decision(candidate, pack, confidence, reasons, blocking_issues, missing_evidence, unsupported, sufficiency_score)
     recommended_next_action = _recommended_next_action(decision, missing_evidence, reasons)
     result = OpportunityGateResult(
         gate_result_id=make_gate_result_id(candidate.opportunity_id or candidate.evidence_pack_id),
@@ -196,6 +201,7 @@ def evaluate_opportunity_quality(
         evidence_ids=evidence_ids,
         source_signal_ids=source_signal_ids,
         source_urls=source_urls,
+        evidence_sufficiency_score=sufficiency_score.to_dict(),
     )
     result.validate()
     return result
@@ -301,13 +307,18 @@ def _decision(
     blocking_issues: list[str],
     missing_evidence: list[str],
     unsupported: list[str],
+    sufficiency_score: EvidenceSufficiencyScore,
 ) -> str:
     if blocking_issues:
         return REJECT
     fatal_reasons = [reason for reason in reasons if reason.severity == "fatal"]
     if fatal_reasons or confidence < 0.2:
         return REJECT
+    if sufficiency_score.score_band == "insufficient":
+        return REJECT
     if missing_evidence:
+        return PARK
+    if sufficiency_score.score_band == "weak":
         return PARK
     if confidence < 0.55 or len(unsupported) > 2:
         return PARK
@@ -343,17 +354,34 @@ def _gate_confidence(
     reasons: list[OpportunityGateReason],
     blocking_issues: list[str],
     missing_evidence: list[str],
+    sufficiency_score: EvidenceSufficiencyScore | None = None,
 ) -> float:
     confidence = max(0.0, min(1.0, float(candidate.confidence)))
     if pack is not None and pack.confidence_values:
         pack_confidence = sum(float(value) for value in pack.confidence_values) / len(pack.confidence_values)
         confidence = (confidence + pack_confidence) / 2
+    if sufficiency_score is not None:
+        confidence = (confidence + sufficiency_score.total_score) / 2
     confidence -= 0.08 * len(missing_evidence)
     confidence -= 0.12 * len(blocking_issues)
     confidence -= 0.08 * sum(1 for reason in reasons if reason.severity == "high")
     confidence -= 0.18 * sum(1 for reason in reasons if reason.severity == "fatal")
     confidence += 0.05 * sum(1 for reason in reasons if reason.severity == "positive")
     return round(max(0.0, min(0.95, confidence)), 3)
+
+
+def _add_sufficiency_reasons(
+    reasons: list[OpportunityGateReason],
+    sufficiency_score: EvidenceSufficiencyScore,
+) -> None:
+    if sufficiency_score.score_band == "strong":
+        reasons.append(OpportunityGateReason("evidence_sufficiency_strong", "Evidence sufficiency score is strong.", "positive"))
+    elif sufficiency_score.score_band == "adequate":
+        reasons.append(OpportunityGateReason("evidence_sufficiency_adequate", "Evidence sufficiency score is adequate.", "positive"))
+    elif sufficiency_score.score_band == "weak":
+        reasons.append(OpportunityGateReason("evidence_sufficiency_weak", "Evidence sufficiency score is weak.", "high"))
+    else:
+        reasons.append(OpportunityGateReason("evidence_sufficiency_insufficient", "Evidence sufficiency score is insufficient.", "fatal"))
 
 
 def _add_traceability_reasons(

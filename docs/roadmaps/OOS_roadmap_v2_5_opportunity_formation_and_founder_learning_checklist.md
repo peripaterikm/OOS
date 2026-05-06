@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **4.2 Evidence sufficiency scoring**
+- [ ] **0.2** Current item: **4.3 False-positive opportunity suppressor**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **13 / 24**
-- [ ] **0.5** Remaining: **11 / 24**
+- [ ] **0.4** Completed from this roadmap: **14 / 24**
+- [ ] **0.5** Remaining: **10 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -600,6 +600,7 @@ Score dimensions:
 
 ### Expected files
 
+- `src/oos/evidence_sufficiency_scoring.py`
 - `src/oos/opportunity_quality_gate.py`
 - `tests/test_evidence_sufficiency_scoring.py`
 - `docs/dev_ledger/02_mini_epics/4.2-evidence-sufficiency-scoring.md`
@@ -607,11 +608,11 @@ Score dimensions:
 
 ### Acceptance criteria
 
-- [ ] **4.2.1** Each score dimension is explicit and serializable.
-- [ ] **4.2.2** Missing price evidence does not create fake willingness-to-pay.
-- [ ] **4.2.3** Source diversity is measured from evidence, not inferred.
-- [ ] **4.2.4** Risk/ambiguity lowers confidence or gate outcome.
-- [ ] **4.2.5** Full validation passes.
+- [x] **4.2.1** Each score dimension is explicit and serializable.
+- [x] **4.2.2** Missing price evidence does not create fake willingness-to-pay.
+- [x] **4.2.3** Source diversity is measured from evidence, not inferred.
+- [x] **4.2.4** Risk/ambiguity lowers confidence or gate outcome.
+- [x] **4.2.5** Full validation passes.
 
 ### Validation expectations
 
