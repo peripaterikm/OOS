@@ -27,11 +27,22 @@ _DAY_ENTRY_RE = re.compile(r"\bday\s+\d+\b", re.IGNORECASE)
 _BROKEN_EMOJI_RE = re.compile(r"\b[рР]џ\S*", re.IGNORECASE)
 _MOJIBAKE_REPLACEMENTS = {
     "\u0432\u0402\u2122": "'",
-    "\u0432\u0402\u201d": "\u2014",
-    "\u0432\u0402\u201c": "\u2013",
+    "\u0432\u0402\u201d": "-",
+    "\u0432\u0402\u201c": "-",
     "\u0432\u0402\u045a": '"',
     "\u0432\u0402\u045c": '"',
+    "\u0432\u0402\u045e": "-",
     "\u0432\u0402\u00a6": "...",
+    "\u00e2\u20ac\u2122": "'",
+    "\u00e2\u20ac\u0153": '"',
+    "\u00e2\u20ac\u009d": '"',
+    "\u00e2\u20ac\u00a2": "-",
+    "\u00e2\u20ac\u201c": "-",
+    "\u00e2\u20ac\u201d": "-",
+    "\u00c2 ": " ",
+    "\u0100 ": " ",
+    "\u0412 ": " ",
+    "\u00a0": " ",
 }
 
 _RULES: list[tuple[str, list[str]]] = [
@@ -287,6 +298,8 @@ def clean_evidence(evidence: RawEvidence) -> CleanedEvidence:
         "normalized_content_hash_generated",
         "boilerplate_removal_not_applied",
     ]
+    if repair_mojibake(evidence.title) != str(evidence.title or "") or repair_mojibake(evidence.body) != str(evidence.body or ""):
+        notes.append("mojibake_repaired")
     cleaned = CleanedEvidence(
         evidence_id=evidence.evidence_id,
         source_id=evidence.source_id,

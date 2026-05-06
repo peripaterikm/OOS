@@ -97,7 +97,7 @@ class TestEvidenceCleanerClassifier(unittest.TestCase):
         )
 
         self.assertIn("today's", cleaned.normalized_body)
-        self.assertIn("optional—they", cleaned.normalized_body)
+        self.assertIn("optional-they", cleaned.normalized_body)
         self.assertNotIn("вЂ", cleaned.normalized_body)
         self.assertNotIn("рџ", cleaned.normalized_body.lower())
 

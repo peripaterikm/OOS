@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **1.5 Mojibake cleanup regression test**
+- [ ] **0.2** Current item: **1.6 Second controlled live run comparison**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **4 / 24**
-- [ ] **0.5** Remaining: **20 / 24**
+- [ ] **0.4** Completed from this roadmap: **5 / 24**
+- [ ] **0.5** Remaining: **19 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -254,17 +254,17 @@ Prevent `вЂ™`, `вЂў`, and similar encoding garbage from reaching founder-
 
 - `src/oos/evidence_cleaner.py`
 - `src/oos/candidate_signal_extractor.py`
-- `tests/test_mojibake_cleanup_regression.py`
+- `tests/test_mojibake_cleanup.py`
 - `docs/dev_ledger/02_mini_epics/1.5-mojibake-cleanup-regression.md`
 - `docs/dev_ledger/03_run_reports/1.5-mojibake-cleanup-regression.md`
 
 ### Acceptance criteria
 
-- [ ] **1.5.1** `вЂ™` does not appear in cleaned/founder-facing summaries.
-- [ ] **1.5.2** `вЂў` does not appear in cleaned/founder-facing summaries.
-- [ ] **1.5.3** Cleanup does not corrupt valid UTF-8 punctuation.
-- [ ] **1.5.4** Existing cleaner behavior is preserved.
-- [ ] **1.5.5** Full validation passes.
+- [x] **1.5.1** `вЂ™` does not appear in cleaned/founder-facing summaries.
+- [x] **1.5.2** `вЂў` does not appear in cleaned/founder-facing summaries.
+- [x] **1.5.3** Cleanup does not corrupt valid UTF-8 punctuation.
+- [x] **1.5.4** Existing cleaner behavior is preserved.
+- [x] **1.5.5** Full validation passes.
 
 ### Validation expectations
 
