@@ -1,14 +1,14 @@
-﻿# OOS Roadmap v2.5 - Opportunity Formation & Founder Learning
+# OOS Roadmap v2.5 - Opportunity Formation & Founder Learning
 
 ## 0. Roadmap Overview
 
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **5.3 Founder preference profile draft**
+- [x] **0.2** Current item: **6.1 Weekly opportunity review package**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **17 / 24**
-- [ ] **0.5** Remaining: **7 / 24**
+- [x] **0.4** Completed from this roadmap: **18 / 24**
+- [x] **0.5** Remaining: **6 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -34,7 +34,7 @@ Real open-source signals -> source/query quality hardening -> deterministic evid
   - SMB bookkeeping via sticky notes / Excel / inability to afford a developer.
 - GitHub Issues produced marketing/vendor/SEO noise, including product-promo and service-page-like records.
 - Candidate signals included duplicates, especially around HN accounting-agent and Winstwaker bookkeeping-service items.
-- Founder-facing text still needs mojibake protection for fragments such as `вЂ™` and `вЂў`.
+- Founder-facing text still needs mojibake protection for fragments such as `’` and `•`.
 - Price extraction produced false positives:
   - `$75` receipt threshold treated as a spend hint;
   - `$1.25M` Section 179 deduction limit partially extracted as `$1.25`;
@@ -242,7 +242,7 @@ Prevent duplicate candidate signals from appearing in founder review and inflati
 
 ### Goal
 
-Prevent `вЂ™`, `вЂў`, and similar encoding garbage from reaching founder-facing summaries.
+Prevent `’`, `•`, and similar encoding garbage from reaching founder-facing summaries.
 
 ### Scope
 
@@ -260,8 +260,8 @@ Prevent `вЂ™`, `вЂў`, and similar encoding garbage from reaching founder-
 
 ### Acceptance criteria
 
-- [x] **1.5.1** `вЂ™` does not appear in cleaned/founder-facing summaries.
-- [x] **1.5.2** `вЂў` does not appear in cleaned/founder-facing summaries.
+- [x] **1.5.1** `’` does not appear in cleaned/founder-facing summaries.
+- [x] **1.5.2** `•` does not appear in cleaned/founder-facing summaries.
 - [x] **1.5.3** Cleanup does not corrupt valid UTF-8 punctuation.
 - [x] **1.5.4** Existing cleaner behavior is preserved.
 - [x] **1.5.5** Full validation passes.
@@ -764,12 +764,12 @@ decision taxonomy -> pattern memory -> scoring adjustment -> founder package war
 
 ### Acceptance criteria
 
-- [ ] **5.3.1** Profile model exists and serializes.
-- [ ] **5.3.2** Promoted/rejected patterns are deterministic summaries.
-- [ ] **5.3.3** Recurring kill reasons are surfaced.
-- [ ] **5.3.4** Profile creates advisory scoring/founder-package warnings only.
-- [ ] **5.3.5** No ML training claims or behavior.
-- [ ] **5.3.6** Full validation passes.
+- [x] **5.3.1** Profile model exists and serializes.
+- [x] **5.3.2** Promoted/rejected patterns are deterministic summaries.
+- [x] **5.3.3** Recurring kill reasons are surfaced.
+- [x] **5.3.4** Profile creates advisory scoring/founder-package warnings only.
+- [x] **5.3.5** No ML training claims or behavior.
+- [x] **5.3.6** Full validation passes.
 
 ### Validation expectations
 

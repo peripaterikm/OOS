@@ -1,4 +1,4 @@
-﻿# Dev Ledger Project State
+# Dev Ledger Project State
 
 ## Current Roadmap
 
@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `5.3 Founder preference profile draft`
+- Current item: `6.1 Weekly opportunity review package`
 - Roadmap state: `active / planned`
-- Completed: `17 / 24`
-- Remaining: `7 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `5.2` - Decision-to-signal feedback mapping
-- Next planned roadmap item: Roadmap v2.5 `5.3` - Founder preference profile draft
+- Completed: `18 / 24`
+- Remaining: `6 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `5.3` - Founder preference profile draft
+- Next planned roadmap item: Roadmap v2.5 `6.1` - Weekly opportunity review package
 
 ## Branch And Commit Strategy
 
