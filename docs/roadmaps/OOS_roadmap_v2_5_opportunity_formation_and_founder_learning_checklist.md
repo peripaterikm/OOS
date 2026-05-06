@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **5.1 Founder decision taxonomy v2**
+- [ ] **0.2** Current item: **5.2 Decision-to-signal feedback mapping**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **15 / 24**
-- [ ] **0.5** Remaining: **9 / 24**
+- [ ] **0.4** Completed from this roadmap: **16 / 24**
+- [ ] **0.5** Remaining: **8 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -679,18 +679,18 @@ Supported decisions:
 
 ### Expected files
 
-- `src/oos/founder_decision.py`
-- `tests/test_founder_decision_taxonomy_v2.py`
+- `src/oos/founder_decision_taxonomy.py`
+- `tests/test_founder_decision_taxonomy.py`
 - `docs/dev_ledger/02_mini_epics/5.1-founder-decision-taxonomy-v2.md`
 - `docs/dev_ledger/03_run_reports/5.1-founder-decision-taxonomy-v2.md`
 
 ### Acceptance criteria
 
-- [ ] **5.1.1** Decision taxonomy model exists and serializes.
-- [ ] **5.1.2** All five decision values are supported.
-- [ ] **5.1.3** Kill decisions require a structured kill reason.
-- [ ] **5.1.4** Needs-more-evidence decisions preserve requested evidence type.
-- [ ] **5.1.5** Full validation passes.
+- [x] **5.1.1** Decision taxonomy model exists and serializes.
+- [x] **5.1.2** All five decision values are supported.
+- [x] **5.1.3** Kill decisions require a structured kill reason.
+- [x] **5.1.4** Needs-more-evidence decisions preserve requested evidence type.
+- [x] **5.1.5** Full validation passes.
 
 ### Validation expectations
 

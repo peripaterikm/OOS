@@ -9,17 +9,17 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `5.1 Founder decision taxonomy v2`
+- Current item: `5.2 Decision-to-signal feedback mapping`
 - Roadmap state: `active / planned`
-- Completed: `15 / 24`
-- Remaining: `9 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `4.3` - False-positive opportunity suppressor
-- Next planned roadmap item: Roadmap v2.5 `5.1` - Founder decision taxonomy v2
+- Completed: `16 / 24`
+- Remaining: `8 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `5.1` - Founder decision taxonomy v2
+- Next planned roadmap item: Roadmap v2.5 `5.2` - Decision-to-signal feedback mapping
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-5-block-3-opportunity-formation`
+- Current branch: `feat/v2-5-block-5-founder-feedback-loop`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -109,3 +109,4 @@
 - Roadmap v2.5 item 4.1 added a deterministic post-synthesis opportunity quality gate with pass/park/reject decisions, traceability checks, conservative rationale, and founder-decision authority preserved without live collection, live internet/API calls, live LLM/API calls, or provider execution.
 - Roadmap v2.5 item 4.2 added deterministic evidence sufficiency scoring with explicit dimensions, missing-evidence/risk factors, score bands, and narrow quality-gate inclusion while preserving founder-decision authority and no-auto-promote behavior.
 - Roadmap v2.5 item 4.3 added deterministic false-positive opportunity suppression for generic, vendor/SEO, product-submission, disguised-consulting, buyerless, unsupported-assumption-heavy, and low-sufficiency opportunities, with quality-gate integration that prevents pass for high/critical false positives without auto-promotion.
+- Roadmap v2.5 item 5.1 added a structured FounderDecisionV2 taxonomy with five decision values, decision-specific reason categories, deterministic IDs, traceability fields, validation, serialization, and summaries without changing scoring, mapping feedback, or founder preference profiles.
