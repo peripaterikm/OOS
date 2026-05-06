@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `4.1 Post-synthesis quality gate`
+- Current item: `5.1 Founder decision taxonomy v2`
 - Roadmap state: `active / planned`
-- Completed: `12 / 24`
-- Remaining: `12 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `3.3` - Offline LLM opportunity synthesis dry-run
-- Next planned roadmap item: Roadmap v2.5 `4.1` - Post-synthesis quality gate
+- Completed: `15 / 24`
+- Remaining: `9 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `4.3` - False-positive opportunity suppressor
+- Next planned roadmap item: Roadmap v2.5 `5.1` - Founder decision taxonomy v2
 
 ## Branch And Commit Strategy
 
@@ -106,3 +106,6 @@
 - Roadmap v2.5 item 3.1 added a no-LLM deterministic OpportunityCandidate baseline from EvidencePack inputs, preserving evidence IDs, signal IDs, source URLs, unsupported assumptions, conservative confidence, and risk notes without live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 3.2 added a future-only LLM opportunity synthesis contract from EvidencePack and deterministic OpportunityCandidate inputs, with evidence-bound prompt/schema validation, advisory-only response checks, and local-preview `opportunity_synthesis` budget-role support without live collection, live internet/API calls, live LLM/API calls, or provider execution.
 - Roadmap v2.5 item 3.3 added an offline deterministic/mock opportunity synthesis dry-run that builds the 3.1 baseline, constructs the 3.2 synthesis request, validates a schema-compliant evidence-bound mock response, records prompt hash/preview and no-live-provider flags, and avoids live collection, live internet/API calls, live LLM/API calls, and provider execution.
+- Roadmap v2.5 item 4.1 added a deterministic post-synthesis opportunity quality gate with pass/park/reject decisions, traceability checks, conservative rationale, and founder-decision authority preserved without live collection, live internet/API calls, live LLM/API calls, or provider execution.
+- Roadmap v2.5 item 4.2 added deterministic evidence sufficiency scoring with explicit dimensions, missing-evidence/risk factors, score bands, and narrow quality-gate inclusion while preserving founder-decision authority and no-auto-promote behavior.
+- Roadmap v2.5 item 4.3 added deterministic false-positive opportunity suppression for generic, vendor/SEO, product-submission, disguised-consulting, buyerless, unsupported-assumption-heavy, and low-sufficiency opportunities, with quality-gate integration that prevents pass for high/critical false positives without auto-promotion.

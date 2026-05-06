@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **4.1 Post-synthesis quality gate**
+- [ ] **0.2** Current item: **5.1 Founder decision taxonomy v2**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **12 / 24**
-- [ ] **0.5** Remaining: **12 / 24**
+- [ ] **0.4** Completed from this roadmap: **15 / 24**
+- [ ] **0.5** Remaining: **9 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -566,11 +566,11 @@ Create a deterministic gate after opportunity synthesis.
 
 ### Acceptance criteria
 
-- [ ] **4.1.1** Gate returns pass/park/reject deterministically.
-- [ ] **4.1.2** Gate never auto-promotes.
-- [ ] **4.1.3** Gate preserves founder-decision authority.
-- [ ] **4.1.4** Unsupported assumptions push toward park/reject.
-- [ ] **4.1.5** Full validation passes.
+- [x] **4.1.1** Gate returns pass/park/reject deterministically.
+- [x] **4.1.2** Gate never auto-promotes.
+- [x] **4.1.3** Gate preserves founder-decision authority.
+- [x] **4.1.4** Unsupported assumptions push toward park/reject.
+- [x] **4.1.5** Full validation passes.
 
 ### Validation expectations
 
@@ -600,6 +600,7 @@ Score dimensions:
 
 ### Expected files
 
+- `src/oos/evidence_sufficiency_scoring.py`
 - `src/oos/opportunity_quality_gate.py`
 - `tests/test_evidence_sufficiency_scoring.py`
 - `docs/dev_ledger/02_mini_epics/4.2-evidence-sufficiency-scoring.md`
@@ -607,11 +608,11 @@ Score dimensions:
 
 ### Acceptance criteria
 
-- [ ] **4.2.1** Each score dimension is explicit and serializable.
-- [ ] **4.2.2** Missing price evidence does not create fake willingness-to-pay.
-- [ ] **4.2.3** Source diversity is measured from evidence, not inferred.
-- [ ] **4.2.4** Risk/ambiguity lowers confidence or gate outcome.
-- [ ] **4.2.5** Full validation passes.
+- [x] **4.2.1** Each score dimension is explicit and serializable.
+- [x] **4.2.2** Missing price evidence does not create fake willingness-to-pay.
+- [x] **4.2.3** Source diversity is measured from evidence, not inferred.
+- [x] **4.2.4** Risk/ambiguity lowers confidence or gate outcome.
+- [x] **4.2.5** Full validation passes.
 
 ### Validation expectations
 
@@ -630,30 +631,30 @@ Suppress generic opportunities, disguised consulting, no-buyer ideas, repeated k
 ### Scope
 
 - Add deterministic opportunity-level suppressor rules.
-- Use kill archive feedback without auto-killing.
-- Preserve warning details for founder review.
+- Suppress generic, vendor/SEO, product-submission, buyerless, and unsupported-assumption-heavy opportunities.
+- Preserve assessment details for founder review.
 
 ### Expected files
 
+- `src/oos/opportunity_false_positive_suppressor.py`
 - `src/oos/opportunity_quality_gate.py`
-- `src/oos/kill_archive_feedback.py`
-- `tests/test_false_positive_opportunity_suppressor.py`
+- `tests/test_opportunity_false_positive_suppressor.py`
 - `docs/dev_ledger/02_mini_epics/4.3-false-positive-opportunity-suppressor.md`
 - `docs/dev_ledger/03_run_reports/4.3-false-positive-opportunity-suppressor.md`
 
 ### Acceptance criteria
 
-- [ ] **4.3.1** Generic opportunities are downgraded.
-- [ ] **4.3.2** Disguised consulting patterns are downgraded.
-- [ ] **4.3.3** No-buyer ideas are parked/rejected.
-- [ ] **4.3.4** Marketing-copy-derived opportunities are suppressed.
-- [ ] **4.3.5** Similar killed patterns create warnings, not auto-kills.
-- [ ] **4.3.6** Full validation passes.
+- [x] **4.3.1** Generic opportunities are downgraded.
+- [x] **4.3.2** Disguised consulting patterns are downgraded.
+- [x] **4.3.3** No-buyer ideas are parked/rejected.
+- [x] **4.3.4** Marketing-copy-derived opportunities are suppressed.
+- [x] **4.3.5** High/critical false-positive assessments prevent gate pass without auto-promotion.
+- [x] **4.3.6** Full validation passes.
 
 ### Validation expectations
 
 - Fixture tests for each false-positive class.
-- Kill archive warning preservation tests.
+- Product-submission, no-buyer, traceability, sufficiency, and gate-integration tests.
 - Full validation.
 
 ---
