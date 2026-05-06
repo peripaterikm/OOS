@@ -1,0 +1,474 @@
+{
+  "schema_version": "founder_manual_labels.v1",
+  "run_id": "first_real_open_source_signal_run_v1",
+  "source_candidate_artifact": "artifacts/discovery_runs/first_real_open_source_signal_run_v1/candidate_signals.json",
+  "reviewer_context": "initial_founder_ground_truth_for_v2_5_block_1",
+  "allowed_founder_labels": [
+    "useful",
+    "weak",
+    "noise",
+    "duplicate",
+    "vendor_promo",
+    "price_false_positive",
+    "needs_more_evidence"
+  ],
+  "allowed_recommended_actions": [
+    "promote_to_opportunity_seed",
+    "keep_as_context",
+    "park_for_more_evidence",
+    "suppress_in_future",
+    "mark_duplicate",
+    "use_for_price_hardening",
+    "use_for_mojibake_regression"
+  ],
+  "allowed_issue_tags": [
+    "real_smb_pain",
+    "finance_reporting",
+    "cash_collection",
+    "bookkeeping_workaround",
+    "affordability_pain",
+    "vendor_promo",
+    "seo_noise",
+    "product_submission",
+    "generic_accounting_copy",
+    "duplicate_signal",
+    "price_false_positive",
+    "mojibake",
+    "weak_buyer_evidence",
+    "weak_price_evidence",
+    "needs_human_review",
+    "source_quality_issue"
+  ],
+  "review_count": 18,
+  "reviews": [
+    {
+      "review_id": "fror_v1_review_01",
+      "evidence_id": "raw_github_issue_3565323722",
+      "signal_id": "candidate_signal_raw_github_issue_3565323722_needs_human_review",
+      "source_type": "github_issues",
+      "source_url": "https://github.com/mohanayooganitech-create/expressocab/issues/4",
+      "original_classification": "needs_human_review",
+      "original_signal_type": "needs_human_review",
+      "original_confidence": 0.2,
+      "founder_label": "vendor_promo",
+      "secondary_labels": [
+        "noise"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "suppress_in_future",
+      "issue_tags": [
+        "vendor_promo",
+        "seo_noise",
+        "source_quality_issue"
+      ],
+      "review_rationale": "Promotional accounting software copy; no concrete user pain.",
+      "notes": "Zoho Books / NurtureU promo.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_02",
+      "evidence_id": "raw_github_issue_1182773055",
+      "signal_id": "candidate_signal_raw_github_issue_1182773055_pain_signal_candidate",
+      "source_type": "github_issues",
+      "source_url": "https://github.com/toolkit-for-ynab/toolkit-for-ynab/issues/2711",
+      "original_classification": "pain_signal_candidate",
+      "original_signal_type": "pain_signal",
+      "original_confidence": 0.58,
+      "founder_label": "useful",
+      "secondary_labels": [
+        "finance_reporting"
+      ],
+      "founder_quality_score": 5,
+      "recommended_action": "promote_to_opportunity_seed",
+      "issue_tags": [
+        "real_smb_pain",
+        "finance_reporting"
+      ],
+      "review_rationale": "Concrete reporting need; clear evidence of desired balance-sheet functionality.",
+      "notes": "YNAB balance sheet / historical month-end balances.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_03",
+      "evidence_id": "raw_github_issue_4369704245",
+      "signal_id": "candidate_signal_raw_github_issue_4369704245_workaround_signal_candidate",
+      "source_type": "github_issues",
+      "source_url": "https://github.com/movingcloud360/Busy-Software-02/issues/6",
+      "original_classification": "workaround_signal_candidate",
+      "original_signal_type": "workaround",
+      "original_confidence": 0.58,
+      "founder_label": "vendor_promo",
+      "secondary_labels": [
+        "noise"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "suppress_in_future",
+      "issue_tags": [
+        "vendor_promo",
+        "seo_noise",
+        "source_quality_issue"
+      ],
+      "review_rationale": "Vendor marketing copy; not a user pain or organic workaround.",
+      "notes": "BUSY Software billing/GST/inventory/financial management promo.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_04",
+      "evidence_id": "raw_github_issue_385700413",
+      "signal_id": "candidate_signal_raw_github_issue_385700413_needs_human_review",
+      "source_type": "github_issues",
+      "source_url": "https://github.com/ahmehmohamed/Corporate-accounting-software/issues/1",
+      "original_classification": "needs_human_review",
+      "original_signal_type": "needs_human_review",
+      "original_confidence": 0.19,
+      "founder_label": "vendor_promo",
+      "secondary_labels": [
+        "noise"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "suppress_in_future",
+      "issue_tags": [
+        "vendor_promo",
+        "seo_noise",
+        "generic_accounting_copy",
+        "source_quality_issue"
+      ],
+      "review_rationale": "Generic promotional/SEO content; no concrete user pain.",
+      "notes": "Corporate accounting software / Tumblr SEO-like text.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_05",
+      "evidence_id": "raw_github_issue_4072093883",
+      "signal_id": "candidate_signal_raw_github_issue_4072093883_pain_signal_candidate",
+      "source_type": "github_issues",
+      "source_url": "https://github.com/ameliabrownconsulting-cloud/ThriveandAlign/issues/41",
+      "original_classification": "pain_signal_candidate",
+      "original_signal_type": "pain_signal",
+      "original_confidence": 0.74,
+      "founder_label": "weak",
+      "secondary_labels": [
+        "needs_more_evidence"
+      ],
+      "founder_quality_score": 2,
+      "recommended_action": "park_for_more_evidence",
+      "issue_tags": [
+        "weak_buyer_evidence",
+        "generic_accounting_copy",
+        "source_quality_issue"
+      ],
+      "review_rationale": "Phrase resembles a real pain, but source/content appears vendor/consulting-adjacent and lacks concrete user context.",
+      "notes": "Scattered/incomplete records make performance tracking difficult.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_06",
+      "evidence_id": "raw_github_issue_194268452",
+      "signal_id": "candidate_signal_raw_github_issue_194268452_pain_signal_candidate",
+      "source_type": "github_issues",
+      "source_url": "https://github.com/ibnbookkeeping/bookkeeping-expert-in-USA/issues/2",
+      "original_classification": "pain_signal_candidate",
+      "original_signal_type": "pain_signal",
+      "original_confidence": 0.49,
+      "founder_label": "price_false_positive",
+      "secondary_labels": [
+        "vendor_promo",
+        "weak"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "use_for_price_hardening",
+      "issue_tags": [
+        "price_false_positive",
+        "vendor_promo",
+        "seo_noise",
+        "mojibake",
+        "source_quality_issue"
+      ],
+      "review_rationale": "$75 is a receipt threshold, not current spend or willingness-to-pay; content appears marketing-like and includes mojibake.",
+      "notes": "Bookkeeping expert USA / small businesses / spreadsheets / $75 receipt threshold.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_07",
+      "evidence_id": "raw_github_issue_4058309053",
+      "signal_id": "candidate_signal_raw_github_issue_4058309053_pain_signal_candidate",
+      "source_type": "github_issues",
+      "source_url": "https://github.com/ameliabrownconsulting-cloud/ThriveandAlign/issues/40",
+      "original_classification": "pain_signal_candidate",
+      "original_signal_type": "pain_signal",
+      "original_confidence": 0.35,
+      "founder_label": "weak",
+      "secondary_labels": [
+        "vendor_promo"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "suppress_in_future",
+      "issue_tags": [
+        "generic_accounting_copy",
+        "vendor_promo",
+        "source_quality_issue"
+      ],
+      "review_rationale": "Generic accounting copy; no concrete user problem, buyer, or workaround.",
+      "notes": "Accurate financial records and tax obligations.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_08",
+      "evidence_id": "raw_github_issue_4103786450",
+      "signal_id": "candidate_signal_raw_github_issue_4103786450_needs_human_review",
+      "source_type": "github_issues",
+      "source_url": "https://github.com/chatmcp/mcpso/issues/939",
+      "original_classification": "needs_human_review",
+      "original_signal_type": "needs_human_review",
+      "original_confidence": 0.28,
+      "founder_label": "vendor_promo",
+      "secondary_labels": [
+        "product_submission"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "suppress_in_future",
+      "issue_tags": [
+        "product_submission",
+        "vendor_promo",
+        "weak_price_evidence",
+        "source_quality_issue"
+      ],
+      "review_rationale": "Product listing/submission, not evidence of user pain.",
+      "notes": "QuickBooks MCP hosted server submission.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_09",
+      "evidence_id": "raw_hn_47844178",
+      "signal_id": "candidate_signal_raw_hn_47844178_workaround_signal_candidate",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=47844178",
+      "original_classification": "workaround_signal_candidate",
+      "original_signal_type": "workaround",
+      "original_confidence": 0.26,
+      "founder_label": "weak",
+      "secondary_labels": [
+        "bookkeeping_workaround"
+      ],
+      "founder_quality_score": 3,
+      "recommended_action": "keep_as_context",
+      "issue_tags": [
+        "bookkeeping_workaround",
+        "weak_buyer_evidence"
+      ],
+      "review_rationale": "Organic workaround context; useful but not strong enough as a standalone opportunity seed.",
+      "notes": "Older accounting software + agents helping with accounting/bookkeeping/tax filing.",
+      "duplicate_group_id": "dup_raw_hn_47844178"
+    },
+    {
+      "review_id": "fror_v1_review_10",
+      "evidence_id": "raw_hn_47401563",
+      "signal_id": "candidate_signal_raw_hn_47401563_workaround_signal_candidate",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=47401563",
+      "original_classification": "workaround_signal_candidate",
+      "original_signal_type": "workaround",
+      "original_confidence": 0.45,
+      "founder_label": "weak",
+      "secondary_labels": [
+        "bookkeeping_workaround"
+      ],
+      "founder_quality_score": 2,
+      "recommended_action": "keep_as_context",
+      "issue_tags": [
+        "bookkeeping_workaround",
+        "weak_buyer_evidence"
+      ],
+      "review_rationale": "Market/competitor context; less direct pain evidence.",
+      "notes": "Winstwaker bookkeeping service for Dutch businesses.",
+      "duplicate_group_id": "dup_raw_hn_47401563"
+    },
+    {
+      "review_id": "fror_v1_review_11",
+      "evidence_id": "raw_hn_47082761",
+      "signal_id": "candidate_signal_raw_hn_47082761_pain_signal_candidate",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=47082761",
+      "original_classification": "pain_signal_candidate",
+      "original_signal_type": "pain_signal",
+      "original_confidence": 0.75,
+      "founder_label": "useful",
+      "secondary_labels": [
+        "cash_collection"
+      ],
+      "founder_quality_score": 5,
+      "recommended_action": "promote_to_opportunity_seed",
+      "issue_tags": [
+        "real_smb_pain",
+        "cash_collection",
+        "bookkeeping_workaround"
+      ],
+      "review_rationale": "Strongest signal; concrete small-business pain, clear manual workaround, direct finance/cash-collection relevance.",
+      "notes": "Unpaid invoice follow-up email pain from small business operator.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_12",
+      "evidence_id": "raw_hn_46725518",
+      "signal_id": "candidate_signal_raw_hn_46725518_workaround_signal_candidate",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=46725518",
+      "original_classification": "workaround_signal_candidate",
+      "original_signal_type": "workaround",
+      "original_confidence": 0.24,
+      "founder_label": "price_false_positive",
+      "secondary_labels": [
+        "weak"
+      ],
+      "founder_quality_score": 3,
+      "recommended_action": "use_for_price_hardening",
+      "issue_tags": [
+        "price_false_positive",
+        "affordability_pain",
+        "bookkeeping_workaround",
+        "weak_price_evidence"
+      ],
+      "review_rationale": "Useful affordability/workaround context, but $1.25M tax/deduction limit must not be extracted as spend.",
+      "notes": "Small businesses choose oversimplified calculators or expensive accounting software for IRS rules; Section 179 $1.25M limit extracted incorrectly.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_13",
+      "evidence_id": "raw_hn_44581530",
+      "signal_id": "candidate_signal_raw_hn_44581530_needs_human_review",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=44581530",
+      "original_classification": "needs_human_review",
+      "original_signal_type": "needs_human_review",
+      "original_confidence": 0.1,
+      "founder_label": "noise",
+      "secondary_labels": [
+        "needs_more_evidence"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "suppress_in_future",
+      "issue_tags": [
+        "generic_accounting_copy"
+      ],
+      "review_rationale": "Broad macro prediction, not SMB finance pain.",
+      "notes": "Broad statement about Big Four accounting/software/medicine reshaped.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_14",
+      "evidence_id": "raw_hn_47844178",
+      "signal_id": "candidate_signal_raw_hn_47844178_workaround_signal_candidate",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=47844178",
+      "original_classification": "workaround_signal_candidate",
+      "original_signal_type": "workaround",
+      "original_confidence": 0.26,
+      "founder_label": "duplicate",
+      "secondary_labels": [
+        "weak"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "mark_duplicate",
+      "issue_tags": [
+        "duplicate_signal",
+        "bookkeeping_workaround"
+      ],
+      "review_rationale": "Duplicate occurrence of raw_hn_47844178.",
+      "notes": "Duplicate of older accounting software + agents signal.",
+      "duplicate_group_id": "dup_raw_hn_47844178"
+    },
+    {
+      "review_id": "fror_v1_review_15",
+      "evidence_id": "raw_hn_47401563",
+      "signal_id": "candidate_signal_raw_hn_47401563_workaround_signal_candidate",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=47401563",
+      "original_classification": "workaround_signal_candidate",
+      "original_signal_type": "workaround",
+      "original_confidence": 0.45,
+      "founder_label": "duplicate",
+      "secondary_labels": [
+        "weak"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "mark_duplicate",
+      "issue_tags": [
+        "duplicate_signal",
+        "bookkeeping_workaround"
+      ],
+      "review_rationale": "Duplicate occurrence of raw_hn_47401563.",
+      "notes": "Duplicate of Winstwaker bookkeeping service signal.",
+      "duplicate_group_id": "dup_raw_hn_47401563"
+    },
+    {
+      "review_id": "fror_v1_review_16",
+      "evidence_id": "raw_hn_47009152",
+      "signal_id": "candidate_signal_raw_hn_47009152_pain_signal_candidate",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=47009152",
+      "original_classification": "pain_signal_candidate",
+      "original_signal_type": "pain_signal",
+      "original_confidence": 0.29,
+      "founder_label": "useful",
+      "secondary_labels": [
+        "affordability_pain"
+      ],
+      "founder_quality_score": 5,
+      "recommended_action": "promote_to_opportunity_seed",
+      "issue_tags": [
+        "real_smb_pain",
+        "bookkeeping_workaround",
+        "affordability_pain"
+      ],
+      "review_rationale": "Real SMB pain; current workaround and affordability barrier are explicit. Original system score may be too low.",
+      "notes": "Small businesses use sticky notes/Excel for bookkeeping and cannot afford full-time developer.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_17",
+      "evidence_id": "raw_hn_46864767",
+      "signal_id": "candidate_signal_raw_hn_46864767_needs_human_review",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=46864767",
+      "original_classification": "needs_human_review",
+      "original_signal_type": "needs_human_review",
+      "original_confidence": 0.13,
+      "founder_label": "vendor_promo",
+      "secondary_labels": [
+        "noise"
+      ],
+      "founder_quality_score": 1,
+      "recommended_action": "suppress_in_future",
+      "issue_tags": [
+        "vendor_promo",
+        "generic_accounting_copy"
+      ],
+      "review_rationale": "Solution marketing copy, not user pain.",
+      "notes": "All-in-one banking/bookkeeping/taxes/payments solution pitch.",
+      "duplicate_group_id": null
+    },
+    {
+      "review_id": "fror_v1_review_18",
+      "evidence_id": "raw_hn_46430957",
+      "signal_id": "candidate_signal_raw_hn_46430957_needs_human_review",
+      "source_type": "hacker_news_algolia",
+      "source_url": "https://news.ycombinator.com/item?id=46430957",
+      "original_classification": "needs_human_review",
+      "original_signal_type": "needs_human_review",
+      "original_confidence": 0.13,
+      "founder_label": "needs_more_evidence",
+      "secondary_labels": [
+        "weak"
+      ],
+      "founder_quality_score": 2,
+      "recommended_action": "park_for_more_evidence",
+      "issue_tags": [
+        "needs_human_review",
+        "weak_buyer_evidence"
+      ],
+      "review_rationale": "Interesting discovery meta-signal, but not direct finance/SMB pain.",
+      "notes": "Searching AI use-cases for small businesses in retail/hospitality/etc.",
+      "duplicate_group_id": null
+    }
+  ]
+}

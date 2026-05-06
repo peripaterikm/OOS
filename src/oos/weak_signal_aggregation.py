@@ -4,6 +4,7 @@ import re
 from collections import defaultdict
 from typing import Iterable
 
+from .candidate_signal_dedup import deduplicate_candidate_signals
 from .models import CandidateSignal, WeakPatternCandidate
 
 
@@ -38,7 +39,7 @@ _STOPWORDS = {
 
 def aggregate_weak_pattern_candidates(signals: Iterable[CandidateSignal]) -> list[WeakPatternCandidate]:
     clusters: dict[str, list[CandidateSignal]] = defaultdict(list)
-    for signal in signals:
+    for signal in deduplicate_candidate_signals(signals).canonical_signals:
         signal.validate()
         if not _is_weak_signal(signal):
             continue

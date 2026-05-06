@@ -9,17 +9,17 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `1.1 Founder manual review labels for first real run`
+- Current item: `2.1 Cluster evidence pack contract`
 - Roadmap state: `active / planned`
-- Completed: `0 / 24`
-- Remaining: `24 / 24`
-- Latest completed roadmap item: Roadmap v2.5 planning checkpoint
-- Next planned roadmap item: Roadmap v2.5 `1.1` - Founder manual review labels for first real run
+- Completed: `6 / 24`
+- Remaining: `18 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `1.6` - Second controlled live run comparison
+- Next planned roadmap item: Roadmap v2.5 `2.1` - Cluster evidence pack contract
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-5-roadmap-planning`
+- Current branch: `feat/v2-5-block-1-first-run-quality-hardening`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -77,6 +77,7 @@
 - Roadmap v2.4 gap item 7.1 added deterministic Kill Archive feedback into scoring, `kill_pattern_flag`/`kill_pattern_penalty`, discovery-run `kill_archive_warnings.json` artifacts, and founder package warning details without auto-killing, live internet/API calls, or live LLM/API calls.
 - First real open-source signal run v1 executed a bounded HN + GitHub Issues pass with existing v2.4 capabilities, generated founder package artifacts under `artifacts/discovery_runs/first_real_open_source_signal_run_v1/`, and recorded protocol/run-report docs without live LLM/API calls, source-code feature changes, or tracked runtime artifacts.
 - Roadmap v2.5 planning created the Opportunity Formation & Founder Learning checklist from first-run lessons: GitHub vendor-promo noise, candidate duplicates, mojibake, price false positives, and the strongest unpaid-invoice/SMB cash-collection pain. Implementation starts at item `1.1`; no source code features, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
+- Roadmap v2.5 item 1.1 added tracked founder manual labels for all 18 first-run candidate signals under `examples/first_real_open_source_signal_run_v1/`, preserving duplicate evidence IDs, source URLs, classifications, founder labels, recommended actions, and issue tags for future source-quality hardening without additional live collection, source-code feature implementation, live internet/API calls, or live LLM/API calls.
 
 ## Roadmap v2.4 Final Branch Notes
 
@@ -93,3 +94,9 @@
   - final 8.2 checkpoint rerun commit follows this project-state update.
 - No release tag was created.
 - No push, PR, or merge was performed by Codex.
+
+- Roadmap v2.5 item 1.2 added deterministic GitHub vendor-promo/SEO suppression with classification downgrade, scoring caps, founder-package risk notes, and fixture-only tests against first-run false positives without live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 1.3 hardened PriceSignal extraction against receipt thresholds, tax/deduction/regulatory limits, `$1.25M` truncation, and weak vendor-commercial WTP phrases while preserving organic affordability complaints without live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 1.4 added deterministic CandidateSignal dedup before founder-facing packages and weak-pattern aggregation, preserving duplicate evidence/signal/source metadata while keeping raw artifacts intact and avoiding live internet/API or live LLM/API calls.
+- Roadmap v2.5 item 1.5 extended deterministic mojibake repair for founder-facing evidence, candidate summaries, and founder package outputs, preserving raw evidence traceability without additional live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 1.6 ran a second bounded HN + GitHub live comparison after Block 1 hardening, recorded ignored runtime artifacts under `artifacts/discovery_runs/second_controlled_open_source_signal_run_v1/`, and confirmed vendor-promo, price false-positive, duplicate, and mojibake behavior before moving to evidence packs.

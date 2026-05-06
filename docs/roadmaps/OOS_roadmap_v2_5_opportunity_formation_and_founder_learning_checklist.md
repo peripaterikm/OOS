@@ -1,14 +1,14 @@
-# OOS Roadmap v2.5 - Opportunity Formation & Founder Learning
+﻿# OOS Roadmap v2.5 - Opportunity Formation & Founder Learning
 
 ## 0. Roadmap Overview
 
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **1.1 Founder manual review labels for first real run**
+- [ ] **0.2** Current item: **2.1 Cluster evidence pack contract**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **0 / 24**
-- [ ] **0.5** Remaining: **24 / 24**
+- [ ] **0.4** Completed from this roadmap: **6 / 24**
+- [ ] **0.5** Remaining: **18 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -89,19 +89,20 @@ Create structured founder labels for the 18 first-run candidate signals.
 
 ### Expected files
 
-- `src/oos/founder_signal_review.py`
-- `tests/test_founder_signal_review.py`
+- `examples/first_real_open_source_signal_run_v1/founder_manual_labels.json`
+- `examples/first_real_open_source_signal_run_v1/founder_manual_labels.md`
+- `tests/test_first_real_run_founder_labels.py`
 - `docs/dev_ledger/02_mini_epics/1.1-founder-manual-review-labels.md`
 - `docs/dev_ledger/03_run_reports/1.1-founder-manual-review-labels.md`
 
 ### Acceptance criteria
 
-- [ ] **1.1.1** Founder label model exists and serializes.
-- [ ] **1.1.2** All seven label values are supported.
-- [ ] **1.1.3** Labels preserve candidate/evidence/source traceability.
-- [ ] **1.1.4** Duplicate/vendor/price-false-positive labels are representable.
-- [ ] **1.1.5** First-run review fixture can be loaded without live network calls.
-- [ ] **1.1.6** Full validation passes.
+- [x] **1.1.1** Founder label artifact exists and serializes.
+- [x] **1.1.2** All seven label values are supported.
+- [x] **1.1.3** Labels preserve candidate/evidence/source traceability.
+- [x] **1.1.4** Duplicate/vendor/price-false-positive labels are representable.
+- [x] **1.1.5** First-run review fixture can be loaded without live network calls.
+- [x] **1.1.6** Full validation passes.
 
 ### Validation expectations
 
@@ -131,21 +132,22 @@ Reduce false positives from GitHub Issues where SEO/vendor/product-promo text is
 
 ### Expected files
 
+- `src/oos/vendor_promo_suppressor.py`
 - `src/oos/evidence_classifier.py`
-- `src/oos/candidate_signal_extractor.py`
 - `src/oos/signal_scoring.py`
-- `tests/test_github_vendor_promo_suppressor.py`
+- `src/oos/founder_package.py`
+- `tests/test_vendor_promo_suppressor.py`
 - `docs/dev_ledger/02_mini_epics/1.2-github-vendor-promo-seo-suppressor.md`
 - `docs/dev_ledger/03_run_reports/1.2-github-vendor-promo-seo-suppressor.md`
 
 ### Acceptance criteria
 
-- [ ] **1.2.1** Known vendor-promo examples are downgraded or marked `needs_human_review`.
-- [ ] **1.2.2** Product listing/submission text does not rank as strong pain.
-- [ ] **1.2.3** Real feature requests, such as the YNAB balance-sheet need, remain eligible.
-- [ ] **1.2.4** Founder package explains suppression when useful.
-- [ ] **1.2.5** No live internet/API calls in tests.
-- [ ] **1.2.6** Full validation passes.
+- [x] **1.2.1** Known vendor-promo examples are downgraded or marked `needs_human_review`.
+- [x] **1.2.2** Product listing/submission text does not rank as strong pain.
+- [x] **1.2.3** Real feature requests, such as the YNAB balance-sheet need, remain eligible.
+- [x] **1.2.4** Founder package explains suppression when useful.
+- [x] **1.2.5** No live internet/API calls in tests.
+- [x] **1.2.6** Full validation passes.
 
 ### Validation expectations
 
@@ -180,12 +182,12 @@ Avoid treating tax thresholds, deduction limits, receipt thresholds, and random 
 
 ### Acceptance criteria
 
-- [ ] **1.3.1** Receipt thresholds are not extracted as current spend.
-- [ ] **1.3.2** Tax/deduction limits are not truncated into fake spend hints.
-- [ ] **1.3.3** Generic `affordable pricing` remains low-confidence and does not imply budget.
-- [ ] **1.3.4** Explicit spend and price complaints still extract correctly.
-- [ ] **1.3.5** Evidence citation remains required.
-- [ ] **1.3.6** Full validation passes.
+- [x] **1.3.1** Receipt thresholds are not extracted as current spend.
+- [x] **1.3.2** Tax/deduction limits are not truncated into fake spend hints.
+- [x] **1.3.3** Generic `affordable pricing` remains low-confidence and does not imply budget.
+- [x] **1.3.4** Explicit spend and price complaints still extract correctly.
+- [x] **1.3.5** Evidence citation remains required.
+- [x] **1.3.6** Full validation passes.
 
 ### Validation expectations
 
@@ -212,21 +214,21 @@ Prevent duplicate candidate signals from appearing in founder review and inflati
 
 ### Expected files
 
-- `src/oos/signal_dedup.py`
-- `src/oos/founder_package.py`
+- `src/oos/candidate_signal_dedup.py`
+- `src/oos/discovery_weekly.py`
 - `src/oos/weak_signal_aggregation.py`
-- `tests/test_candidate_signal_dedup_founder_package.py`
-- `docs/dev_ledger/02_mini_epics/1.4-candidate-signal-dedup-founder-package.md`
-- `docs/dev_ledger/03_run_reports/1.4-candidate-signal-dedup-founder-package.md`
+- `tests/test_candidate_signal_dedup.py`
+- `docs/dev_ledger/02_mini_epics/1.4-candidate-signal-dedup.md`
+- `docs/dev_ledger/03_run_reports/1.4-candidate-signal-dedup.md`
 
 ### Acceptance criteria
 
-- [ ] **1.4.1** Duplicate candidates collapse in founder package display.
-- [ ] **1.4.2** Canonical candidate preserves duplicate evidence IDs.
-- [ ] **1.4.3** Dedup does not remove distinct pains from the same source.
-- [ ] **1.4.4** Weak pattern aggregation uses canonical signals.
-- [ ] **1.4.5** Output ordering is deterministic.
-- [ ] **1.4.6** Full validation passes.
+- [x] **1.4.1** Duplicate candidates collapse in founder package display.
+- [x] **1.4.2** Canonical candidate preserves duplicate evidence IDs.
+- [x] **1.4.3** Dedup does not remove distinct pains from the same source.
+- [x] **1.4.4** Weak pattern aggregation uses canonical signals.
+- [x] **1.4.5** Output ordering is deterministic.
+- [x] **1.4.6** Full validation passes.
 
 ### Validation expectations
 
@@ -252,17 +254,17 @@ Prevent `вЂ™`, `вЂў`, and similar encoding garbage from reaching founder-
 
 - `src/oos/evidence_cleaner.py`
 - `src/oos/candidate_signal_extractor.py`
-- `tests/test_mojibake_cleanup_regression.py`
+- `tests/test_mojibake_cleanup.py`
 - `docs/dev_ledger/02_mini_epics/1.5-mojibake-cleanup-regression.md`
 - `docs/dev_ledger/03_run_reports/1.5-mojibake-cleanup-regression.md`
 
 ### Acceptance criteria
 
-- [ ] **1.5.1** `вЂ™` does not appear in cleaned/founder-facing summaries.
-- [ ] **1.5.2** `вЂў` does not appear in cleaned/founder-facing summaries.
-- [ ] **1.5.3** Cleanup does not corrupt valid UTF-8 punctuation.
-- [ ] **1.5.4** Existing cleaner behavior is preserved.
-- [ ] **1.5.5** Full validation passes.
+- [x] **1.5.1** `вЂ™` does not appear in cleaned/founder-facing summaries.
+- [x] **1.5.2** `вЂў` does not appear in cleaned/founder-facing summaries.
+- [x] **1.5.3** Cleanup does not corrupt valid UTF-8 punctuation.
+- [x] **1.5.4** Existing cleaner behavior is preserved.
+- [x] **1.5.5** Full validation passes.
 
 ### Validation expectations
 
@@ -293,12 +295,12 @@ Run the same bounded HN + GitHub live collection after hardening and compare qua
 
 ### Acceptance criteria
 
-- [ ] **1.6.1** Marketing/vendor promo reduced.
-- [ ] **1.6.2** Duplicate top signals reduced.
-- [ ] **1.6.3** Price false positives reduced.
-- [ ] **1.6.4** At least 2-3 plausible finance/SMB pains still appear.
-- [ ] **1.6.5** Tracked git status clean after runtime artifact handling.
-- [ ] **1.6.6** No live LLM/API calls.
+- [x] **1.6.1** Marketing/vendor promo reduced.
+- [x] **1.6.2** Duplicate top signals reduced.
+- [x] **1.6.3** Price false positives reduced.
+- [x] **1.6.4** At least 2-3 plausible finance/SMB pains still appear.
+- [x] **1.6.5** Tracked git status clean after runtime artifact handling.
+- [x] **1.6.6** No live LLM/API calls.
 
 ### Validation expectations
 
