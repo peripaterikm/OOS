@@ -6,6 +6,10 @@ from typing import Any
 
 from .evidence_pack import EvidencePack, evidence_pack_from_dict
 from .evidence_sufficiency_scoring import EvidenceSufficiencyScore, score_evidence_sufficiency
+from .opportunity_false_positive_suppressor import (
+    OpportunityFalsePositiveAssessment,
+    assess_opportunity_false_positive,
+)
 from .opportunity_sketch import UNKNOWN, OpportunityCandidate, opportunity_sketch_from_dict
 
 
@@ -100,6 +104,7 @@ class OpportunityGateResult:
     source_signal_ids: list[str]
     source_urls: list[str]
     evidence_sufficiency_score: dict[str, Any] | None = None
+    false_positive_assessment: dict[str, Any] | None = None
     founder_override_status: str = "not_applied"
     founder_decision_authority_note: str = FOUNDER_DECISION_AUTHORITY_NOTE
     auto_promote: bool = False
@@ -121,6 +126,7 @@ class OpportunityGateResult:
             "source_signal_ids": list(self.source_signal_ids),
             "source_urls": list(self.source_urls),
             "evidence_sufficiency_score": self.evidence_sufficiency_score,
+            "false_positive_assessment": self.false_positive_assessment,
             "founder_override_status": self.founder_override_status,
             "founder_decision_authority_note": self.founder_decision_authority_note,
             "auto_promote": self.auto_promote,
@@ -184,9 +190,25 @@ def evaluate_opportunity_quality(
     _add_support_reasons(reasons, candidate, pack)
     sufficiency_score = score_evidence_sufficiency(candidate, pack, extra_risk_notes=risk_notes)
     _add_sufficiency_reasons(reasons, sufficiency_score)
+    false_positive_assessment = assess_opportunity_false_positive(
+        candidate,
+        pack,
+        evidence_sufficiency_score=sufficiency_score,
+    )
+    _add_false_positive_reasons(reasons, false_positive_assessment)
 
     confidence = _gate_confidence(candidate, pack, reasons, blocking_issues, missing_evidence, sufficiency_score)
-    decision = _decision(candidate, pack, confidence, reasons, blocking_issues, missing_evidence, unsupported, sufficiency_score)
+    decision = _decision(
+        candidate,
+        pack,
+        confidence,
+        reasons,
+        blocking_issues,
+        missing_evidence,
+        unsupported,
+        sufficiency_score,
+        false_positive_assessment,
+    )
     recommended_next_action = _recommended_next_action(decision, missing_evidence, reasons)
     result = OpportunityGateResult(
         gate_result_id=make_gate_result_id(candidate.opportunity_id or candidate.evidence_pack_id),
@@ -202,6 +224,7 @@ def evaluate_opportunity_quality(
         source_signal_ids=source_signal_ids,
         source_urls=source_urls,
         evidence_sufficiency_score=sufficiency_score.to_dict(),
+        false_positive_assessment=false_positive_assessment.to_dict(),
     )
     result.validate()
     return result
@@ -308,6 +331,7 @@ def _decision(
     missing_evidence: list[str],
     unsupported: list[str],
     sufficiency_score: EvidenceSufficiencyScore,
+    false_positive_assessment: OpportunityFalsePositiveAssessment,
 ) -> str:
     if blocking_issues:
         return REJECT
@@ -316,6 +340,10 @@ def _decision(
         return REJECT
     if sufficiency_score.score_band == "insufficient":
         return REJECT
+    if false_positive_assessment.severity == "critical":
+        return REJECT
+    if false_positive_assessment.severity in {"high", "medium"}:
+        return PARK
     if missing_evidence:
         return PARK
     if sufficiency_score.score_band == "weak":
@@ -382,6 +410,24 @@ def _add_sufficiency_reasons(
         reasons.append(OpportunityGateReason("evidence_sufficiency_weak", "Evidence sufficiency score is weak.", "high"))
     else:
         reasons.append(OpportunityGateReason("evidence_sufficiency_insufficient", "Evidence sufficiency score is insufficient.", "fatal"))
+
+
+def _add_false_positive_reasons(
+    reasons: list[OpportunityGateReason],
+    assessment: OpportunityFalsePositiveAssessment,
+) -> None:
+    if assessment.severity == "none":
+        reasons.append(OpportunityGateReason("false_positive_not_detected", "No deterministic false-positive pattern matched.", "positive"))
+        return
+    severity = "fatal" if assessment.severity == "critical" else "high" if assessment.severity == "high" else "medium"
+    reason_codes = ", ".join(reason.code for reason in assessment.reasons) or "false_positive_pattern"
+    reasons.append(
+        OpportunityGateReason(
+            "false_positive_assessment",
+            f"False-positive suppressor severity is {assessment.severity}: {reason_codes}.",
+            severity,
+        )
+    )
 
 
 def _add_traceability_reasons(

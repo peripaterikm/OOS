@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **4.3 False-positive opportunity suppressor**
+- [ ] **0.2** Current item: **5.1 Founder decision taxonomy v2**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **14 / 24**
-- [ ] **0.5** Remaining: **10 / 24**
+- [ ] **0.4** Completed from this roadmap: **15 / 24**
+- [ ] **0.5** Remaining: **9 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -631,30 +631,30 @@ Suppress generic opportunities, disguised consulting, no-buyer ideas, repeated k
 ### Scope
 
 - Add deterministic opportunity-level suppressor rules.
-- Use kill archive feedback without auto-killing.
-- Preserve warning details for founder review.
+- Suppress generic, vendor/SEO, product-submission, buyerless, and unsupported-assumption-heavy opportunities.
+- Preserve assessment details for founder review.
 
 ### Expected files
 
+- `src/oos/opportunity_false_positive_suppressor.py`
 - `src/oos/opportunity_quality_gate.py`
-- `src/oos/kill_archive_feedback.py`
-- `tests/test_false_positive_opportunity_suppressor.py`
+- `tests/test_opportunity_false_positive_suppressor.py`
 - `docs/dev_ledger/02_mini_epics/4.3-false-positive-opportunity-suppressor.md`
 - `docs/dev_ledger/03_run_reports/4.3-false-positive-opportunity-suppressor.md`
 
 ### Acceptance criteria
 
-- [ ] **4.3.1** Generic opportunities are downgraded.
-- [ ] **4.3.2** Disguised consulting patterns are downgraded.
-- [ ] **4.3.3** No-buyer ideas are parked/rejected.
-- [ ] **4.3.4** Marketing-copy-derived opportunities are suppressed.
-- [ ] **4.3.5** Similar killed patterns create warnings, not auto-kills.
-- [ ] **4.3.6** Full validation passes.
+- [x] **4.3.1** Generic opportunities are downgraded.
+- [x] **4.3.2** Disguised consulting patterns are downgraded.
+- [x] **4.3.3** No-buyer ideas are parked/rejected.
+- [x] **4.3.4** Marketing-copy-derived opportunities are suppressed.
+- [x] **4.3.5** High/critical false-positive assessments prevent gate pass without auto-promotion.
+- [x] **4.3.6** Full validation passes.
 
 ### Validation expectations
 
 - Fixture tests for each false-positive class.
-- Kill archive warning preservation tests.
+- Product-submission, no-buyer, traceability, sufficiency, and gate-integration tests.
 - Full validation.
 
 ---
