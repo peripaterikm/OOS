@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **2.1 Cluster evidence pack contract**
+- [ ] **0.2** Current item: **2.2 Evidence pack builder**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **6 / 24**
-- [ ] **0.5** Remaining: **18 / 24**
+- [ ] **0.4** Completed from this roadmap: **7 / 24**
+- [ ] **0.5** Remaining: **17 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -333,11 +333,11 @@ Define an evidence pack for clusters/opportunity seeds.
 
 ### Acceptance criteria
 
-- [ ] **2.1.1** Evidence pack model exists and serializes.
-- [ ] **2.1.2** Evidence IDs and source URLs are required.
-- [ ] **2.1.3** Price, weak-pattern, kill-warning, confidence, and risk fields are optional but structured.
-- [ ] **2.1.4** Empty or insufficient evidence is represented explicitly.
-- [ ] **2.1.5** Full validation passes.
+- [x] **2.1.1** Evidence pack model exists and serializes.
+- [x] **2.1.2** Evidence IDs and source URLs are required.
+- [x] **2.1.3** Price, weak-pattern, kill-warning, confidence, and risk fields are optional but structured.
+- [x] **2.1.4** Empty or insufficient evidence is represented explicitly.
+- [x] **2.1.5** Full validation passes.
 
 ### Validation expectations
 

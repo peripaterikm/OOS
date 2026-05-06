@@ -9,17 +9,17 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `2.1 Cluster evidence pack contract`
+- Current item: `2.2 Evidence pack builder`
 - Roadmap state: `active / planned`
-- Completed: `6 / 24`
-- Remaining: `18 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `1.6` - Second controlled live run comparison
-- Next planned roadmap item: Roadmap v2.5 `2.1` - Cluster evidence pack contract
+- Completed: `7 / 24`
+- Remaining: `17 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `2.1` - Cluster evidence pack contract
+- Next planned roadmap item: Roadmap v2.5 `2.2` - Evidence pack builder
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-5-block-1-first-run-quality-hardening`
+- Current branch: `feat/v2-5-block-2-evidence-pack-layer`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -100,3 +100,4 @@
 - Roadmap v2.5 item 1.4 added deterministic CandidateSignal dedup before founder-facing packages and weak-pattern aggregation, preserving duplicate evidence/signal/source metadata while keeping raw artifacts intact and avoiding live internet/API or live LLM/API calls.
 - Roadmap v2.5 item 1.5 extended deterministic mojibake repair for founder-facing evidence, candidate summaries, and founder package outputs, preserving raw evidence traceability without additional live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 1.6 ran a second bounded HN + GitHub live comparison after Block 1 hardening, recorded ignored runtime artifacts under `artifacts/discovery_runs/second_controlled_open_source_signal_run_v1/`, and confirmed vendor-promo, price false-positive, duplicate, and mojibake behavior before moving to evidence packs.
+- Roadmap v2.5 item 2.1 added the deterministic `EvidencePack` contract with serializable evidence items, source summaries, risk notes, optional price/weak-pattern/kill-warning IDs, explicit insufficient-evidence representation, and traceability-preserving validation without live collection, live internet/API calls, or live LLM/API calls.
