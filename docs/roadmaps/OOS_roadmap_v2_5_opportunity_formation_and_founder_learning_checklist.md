@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **3.3 Offline LLM opportunity synthesis dry-run**
+- [ ] **0.2** Current item: **4.1 Post-synthesis quality gate**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **11 / 24**
-- [ ] **0.5** Remaining: **13 / 24**
+- [ ] **0.4** Completed from this roadmap: **12 / 24**
+- [ ] **0.5** Remaining: **12 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -520,20 +520,20 @@ Run synthesis through deterministic/mock provider only.
 
 ### Expected files
 
-- `src/oos/opportunity_synthesis_dry_run.py`
+- `src/oos/llm_opportunity_synthesis_dry_run.py`
 - `src/oos/cli.py`
-- `tests/test_opportunity_synthesis_dry_run.py`
-- `docs/dev_ledger/02_mini_epics/3.3-offline-opportunity-synthesis-dry-run.md`
-- `docs/dev_ledger/03_run_reports/3.3-offline-opportunity-synthesis-dry-run.md`
+- `tests/test_llm_opportunity_synthesis_dry_run.py`
+- `docs/dev_ledger/02_mini_epics/3.3-offline-llm-opportunity-synthesis-dry-run.md`
+- `docs/dev_ledger/03_run_reports/3.3-offline-llm-opportunity-synthesis-dry-run.md`
 
 ### Acceptance criteria
 
-- [ ] **3.3.1** Dry-run reads local evidence packs.
-- [ ] **3.3.2** Dry-run uses deterministic/mock provider only.
-- [ ] **3.3.3** Output preserves evidence IDs.
-- [ ] **3.3.4** Invalid/unsupported fields fail closed or mark low confidence.
-- [ ] **3.3.5** No live LLM/API calls.
-- [ ] **3.3.6** Full validation passes.
+- [x] **3.3.1** Dry-run reads local evidence packs.
+- [x] **3.3.2** Dry-run uses deterministic/mock provider only.
+- [x] **3.3.3** Output preserves evidence IDs.
+- [x] **3.3.4** Invalid/unsupported fields fail closed or mark low confidence.
+- [x] **3.3.5** No live LLM/API calls.
+- [x] **3.3.6** Full validation passes.
 
 ### Validation expectations
 
