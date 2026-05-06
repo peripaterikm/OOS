@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **2.1 Cluster evidence pack contract**
+- [ ] **0.2** Current item: **3.1 Deterministic opportunity sketch baseline**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **6 / 24**
-- [ ] **0.5** Remaining: **18 / 24**
+- [ ] **0.4** Completed from this roadmap: **9 / 24**
+- [ ] **0.5** Remaining: **15 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -333,11 +333,11 @@ Define an evidence pack for clusters/opportunity seeds.
 
 ### Acceptance criteria
 
-- [ ] **2.1.1** Evidence pack model exists and serializes.
-- [ ] **2.1.2** Evidence IDs and source URLs are required.
-- [ ] **2.1.3** Price, weak-pattern, kill-warning, confidence, and risk fields are optional but structured.
-- [ ] **2.1.4** Empty or insufficient evidence is represented explicitly.
-- [ ] **2.1.5** Full validation passes.
+- [x] **2.1.1** Evidence pack model exists and serializes.
+- [x] **2.1.2** Evidence IDs and source URLs are required.
+- [x] **2.1.3** Price, weak-pattern, kill-warning, confidence, and risk fields are optional but structured.
+- [x] **2.1.4** Empty or insufficient evidence is represented explicitly.
+- [x] **2.1.5** Full validation passes.
 
 ### Validation expectations
 
@@ -370,12 +370,12 @@ Build deterministic evidence packs from signals, clusters, price signals, weak p
 
 ### Acceptance criteria
 
-- [ ] **2.2.1** Builder reads existing discovery artifacts.
-- [ ] **2.2.2** Evidence IDs/source URLs are preserved.
-- [ ] **2.2.3** Price signals attach only when evidence-bound.
-- [ ] **2.2.4** Kill archive warnings attach without auto-kill.
-- [ ] **2.2.5** Builder output is deterministic.
-- [ ] **2.2.6** Full validation passes.
+- [x] **2.2.1** Builder reads existing discovery artifacts.
+- [x] **2.2.2** Evidence IDs/source URLs are preserved.
+- [x] **2.2.3** Price signals attach only when evidence-bound.
+- [x] **2.2.4** Kill archive warnings attach without auto-kill.
+- [x] **2.2.5** Builder output is deterministic.
+- [x] **2.2.6** Full validation passes.
 
 ### Validation expectations
 
@@ -400,17 +400,17 @@ Founder can see the actual evidence bundle behind each opportunity seed.
 ### Expected files
 
 - `src/oos/founder_package.py`
-- `tests/test_evidence_pack_founder_package.py`
-- `docs/dev_ledger/02_mini_epics/2.3-evidence-pack-founder-display.md`
-- `docs/dev_ledger/03_run_reports/2.3-evidence-pack-founder-display.md`
+- `tests/test_evidence_pack_founder_display.py`
+- `docs/dev_ledger/02_mini_epics/2.3-evidence-pack-display-founder-package.md`
+- `docs/dev_ledger/03_run_reports/2.3-evidence-pack-display-founder-package.md`
 
 ### Acceptance criteria
 
-- [ ] **2.3.1** Founder package displays evidence packs when available.
-- [ ] **2.3.2** Empty evidence pack state does not crash.
-- [ ] **2.3.3** Evidence IDs and source URLs are visible.
-- [ ] **2.3.4** Price/weak/kill/risk sections remain compact.
-- [ ] **2.3.5** Full validation passes.
+- [x] **2.3.1** Founder package displays evidence packs when available.
+- [x] **2.3.2** Empty evidence pack state does not crash.
+- [x] **2.3.3** Evidence IDs and source URLs are visible.
+- [x] **2.3.4** Price/weak/kill/risk sections remain compact.
+- [x] **2.3.5** Full validation passes.
 
 ### Validation expectations
 

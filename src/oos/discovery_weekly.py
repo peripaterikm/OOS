@@ -11,7 +11,14 @@ from typing import Any, Dict, Iterable, List
 from .candidate_signal_dedup import deduplicate_candidate_signals, deduplicate_ranked_candidate_signals
 from .candidate_signal_extractor import extract_candidate_signal
 from .evidence_classifier import classify_evidence, clean_evidence
-from .founder_package import build_founder_package_quality_sections, render_founder_package_quality_sections
+from .evidence_pack import evidence_pack_to_dict
+from .evidence_pack_builder import build_evidence_packs_for_clusters
+from .founder_package import (
+    build_founder_evidence_pack_section,
+    build_founder_package_quality_sections,
+    render_founder_evidence_pack_section,
+    render_founder_package_quality_sections,
+)
 from .kill_archive_feedback import apply_kill_archive_feedback
 from .live_collection import collect_raw_evidence_for_topic
 from .meaning_loop_adapter import build_meaning_loop_dry_run, write_meaning_loop_dry_run_artifacts
@@ -104,6 +111,12 @@ def run_discovery_weekly(
     dedup_result = deduplicate_candidate_signals(candidate_signals)
     canonical_candidate_signals = dedup_result.canonical_signals
     weak_pattern_candidates = aggregate_weak_pattern_candidates(canonical_candidate_signals)
+    evidence_packs = build_evidence_packs_for_clusters(
+        candidate_signals=canonical_candidate_signals,
+        price_signals=price_signals,
+        weak_patterns=weak_pattern_candidates,
+        kill_warnings=kill_feedback.warnings,
+    )
 
     run_dir = project_root / "artifacts" / "discovery_runs" / resolved_run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -127,6 +140,7 @@ def run_discovery_weekly(
         "candidate_signals": [model_to_dict(item) for item in candidate_signals],
         "candidate_signal_dedup": dedup_result.to_dict(),
         "price_signals": [model_to_dict(item) for item in price_signals],
+        "evidence_packs": {"items": [evidence_pack_to_dict(item) for item in evidence_packs]},
     }
     weak_pattern_path = run_dir / "weak_pattern_candidates.json"
     if weak_pattern_candidates:
@@ -172,6 +186,7 @@ def run_discovery_weekly(
         price_signal_count=len(price_signals),
         candidate_signal_dedup=dedup_result.to_dict(),
         weak_pattern_candidate_count=len(weak_pattern_candidates),
+        evidence_pack_count=len(evidence_packs),
         artifact_paths=artifact_paths,
         collection_metadata=collection_metadata,
     )
@@ -182,6 +197,7 @@ def run_discovery_weekly(
         candidate_signals=canonical_candidate_signals,
         classifications=classifications,
         price_signals=price_signals,
+        evidence_packs=evidence_packs,
         run_dir=run_dir,
         collection_metadata=collection_metadata,
     )
@@ -283,6 +299,7 @@ def _build_summary(
     price_signal_count: int = 0,
     candidate_signal_dedup: Dict[str, Any] | None = None,
     weak_pattern_candidate_count: int = 0,
+    evidence_pack_count: int = 0,
 ) -> Dict[str, Any]:
     classification_counts = Counter(item.classification for item in classifications)
     signal_counts = Counter(item.signal_type for item in candidate_signals)
@@ -309,6 +326,7 @@ def _build_summary(
         "duplicate_candidate_group_count": (candidate_signal_dedup or {}).get("duplicate_group_count", 0),
         "price_signal_count": price_signal_count,
         "weak_pattern_candidate_count": weak_pattern_candidate_count,
+        "evidence_pack_count": evidence_pack_count,
         "counts_by_source_type": dict(sorted(source_type_counts.items())),
         "candidate_signal_counts_by_source_type": dict(sorted(signal_source_counts.items())),
         "counts_by_classification": dict(sorted(classification_counts.items())),
@@ -351,6 +369,7 @@ def _build_founder_package(
     candidate_signals: List[CandidateSignal],
     classifications: List[EvidenceClassification] | None = None,
     price_signals: List[Any] | None = None,
+    evidence_packs: List[Any] | None = None,
     run_dir: Path | None = None,
     collection_metadata: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
@@ -364,6 +383,7 @@ def _build_founder_package(
         run_dir=run_dir,
         collection_metadata=collection_metadata or {},
     )
+    evidence_pack_section = build_founder_evidence_pack_section(evidence_packs or [])
     return {
         "run_id": summary["run_id"],
         "topic_id": summary["topic_id"],
@@ -378,6 +398,7 @@ def _build_founder_package(
         "duplicate_candidate_group_count": summary.get("duplicate_candidate_group_count", 0),
         "price_signal_count": summary.get("price_signal_count", 0),
         "weak_pattern_candidate_count": summary.get("weak_pattern_candidate_count", 0),
+        "evidence_pack_count": summary.get("evidence_pack_count", 0),
         "needs_human_review_count": summary["needs_human_review_count"],
         "noise_count": summary["noise_count"],
         "counts_by_source_type": summary["counts_by_source_type"],
@@ -386,6 +407,7 @@ def _build_founder_package(
         "candidate_signal_dedup": summary.get("candidate_signal_dedup", {}),
         "top_candidate_signals": [_signal_package_item(signal) for signal in top_signals[:10]],
         "needs_human_review_signals": [_signal_package_item(signal) for signal in review_signals],
+        "evidence_packs": evidence_pack_section,
         "quality_sections": quality_sections,
         "recommended_founder_actions": list(RECOMMENDED_FOUNDER_ACTIONS),
         "artifact_paths": summary["artifact_paths"],
@@ -443,6 +465,7 @@ def _summary_markdown(summary: Dict[str, Any], candidate_signals: List[Candidate
         f"- Suppressed duplicate candidates: `{summary.get('suppressed_duplicate_candidate_signal_count', 0)}`",
         f"- Price signals: `{summary.get('price_signal_count', 0)}`",
         f"- Weak pattern candidates: `{summary.get('weak_pattern_candidate_count', 0)}`",
+        f"- Evidence packs: `{summary.get('evidence_pack_count', 0)}`",
         f"- Needs human review: `{summary['needs_human_review_count']}`",
         f"- Noise: `{summary['noise_count']}`",
         f"- Query plans: `{summary['query_plan_count']}`",
@@ -567,6 +590,10 @@ def _founder_package_markdown(package: Dict[str, Any]) -> str:
     quality_sections = package.get("quality_sections")
     if isinstance(quality_sections, dict):
         lines.extend(["", render_founder_package_quality_sections(quality_sections).rstrip()])
+
+    evidence_packs = package.get("evidence_packs")
+    if isinstance(evidence_packs, dict):
+        lines.extend(["", render_founder_evidence_pack_section(evidence_packs).rstrip()])
 
     lines.extend(
         [
