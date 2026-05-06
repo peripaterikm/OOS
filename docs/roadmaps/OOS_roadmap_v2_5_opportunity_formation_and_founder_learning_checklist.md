@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **2.3 Evidence pack display in founder package**
+- [ ] **0.2** Current item: **3.1 Deterministic opportunity sketch baseline**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **8 / 24**
-- [ ] **0.5** Remaining: **16 / 24**
+- [ ] **0.4** Completed from this roadmap: **9 / 24**
+- [ ] **0.5** Remaining: **15 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -400,17 +400,17 @@ Founder can see the actual evidence bundle behind each opportunity seed.
 ### Expected files
 
 - `src/oos/founder_package.py`
-- `tests/test_evidence_pack_founder_package.py`
-- `docs/dev_ledger/02_mini_epics/2.3-evidence-pack-founder-display.md`
-- `docs/dev_ledger/03_run_reports/2.3-evidence-pack-founder-display.md`
+- `tests/test_evidence_pack_founder_display.py`
+- `docs/dev_ledger/02_mini_epics/2.3-evidence-pack-display-founder-package.md`
+- `docs/dev_ledger/03_run_reports/2.3-evidence-pack-display-founder-package.md`
 
 ### Acceptance criteria
 
-- [ ] **2.3.1** Founder package displays evidence packs when available.
-- [ ] **2.3.2** Empty evidence pack state does not crash.
-- [ ] **2.3.3** Evidence IDs and source URLs are visible.
-- [ ] **2.3.4** Price/weak/kill/risk sections remain compact.
-- [ ] **2.3.5** Full validation passes.
+- [x] **2.3.1** Founder package displays evidence packs when available.
+- [x] **2.3.2** Empty evidence pack state does not crash.
+- [x] **2.3.3** Evidence IDs and source URLs are visible.
+- [x] **2.3.4** Price/weak/kill/risk sections remain compact.
+- [x] **2.3.5** Full validation passes.
 
 ### Validation expectations
 

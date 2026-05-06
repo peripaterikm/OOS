@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .evidence_pack import EvidencePack, evidence_pack_to_dict
 from .models import CandidateSignal, EvidenceClassification, PriceSignal
 
 
@@ -76,6 +77,46 @@ def render_founder_package_quality_sections(quality_sections: dict[str, Any]) ->
                     lines.append(f"  - {label}: {_md(value)}")
         lines.append("")
     return "\n".join(lines)
+
+
+def build_founder_evidence_pack_section(evidence_packs: list[EvidencePack | dict[str, Any]]) -> dict[str, Any]:
+    items = [_evidence_pack_display_item(pack) for pack in evidence_packs]
+    items = sorted(items, key=lambda item: (item["cluster_id"], item["evidence_pack_id"]))
+    return _section(items, "No evidence packs generated for this run.")
+
+
+def render_founder_evidence_pack_section(evidence_pack_section: dict[str, Any]) -> str:
+    items = evidence_pack_section.get("items", []) if isinstance(evidence_pack_section, dict) else []
+    lines = ["## Evidence packs", ""]
+    if not items:
+        empty_state = evidence_pack_section.get("empty_state") if isinstance(evidence_pack_section, dict) else None
+        lines.append(f"- {empty_state or 'No evidence packs generated for this run.'}")
+        return "\n".join(lines)
+    for item in items:
+        lines.extend(
+            [
+                f"### `{item['evidence_pack_id']}`",
+                "",
+                f"- Cluster: `{item['cluster_id']}`",
+                (
+                    f"- Signals: `{item['source_signal_count']}`; "
+                    f"evidence: `{item['evidence_count']}`; "
+                    f"source diversity: `{item['source_diversity']}`; "
+                    f"recurrence: `{item['recurrence_count']}`"
+                ),
+                f"- Insufficient evidence: `{str(item['is_insufficient_evidence']).lower()}`",
+            ]
+        )
+        _append_compact_list(lines, "Evidence IDs", item["evidence_ids"])
+        _append_compact_list(lines, "Source signal IDs", item["source_signal_ids"])
+        _append_compact_list(lines, "Source URLs", item["source_urls"])
+        _append_compact_list(lines, "Top summaries", item["top_summaries"])
+        _append_compact_list(lines, "Price signal IDs", item["price_signal_ids"])
+        _append_compact_list(lines, "Weak pattern IDs", item["weak_pattern_ids"])
+        _append_compact_list(lines, "Kill warning IDs", item["kill_warning_ids"])
+        _append_compact_list(lines, "Risk notes", item["risk_notes"])
+        lines.append("")
+    return "\n".join(lines).rstrip()
 
 
 def _time_sensitive_opportunities(candidate_signals: list[CandidateSignal]) -> dict[str, Any]:
@@ -262,6 +303,60 @@ def _section(items: list[dict[str, Any]], empty_state: str) -> dict[str, Any]:
         "count": len(items),
         "empty_state": empty_state,
     }
+
+
+def _evidence_pack_display_item(pack: EvidencePack | dict[str, Any]) -> dict[str, Any]:
+    payload = evidence_pack_to_dict(pack) if isinstance(pack, EvidencePack) else dict(pack)
+    risk_notes = payload.get("risk_notes", [])
+    return {
+        "evidence_pack_id": str(payload.get("evidence_pack_id") or "unknown_evidence_pack"),
+        "cluster_id": str(payload.get("cluster_id") or "unknown_cluster"),
+        "source_signal_count": len(payload.get("source_signal_ids", []) or []),
+        "evidence_count": len(payload.get("evidence_ids", []) or []),
+        "source_diversity": int(payload.get("source_diversity") or 0),
+        "recurrence_count": int(payload.get("recurrence_count") or 0),
+        "evidence_ids": _compact_strings(payload.get("evidence_ids", []), limit=6),
+        "source_signal_ids": _compact_strings(payload.get("source_signal_ids", []), limit=6),
+        "source_urls": _compact_strings(payload.get("source_urls", []), limit=4),
+        "top_summaries": _compact_strings(payload.get("summaries", []), limit=3),
+        "price_signal_ids": _compact_strings(payload.get("price_signal_ids", []), limit=6),
+        "weak_pattern_ids": _compact_strings(payload.get("weak_pattern_ids", []), limit=6),
+        "kill_warning_ids": _compact_strings(payload.get("kill_warning_ids", []), limit=6),
+        "risk_notes": _compact_risk_notes(risk_notes, limit=6),
+        "created_from": str(payload.get("created_from") or ""),
+        "is_insufficient_evidence": str(payload.get("created_from") or "") == "insufficient_evidence",
+        "schema_version": str(payload.get("schema_version") or ""),
+    }
+
+
+def _compact_strings(values: Any, *, limit: int) -> list[str]:
+    if not isinstance(values, list):
+        return []
+    return [str(item) for item in values[:limit] if str(item).strip()]
+
+
+def _compact_risk_notes(values: Any, *, limit: int) -> list[str]:
+    if not isinstance(values, list):
+        return []
+    notes = []
+    for item in values[:limit]:
+        if not isinstance(item, dict):
+            notes.append(str(item))
+            continue
+        risk_type = str(item.get("risk_type") or "risk")
+        severity = str(item.get("severity") or "medium")
+        evidence_id = item.get("evidence_id")
+        note = str(item.get("note") or "")
+        prefix = f"{risk_type}/{severity}"
+        if evidence_id:
+            prefix = f"{prefix}/{evidence_id}"
+        notes.append(f"{prefix}: {note}".strip())
+    return notes
+
+
+def _append_compact_list(lines: list[str], label: str, values: list[str]) -> None:
+    if values:
+        lines.append(f"- {label}: {_md(values)}")
 
 
 def _load_optional_json(run_dir: Path | None, filename: str) -> Any:

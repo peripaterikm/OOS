@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `2.3 Evidence pack display in founder package`
+- Current item: `3.1 Deterministic opportunity sketch baseline`
 - Roadmap state: `active / planned`
-- Completed: `8 / 24`
-- Remaining: `16 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `2.2` - Evidence pack builder
-- Next planned roadmap item: Roadmap v2.5 `2.3` - Evidence pack display in founder package
+- Completed: `9 / 24`
+- Remaining: `15 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `2.3` - Evidence pack display in founder package
+- Next planned roadmap item: Roadmap v2.5 `3.1` - Deterministic opportunity sketch baseline
 
 ## Branch And Commit Strategy
 
@@ -102,3 +102,4 @@
 - Roadmap v2.5 item 1.6 ran a second bounded HN + GitHub live comparison after Block 1 hardening, recorded ignored runtime artifacts under `artifacts/discovery_runs/second_controlled_open_source_signal_run_v1/`, and confirmed vendor-promo, price false-positive, duplicate, and mojibake behavior before moving to evidence packs.
 - Roadmap v2.5 item 2.1 added the deterministic `EvidencePack` contract with serializable evidence items, source summaries, risk notes, optional price/weak-pattern/kill-warning IDs, explicit insufficient-evidence representation, and traceability-preserving validation without live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 2.2 added a deterministic EvidencePack builder that consumes existing candidate signals, price signals, weak patterns, kill archive warnings, and discovery artifacts, writes `evidence_packs.json` in discovery runs, preserves traceability, and records risk notes without live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 2.3 displayed deterministic EvidencePack sections in founder package JSON/Markdown outputs with compact counts, evidence IDs, source URLs, linked price/weak-pattern/kill-warning IDs, and risk notes while preserving existing quality sections without live collection, live internet/API calls, or live LLM/API calls.

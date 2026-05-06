@@ -13,7 +13,12 @@ from .candidate_signal_extractor import extract_candidate_signal
 from .evidence_classifier import classify_evidence, clean_evidence
 from .evidence_pack import evidence_pack_to_dict
 from .evidence_pack_builder import build_evidence_packs_for_clusters
-from .founder_package import build_founder_package_quality_sections, render_founder_package_quality_sections
+from .founder_package import (
+    build_founder_evidence_pack_section,
+    build_founder_package_quality_sections,
+    render_founder_evidence_pack_section,
+    render_founder_package_quality_sections,
+)
 from .kill_archive_feedback import apply_kill_archive_feedback
 from .live_collection import collect_raw_evidence_for_topic
 from .meaning_loop_adapter import build_meaning_loop_dry_run, write_meaning_loop_dry_run_artifacts
@@ -192,6 +197,7 @@ def run_discovery_weekly(
         candidate_signals=canonical_candidate_signals,
         classifications=classifications,
         price_signals=price_signals,
+        evidence_packs=evidence_packs,
         run_dir=run_dir,
         collection_metadata=collection_metadata,
     )
@@ -363,6 +369,7 @@ def _build_founder_package(
     candidate_signals: List[CandidateSignal],
     classifications: List[EvidenceClassification] | None = None,
     price_signals: List[Any] | None = None,
+    evidence_packs: List[Any] | None = None,
     run_dir: Path | None = None,
     collection_metadata: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
@@ -376,6 +383,7 @@ def _build_founder_package(
         run_dir=run_dir,
         collection_metadata=collection_metadata or {},
     )
+    evidence_pack_section = build_founder_evidence_pack_section(evidence_packs or [])
     return {
         "run_id": summary["run_id"],
         "topic_id": summary["topic_id"],
@@ -399,6 +407,7 @@ def _build_founder_package(
         "candidate_signal_dedup": summary.get("candidate_signal_dedup", {}),
         "top_candidate_signals": [_signal_package_item(signal) for signal in top_signals[:10]],
         "needs_human_review_signals": [_signal_package_item(signal) for signal in review_signals],
+        "evidence_packs": evidence_pack_section,
         "quality_sections": quality_sections,
         "recommended_founder_actions": list(RECOMMENDED_FOUNDER_ACTIONS),
         "artifact_paths": summary["artifact_paths"],
@@ -581,6 +590,10 @@ def _founder_package_markdown(package: Dict[str, Any]) -> str:
     quality_sections = package.get("quality_sections")
     if isinstance(quality_sections, dict):
         lines.extend(["", render_founder_package_quality_sections(quality_sections).rstrip()])
+
+    evidence_packs = package.get("evidence_packs")
+    if isinstance(evidence_packs, dict):
+        lines.extend(["", render_founder_evidence_pack_section(evidence_packs).rstrip()])
 
     lines.extend(
         [
