@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **3.1 Deterministic opportunity sketch baseline**
+- [ ] **0.2** Current item: **3.2 LLM opportunity synthesis contract**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **9 / 24**
-- [ ] **0.5** Remaining: **15 / 24**
+- [ ] **0.4** Completed from this roadmap: **10 / 24**
+- [ ] **0.5** Remaining: **14 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -443,11 +443,11 @@ Create a no-LLM baseline opportunity sketch from evidence pack.
 
 ### Acceptance criteria
 
-- [ ] **3.1.1** Opportunity sketch model exists and serializes.
-- [ ] **3.1.2** Baseline sketch cites evidence IDs.
-- [ ] **3.1.3** Missing buyer/price/product assumptions remain unknown.
-- [ ] **3.1.4** Output is stable across repeated runs.
-- [ ] **3.1.5** Full validation passes.
+- [x] **3.1.1** Opportunity sketch model exists and serializes.
+- [x] **3.1.2** Baseline sketch cites evidence IDs.
+- [x] **3.1.3** Missing buyer/price/product assumptions remain unknown.
+- [x] **3.1.4** Output is stable across repeated runs.
+- [x] **3.1.5** Full validation passes.
 
 ### Validation expectations
 
