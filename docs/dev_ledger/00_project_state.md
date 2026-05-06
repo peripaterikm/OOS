@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `5.2 Decision-to-signal feedback mapping`
+- Current item: `5.3 Founder preference profile draft`
 - Roadmap state: `active / planned`
-- Completed: `16 / 24`
-- Remaining: `8 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `5.1` - Founder decision taxonomy v2
-- Next planned roadmap item: Roadmap v2.5 `5.2` - Decision-to-signal feedback mapping
+- Completed: `17 / 24`
+- Remaining: `7 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `5.2` - Decision-to-signal feedback mapping
+- Next planned roadmap item: Roadmap v2.5 `5.3` - Founder preference profile draft
 
 ## Branch And Commit Strategy
 
@@ -110,3 +110,4 @@
 - Roadmap v2.5 item 4.2 added deterministic evidence sufficiency scoring with explicit dimensions, missing-evidence/risk factors, score bands, and narrow quality-gate inclusion while preserving founder-decision authority and no-auto-promote behavior.
 - Roadmap v2.5 item 4.3 added deterministic false-positive opportunity suppression for generic, vendor/SEO, product-submission, disguised-consulting, buyerless, unsupported-assumption-heavy, and low-sufficiency opportunities, with quality-gate integration that prevents pass for high/critical false positives without auto-promotion.
 - Roadmap v2.5 item 5.1 added a structured FounderDecisionV2 taxonomy with five decision values, decision-specific reason categories, deterministic IDs, traceability fields, validation, serialization, and summaries without changing scoring, mapping feedback, or founder preference profiles.
+- Roadmap v2.5 item 5.2 added deterministic founder feedback mapping from `FounderDecisionV2` to opportunity, evidence-pack, optional cluster, evidence, source-signal, and source-URL lineage, with feedback tags, signal impact, recommended future handling, serialization, validation, and record-only semantics without scoring mutation, ML-training claims, live internet/API calls, or live LLM/API calls.

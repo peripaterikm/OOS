@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **5.2 Decision-to-signal feedback mapping**
+- [ ] **0.2** Current item: **5.3 Founder preference profile draft**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **16 / 24**
-- [ ] **0.5** Remaining: **8 / 24**
+- [ ] **0.4** Completed from this roadmap: **17 / 24**
+- [ ] **0.5** Remaining: **7 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -714,18 +714,18 @@ Map founder decisions back to opportunity, cluster, signal, and evidence.
 
 ### Expected files
 
-- `src/oos/founder_feedback.py`
-- `tests/test_decision_to_signal_feedback_mapping.py`
+- `src/oos/founder_feedback_mapping.py`
+- `tests/test_founder_feedback_mapping.py`
 - `docs/dev_ledger/02_mini_epics/5.2-decision-to-signal-feedback-mapping.md`
 - `docs/dev_ledger/03_run_reports/5.2-decision-to-signal-feedback-mapping.md`
 
 ### Acceptance criteria
 
-- [ ] **5.2.1** Founder decisions map to opportunity IDs.
-- [ ] **5.2.2** Founder decisions map to cluster IDs when available.
-- [ ] **5.2.3** Founder decisions map to signal/evidence IDs.
-- [ ] **5.2.4** Mapping is deterministic and serializable.
-- [ ] **5.2.5** Full validation passes.
+- [x] **5.2.1** Founder decisions map to opportunity IDs.
+- [x] **5.2.2** Founder decisions map to cluster IDs when available.
+- [x] **5.2.3** Founder decisions map to signal/evidence IDs.
+- [x] **5.2.4** Mapping is deterministic and serializable.
+- [x] **5.2.5** Full validation passes.
 
 ### Validation expectations
 
