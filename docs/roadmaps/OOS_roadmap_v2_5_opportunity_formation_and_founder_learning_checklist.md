@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **3.2 LLM opportunity synthesis contract**
+- [ ] **0.2** Current item: **3.3 Offline LLM opportunity synthesis dry-run**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **10 / 24**
-- [ ] **0.5** Remaining: **14 / 24**
+- [ ] **0.4** Completed from this roadmap: **11 / 24**
+- [ ] **0.5** Remaining: **13 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -481,20 +481,20 @@ Define a future-only LLM contract for opportunity synthesis from evidence pack.
 
 ### Expected files
 
-- `src/oos/opportunity_synthesis_contract.py`
-- `src/oos/llm_budget.py`
-- `tests/test_opportunity_synthesis_contract.py`
+- `src/oos/llm_opportunity_synthesis_contract.py`
+- `src/oos/llm_contracts.py`
+- `tests/test_llm_opportunity_synthesis_contract.py`
 - `docs/dev_ledger/02_mini_epics/3.2-llm-opportunity-synthesis-contract.md`
 - `docs/dev_ledger/03_run_reports/3.2-llm-opportunity-synthesis-contract.md`
 
 ### Acceptance criteria
 
-- [ ] **3.2.1** Contract model/prompt exists.
-- [ ] **3.2.2** Prompt requires evidence pack context.
-- [ ] **3.2.3** Prompt forbids invented buyer/price/market/product/strategy claims.
-- [ ] **3.2.4** Prompt requires evidence IDs and unsupported assumption fields.
-- [ ] **3.2.5** No live provider call is made by default.
-- [ ] **3.2.6** Full validation passes.
+- [x] **3.2.1** Contract model/prompt exists.
+- [x] **3.2.2** Prompt requires evidence pack context.
+- [x] **3.2.3** Prompt forbids invented buyer/price/market/product/strategy claims.
+- [x] **3.2.4** Prompt requires evidence IDs and unsupported assumption fields.
+- [x] **3.2.5** No live provider call is made by default.
+- [x] **3.2.6** Full validation passes.
 
 ### Validation expectations
 
