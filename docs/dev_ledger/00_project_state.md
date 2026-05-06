@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `1.6 Second controlled live run comparison`
+- Current item: `2.1 Cluster evidence pack contract`
 - Roadmap state: `active / planned`
-- Completed: `5 / 24`
-- Remaining: `19 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `1.5` - Mojibake cleanup regression test
-- Next planned roadmap item: Roadmap v2.5 `1.6` - Second controlled live run comparison
+- Completed: `6 / 24`
+- Remaining: `18 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `1.6` - Second controlled live run comparison
+- Next planned roadmap item: Roadmap v2.5 `2.1` - Cluster evidence pack contract
 
 ## Branch And Commit Strategy
 
@@ -99,3 +99,4 @@
 - Roadmap v2.5 item 1.3 hardened PriceSignal extraction against receipt thresholds, tax/deduction/regulatory limits, `$1.25M` truncation, and weak vendor-commercial WTP phrases while preserving organic affordability complaints without live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 1.4 added deterministic CandidateSignal dedup before founder-facing packages and weak-pattern aggregation, preserving duplicate evidence/signal/source metadata while keeping raw artifacts intact and avoiding live internet/API or live LLM/API calls.
 - Roadmap v2.5 item 1.5 extended deterministic mojibake repair for founder-facing evidence, candidate summaries, and founder package outputs, preserving raw evidence traceability without additional live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 1.6 ran a second bounded HN + GitHub live comparison after Block 1 hardening, recorded ignored runtime artifacts under `artifacts/discovery_runs/second_controlled_open_source_signal_run_v1/`, and confirmed vendor-promo, price false-positive, duplicate, and mojibake behavior before moving to evidence packs.

@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **1.6 Second controlled live run comparison**
+- [ ] **0.2** Current item: **2.1 Cluster evidence pack contract**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **5 / 24**
-- [ ] **0.5** Remaining: **19 / 24**
+- [ ] **0.4** Completed from this roadmap: **6 / 24**
+- [ ] **0.5** Remaining: **18 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -295,12 +295,12 @@ Run the same bounded HN + GitHub live collection after hardening and compare qua
 
 ### Acceptance criteria
 
-- [ ] **1.6.1** Marketing/vendor promo reduced.
-- [ ] **1.6.2** Duplicate top signals reduced.
-- [ ] **1.6.3** Price false positives reduced.
-- [ ] **1.6.4** At least 2-3 plausible finance/SMB pains still appear.
-- [ ] **1.6.5** Tracked git status clean after runtime artifact handling.
-- [ ] **1.6.6** No live LLM/API calls.
+- [x] **1.6.1** Marketing/vendor promo reduced.
+- [x] **1.6.2** Duplicate top signals reduced.
+- [x] **1.6.3** Price false positives reduced.
+- [x] **1.6.4** At least 2-3 plausible finance/SMB pains still appear.
+- [x] **1.6.5** Tracked git status clean after runtime artifact handling.
+- [x] **1.6.6** No live LLM/API calls.
 
 ### Validation expectations
 
