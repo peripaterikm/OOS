@@ -10,6 +10,7 @@ from pathlib import Path
 from .ai_ideation_evaluation import evaluate_ai_ideation
 from .artifact_store import ArtifactStore
 from .config import OOSConfig
+from .weekly_cycle_builder import build_weekly_cycle
 from .customer_voice_queries import (
     approve_customer_voice_query,
     generate_customer_voice_queries,
@@ -881,6 +882,34 @@ def build_arg_parser() -> argparse.ArgumentParser:
     rating_parser.add_argument("--created-at", default=None)
     rating_parser.add_argument("--founder", default="founder")
 
+    v2_weekly_parser = subparsers.add_parser(
+        "run-weekly-cycle-v2",
+        help="Run a complete v2.6 weekly cycle from a signal batch file.",
+    )
+    v2_weekly_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    v2_weekly_parser.add_argument(
+        "--input-file",
+        type=Path,
+        required=True,
+        help="Path to a canonical JSONL signal batch file, JSON array, or evaluation dataset file.",
+    )
+    v2_weekly_parser.add_argument(
+        "--run-id",
+        default=None,
+        help="Optional explicit run ID. Auto-generated from input content hash if not provided.",
+    )
+    v2_weekly_parser.add_argument(
+        "--prior-artifacts-dir",
+        type=Path,
+        default=None,
+        help="Optional path to a prior weekly run directory for parking lot revisit matching.",
+    )
+
     return parser
 
 
@@ -938,6 +967,57 @@ def main(argv: list[str] | None = None) -> int:
         for k, p in paths.items():
             print(f"{k}: {p}")
         return 0
+
+    if args.command == "run-weekly-cycle-v2":
+        try:
+            result = build_weekly_cycle(
+                project_root=args.project_root,
+                input_file=args.input_file,
+                run_id=args.run_id,
+                existing_artifacts_dir=args.prior_artifacts_dir,
+            )
+        except ValueError as exc:
+            print(f"run-weekly-cycle-v2 failed: {exc}")
+            return 2
+
+        # ── Print structured summary ──────────────────────────
+        print("OOS v2.6 weekly cycle completed.")
+        print(f"run_id: {result.run_id}")
+        print(f"run_dir: {result.run_dir}")
+        print(f"manifest_path: {result.manifest_path}")
+        print(f"artifact_count: {result.artifact_count}")
+        print(f"validation_passed: {str(result.validation_passed).lower()}")
+        print(f"warnings_count: {len(result.warnings)}")
+        print(f"errors_count: {len(result.errors)}")
+        if result.warnings:
+            for w in result.warnings:
+                print(f"  warning: {w}")
+        if result.errors:
+            for e in result.errors:
+                print(f"  error: {e}")
+        pipeline = result.pipeline_summary
+        print(f"input_file: {pipeline.get('input_file', '')}")
+        print(f"input_signal_count: {pipeline.get('input_signal_count', 0)}")
+        print(f"evidence_packs_built: {pipeline.get('evidence_packs_built', 0)}")
+        print(f"opportunity_candidates_built: {pipeline.get('opportunity_candidates_built', 0)}")
+        print(f"quality_gate_results: {pipeline.get('quality_gate_results', 0)}")
+        qg = pipeline.get("quality_gate_counts", {})
+        if qg:
+            for k, v in sorted(qg.items()):
+                print(f"  quality_gate_{k}: {v}")
+        print(f"founder_decisions_count: {pipeline.get('founder_decisions_count', 0)}")
+        print(f"next_best_actions_count: {pipeline.get('next_best_actions_count', 0)}")
+        print(f"parking_lot_record_count: {pipeline.get('parking_lot_record_count', 0)}")
+        print(f"revisit_matches_found: {pipeline.get('revisit_matches_found', 0)}")
+        print(f"advisory_only: {str(result.advisory_only).lower()}")
+        print(f"no_live_api: {str(result.no_live_api).lower()}")
+        print(f"no_live_llm: {str(result.no_live_llm).lower()}")
+        print("")
+        if result.validation_passed:
+            print("Next step: review artifacts in the run directory, then use founder inbox and decision import (v2.6 items 4.1, 5.1).")
+        else:
+            print("Next step: review errors above before proceeding.")
+        return 0 if result.validation_passed else 1
 
     if args.command == "run-discovery-weekly":
         try:

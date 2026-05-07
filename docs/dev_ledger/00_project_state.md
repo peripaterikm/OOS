@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.6 planning created: yes
-- Current item: `3.1` - CLI command for unified weekly cycle
+- Current item: `4.1` - Founder inbox v2
 - Roadmap state: `active / in_progress`
-- Completed: `2 / 9`
-- Remaining: `7 / 9`
-- Latest completed roadmap item: Roadmap v2.6 `2.1` - Unified weekly cycle builder
-- Next planned roadmap item: Roadmap v2.6 `3.1` - CLI command for unified weekly cycle
+- Completed: `3 / 9`
+- Remaining: `6 / 9`
+- Latest completed roadmap item: Roadmap v2.6 `3.1` - CLI command for unified weekly cycle
+- Next planned roadmap item: Roadmap v2.6 `4.1` - Founder inbox v2
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
@@ -124,3 +124,4 @@
 - Roadmap v2.6 planning created the Real Weekly Loop / Operationalization checklist with 9 implementation items: weekly run artifact contract, unified weekly cycle builder, CLI command, founder inbox v2, founder decision import, weekly cycle status command, run reports and dashboard index, fixture end-to-end validation, and final v2.6 checkpoint. Implementation starts at item 1.1; no source code features, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
 - Roadmap v2.6 item 1.1 added the canonical `WeeklyRunManifest` model with 14 artifact paths, deterministic `run_id` generation (`weekly_run_{YYYY-MM-DD}_{content_hash_short}`), `write_weekly_run_manifest()` / `read_weekly_run_manifest()` helpers with validation and path-traversal guards, and advisory-only / no-live-api / no-live-llm safety flags enforced by validation. Focused tests pass. No full weekly cycle builder, CLI, inbox, or decision import were implemented (deferred to items 2.1–5.1). No real artifacts were written under `artifacts/`. No live collection, live internet/API calls, or live LLM/API calls were made.
 - Roadmap v2.6 item 2.1 added the unified weekly cycle builder (`src/oos/weekly_cycle_builder.py`) with `WeeklyCycleBuildResult` model and `build_weekly_cycle()` orchestrator function. The builder runs the full v2.5 pipeline (evidence packs → opportunity candidates → quality gates → weekly review → next-best actions → parking lot) in one deterministic pass, writing all 14 manifest-defined artifacts. Supports evaluation-dataset-style input, canonical real signal batch input, safe run_id validation, stricter artifact readback validation, fixed generated_at determinism checks, empty-input graceful handling, prior-artifact parking lot revisit matching, and placeholder artifacts for later v2.6 items (founder inbox v2, run report). 39 focused tests cover empty input, real/non-real fixtures, manifest integration, determinism, artifact existence/format, traceability, advisory-only boundaries, malformed/unsupported input, and malicious run IDs. No CLI, founder inbox v2 rendering, or founder decision import were implemented (deferred to items 3.1, 4.1, 5.1). No real artifacts were written under `artifacts/`. No live collection, live internet/API calls, or live LLM/API calls were made.
+- Roadmap v2.6 item 3.1 added the `run-weekly-cycle-v2` CLI subcommand (`src/oos/cli.py`) that calls `build_weekly_cycle()`. Accepts `--project-root`, `--input-file` (required), `--run-id` (optional), and `--prior-artifacts-dir` (optional). Prints structured summary (run_id, run_dir, manifest_path, artifact_count, validation_passed, warnings/errors, pipeline counts, advisory flags). Exit codes: 0 on success, 1 on validation failure, 2 on ValueError. 20 focused CLI tests cover empty input, evaluation-dataset fixture input, real signal batch input, missing input file, malformed JSON/JSONL, unsafe run_id rejection, exit code semantics, existing command preservation, and no-real-artifacts safety. No changes to `weekly_cycle_builder.py` or `weekly_run_manifest.py`. No live collection, live internet/API calls, or live LLM/API calls were made.

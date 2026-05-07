@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- [ ] **0.2** Current item: `3.1` CLI command for unified weekly cycle
+- [ ] **0.2** Current item: `4.1` Founder inbox v2
 - [ ] **0.3** Roadmap state: `active / in_progress`
-- [ ] **0.4** Completed from this roadmap: **2 / 9**
-- [ ] **0.5** Remaining: **7 / 9**
+- [ ] **0.4** Completed from this roadmap: **3 / 9**
+- [ ] **0.5** Remaining: **6 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
 
 ### Core Concept
@@ -236,12 +236,12 @@ Expose the unified weekly cycle builder through the existing `oos.cli` entry poi
 
 ### Acceptance criteria
 
-- [ ] **3.1.1** `python -m oos.cli run-weekly-cycle-v2 --project-root . --input-file examples/real_signal_batch.jsonl` completes successfully.
-- [ ] **3.1.2** Missing `--input-file` produces a clear error message and exit code 1.
-- [ ] **3.1.3** Output includes all counts and paths listed above.
-- [ ] **3.1.4** A `--prior-artifacts-dir` pointing to a pre-existing run directory enables parking lot revisit matching (visible in revisit_match count > 0 when appropriate).
-- [ ] **3.1.5** CLI tests (fixture-based, no live network) pass.
-- [ ] **3.1.6** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
+- [x] **3.1.1** `python -m oos.cli run-weekly-cycle-v2 --project-root . --input-file examples/real_signal_batch.jsonl` completes successfully.
+- [x] **3.1.2** Missing `--input-file` produces a clear error message and exit code 1.
+- [x] **3.1.3** Output includes all counts and paths listed above.
+- [x] **3.1.4** A `--prior-artifacts-dir` pointing to a pre-existing run directory enables parking lot revisit matching (visible in revisit_match count > 0 when appropriate).
+- [x] **3.1.5** CLI tests (fixture-based, no live network) pass.
+- [x] **3.1.6** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
 
 ---
 
