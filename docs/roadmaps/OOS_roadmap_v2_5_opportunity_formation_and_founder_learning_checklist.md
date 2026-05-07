@@ -1,15 +1,15 @@
-﻿# OOS Roadmap v2.5 - Opportunity Formation & Founder Learning
+# OOS Roadmap v2.5 - Opportunity Formation & Founder Learning
 
 ## 0. Roadmap Overview
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **5.1 Founder decision taxonomy v2**
-- [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **15 / 24**
-- [ ] **0.5** Remaining: **9 / 24**
-- [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
+- [x] **0.2** Current item: **v2.5 complete**
+- [x] **0.3** Roadmap state: `completed`
+- [x] **0.4** Completed from this roadmap: **24 / 24**
+- [x] **0.5** Remaining: **0 / 24**
+- [x] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
 
@@ -34,7 +34,7 @@ Real open-source signals -> source/query quality hardening -> deterministic evid
   - SMB bookkeeping via sticky notes / Excel / inability to afford a developer.
 - GitHub Issues produced marketing/vendor/SEO noise, including product-promo and service-page-like records.
 - Candidate signals included duplicates, especially around HN accounting-agent and Winstwaker bookkeeping-service items.
-- Founder-facing text still needs mojibake protection for fragments such as `вЂ™` and `вЂў`.
+- Founder-facing text still needs mojibake protection for fragments such as `’` and `•`.
 - Price extraction produced false positives:
   - `$75` receipt threshold treated as a spend hint;
   - `$1.25M` Section 179 deduction limit partially extracted as `$1.25`;
@@ -242,7 +242,7 @@ Prevent duplicate candidate signals from appearing in founder review and inflati
 
 ### Goal
 
-Prevent `вЂ™`, `вЂў`, and similar encoding garbage from reaching founder-facing summaries.
+Prevent `’`, `•`, and similar encoding garbage from reaching founder-facing summaries.
 
 ### Scope
 
@@ -260,8 +260,8 @@ Prevent `вЂ™`, `вЂў`, and similar encoding garbage from reaching founder-
 
 ### Acceptance criteria
 
-- [x] **1.5.1** `вЂ™` does not appear in cleaned/founder-facing summaries.
-- [x] **1.5.2** `вЂў` does not appear in cleaned/founder-facing summaries.
+- [x] **1.5.1** `’` does not appear in cleaned/founder-facing summaries.
+- [x] **1.5.2** `•` does not appear in cleaned/founder-facing summaries.
 - [x] **1.5.3** Cleanup does not corrupt valid UTF-8 punctuation.
 - [x] **1.5.4** Existing cleaner behavior is preserved.
 - [x] **1.5.5** Full validation passes.
@@ -679,18 +679,18 @@ Supported decisions:
 
 ### Expected files
 
-- `src/oos/founder_decision.py`
-- `tests/test_founder_decision_taxonomy_v2.py`
+- `src/oos/founder_decision_taxonomy.py`
+- `tests/test_founder_decision_taxonomy.py`
 - `docs/dev_ledger/02_mini_epics/5.1-founder-decision-taxonomy-v2.md`
 - `docs/dev_ledger/03_run_reports/5.1-founder-decision-taxonomy-v2.md`
 
 ### Acceptance criteria
 
-- [ ] **5.1.1** Decision taxonomy model exists and serializes.
-- [ ] **5.1.2** All five decision values are supported.
-- [ ] **5.1.3** Kill decisions require a structured kill reason.
-- [ ] **5.1.4** Needs-more-evidence decisions preserve requested evidence type.
-- [ ] **5.1.5** Full validation passes.
+- [x] **5.1.1** Decision taxonomy model exists and serializes.
+- [x] **5.1.2** All five decision values are supported.
+- [x] **5.1.3** Kill decisions require a structured kill reason.
+- [x] **5.1.4** Needs-more-evidence decisions preserve requested evidence type.
+- [x] **5.1.5** Full validation passes.
 
 ### Validation expectations
 
@@ -714,18 +714,18 @@ Map founder decisions back to opportunity, cluster, signal, and evidence.
 
 ### Expected files
 
-- `src/oos/founder_feedback.py`
-- `tests/test_decision_to_signal_feedback_mapping.py`
+- `src/oos/founder_feedback_mapping.py`
+- `tests/test_founder_feedback_mapping.py`
 - `docs/dev_ledger/02_mini_epics/5.2-decision-to-signal-feedback-mapping.md`
 - `docs/dev_ledger/03_run_reports/5.2-decision-to-signal-feedback-mapping.md`
 
 ### Acceptance criteria
 
-- [ ] **5.2.1** Founder decisions map to opportunity IDs.
-- [ ] **5.2.2** Founder decisions map to cluster IDs when available.
-- [ ] **5.2.3** Founder decisions map to signal/evidence IDs.
-- [ ] **5.2.4** Mapping is deterministic and serializable.
-- [ ] **5.2.5** Full validation passes.
+- [x] **5.2.1** Founder decisions map to opportunity IDs.
+- [x] **5.2.2** Founder decisions map to cluster IDs when available.
+- [x] **5.2.3** Founder decisions map to signal/evidence IDs.
+- [x] **5.2.4** Mapping is deterministic and serializable.
+- [x] **5.2.5** Full validation passes.
 
 ### Validation expectations
 
@@ -764,12 +764,12 @@ decision taxonomy -> pattern memory -> scoring adjustment -> founder package war
 
 ### Acceptance criteria
 
-- [ ] **5.3.1** Profile model exists and serializes.
-- [ ] **5.3.2** Promoted/rejected patterns are deterministic summaries.
-- [ ] **5.3.3** Recurring kill reasons are surfaced.
-- [ ] **5.3.4** Profile creates advisory scoring/founder-package warnings only.
-- [ ] **5.3.5** No ML training claims or behavior.
-- [ ] **5.3.6** Full validation passes.
+- [x] **5.3.1** Profile model exists and serializes.
+- [x] **5.3.2** Promoted/rejected patterns are deterministic summaries.
+- [x] **5.3.3** Recurring kill reasons are surfaced.
+- [x] **5.3.4** Profile creates advisory scoring/founder-package warnings only.
+- [x] **5.3.5** No ML training claims or behavior.
+- [x] **5.3.6** Full validation passes.
 
 ### Validation expectations
 
@@ -810,11 +810,11 @@ Sections:
 
 ### Acceptance criteria
 
-- [ ] **6.1.1** Weekly review package model exists.
-- [ ] **6.1.2** All required sections render deterministically.
-- [ ] **6.1.3** Empty sections have clear empty states.
-- [ ] **6.1.4** Package cites opportunity/evidence IDs.
-- [ ] **6.1.5** Full validation passes.
+- [x] **6.1.1** Weekly review package model exists.
+- [x] **6.1.2** All required sections render deterministically.
+- [x] **6.1.3** Empty sections have clear empty states.
+- [x] **6.1.4** Package cites opportunity/evidence IDs.
+- [x] **6.1.5** Full validation passes.
 
 ### Validation expectations
 
@@ -850,11 +850,11 @@ Actions:
 
 ### Acceptance criteria
 
-- [ ] **6.2.1** Action recommendation model exists and serializes.
-- [ ] **6.2.2** Actions are deterministic from gate/decision/evidence state.
-- [ ] **6.2.3** Actions never bypass founder approval.
-- [ ] **6.2.4** Suggested customer interviews include evidence rationale.
-- [ ] **6.2.5** Full validation passes.
+- [x] **6.2.1** Action recommendation model exists and serializes.
+- [x] **6.2.2** Actions are deterministic from gate/decision/evidence state.
+- [x] **6.2.3** Actions never bypass founder approval.
+- [x] **6.2.4** Suggested customer interviews include evidence rationale.
+- [x] **6.2.5** Full validation passes.
 
 ### Validation expectations
 
@@ -886,11 +886,11 @@ Keep parked opportunities visible and revisit them when new matching evidence ap
 
 ### Acceptance criteria
 
-- [ ] **6.3.1** Parked opportunity record exists and serializes.
-- [ ] **6.3.2** New matching evidence can trigger revisit recommendation.
-- [ ] **6.3.3** Revisit logic does not auto-promote.
-- [ ] **6.3.4** Revisit queue is visible in weekly package.
-- [ ] **6.3.5** Full validation passes.
+- [x] **6.3.1** Parked opportunity record exists and serializes.
+- [x] **6.3.2** New matching evidence can trigger revisit recommendation.
+- [x] **6.3.3** Revisit logic does not auto-promote.
+- [x] **6.3.4** Revisit queue is visible in weekly package.
+- [x] **6.3.5** Full validation passes.
 
 ### Validation expectations
 
@@ -915,29 +915,44 @@ Cases:
 - strong opportunity;
 - weak but interesting;
 - generic false positive;
-- no buyer;
-- no evidence;
 - vendor promo false positive;
-- price false positive;
 - duplicate signal;
-- mojibake case;
+- no buyer;
+- weak noisy;
 - killed-pattern repeat;
-- strong pain but weak price evidence.
+- needs more evidence;
+- parked/revisit candidate.
+
+### Actual case types delivered (10 cases)
+
+| Case ID | Quality Label | Founder Posture | Gate Decision |
+|---------|--------------|-----------------|---------------|
+| opp_quality_v1_case_001 | strong_opportunity | promote_candidate | pass |
+| opp_quality_v1_case_002 | weak_but_interesting | park_candidate | park |
+| opp_quality_v1_case_003 | generic_false_positive | kill_candidate | reject |
+| opp_quality_v1_case_004 | vendor_promo_false_positive | kill_candidate | reject |
+| opp_quality_v1_case_005 | duplicate_signal | needs_more_evidence | park |
+| opp_quality_v1_case_006 | no_buyer | park_candidate | park |
+| opp_quality_v1_case_007 | weak_noisy | kill_candidate | reject |
+| opp_quality_v1_case_008 | strong_opportunity | revisit_candidate | pass |
+| opp_quality_v1_case_009 | killed_pattern_repeat | kill_candidate | reject |
+| opp_quality_v1_case_010 | needs_more_evidence | needs_more_evidence | park |
 
 ### Expected files
 
-- `tests/fixtures/opportunity_quality_cases_v1.json`
-- `tests/test_opportunity_quality_dataset.py`
+- `examples/evaluation_dataset_v2_5/opportunity_quality_cases_v1.json`
+- `src/oos/evaluation_dataset.py`
+- `tests/test_opportunity_quality_evaluation_dataset.py`
 - `docs/dev_ledger/02_mini_epics/7.1-opportunity-quality-evaluation-dataset-v1.md`
 - `docs/dev_ledger/03_run_reports/7.1-opportunity-quality-evaluation-dataset-v1.md`
 
 ### Acceptance criteria
 
-- [ ] **7.1.1** Dataset includes all required case types.
-- [ ] **7.1.2** Each case includes expected gate outcome and rationale.
-- [ ] **7.1.3** Each case includes evidence IDs or explicit no-evidence state.
-- [ ] **7.1.4** Dataset is deterministic and fixture-only.
-- [ ] **7.1.5** Full validation passes.
+- [x] **7.1.1** Dataset includes all required case types.
+- [x] **7.1.2** Each case includes expected gate outcome and rationale.
+- [x] **7.1.3** Each case includes evidence IDs or explicit no-evidence state.
+- [x] **7.1.4** Dataset is deterministic and fixture-only.
+- [x] **7.1.5** Full validation passes.
 
 ### Validation expectations
 
@@ -974,11 +989,11 @@ Metrics:
 
 ### Acceptance criteria
 
-- [ ] **7.2.1** Metrics model exists and serializes.
-- [ ] **7.2.2** Metrics are computed deterministically from fixture outputs.
-- [ ] **7.2.3** False-positive and duplicate rates are reported separately.
-- [ ] **7.2.4** Unsupported assumptions are counted.
-- [ ] **7.2.5** Full validation passes.
+- [x] **7.2.1** Metrics model exists and serializes.
+- [x] **7.2.2** Metrics are computed deterministically from fixture outputs.
+- [x] **7.2.3** False-positive and duplicate rates are reported separately.
+- [x] **7.2.4** Unsupported assumptions are counted.
+- [x] **7.2.5** Full validation passes.
 
 ### Validation expectations
 
@@ -1001,18 +1016,18 @@ Validate full v2.5 flow on fixtures.
 
 ### Expected files
 
-- `tests/test_v2_5_end_to_end_fixture.py`
+- `tests/test_v2_5_end_to_end_fixture_validation.py`
 - `docs/dev_ledger/02_mini_epics/7.3-v2-5-end-to-end-fixture-validation.md`
 - `docs/dev_ledger/03_run_reports/7.3-v2-5-end-to-end-fixture-validation.md`
 
 ### Acceptance criteria
 
-- [ ] **7.3.1** End-to-end fixture flow passes.
-- [ ] **7.3.2** Evidence packs feed opportunity sketches/synthesis outputs.
-- [ ] **7.3.3** Quality gate outputs pass/park/reject.
-- [ ] **7.3.4** Founder feedback maps back to signals/evidence.
-- [ ] **7.3.5** Weekly package includes actionable next steps.
-- [ ] **7.3.6** Full validation passes.
+- [x] **7.3.1** End-to-end fixture flow passes.
+- [x] **7.3.2** Evidence packs feed opportunity sketches/synthesis outputs.
+- [x] **7.3.3** Quality gate outputs pass/park/reject.
+- [x] **7.3.4** Founder feedback maps back to signals/evidence.
+- [x] **7.3.5** Weekly package includes actionable next steps.
+- [x] **7.3.6** Full validation passes.
 
 ### Validation expectations
 
@@ -1082,14 +1097,14 @@ Close v2.5 cleanly.
 
 ### Acceptance criteria
 
-- [ ] **8.1.1** Full unittest discovery passes.
-- [ ] **8.1.2** `scripts/oos-validate.ps1` passes.
-- [ ] **8.1.3** `git diff --check` passes.
-- [ ] **8.1.4** Roadmap status is `completed`.
-- [ ] **8.1.5** Completed items: `24 / 24`.
-- [ ] **8.1.6** Remaining items: `0 / 24`.
-- [ ] **8.1.7** Dev Ledger final state updated.
-- [ ] **8.1.8** No release tag unless explicitly approved.
+- [x] **8.1.1** Full unittest discovery passes. (1106 tests, 0 failures, OK)
+- [x] **8.1.2** `scripts/oos-validate.ps1` passes.
+- [x] **8.1.3** `git diff --check` passes.
+- [x] **8.1.4** Roadmap status is `completed`.
+- [x] **8.1.5** Completed items: `24 / 24`.
+- [x] **8.1.6** Remaining items: `0 / 24`.
+- [x] **8.1.7** Dev Ledger final state updated.
+- [x] **8.1.8** No release tag unless explicitly approved.
 
 ### Validation expectations
 

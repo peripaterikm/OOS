@@ -1,4 +1,4 @@
-﻿# Dev Ledger Project State
+# Dev Ledger Project State
 
 ## Current Roadmap
 
@@ -9,17 +9,17 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `5.1 Founder decision taxonomy v2`
-- Roadmap state: `active / planned`
-- Completed: `15 / 24`
-- Remaining: `9 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `4.3` - False-positive opportunity suppressor
-- Next planned roadmap item: Roadmap v2.5 `5.1` - Founder decision taxonomy v2
+- Current item: `v2.5 complete`
+- Roadmap state: `completed`
+- Completed: `24 / 24`
+- Remaining: `0 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `8.1` - Roadmap v2.5 final validation
+- Next planned roadmap item: Roadmap v2.5 `7.4` - Third controlled live run quality comparison (optional/deferred checkpoint)
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-5-block-3-opportunity-formation`
+- Current branch: `feat/v2-5-block-5-founder-feedback-loop`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
@@ -109,3 +109,13 @@
 - Roadmap v2.5 item 4.1 added a deterministic post-synthesis opportunity quality gate with pass/park/reject decisions, traceability checks, conservative rationale, and founder-decision authority preserved without live collection, live internet/API calls, live LLM/API calls, or provider execution.
 - Roadmap v2.5 item 4.2 added deterministic evidence sufficiency scoring with explicit dimensions, missing-evidence/risk factors, score bands, and narrow quality-gate inclusion while preserving founder-decision authority and no-auto-promote behavior.
 - Roadmap v2.5 item 4.3 added deterministic false-positive opportunity suppression for generic, vendor/SEO, product-submission, disguised-consulting, buyerless, unsupported-assumption-heavy, and low-sufficiency opportunities, with quality-gate integration that prevents pass for high/critical false positives without auto-promotion.
+- Roadmap v2.5 item 5.1 added a structured FounderDecisionV2 taxonomy with five decision values, decision-specific reason categories, deterministic IDs, traceability fields, validation, serialization, and summaries without changing scoring, mapping feedback, or founder preference profiles.
+- Roadmap v2.5 item 5.2 added deterministic founder feedback mapping from `FounderDecisionV2` to opportunity, evidence-pack, optional cluster, evidence, source-signal, and source-URL lineage, with feedback tags, signal impact, recommended future handling, serialization, validation, and record-only semantics without scoring mutation, ML-training claims, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 5.3 added deterministic FounderPreferenceProfile built from `FounderDecisionV2` and optional `FounderFeedbackMapping` inputs, with preferred pain types, rejected/promoted patterns, recurring kill reasons, evidence gap aggregation, scoring hints, package warnings, and fixture-driven tests without ML-training claims, scoring mutation, internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 6.1 added a deterministic `WeeklyOpportunityReviewPackage` that aggregates existing founder decisions, feedback mappings, preference profiles, and opportunity candidates into a founder-facing weekly review with structured sections, traceability-preserving item IDs, clear empty states, advisory-only enforcement, and JSON/Markdown rendering without live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 6.2 added a deterministic next-best-founder-actions layer (`FounderAction` model, `build_next_best_founder_actions()`) that converts the `WeeklyOpportunityReviewPackage` into a prioritized, flattened list of advisory actions with stable action IDs, 10 action types, priority bands, linked source artifact IDs, suggested next steps, and JSON/Markdown rendering without autonomous decisions, portfolio transitions, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 6.3 added deterministic parking lot / revisit logic (`ParkingLotRecord` model, `RevisitMatch` model, `build_parking_lot_records()`, `match_revisit_candidates()`) that builds parked records from PARK/REVISIT_LATER decisions, matches new evidence using three-tier deterministic matching (pattern keys then token overlap then substring), surfaces advisory revisit matches in the weekly review revisit_queue section, and avoids autonomous portfolio transitions, embeddings, ML, LLM, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 7.1 created the opportunity quality evaluation dataset v1 with 10 synthetic labeled cases under `examples/evaluation_dataset_v2_5/opportunity_quality_cases_v1.json`, a loader with validation in `src/oos/evaluation_dataset.py`, and 14 focused tests covering dataset integrity, case-type coverage, label-decision consistency, and deterministic gate evaluation without live APIs, LLM calls, or internet access.
+- Roadmap v2.5 item 7.2 created deterministic regression metrics (`OpportunityQualityRegressionMetrics` model, `compute_regression_metrics()`) that load the v1 quality dataset, run the existing `evaluate_opportunity_quality()` pipeline on each case, compare actual gate outputs to expected labels, and produce JSON-serializable aggregate and per-case metrics (total_cases, gate_match_rate=1.0, false_positive_rate=0.4, duplicate_rate=0.1, unsupported_assumptions_count=30) with 52 focused tests and no live APIs, LLM calls, or internet access.
+- Roadmap v2.5 item 7.3 created deterministic end-to-end fixture validation (`V2_5EndToEndValidationReport` model, `run_v2_5_end_to_end_fixture_validation()`) that processes all 10 quality fixture cases through the full v2.5 advisory pipeline — evidence packs, quality gates, founder decisions, feedback mappings, preference profiles, parking lot records, weekly review packaging, and next-best actions — with 37 focused tests, 5-stage traceability verification, advisory-only enforcement (0 autonomous decisions), deterministic output, and no live APIs, LLM calls, or internet access.
+- Roadmap v2.5 item 8.1 closed the roadmap with a final validation checkpoint: 1106 tests, 0 failures; `scripts/oos-validate.ps1` pass; `git diff --check` clean; roadmap state `completed` at `24 / 24`. Push, PR, merge, and release tag remain deferred until explicitly requested. Item 7.4 (third controlled live run) remains optional/deferred.

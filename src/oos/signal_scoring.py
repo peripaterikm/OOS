@@ -74,6 +74,9 @@ class SignalScoringInput:
     kill_pattern_flag: bool = False
     kill_pattern_penalty: float = 0.0
     vendor_promo_flag: bool = False
+    founder_preference_advisory_adjustment: float = 0.0
+    founder_preference_hint_kind: str = ""
+    founder_preference_hint_reason: str = ""
 
 
 @dataclass(frozen=True)
@@ -99,6 +102,9 @@ class SignalScoreBreakdown:
     classification_confidence_factor: float
     human_review_cap_applied: bool
     noise_cap_applied: bool
+    founder_preference_advisory_adjustment: float
+    founder_preference_hint_kind: str
+    founder_preference_hint_reason: str
     final_score: float
     explanation: List[str]
     scoring_model_version: str = SCORING_MODEL_VERSION
@@ -187,6 +193,15 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
         noise_cap_applied = True
         explanation.append("noise_cap")
 
+    preference_adjustment = float(scoring_input.founder_preference_advisory_adjustment)
+    preference_hint_kind = str(scoring_input.founder_preference_hint_kind or "no_advisory_change")
+    preference_hint_reason = str(scoring_input.founder_preference_hint_reason or "")
+    if preference_adjustment != 0.0:
+        score += preference_adjustment
+        explanation.append(f"founder_preference:{preference_hint_kind}")
+        if preference_hint_reason:
+            explanation.append(f"founder_preference_reason:{preference_hint_reason}")
+
     if topic_score >= 0.55:
         explanation.append("topic_relevance:finance_anchor")
     if pain_score >= 0.50:
@@ -230,6 +245,9 @@ def build_signal_score_breakdown(scoring_input: SignalScoringInput) -> SignalSco
         classification_confidence_factor=classification_factor,
         human_review_cap_applied=human_review_cap_applied,
         noise_cap_applied=noise_cap_applied,
+        founder_preference_advisory_adjustment=round(preference_adjustment, 3),
+        founder_preference_hint_kind=preference_hint_kind,
+        founder_preference_hint_reason=preference_hint_reason,
         final_score=round(_clamp(score), 2),
         explanation=explanation,
     )

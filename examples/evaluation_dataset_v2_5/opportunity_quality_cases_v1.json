@@ -1,0 +1,1295 @@
+[
+  {
+    "case_id": "opp_quality_v1_case_001",
+    "title": "Strong specific pain with recurrence and buyer clarity",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_001",
+        "cluster_id": "cluster_smb_invoice_collection",
+        "topic_id": "smb_invoice_collection",
+        "source_signal_ids": [
+          "sig_v1_case_001_001",
+          "sig_v1_case_001_002",
+          "sig_v1_case_001_003"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_001_hn_001",
+            "source_signal_id": "sig_v1_case_001_001",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_001",
+            "source_type": "hn_algolia",
+            "summary": "SMB owner describes spending 2 hours every Friday following up on unpaid invoices; customers ignore email reminders and only respond to personal calls.",
+            "confidence": 0.85
+          },
+          {
+            "evidence_id": "ev_v1_case_001_gh_001",
+            "source_signal_id": "sig_v1_case_001_002",
+            "source_url": "https://github.com/synthetic/repo/issues/1",
+            "source_type": "github_issues",
+            "summary": "Bookkeeper requests automated invoice follow-up because current QuickBooks reminders have no escalation and clients ignore them.",
+            "confidence": 0.8
+          },
+          {
+            "evidence_id": "ev_v1_case_001_hn_002",
+            "source_signal_id": "sig_v1_case_001_003",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_002",
+            "source_type": "hn_algolia",
+            "summary": "Freelance accountant says unpaid invoices are the number one cash flow problem for their SMB clients; existing tools only send generic reminders.",
+            "confidence": 0.75
+          }
+        ],
+        "summaries": [
+          "SMB owners spend significant time on unpaid invoice follow-up",
+          "Existing tools lack escalation and personalization",
+          "Multiple independent sources confirm the pain across HN and GitHub Issues"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "hn_algolia",
+            "source_count": 2,
+            "evidence_ids": [
+              "ev_v1_case_001_hn_001",
+              "ev_v1_case_001_hn_002"
+            ]
+          },
+          {
+            "source_type": "github_issues",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_001_gh_001"
+            ]
+          }
+        ],
+        "recurrence_count": 3,
+        "source_diversity": 2,
+        "price_signal_ids": [
+          "price_sig_v1_case_001"
+        ],
+        "weak_pattern_ids": [],
+        "kill_warning_ids": [],
+        "risk_notes": [],
+        "confidence_values": [
+          0.85,
+          0.8,
+          0.75
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "hn_algolia",
+          "github_issues"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_001_hn_001",
+          "ev_v1_case_001_gh_001",
+          "ev_v1_case_001_hn_002"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_001",
+          "https://github.com/synthetic/repo/issues/1",
+          "https://news.ycombinator.com/item?id=synthetic_002"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_001",
+        "evidence_pack_id": "ep_v1_case_001",
+        "cluster_id": "cluster_smb_invoice_collection",
+        "problem_statement": "SMB owners spend hours each week following up on unpaid invoices because existing tools only send generic email reminders with no escalation or personalization.",
+        "target_user": "SMB owner or bookkeeper",
+        "current_workaround": "Manual email follow-ups, personal phone calls, spreadsheet tracking of overdue invoices",
+        "opportunity_sketch": "An automated invoice follow-up system with personalized escalation sequences that increases payment rates without requiring owner time.",
+        "why_now": "Rising interest rates make cash flow timing more critical; SMBs need to collect faster.",
+        "possible_buyer": "SMB owner",
+        "product_wedge": "Escalation-aware invoice reminder with personalization templates and payment-link embedding",
+        "evidence_ids": [
+          "ev_v1_case_001_hn_001",
+          "ev_v1_case_001_gh_001",
+          "ev_v1_case_001_hn_002"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_001_001",
+          "sig_v1_case_001_002",
+          "sig_v1_case_001_003"
+        ],
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_001",
+          "https://github.com/synthetic/repo/issues/1",
+          "https://news.ycombinator.com/item?id=synthetic_002"
+        ],
+        "unsupported_assumptions": [
+          "price_or_budget"
+        ],
+        "confidence": 0.75,
+        "risk_notes": [],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "strong_opportunity",
+      "founder_review_posture": "promote_candidate",
+      "gate_decision": "pass",
+      "evidence_gaps": [
+        "price_or_willingness_to_pay"
+      ],
+      "risk_notes": [],
+      "sufficiency_band": "strong",
+      "false_positive_severity": "none"
+    },
+    "rationale": "Three independent sources across two source types confirm recurring SMB pain. Buyer is clear (SMB owner/bookkeeper). Workaround is documented. Price evidence is the only gap — unsupported assumption about budget. Overall evidence is strong enough for founder to consider promoting to interviews."
+  },
+  {
+    "case_id": "opp_quality_v1_case_002",
+    "title": "Strong pain but weak price evidence",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_002",
+        "cluster_id": "cluster_month_end_reporting",
+        "topic_id": "month_end_reporting",
+        "source_signal_ids": [
+          "sig_v1_case_002_001",
+          "sig_v1_case_002_002"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_002_hn_001",
+            "source_signal_id": "sig_v1_case_002_001",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_003",
+            "source_type": "hn_algolia",
+            "summary": "Finance manager at a 50-person company spends the last 3 days of every month reconciling reports from three different systems; errors cause restatements.",
+            "confidence": 0.9
+          },
+          {
+            "evidence_id": "ev_v1_case_002_gh_001",
+            "source_signal_id": "sig_v1_case_002_002",
+            "source_url": "https://github.com/synthetic/repo/issues/2",
+            "source_type": "github_issues",
+            "summary": "Feature request for consolidated month-end reporting across QuickBooks and custom ERP; current process is manual Excel consolidation.",
+            "confidence": 0.7
+          }
+        ],
+        "summaries": [
+          "Month-end reporting reconciliation is a recurring time sink",
+          "Multiple system reconciliation causes errors and restatements"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "hn_algolia",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_002_hn_001"
+            ]
+          },
+          {
+            "source_type": "github_issues",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_002_gh_001"
+            ]
+          }
+        ],
+        "recurrence_count": 2,
+        "source_diversity": 2,
+        "price_signal_ids": [],
+        "weak_pattern_ids": [],
+        "kill_warning_ids": [],
+        "risk_notes": [
+          {
+            "risk_type": "weak_price_evidence",
+            "note": "No willingness-to-pay signal found in source evidence; generic pricing expectation only.",
+            "severity": "medium"
+          }
+        ],
+        "confidence_values": [
+          0.9,
+          0.7
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "hn_algolia",
+          "github_issues"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_002_hn_001",
+          "ev_v1_case_002_gh_001"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_003",
+          "https://github.com/synthetic/repo/issues/2"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_002",
+        "evidence_pack_id": "ep_v1_case_002",
+        "cluster_id": "cluster_month_end_reporting",
+        "problem_statement": "Finance managers spend days reconciling month-end reports across multiple systems, leading to errors and restatements.",
+        "target_user": "Finance manager or controller",
+        "current_workaround": "Manual Excel consolidation across QuickBooks and ERP exports",
+        "opportunity_sketch": "A consolidated month-end reporting layer that pulls from multiple accounting/ERP systems and produces audit-ready reports.",
+        "why_now": "unknown",
+        "possible_buyer": "Finance manager",
+        "product_wedge": "Multi-system month-end report consolidator with reconciliation flags",
+        "evidence_ids": [
+          "ev_v1_case_002_hn_001",
+          "ev_v1_case_002_gh_001"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_002_001",
+          "sig_v1_case_002_002"
+        ],
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_003",
+          "https://github.com/synthetic/repo/issues/2"
+        ],
+        "unsupported_assumptions": [
+          "price_or_budget",
+          "why_now"
+        ],
+        "confidence": 0.6,
+        "risk_notes": [
+          "weak_price_evidence"
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "weak_but_interesting",
+      "founder_review_posture": "park_candidate",
+      "gate_decision": "park",
+      "evidence_gaps": [
+        "price_or_willingness_to_pay",
+        "why_now"
+      ],
+      "risk_notes": [
+        "weak_price_evidence"
+      ],
+      "sufficiency_band": "adequate",
+      "false_positive_severity": "none"
+    },
+    "rationale": "Strong pain signal with two sources and clear buyer, but no price evidence and why-now is unknown. Should be parked until price signal or urgency evidence appears. Founder can override to promote if they have domain knowledge."
+  },
+  {
+    "case_id": "opp_quality_v1_case_003",
+    "title": "Generic productivity/AI assistant idea",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_003",
+        "cluster_id": "cluster_generic_ai_assistant",
+        "topic_id": "generic_ai_assistant",
+        "source_signal_ids": [
+          "sig_v1_case_003_001"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_003_hn_001",
+            "source_signal_id": "sig_v1_case_003_001",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_004",
+            "source_type": "hn_algolia",
+            "summary": "We need an AI assistant that helps with everything. There's so much to do and AI could automate it.",
+            "confidence": 0.3
+          }
+        ],
+        "summaries": [
+          "Vague request for AI assistant to automate general tasks"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "hn_algolia",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_003_hn_001"
+            ]
+          }
+        ],
+        "recurrence_count": 1,
+        "source_diversity": 1,
+        "price_signal_ids": [],
+        "weak_pattern_ids": [],
+        "kill_warning_ids": [],
+        "risk_notes": [
+          {
+            "risk_type": "generic",
+            "note": "No specific pain, buyer, or workaround described. Generic AI assistant request.",
+            "severity": "high"
+          }
+        ],
+        "confidence_values": [
+          0.3
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "hn_algolia"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_003_hn_001"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_004"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_003",
+        "evidence_pack_id": "ep_v1_case_003",
+        "cluster_id": "cluster_generic_ai_assistant",
+        "problem_statement": "People want AI to help with general productivity tasks.",
+        "target_user": "unknown",
+        "current_workaround": "unknown",
+        "opportunity_sketch": "An AI assistant that helps with everything.",
+        "why_now": "unknown",
+        "possible_buyer": "unknown",
+        "product_wedge": "unknown",
+        "evidence_ids": [
+          "ev_v1_case_003_hn_001"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_003_001"
+        ],
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_004"
+        ],
+        "unsupported_assumptions": [
+          "target_user",
+          "possible_buyer",
+          "product_wedge",
+          "why_now",
+          "price_or_budget"
+        ],
+        "confidence": 0.15,
+        "risk_notes": [
+          "generic",
+          "no_buyer",
+          "no_specific_pain"
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "generic_false_positive",
+      "founder_review_posture": "kill_candidate",
+      "gate_decision": "reject",
+      "evidence_gaps": [
+        "possible_buyer",
+        "product_wedge",
+        "current_workaround",
+        "why_now",
+        "price_or_willingness_to_pay",
+        "source_diversity",
+        "recurrence"
+      ],
+      "risk_notes": [
+        "generic",
+        "no_buyer",
+        "no_specific_pain"
+      ],
+      "sufficiency_band": "insufficient",
+      "false_positive_severity": "critical"
+    },
+    "rationale": "No specific pain, no buyer, no workaround, single low-confidence source. This is a textbook generic AI idea that should be killed. All key dimensions are unknown or generic."
+  },
+  {
+    "case_id": "opp_quality_v1_case_004",
+    "title": "Vendor promo / marketing false positive",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_004",
+        "cluster_id": "cluster_vendor_promo_accounting",
+        "topic_id": "vendor_promo_accounting",
+        "source_signal_ids": [
+          "sig_v1_case_004_001"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_004_gh_001",
+            "source_signal_id": "sig_v1_case_004_001",
+            "source_url": "https://github.com/synthetic/vendor-repo/issues/1",
+            "source_type": "github_issues",
+            "summary": "Introducing AcmeBooks — the complete accounting solution for small businesses. Features include invoicing, expense tracking, payroll integration, and real-time dashboards. Start your free trial today!",
+            "confidence": 0.2
+          }
+        ],
+        "summaries": [
+          "Product listing for AcmeBooks accounting software"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "github_issues",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_004_gh_001"
+            ]
+          }
+        ],
+        "recurrence_count": 1,
+        "source_diversity": 1,
+        "price_signal_ids": [],
+        "weak_pattern_ids": [],
+        "kill_warning_ids": [],
+        "risk_notes": [
+          {
+            "risk_type": "vendor_promo",
+            "note": "Text is a product listing / marketing copy, not a pain signal.",
+            "severity": "fatal"
+          }
+        ],
+        "confidence_values": [
+          0.2
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "github_issues"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_004_gh_001"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://github.com/synthetic/vendor-repo/issues/1"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_004",
+        "evidence_pack_id": "ep_v1_case_004",
+        "cluster_id": "cluster_vendor_promo_accounting",
+        "problem_statement": "Small businesses need accounting software with invoicing and payroll.",
+        "target_user": "unknown",
+        "current_workaround": "unknown",
+        "opportunity_sketch": "An accounting platform for SMBs.",
+        "why_now": "unknown",
+        "possible_buyer": "unknown",
+        "product_wedge": "unknown",
+        "evidence_ids": [
+          "ev_v1_case_004_gh_001"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_004_001"
+        ],
+        "source_urls": [
+          "https://github.com/synthetic/vendor-repo/issues/1"
+        ],
+        "unsupported_assumptions": [
+          "target_user",
+          "possible_buyer",
+          "product_wedge",
+          "why_now",
+          "price_or_budget"
+        ],
+        "confidence": 0.1,
+        "risk_notes": [
+          "vendor_promo",
+          "source_quality_issue"
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "vendor_promo_false_positive",
+      "founder_review_posture": "kill_candidate",
+      "gate_decision": "reject",
+      "evidence_gaps": [
+        "possible_buyer",
+        "product_wedge",
+        "current_workaround",
+        "why_now",
+        "price_or_willingness_to_pay",
+        "source_diversity",
+        "recurrence",
+        "sufficient_evidence"
+      ],
+      "risk_notes": [
+        "vendor_promo",
+        "source_quality_issue"
+      ],
+      "sufficiency_band": "insufficient",
+      "false_positive_severity": "critical"
+    },
+    "rationale": "The source text is a product advertisement, not a real pain signal. This should be caught by vendor-promo suppression and killed. Represents a GitHub Issues SEO/marketing false positive."
+  },
+  {
+    "case_id": "opp_quality_v1_case_005",
+    "title": "Duplicate or near-duplicate evidence",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_005",
+        "cluster_id": "cluster_bookkeeping_duplicate",
+        "topic_id": "bookkeeping_duplicate",
+        "source_signal_ids": [
+          "sig_v1_case_005_001",
+          "sig_v1_case_005_002"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_005_hn_001",
+            "source_signal_id": "sig_v1_case_005_001",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_005",
+            "source_type": "hn_algolia",
+            "summary": "SMB owners use sticky notes and Excel for bookkeeping because they cannot afford a developer to build custom tools.",
+            "confidence": 0.7
+          },
+          {
+            "evidence_id": "ev_v1_case_005_hn_002",
+            "source_signal_id": "sig_v1_case_005_002",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_006",
+            "source_type": "hn_algolia",
+            "summary": "SMB owners use sticky notes and Excel for bookkeeping because they cannot afford a developer.",
+            "confidence": 0.65
+          }
+        ],
+        "summaries": [
+          "SMB bookkeeping via sticky notes and Excel",
+          "Near-duplicate: same pain, similar wording, same source type"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "hn_algolia",
+            "source_count": 2,
+            "evidence_ids": [
+              "ev_v1_case_005_hn_001",
+              "ev_v1_case_005_hn_002"
+            ]
+          }
+        ],
+        "recurrence_count": 1,
+        "source_diversity": 1,
+        "price_signal_ids": [],
+        "weak_pattern_ids": [],
+        "kill_warning_ids": [],
+        "risk_notes": [
+          {
+            "risk_type": "duplicate",
+            "note": "Two pieces of evidence are near-duplicate from the same source type; recurrence may be inflated.",
+            "severity": "high"
+          }
+        ],
+        "confidence_values": [
+          0.7,
+          0.65
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "hn_algolia"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_005_hn_001",
+          "ev_v1_case_005_hn_002"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_005",
+          "https://news.ycombinator.com/item?id=synthetic_006"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_005",
+        "evidence_pack_id": "ep_v1_case_005",
+        "cluster_id": "cluster_bookkeeping_duplicate",
+        "problem_statement": "SMB owners use sticky notes and Excel for bookkeeping because they cannot afford a developer to build custom tools.",
+        "target_user": "SMB owner",
+        "current_workaround": "Sticky notes and Excel spreadsheets",
+        "opportunity_sketch": "Low-cost bookkeeping tool for SMB owners who cannot afford developers.",
+        "why_now": "unknown",
+        "possible_buyer": "SMB owner",
+        "product_wedge": "Sticky-note-to-ledger bookkeeping app for non-technical SMB owners",
+        "evidence_ids": [
+          "ev_v1_case_005_hn_001",
+          "ev_v1_case_005_hn_002"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_005_001",
+          "sig_v1_case_005_002"
+        ],
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_005",
+          "https://news.ycombinator.com/item?id=synthetic_006"
+        ],
+        "unsupported_assumptions": [
+          "price_or_budget",
+          "why_now"
+        ],
+        "confidence": 0.45,
+        "risk_notes": [
+          "duplicate_evidence_warning",
+          "single_source_type"
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "duplicate_signal",
+      "founder_review_posture": "needs_more_evidence",
+      "gate_decision": "park",
+      "evidence_gaps": [
+        "price_or_willingness_to_pay",
+        "source_diversity",
+        "why_now"
+      ],
+      "risk_notes": [
+        "duplicate_evidence_warning",
+        "single_source_type"
+      ],
+      "sufficiency_band": "weak",
+      "false_positive_severity": "none"
+    },
+    "rationale": "Two pieces of evidence appear to be near-duplicates from the same source type (HN). Source diversity is effectively 1. Pain is real but recurrence is inflated by duplicates. Should be parked with needs-more-evidence until distinct sources confirm."
+  },
+  {
+    "case_id": "opp_quality_v1_case_006",
+    "title": "Unclear buyer",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_006",
+        "cluster_id": "cluster_compliance_vendor_evidence",
+        "topic_id": "compliance_vendor_evidence",
+        "source_signal_ids": [
+          "sig_v1_case_006_001"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_006_hn_001",
+            "source_signal_id": "sig_v1_case_006_001",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_007",
+            "source_type": "hn_algolia",
+            "summary": "Collecting vendor compliance evidence is painful; someone should build a tool for it.",
+            "confidence": 0.5
+          }
+        ],
+        "summaries": [
+          "Vendor compliance evidence collection is painful, but buyer is unclear"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "hn_algolia",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_006_hn_001"
+            ]
+          }
+        ],
+        "recurrence_count": 1,
+        "source_diversity": 1,
+        "price_signal_ids": [],
+        "weak_pattern_ids": [],
+        "kill_warning_ids": [],
+        "risk_notes": [
+          {
+            "risk_type": "unclear_buyer",
+            "note": "No indication of who would purchase or champion this tool.",
+            "severity": "high"
+          }
+        ],
+        "confidence_values": [
+          0.5
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "hn_algolia"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_006_hn_001"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_007"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_006",
+        "evidence_pack_id": "ep_v1_case_006",
+        "cluster_id": "cluster_compliance_vendor_evidence",
+        "problem_statement": "Collecting vendor compliance evidence is painful and manual.",
+        "target_user": "unknown",
+        "current_workaround": "Email threads and shared spreadsheets",
+        "opportunity_sketch": "A vendor compliance evidence collection and tracking tool.",
+        "why_now": "unknown",
+        "possible_buyer": "unknown",
+        "product_wedge": "unknown",
+        "evidence_ids": [
+          "ev_v1_case_006_hn_001"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_006_001"
+        ],
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_007"
+        ],
+        "unsupported_assumptions": [
+          "target_user",
+          "possible_buyer",
+          "product_wedge",
+          "why_now",
+          "price_or_budget"
+        ],
+        "confidence": 0.25,
+        "risk_notes": [
+          "unclear_buyer",
+          "single_source"
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "no_buyer",
+      "founder_review_posture": "park_candidate",
+      "gate_decision": "reject",
+      "evidence_gaps": [
+        "possible_buyer",
+        "product_wedge",
+        "why_now",
+        "price_or_willingness_to_pay",
+        "source_diversity",
+        "recurrence"
+      ],
+      "risk_notes": [
+        "unclear_buyer",
+        "single_source"
+      ],
+      "sufficiency_band": "weak",
+      "false_positive_severity": "high"
+    },
+    "rationale": "Pain description exists but buyer is completely unknown. Single source, low confidence. Gate evaluates as reject due to high false-positive severity from missing buyer/product wedge and single-source evidence, combined with weak sufficiency. Founder can override based on domain knowledge."
+  },
+  {
+    "case_id": "opp_quality_v1_case_007",
+    "title": "Weak signal cluster that should not be promoted",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_007",
+        "cluster_id": "cluster_weak_dashboard_request",
+        "topic_id": "weak_dashboard_request",
+        "source_signal_ids": [
+          "sig_v1_case_007_001",
+          "sig_v1_case_007_002"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_007_hn_001",
+            "source_signal_id": "sig_v1_case_007_001",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_008",
+            "source_type": "hn_algolia",
+            "summary": "Need a dashboard for everything because leadership keeps asking questions.",
+            "confidence": 0.25
+          },
+          {
+            "evidence_id": "ev_v1_case_007_gh_001",
+            "source_signal_id": "sig_v1_case_007_002",
+            "source_url": "https://github.com/synthetic/repo/issues/3",
+            "source_type": "github_issues",
+            "summary": "Dashboard feature request: show all metrics in one place.",
+            "confidence": 0.2
+          }
+        ],
+        "summaries": [
+          "Vague dashboard requests with no specific metrics, pain, or buyer context"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "hn_algolia",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_007_hn_001"
+            ]
+          },
+          {
+            "source_type": "github_issues",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_007_gh_001"
+            ]
+          }
+        ],
+        "recurrence_count": 2,
+        "source_diversity": 2,
+        "price_signal_ids": [],
+        "weak_pattern_ids": [
+          "wp_dashboard_requests"
+        ],
+        "kill_warning_ids": [],
+        "risk_notes": [
+          {
+            "risk_type": "weak_noisy",
+            "note": "Dashboard requests without specific pain or metrics are weak signals.",
+            "severity": "medium"
+          }
+        ],
+        "confidence_values": [
+          0.25,
+          0.2
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "hn_algolia",
+          "github_issues"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_007_hn_001",
+          "ev_v1_case_007_gh_001"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_008",
+          "https://github.com/synthetic/repo/issues/3"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_007",
+        "evidence_pack_id": "ep_v1_case_007",
+        "cluster_id": "cluster_weak_dashboard_request",
+        "problem_statement": "Leadership wants dashboards to answer questions.",
+        "target_user": "unknown",
+        "current_workaround": "unknown",
+        "opportunity_sketch": "A dashboard that shows all metrics in one place.",
+        "why_now": "unknown",
+        "possible_buyer": "unknown",
+        "product_wedge": "unknown",
+        "evidence_ids": [
+          "ev_v1_case_007_hn_001",
+          "ev_v1_case_007_gh_001"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_007_001",
+          "sig_v1_case_007_002"
+        ],
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_008",
+          "https://github.com/synthetic/repo/issues/3"
+        ],
+        "unsupported_assumptions": [
+          "target_user",
+          "possible_buyer",
+          "product_wedge",
+          "why_now",
+          "price_or_budget"
+        ],
+        "confidence": 0.15,
+        "risk_notes": [
+          "weak_noisy",
+          "no_buyer",
+          "no_specific_pain",
+          "generic_dashboard"
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "weak_noisy",
+      "founder_review_posture": "kill_candidate",
+      "gate_decision": "reject",
+      "evidence_gaps": [
+        "possible_buyer",
+        "product_wedge",
+        "current_workaround",
+        "why_now",
+        "price_or_willingness_to_pay"
+      ],
+      "risk_notes": [
+        "weak_noisy",
+        "no_buyer",
+        "no_specific_pain",
+        "generic_dashboard"
+      ],
+      "sufficiency_band": "insufficient",
+      "false_positive_severity": "critical"
+    },
+    "rationale": "Weak signal cluster with vague dashboard requests. No specific pain, no buyer, no workaround. Two sources exist but content is generic. Should be rejected as noise, not promoted."
+  },
+  {
+    "case_id": "opp_quality_v1_case_008",
+    "title": "Parked/revisit-later opportunity with new matching evidence",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_008",
+        "cluster_id": "cluster_payroll_approval_trail",
+        "topic_id": "payroll_approval_trail",
+        "source_signal_ids": [
+          "sig_v1_case_008_001",
+          "sig_v1_case_008_002"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_008_gh_001",
+            "source_signal_id": "sig_v1_case_008_001",
+            "source_url": "https://github.com/synthetic/repo/issues/4",
+            "source_type": "github_issues",
+            "summary": "Payroll exception approvals happen in Slack DMs then are manually copied into the payroll system; audit trail is unreliable.",
+            "confidence": 0.8
+          },
+          {
+            "evidence_id": "ev_v1_case_008_hn_001",
+            "source_signal_id": "sig_v1_case_008_002",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_009",
+            "source_type": "hn_algolia",
+            "summary": "People ops manager screenshots Slack approval threads because auditors cannot trace decisions; this was flagged as revisit_later last quarter.",
+            "confidence": 0.75
+          }
+        ],
+        "summaries": [
+          "Payroll exception approvals lack audit trail across Slack and payroll systems",
+          "New evidence matches previously parked opportunity"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "github_issues",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_008_gh_001"
+            ]
+          },
+          {
+            "source_type": "hn_algolia",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_008_hn_001"
+            ]
+          }
+        ],
+        "recurrence_count": 2,
+        "source_diversity": 2,
+        "price_signal_ids": [],
+        "weak_pattern_ids": [],
+        "kill_warning_ids": [],
+        "risk_notes": [
+          {
+            "risk_type": "revisit_candidate",
+            "note": "Previously parked as revisit_later due to single-source evidence. New second source and auditor mention strengthen the case.",
+            "severity": "low"
+          }
+        ],
+        "confidence_values": [
+          0.8,
+          0.75
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "github_issues",
+          "hn_algolia"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_008_gh_001",
+          "ev_v1_case_008_hn_001"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://github.com/synthetic/repo/issues/4",
+          "https://news.ycombinator.com/item?id=synthetic_009"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_008",
+        "evidence_pack_id": "ep_v1_case_008",
+        "cluster_id": "cluster_payroll_approval_trail",
+        "problem_statement": "Payroll exception approvals happen in Slack without a reliable audit trail, causing compliance risk during audits.",
+        "target_user": "People ops manager or payroll administrator",
+        "current_workaround": "Screenshots of Slack threads, manual copying into payroll system",
+        "opportunity_sketch": "An approval trail capture layer that integrates Slack approvals with payroll system audit logs.",
+        "why_now": "Auditors increasingly scrutinize payroll exception processes; compliance risk is growing.",
+        "possible_buyer": "People ops manager",
+        "product_wedge": "Slack-to-payroll approval audit trail with screenshot-less compliance evidence",
+        "evidence_ids": [
+          "ev_v1_case_008_gh_001",
+          "ev_v1_case_008_hn_001"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_008_001",
+          "sig_v1_case_008_002"
+        ],
+        "source_urls": [
+          "https://github.com/synthetic/repo/issues/4",
+          "https://news.ycombinator.com/item?id=synthetic_009"
+        ],
+        "unsupported_assumptions": [
+          "price_or_budget"
+        ],
+        "confidence": 0.7,
+        "risk_notes": [
+          "revisit_candidate",
+          "previously_parked_single_source"
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "strong_opportunity",
+      "founder_review_posture": "revisit_candidate",
+      "gate_decision": "park",
+      "evidence_gaps": [
+        "price_or_willingness_to_pay"
+      ],
+      "risk_notes": [
+        "revisit_candidate",
+        "previously_parked_single_source"
+      ],
+      "sufficiency_band": "adequate",
+      "false_positive_severity": "none"
+    },
+    "rationale": "Previously parked as revisit_later due to single-source evidence. New evidence from a second source type (HN) and explicit auditor mention strengthens the case, but missing price evidence and adequate sufficiency lead the gate to park. Multi-source, clear buyer, documented workaround, why-now rationale present. Should be surfaced for founder revisit."
+  },
+  {
+    "case_id": "opp_quality_v1_case_009",
+    "title": "Opportunity that should be killed due to known rejected pattern",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_009",
+        "cluster_id": "cluster_disguised_consulting",
+        "topic_id": "disguised_consulting",
+        "source_signal_ids": [
+          "sig_v1_case_009_001",
+          "sig_v1_case_009_002"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_009_hn_001",
+            "source_signal_id": "sig_v1_case_009_001",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_010",
+            "source_type": "hn_algolia",
+            "summary": "Companies need help setting up their accounting workflows. Every implementation is different and requires custom configuration.",
+            "confidence": 0.55
+          },
+          {
+            "evidence_id": "ev_v1_case_009_gh_001",
+            "source_signal_id": "sig_v1_case_009_002",
+            "source_url": "https://github.com/synthetic/repo/issues/5",
+            "source_type": "github_issues",
+            "summary": "Accounting software onboarding takes weeks of custom setup per client; needs a services layer.",
+            "confidence": 0.5
+          }
+        ],
+        "summaries": [
+          "Accounting workflow setup is described as a services/consulting need, not a product wedge"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "hn_algolia",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_009_hn_001"
+            ]
+          },
+          {
+            "source_type": "github_issues",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_009_gh_001"
+            ]
+          }
+        ],
+        "recurrence_count": 2,
+        "source_diversity": 2,
+        "price_signal_ids": [],
+        "weak_pattern_ids": [],
+        "kill_warning_ids": [
+          "kw_disguised_consulting_001"
+        ],
+        "risk_notes": [
+          {
+            "risk_type": "disguised_consulting",
+            "note": "Problem description implies custom per-client implementation; no scalable product wedge. Matches known killed pattern: disguised_consulting.",
+            "severity": "fatal"
+          }
+        ],
+        "confidence_values": [
+          0.55,
+          0.5
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "hn_algolia",
+          "github_issues"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_009_hn_001",
+          "ev_v1_case_009_gh_001"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_010",
+          "https://github.com/synthetic/repo/issues/5"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_009",
+        "evidence_pack_id": "ep_v1_case_009",
+        "cluster_id": "cluster_disguised_consulting",
+        "problem_statement": "Companies need custom accounting workflow setup and configuration; every implementation is different.",
+        "target_user": "Accounting team",
+        "current_workaround": "Manual custom setup per client",
+        "opportunity_sketch": "A services layer for custom accounting software onboarding and configuration.",
+        "why_now": "unknown",
+        "possible_buyer": "Finance director",
+        "product_wedge": "Custom accounting workflow configuration service",
+        "evidence_ids": [
+          "ev_v1_case_009_hn_001",
+          "ev_v1_case_009_gh_001"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_009_001",
+          "sig_v1_case_009_002"
+        ],
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_010",
+          "https://github.com/synthetic/repo/issues/5"
+        ],
+        "unsupported_assumptions": [
+          "why_now",
+          "price_or_budget"
+        ],
+        "confidence": 0.4,
+        "risk_notes": [
+          "disguised_consulting",
+          "repeated_killed_pattern",
+          "no_scalable_product_wedge"
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "killed_pattern_repeat",
+      "founder_review_posture": "kill_candidate",
+      "gate_decision": "park",
+      "evidence_gaps": [
+        "why_now",
+        "price_or_willingness_to_pay"
+      ],
+      "risk_notes": [
+        "disguised_consulting",
+        "repeated_killed_pattern",
+        "no_scalable_product_wedge"
+      ],
+      "sufficiency_band": "adequate",
+      "false_positive_severity": "high"
+    },
+    "rationale": "The pattern describes custom per-client implementation — a disguised consulting opportunity. Matches a known killed pattern from the kill archive. Gate recognizes high false-positive severity from disguised-consulting pattern but with adequate sufficiency parks rather than rejects, preserving founder override authority. Founder should review and can kill based on killed-pattern knowledge."
+  },
+  {
+    "case_id": "opp_quality_v1_case_010",
+    "title": "Opportunity that needs more evidence rather than promote/kill",
+    "synthetic_data": true,
+    "input_artifacts": {
+      "evidence_pack": {
+        "evidence_pack_id": "ep_v1_case_010",
+        "cluster_id": "cluster_client_reporting_trust",
+        "topic_id": "client_reporting_trust",
+        "source_signal_ids": [
+          "sig_v1_case_010_001"
+        ],
+        "items": [
+          {
+            "evidence_id": "ev_v1_case_010_hn_001",
+            "source_signal_id": "sig_v1_case_010_001",
+            "source_url": "https://news.ycombinator.com/item?id=synthetic_011",
+            "source_type": "hn_algolia",
+            "summary": "Agency owner manually compares platform spend, CRM leads, and yesterday's screenshots before explaining anomalies to clients.",
+            "confidence": 0.65
+          }
+        ],
+        "summaries": [
+          "Agency owners manually compile client reporting from multiple platforms; trust depends on accuracy"
+        ],
+        "source_summaries": [
+          {
+            "source_type": "hn_algolia",
+            "source_count": 1,
+            "evidence_ids": [
+              "ev_v1_case_010_hn_001"
+            ]
+          }
+        ],
+        "recurrence_count": 1,
+        "source_diversity": 1,
+        "price_signal_ids": [],
+        "weak_pattern_ids": [],
+        "kill_warning_ids": [],
+        "risk_notes": [
+          {
+            "risk_type": "needs_more_evidence",
+            "note": "Single source with plausible pain but no recurrence, price signal, or second source confirmation.",
+            "severity": "medium"
+          }
+        ],
+        "confidence_values": [
+          0.65
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "source_types": [
+          "hn_algolia"
+        ],
+        "evidence_ids": [
+          "ev_v1_case_010_hn_001"
+        ],
+        "schema_version": "evidence_pack.v1",
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_011"
+        ]
+      },
+      "opportunity_candidate": {
+        "opportunity_id": "opp_v1_case_010",
+        "evidence_pack_id": "ep_v1_case_010",
+        "cluster_id": "cluster_client_reporting_trust",
+        "problem_statement": "Agency owners manually compile ad spend, CRM, and screenshot data to explain anomalies to clients.",
+        "target_user": "Agency owner",
+        "current_workaround": "Manual comparison of platform spend, CRM leads, and yesterday's screenshots",
+        "opportunity_sketch": "A client-facing anomaly explanation layer that auto-compiles platform data into trust-building reports.",
+        "why_now": "unknown",
+        "possible_buyer": "Agency owner",
+        "product_wedge": "Multi-platform ad spend anomaly reporter with client-ready explanations",
+        "evidence_ids": [
+          "ev_v1_case_010_hn_001"
+        ],
+        "source_signal_ids": [
+          "sig_v1_case_010_001"
+        ],
+        "source_urls": [
+          "https://news.ycombinator.com/item?id=synthetic_011"
+        ],
+        "unsupported_assumptions": [
+          "price_or_budget",
+          "why_now"
+        ],
+        "confidence": 0.45,
+        "risk_notes": [
+          "needs_more_evidence",
+          "single_source",
+          "no_price_signal"
+        ],
+        "created_from": "synthetic_evaluation_dataset_v1",
+        "schema_version": "opportunity_sketch.v1"
+      }
+    },
+    "expected": {
+      "quality_label": "needs_more_evidence",
+      "founder_review_posture": "needs_more_evidence",
+      "gate_decision": "reject",
+      "evidence_gaps": [
+        "price_or_willingness_to_pay",
+        "source_diversity",
+        "recurrence",
+        "why_now"
+      ],
+      "risk_notes": [
+        "needs_more_evidence",
+        "single_source",
+        "no_price_signal"
+      ],
+      "sufficiency_band": "weak",
+      "false_positive_severity": "high"
+    },
+    "rationale": "Plausible pain with a clear buyer and documented workaround, but only a single source, no recurrence, no price signal, and why-now is unknown. The gate evaluates as reject due to high false-positive severity from single-source/non-recurring evidence combined with weak sufficiency. Founder can override based on domain knowledge of the pain space."
+  }
+]

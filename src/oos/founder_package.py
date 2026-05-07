@@ -5,6 +5,10 @@ from pathlib import Path
 from typing import Any
 
 from .evidence_pack import EvidencePack, evidence_pack_to_dict
+from .founder_preference_profile import (
+    FounderPreferencePackageWarning,
+    FounderPreferenceProfile,
+)
 from .models import CandidateSignal, EvidenceClassification, PriceSignal
 
 
@@ -17,6 +21,7 @@ QUALITY_SECTION_KEYS = [
     "customer_voice_query_yield",
     "llm_review_outputs",
     "evidence_confidence_risk_notes",
+    "founder_preference_profile_warnings",
 ]
 
 
@@ -27,6 +32,8 @@ def build_founder_package_quality_sections(
     price_signals: list[PriceSignal],
     run_dir: Path | None = None,
     collection_metadata: dict[str, Any] | None = None,
+    founder_preference_profile: FounderPreferenceProfile | None = None,
+    founder_preference_warnings: list[FounderPreferencePackageWarning] | None = None,
 ) -> dict[str, Any]:
     ranked = sorted(candidate_signals, key=lambda signal: (-float(signal.confidence), signal.signal_id))
     classifications_by_evidence_id = {item.evidence_id: item for item in classifications}
@@ -43,6 +50,9 @@ def build_founder_package_quality_sections(
         "customer_voice_query_yield": _customer_voice_query_yield(ranked, metadata, run_dir),
         "llm_review_outputs": _llm_review_outputs(run_dir),
         "evidence_confidence_risk_notes": _evidence_confidence_risk_notes(ranked, classifications_by_evidence_id),
+        "founder_preference_profile_warnings": _founder_preference_profile_warnings(
+            founder_preference_profile, founder_preference_warnings
+        ),
     }
     return {
         "version": "founder_package_quality_sections_v1",
@@ -64,7 +74,14 @@ def render_founder_package_quality_sections(quality_sections: dict[str, Any]) ->
             lines.extend([f"- {empty_state or 'No items available.'}", ""])
             continue
         for item in items:
-            lines.append(f"- `{item.get('id', 'unknown')}`: {_md(item.get('summary', 'No summary available.'))}")
+            item_id = item.get("id", "unknown")
+            summary = item.get("summary", "No summary available.")
+            category = item.get("category")
+            severity = item.get("severity")
+            if category:
+                lines.append(f"- `{item_id}` [{category}/{severity or 'advisory'}]: {_md(summary)}")
+            else:
+                lines.append(f"- `{item_id}`: {_md(summary)}")
             for label, field_name in (
                 ("Evidence", "evidence_id"),
                 ("Source", "source_url"),
@@ -247,6 +264,32 @@ def _evidence_confidence_risk_notes(
             continue
         items.append(_signal_item(signal, risk_note=", ".join(risk_notes)))
     return _section(items, "No confidence or risk notes available.")
+
+
+def _founder_preference_profile_warnings(
+    profile: FounderPreferenceProfile | None = None,
+    warnings: list[FounderPreferencePackageWarning] | None = None,
+) -> dict[str, Any]:
+    if not warnings and profile is not None:
+        from .founder_preference_profile import profile_founder_package_warnings
+        warnings = profile_founder_package_warnings(profile)
+    if not warnings:
+        return _section(
+            [],
+            "No founder preference profile available. "
+            "Record founder decisions to generate advisory preference warnings.",
+        )
+    items = []
+    for w in warnings:
+        items.append(
+            {
+                "id": w.warning_id,
+                "summary": w.message,
+                "category": w.category,
+                "severity": w.severity,
+            }
+        )
+    return _section(items, "No founder preference warnings available.")
 
 
 def _optional_items(run_dir: Path | None, filename: str) -> dict[str, Any]:
