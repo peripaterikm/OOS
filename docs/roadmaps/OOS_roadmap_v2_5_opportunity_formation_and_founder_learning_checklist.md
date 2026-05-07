@@ -1097,14 +1097,14 @@ Close v2.5 cleanly.
 
 ### Acceptance criteria
 
-- [ ] **8.1.1** Full unittest discovery passes.
-- [ ] **8.1.2** `scripts/oos-validate.ps1` passes.
-- [ ] **8.1.3** `git diff --check` passes.
-- [ ] **8.1.4** Roadmap status is `completed`.
-- [ ] **8.1.5** Completed items: `24 / 24`.
-- [ ] **8.1.6** Remaining items: `0 / 24`.
-- [ ] **8.1.7** Dev Ledger final state updated.
-- [ ] **8.1.8** No release tag unless explicitly approved.
+- [x] **8.1.1** Full unittest discovery passes. (1106 tests, 0 failures, OK)
+- [x] **8.1.2** `scripts/oos-validate.ps1` passes.
+- [x] **8.1.3** `git diff --check` passes.
+- [x] **8.1.4** Roadmap status is `completed`.
+- [x] **8.1.5** Completed items: `24 / 24`.
+- [x] **8.1.6** Remaining items: `0 / 24`.
+- [x] **8.1.7** Dev Ledger final state updated.
+- [x] **8.1.8** No release tag unless explicitly approved.
 
 ### Validation expectations
 
