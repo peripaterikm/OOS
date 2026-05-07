@@ -191,14 +191,14 @@ Build the central orchestrator function that runs the full v2.5 pipeline — evi
 ### Acceptance criteria
 
 - [x] **2.1.1** `build_weekly_cycle()` exists and accepts the documented inputs.
-- [x] **2.1.2** A fixture run with evaluation-dataset-style input completes without errors and produces a valid `manifest.json`.
+- [x] **2.1.2** Fixture runs with evaluation-dataset-style input and canonical real signal batch input complete without errors and produce a valid `manifest.json`.
 - [x] **2.1.3** All 14 artifact types (manifest.json + 13 builder-written) are written and parseable.
 - [x] **2.1.4** Empty input (zero signals) produces all artifacts with valid empty states, no crashes.
 - [x] **2.1.5** Traceability: fixture tests verify that opportunity candidates' `source_signal_ids` trace back to input evidence packs.
 - [x] **2.1.6** Parking lot revisit infrastructure is present; revisit matches work when prior artifacts are supplied.
 - [x] **2.1.7** No live LLM/API calls are made during the pipeline.
-- [x] **2.1.8** Output is deterministic: same input → same `run_id`.
-- [x] **2.1.9** Focused tests (34) pass; full discovery and validation pending.
+- [x] **2.1.8** Output is deterministic: same input -> same `run_id`; same input + same explicit `run_id` + same `generated_at` produces stable artifact bytes.
+- [x] **2.1.9** Focused tests (39) pass; full discovery and validation pending.
 
 ---
 
@@ -596,7 +596,7 @@ The validation suite must assert `0` autonomous transitions.
 - `run_id` = `weekly_run_{YYYY-MM-DD}_{content_hash_short}` where `content_hash` = `sha256(input_file_content + run_date.isoformat())[:12]`.
 - Same input on same date → same `run_id`.
 - Different input or different date → different `run_id`.
-- Artifact content hashes should be stable across runs with the same input.
+- Artifact content hashes should be stable across runs with the same input when `run_id` and `generated_at` are fixed.
 
 ### B.5 Windows-native
 

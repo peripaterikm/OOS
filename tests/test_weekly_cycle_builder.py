@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from datetime import date
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -26,8 +26,22 @@ from oos.weekly_run_manifest import (
 # ---------------------------------------------------------------------------
 
 
-def _temp_project_root() -> Path:
-    return Path(tempfile.mkdtemp(prefix="oos_test_wcb_"))
+def _temp_project_root_for(test_case: unittest.TestCase) -> Path:
+    tmpdir = tempfile.TemporaryDirectory(prefix="oos_test_wcb_")
+    test_case.addCleanup(tmpdir.cleanup)
+    return Path(tmpdir.name)
+
+
+def _fixed_generated_at() -> str:
+    return "2026-05-07T12:00:00+00:00"
+
+
+def _artifact_hashes(run_dir: Path) -> dict[str, str]:
+    return {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(run_dir.iterdir(), key=lambda p: p.name)
+        if path.is_file()
+    }
 
 
 def _write_fixture_input(
@@ -185,7 +199,7 @@ class TestWeeklyCycleBuilderEmptyInput(unittest.TestCase):
     """Empty input tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_empty_input_produces_valid_manifest(self) -> None:
         input_file = _empty_input_file(self.project_root)
@@ -251,7 +265,7 @@ class TestWeeklyCycleBuilderNonEmptyInput(unittest.TestCase):
     """Non-empty fixture input tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_fixture_input_produces_evidence_packs(self) -> None:
         items = _evaluation_dataset_items()
@@ -315,12 +329,30 @@ class TestWeeklyCycleBuilderNonEmptyInput(unittest.TestCase):
         # Initial run: no founder decisions, so parking lot should be empty
         self.assertEqual(result.pipeline_summary["parking_lot_record_count"], 0)
 
+    def test_real_signal_batch_input_produces_evidence_packs(self) -> None:
+        input_file = Path(__file__).resolve().parents[1] / "examples" / "real_signal_batch.jsonl"
+        result = build_weekly_cycle(
+            project_root=self.project_root,
+            input_file=input_file,
+            generated_at=_fixed_generated_at(),
+        )
+        self.assertTrue(result.validation_passed, result.errors)
+        self.assertGreater(result.pipeline_summary["evidence_packs_built"], 0)
+        self.assertGreater(result.pipeline_summary["opportunity_candidates_built"], 0)
+        self.assertGreater(result.pipeline_summary["quality_gate_results"], 0)
+
+        run_dir = Path(result.run_dir)
+        evidence_path = run_dir / canonical_artifact_paths()["evidence_packs"]
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+        self.assertFalse(evidence["empty"])
+        self.assertGreater(len(evidence["items"]), 0)
+
 
 class TestWeeklyCycleBuilderManifestIntegration(unittest.TestCase):
     """Manifest integration tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_builder_writes_valid_manifest(self) -> None:
         items = _evaluation_dataset_items()
@@ -392,7 +424,7 @@ class TestWeeklyCycleBuilderDeterminism(unittest.TestCase):
     """Determinism tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_same_input_same_run_id(self) -> None:
         items = _evaluation_dataset_items()
@@ -422,12 +454,35 @@ class TestWeeklyCycleBuilderDeterminism(unittest.TestCase):
         )
         self.assertNotEqual(result_a.run_id, result_b.run_id)
 
+    def test_same_input_same_run_id_same_clock_stable_artifact_bytes(self) -> None:
+        items = _evaluation_dataset_items()
+        input_file = _write_fixture_input(self.project_root, items)
+        result_a = build_weekly_cycle(
+            project_root=self.project_root,
+            input_file=input_file,
+            run_id="stable_run_001",
+            generated_at=_fixed_generated_at(),
+        )
+        hashes_a = _artifact_hashes(Path(result_a.run_dir))
+
+        result_b = build_weekly_cycle(
+            project_root=self.project_root,
+            input_file=input_file,
+            run_id="stable_run_001",
+            generated_at=_fixed_generated_at(),
+        )
+        hashes_b = _artifact_hashes(Path(result_b.run_dir))
+
+        self.assertTrue(result_a.validation_passed, result_a.errors)
+        self.assertTrue(result_b.validation_passed, result_b.errors)
+        self.assertEqual(hashes_a, hashes_b)
+
 
 class TestWeeklyCycleBuilderArtifacts(unittest.TestCase):
     """Artifact output tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_all_13_builder_written_artifacts_exist(self) -> None:
         """Verify all 13 builder-written artifacts exist (excluding manifest.json)."""
@@ -514,7 +569,7 @@ class TestWeeklyCycleBuilderResultSerialization(unittest.TestCase):
     """Result serialization roundtrip tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_build_result_to_dict_roundtrip(self) -> None:
         items = _evaluation_dataset_items()
@@ -548,7 +603,7 @@ class TestWeeklyCycleBuilderTraceability(unittest.TestCase):
     """Traceability verification tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_opportunity_candidates_have_linked_signal_ids(self) -> None:
         items = _evaluation_dataset_items()
@@ -603,7 +658,7 @@ class TestWeeklyCycleBuilderSafetyBoundaries(unittest.TestCase):
     """Advisory-only, no_live_api, no_live_llm boundary tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_result_marks_advisory_only(self) -> None:
         items = _evaluation_dataset_items()
@@ -649,7 +704,7 @@ class TestWeeklyCycleBuilderMissingInput(unittest.TestCase):
     """Missing/invalid input tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_missing_input_file_fails_gracefully(self) -> None:
         missing = self.project_root / "does_not_exist.json"
@@ -660,8 +715,7 @@ class TestWeeklyCycleBuilderMissingInput(unittest.TestCase):
         self.assertFalse(result.validation_passed)
         self.assertTrue(len(result.errors) > 0)
 
-    def test_invalid_run_id_accepted(self) -> None:
-        """Providing any run_id should be accepted."""
+    def test_safe_custom_run_id_accepted(self) -> None:
         items = _evaluation_dataset_items()
         input_file = _write_fixture_input(self.project_root, items)
         result = build_weekly_cycle(
@@ -672,12 +726,58 @@ class TestWeeklyCycleBuilderMissingInput(unittest.TestCase):
         self.assertTrue(result.validation_passed)
         self.assertEqual(result.run_id, "custom_test_run_001")
 
+    def test_malformed_jsonl_fails_clearly(self) -> None:
+        input_file = self.project_root / "bad.jsonl"
+        input_file.write_text('{"signal_id":"ok"}\nnot-json\n', encoding="utf-8")
+        result = build_weekly_cycle(
+            project_root=self.project_root,
+            input_file=input_file,
+        )
+        self.assertFalse(result.validation_passed)
+        self.assertTrue(any("Invalid JSONL" in error for error in result.errors))
+
+    def test_unsupported_non_empty_input_fails_validation(self) -> None:
+        input_file = _write_fixture_input(self.project_root, [{"id": "unsupported"}])
+        result = build_weekly_cycle(
+            project_root=self.project_root,
+            input_file=input_file,
+            generated_at=_fixed_generated_at(),
+        )
+        self.assertFalse(result.validation_passed)
+        self.assertTrue(any("Non-empty input" in error for error in result.errors))
+
+    def test_malicious_run_ids_are_rejected(self) -> None:
+        items = _evaluation_dataset_items()
+        input_file = _write_fixture_input(self.project_root, items)
+        bad_run_ids = [
+            "",
+            ".",
+            "..",
+            "..\\escaped_run",
+            "../escaped_run",
+            "\\escaped_run",
+            "/escaped_run",
+            "C:\\escaped_run",
+            "weekly/run",
+            "weekly\\run",
+            "bad run",
+        ]
+        for bad_run_id in bad_run_ids:
+            with self.subTest(run_id=bad_run_id):
+                result = build_weekly_cycle(
+                    project_root=self.project_root,
+                    input_file=input_file,
+                    run_id=bad_run_id,
+                )
+                self.assertFalse(result.validation_passed)
+                self.assertTrue(result.errors)
+
 
 class TestWeeklyCycleBuilderPriorArtifacts(unittest.TestCase):
     """Prior artifacts / parking lot revisit tests."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_prior_artifacts_dir_produces_warning_if_no_parking_records(self) -> None:
         items = _evaluation_dataset_items()
@@ -708,7 +808,7 @@ class TestWeeklyCycleBuilderEmptyRunDir(unittest.TestCase):
     """Test that run_dir is created correctly even for empty input."""
 
     def setUp(self) -> None:
-        self.project_root = _temp_project_root()
+        self.project_root = _temp_project_root_for(self)
 
     def test_empty_run_dir_contains_all_14_artifacts(self) -> None:
         input_file = _empty_input_file(self.project_root)

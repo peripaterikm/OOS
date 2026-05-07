@@ -11,12 +11,20 @@ No live LLM/API calls. No autonomous portfolio transitions. Advisory-only.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from oos.evidence_pack import EvidencePack, evidence_pack_from_dict, evidence_pack_to_dict
+from oos.evidence_pack import (
+    EvidencePack,
+    EvidencePackItem,
+    EvidencePackSourceSummary,
+    evidence_pack_from_dict,
+    evidence_pack_to_dict,
+    make_evidence_pack_id,
+)
 from oos.founder_decision_taxonomy import (
     FounderDecisionV2,
     founder_decision_to_dict,
@@ -66,6 +74,7 @@ from oos.weekly_run_manifest import (
 )
 
 WEEKLY_CYCLE_BUILDER_VERSION = "weekly_cycle_builder.v1"
+SAFE_RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 
 # ---------------------------------------------------------------------------
@@ -146,16 +155,17 @@ def _read_input_signals(input_file: Path) -> list[dict[str, Any]]:
 
     # Try JSONL (one object per line)
     items: list[dict[str, Any]] = []
-    for line in stripped.splitlines():
+    for line_number, line in enumerate(stripped.splitlines(), start=1):
         line = line.strip()
         if not line:
             continue
         try:
             obj = json.loads(line)
-            if isinstance(obj, dict):
-                items.append(obj)
-        except json.JSONDecodeError:
-            continue
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Invalid JSONL at line {line_number}: {exc.msg}") from exc
+        if not isinstance(obj, dict):
+            raise ValueError(f"Invalid JSONL at line {line_number}: expected object")
+        items.append(obj)
 
     return items
 
@@ -163,6 +173,39 @@ def _read_input_signals(input_file: Path) -> list[dict[str, Any]]:
 def _compute_input_content_hash(input_file: Path) -> bytes:
     """Read input file bytes for deterministic run ID generation."""
     return input_file.read_bytes()
+
+
+def _validate_run_id(run_id: str, weekly_runs_root: Path) -> str:
+    """Validate *run_id* as one safe directory name below weekly_runs_root."""
+    if not isinstance(run_id, str) or not run_id.strip():
+        raise ValueError("run_id must be a non-empty string")
+    safe_run_id = run_id.strip()
+    if safe_run_id in {".", ".."}:
+        raise ValueError("run_id must not be '.' or '..'")
+    if "/" in safe_run_id or "\\" in safe_run_id:
+        raise ValueError("run_id must not contain path separators")
+    if ":" in safe_run_id:
+        raise ValueError("run_id must not contain drive or scheme separators")
+    if not SAFE_RUN_ID_RE.fullmatch(safe_run_id):
+        raise ValueError("run_id may contain only letters, digits, underscore, hyphen, and dot")
+    candidate = (weekly_runs_root / safe_run_id).resolve()
+    root = weekly_runs_root.resolve()
+    if candidate.parent != root:
+        raise ValueError("run_id resolves outside artifacts/weekly_runs")
+    return safe_run_id
+
+
+def _format_generated_at(generated_at: datetime | str | None) -> str:
+    if generated_at is None:
+        return datetime.now(timezone.utc).isoformat()
+    if isinstance(generated_at, datetime):
+        resolved = generated_at
+        if resolved.tzinfo is None:
+            resolved = resolved.replace(tzinfo=timezone.utc)
+        return resolved.isoformat()
+    if isinstance(generated_at, str) and generated_at.strip():
+        return generated_at
+    raise ValueError("generated_at must be a non-empty ISO timestamp string or datetime")
 
 
 # ---------------------------------------------------------------------------
@@ -212,6 +255,68 @@ def _evidence_packs_from_input(items: list[dict[str, Any]]) -> list[EvidencePack
     return sorted(unique, key=lambda p: p.evidence_pack_id)
 
 
+def _evidence_pack_from_canonical_signal(item: dict[str, Any]) -> EvidencePack | None:
+    """Convert the documented real signal-batch record into one EvidencePack."""
+    signal_id = str(item.get("signal_id", "")).strip()
+    title = str(item.get("title", "")).strip()
+    text = str(item.get("text", "")).strip()
+    source_type = str(item.get("source_type", "")).strip()
+    source_ref = str(item.get("source_ref") or item.get("source_url") or "").strip()
+    if not all((signal_id, title, text, source_type, source_ref)):
+        return None
+
+    cluster_id = f"cluster_{signal_id}"
+    evidence_id = f"evidence_{signal_id}"
+    summary = f"{title}: {text}"
+    pack = EvidencePack(
+        evidence_pack_id=make_evidence_pack_id(cluster_id),
+        cluster_id=cluster_id,
+        source_signal_ids=[signal_id],
+        evidence_ids=[evidence_id],
+        source_urls=[source_ref],
+        summaries=[summary],
+        source_types=[source_type],
+        topic_id="real_signal_batch",
+        confidence_values=[0.7],
+        source_diversity=1,
+        recurrence_count=1,
+        created_from="canonical_signal_batch",
+        items=[
+            EvidencePackItem(
+                evidence_id=evidence_id,
+                source_signal_id=signal_id,
+                source_url=source_ref,
+                source_type=source_type,
+                summary=summary,
+                confidence=0.7,
+            )
+        ],
+        source_summaries=[
+            EvidencePackSourceSummary(
+                source_type=source_type,
+                source_count=1,
+                evidence_ids=[evidence_id],
+            )
+        ],
+    )
+    pack.validate()
+    return pack
+
+
+def _canonical_signal_packs_from_input(items: list[dict[str, Any]]) -> tuple[list[EvidencePack], list[str]]:
+    packs: list[EvidencePack] = []
+    errors: list[str] = []
+    for index, item in enumerate(items, start=1):
+        try:
+            pack = _evidence_pack_from_canonical_signal(item)
+        except (ValueError, TypeError) as exc:
+            errors.append(f"Canonical signal at index {index} is invalid: {exc}")
+            continue
+        if pack is not None:
+            packs.append(pack)
+    return sorted(packs, key=lambda pack: pack.evidence_pack_id), errors
+
+
 # ---------------------------------------------------------------------------
 # Artifact writers
 # ---------------------------------------------------------------------------
@@ -243,11 +348,12 @@ def _build_run_report_placeholder(
     run_id: str,
     artifact_counts: dict[str, int],
     quality_gate_summary: dict[str, int],
+    generated_at: str,
 ) -> dict[str, Any]:
     """Placeholder WeeklyRunReport dict until item 7.1 is implemented."""
     return {
         "run_id": run_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": generated_at,
         "input_signal_count": artifact_counts.get("input_signals", 0),
         "pipeline_stage_status": {
             "evidence_packs": "completed" if artifact_counts.get("evidence_packs", 0) > 0 else "empty",
@@ -281,13 +387,14 @@ def _build_founder_inbox_v2_placeholder(
     run_id: str,
     package: WeeklyOpportunityReviewPackage | None,
     actions: list[FounderAction],
+    generated_at: str,
 ) -> str:
     """Placeholder founder inbox v2 Markdown until item 4.1 is implemented."""
     lines: list[str] = []
     lines.append("# Founder Inbox v2 (Placeholder)")
     lines.append("")
     lines.append(f"- **Run ID**: `{run_id}`")
-    lines.append(f"- **Generated**: {datetime.now(timezone.utc).isoformat()}")
+    lines.append(f"- **Generated**: {generated_at}")
     lines.append(f"- **Note**: Full Founder Inbox v2 rendering will be implemented in v2.6 item 4.1.")
     lines.append("")
 
@@ -329,6 +436,7 @@ def _build_founder_inbox_v2_placeholder(
 def _build_founder_inbox_v2_index_placeholder(
     run_id: str,
     package: WeeklyOpportunityReviewPackage | None,
+    generated_at: str,
 ) -> dict[str, Any]:
     """Placeholder founder inbox v2 index JSON until item 4.1 is implemented."""
     review_items: list[dict[str, Any]] = []
@@ -351,7 +459,7 @@ def _build_founder_inbox_v2_index_placeholder(
 
     return {
         "run_id": run_id,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": generated_at,
         "review_items": review_items,
         "total_review_items": len(review_items),
         "schema_version": "founder_inbox_v2_index.v1",
@@ -371,6 +479,7 @@ def build_weekly_cycle(
     *,
     existing_artifacts_dir: Path | None = None,
     run_id: str | None = None,
+    generated_at: datetime | str | None = None,
 ) -> WeeklyCycleBuildResult:
     """Build a complete deterministic weekly cycle run.
 
@@ -383,19 +492,31 @@ def build_weekly_cycle(
         existing_artifacts_dir: Optional path to prior run artifacts for
             parking lot revisit matching.
         run_id: Optional explicit run ID. Auto-generated if not provided.
+        generated_at: Optional fixed timestamp for deterministic artifact bytes.
 
     Returns:
         WeeklyCycleBuildResult with run metadata, artifact paths, and status.
     """
     project_root = project_root.resolve()
     input_file = input_file.resolve()
+    weekly_runs_root = project_root / "artifacts" / "weekly_runs"
     warnings: list[str] = []
     errors: list[str] = []
+    try:
+        generated_at_str = _format_generated_at(generated_at)
+    except ValueError as exc:
+        return WeeklyCycleBuildResult(
+            run_id="",
+            run_dir="",
+            manifest_path="",
+            errors=[str(exc)],
+            validation_passed=False,
+        )
 
     # ── 1. Load input signals ──────────────────────────────────────────
     try:
         input_items = _read_input_signals(input_file)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, ValueError) as exc:
         return WeeklyCycleBuildResult(
             run_id="",
             run_dir="",
@@ -413,8 +534,18 @@ def build_weekly_cycle(
         if not input_content:
             input_content = b"empty_input"
         run_id = generate_weekly_run_id(run_date, input_content)
+    try:
+        run_id = _validate_run_id(run_id, weekly_runs_root)
+    except ValueError as exc:
+        return WeeklyCycleBuildResult(
+            run_id=str(run_id or ""),
+            run_dir="",
+            manifest_path="",
+            errors=[str(exc)],
+            validation_passed=False,
+        )
 
-    run_dir = project_root / "artifacts" / "weekly_runs" / run_id
+    run_dir = weekly_runs_root / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
     # ── 3. Build evidence packs ────────────────────────────────────────
@@ -422,6 +553,11 @@ def build_weekly_cycle(
     #   a) Evaluation dataset format: items with embedded evidence_pack dicts
     #   b) Direct EvidencePack dicts or CandidateSignal dicts (future support)
     evidence_packs = _evidence_packs_from_input(input_items)
+    if not evidence_packs and input_items:
+        evidence_packs, canonical_errors = _canonical_signal_packs_from_input(input_items)
+        errors.extend(canonical_errors)
+    if input_items and not evidence_packs:
+        errors.append("Non-empty input did not contain supported EvidencePack or canonical signal batch records")
 
     # ── 4. Build opportunity candidates ────────────────────────────────
     opportunity_candidates: list[OpportunityCandidate] = []
@@ -429,8 +565,8 @@ def build_weekly_cycle(
         try:
             candidate = build_opportunity_sketch_from_evidence_pack(pack)
             opportunity_candidates.append(candidate)
-        except (ValueError, TypeError):
-            pass
+        except (ValueError, TypeError) as exc:
+            errors.append(f"Opportunity candidate build failed for {pack.evidence_pack_id}: {exc}")
 
     # ── 5. Run quality gates ───────────────────────────────────────────
     gate_results: list[OpportunityGateResult] = []
@@ -474,10 +610,10 @@ def build_weekly_cycle(
                 for item in prior_items:
                     try:
                         prior_parking_records.append(ParkingLotRecord.from_dict(item))
-                    except (ValueError, TypeError):
-                        pass
-            except (json.JSONDecodeError, ValueError):
-                pass
+                    except (ValueError, TypeError) as exc:
+                        errors.append(f"Could not parse prior parking record: {exc}")
+            except (json.JSONDecodeError, ValueError) as exc:
+                warnings.append(f"Prior parking lot records could not be loaded: {exc}")
 
         if prior_parking_records:
             # Build evidence dicts for matching
@@ -512,6 +648,7 @@ def build_weekly_cycle(
     )
 
     # ── 12. Build next best actions ────────────────────────────────────
+    review_package.generated_at = generated_at_str
     actions = build_next_best_founder_actions(review_package.to_dict())
 
     # ── 13. Build artifact counts ──────────────────────────────────────
@@ -630,7 +767,7 @@ def build_weekly_cycle(
                 "areas_needing_more_evidence": [],
                 "source_decision_ids": [],
                 "source_feedback_mapping_ids": [],
-                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "generated_at": generated_at_str,
                 "decision_count": 0,
                 "promote_count": 0,
                 "park_count": 0,
@@ -680,7 +817,7 @@ def build_weekly_cycle(
     artifacts_written.append("parking_lot_records")
 
     # 15j. run_report.json (placeholder)
-    run_report_data = _build_run_report_placeholder(run_id, artifact_counts, quality_gate_counts)
+    run_report_data = _build_run_report_placeholder(run_id, artifact_counts, quality_gate_counts, generated_at_str)
     _write_json_artifact(
         run_dir,
         canonical_artifact_paths()["run_report"],
@@ -689,7 +826,7 @@ def build_weekly_cycle(
     artifacts_written.append("run_report")
 
     # 15k. founder_inbox_v2.md (placeholder)
-    inbox_md = _build_founder_inbox_v2_placeholder(run_id, review_package, actions)
+    inbox_md = _build_founder_inbox_v2_placeholder(run_id, review_package, actions, generated_at_str)
     _write_markdown_artifact(
         run_dir,
         canonical_artifact_paths()["founder_inbox_v2_md"],
@@ -698,7 +835,7 @@ def build_weekly_cycle(
     artifacts_written.append("founder_inbox_v2_md")
 
     # 15l. founder_inbox_v2_index.json (placeholder)
-    inbox_index = _build_founder_inbox_v2_index_placeholder(run_id, review_package)
+    inbox_index = _build_founder_inbox_v2_index_placeholder(run_id, review_package, generated_at_str)
     _write_json_artifact(
         run_dir,
         canonical_artifact_paths()["founder_inbox_v2_index"],
@@ -707,7 +844,7 @@ def build_weekly_cycle(
     artifacts_written.append("founder_inbox_v2_index")
 
     # 15m. run_report.md (placeholder)
-    run_report_md = _build_run_report_markdown_placeholder(run_id, artifact_counts, quality_gate_counts)
+    run_report_md = _build_run_report_markdown_placeholder(run_id, artifact_counts, quality_gate_counts, generated_at_str)
     _write_markdown_artifact(
         run_dir,
         canonical_artifact_paths()["run_report_md"],
@@ -718,7 +855,7 @@ def build_weekly_cycle(
     # ── 16. Build and write manifest ───────────────────────────────────
     manifest = make_default_manifest(
         run_id=run_id,
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=generated_at_str,
         input_file=str(input_file.relative_to(project_root)) if str(input_file).startswith(str(project_root)) else str(input_file),
         input_signal_count=input_signal_count,
         empty_states=empty_states,
@@ -748,6 +885,7 @@ def build_weekly_cycle(
     elif not prior_parking_records:
         warnings.append("existing_artifacts_dir provided but no valid parking lot records found; revisit matching skipped.")
 
+    errors.extend(_validate_builder_output(run_dir, input_signal_count, artifacts_written, pipeline_summary))
     validation_passed = len(errors) == 0
 
     return WeeklyCycleBuildResult(
@@ -771,13 +909,14 @@ def _build_run_report_markdown_placeholder(
     run_id: str,
     artifact_counts: dict[str, int],
     quality_gate_counts: dict[str, int],
+    generated_at: str,
 ) -> str:
     """Placeholder run report Markdown until item 7.1 is implemented."""
     lines: list[str] = []
     lines.append("# Weekly Run Report (Placeholder)")
     lines.append("")
     lines.append(f"- **Run ID**: `{run_id}`")
-    lines.append(f"- **Generated**: {datetime.now(timezone.utc).isoformat()}")
+    lines.append(f"- **Generated**: {generated_at}")
     lines.append(f"- **Note**: Full run report will be implemented in v2.6 item 7.1 (Run Reports and Dashboard Index).")
     lines.append("")
     lines.append("## Pipeline Summary")
@@ -812,17 +951,46 @@ def _count_gate_decisions(gate_results: list[OpportunityGateResult]) -> dict[str
     return counts
 
 
-# ---------------------------------------------------------------------------
-# Convenience: write all weekly cycle artifacts
-# ---------------------------------------------------------------------------
-
-
-def write_weekly_cycle_artifacts(
+def _validate_builder_output(
     run_dir: Path,
-    result: WeeklyCycleBuildResult,
-) -> None:
-    """Convenience wrapper. The builder already writes artifacts during
-    build_weekly_cycle(). This function is provided for API symmetry only.
-    """
-    # No-op: artifacts are already written during build_weekly_cycle()
-    pass
+    input_signal_count: int,
+    artifacts_written: list[str],
+    pipeline_summary: dict[str, Any],
+) -> list[str]:
+    validation_errors: list[str] = []
+    paths = canonical_artifact_paths()
+    try:
+        from oos.weekly_run_manifest import read_weekly_run_manifest
+
+        read_weekly_run_manifest(run_dir)
+    except (FileNotFoundError, ValueError) as exc:
+        validation_errors.append(f"Manifest readback validation failed: {exc}")
+
+    for key, filename in paths.items():
+        artifact_path = run_dir / filename
+        if not artifact_path.is_file():
+            validation_errors.append(f"Required artifact missing: {key} ({filename})")
+
+    for key, filename in paths.items():
+        if filename.endswith(".json"):
+            artifact_path = run_dir / filename
+            if artifact_path.is_file():
+                try:
+                    json.loads(artifact_path.read_text(encoding="utf-8"))
+                except json.JSONDecodeError as exc:
+                    validation_errors.append(f"JSON artifact is not parseable: {key}: {exc.msg}")
+
+    if len(artifacts_written) != len(paths):
+        validation_errors.append(
+            f"Expected {len(paths)} artifacts_written entries, got {len(artifacts_written)}"
+        )
+    if input_signal_count > 0:
+        required_non_empty = (
+            "evidence_packs_built",
+            "opportunity_candidates_built",
+            "quality_gate_results",
+        )
+        for key in required_non_empty:
+            if int(pipeline_summary.get(key, 0)) <= 0:
+                validation_errors.append(f"Non-empty supported input produced no {key}")
+    return validation_errors
