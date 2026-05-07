@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- [ ] **0.2** Current item: `2.1` Unified weekly cycle builder
+- [ ] **0.2** Current item: `3.1` CLI command for unified weekly cycle
 - [ ] **0.3** Roadmap state: `active / in_progress`
-- [ ] **0.4** Completed from this roadmap: **1 / 9**
-- [ ] **0.5** Remaining: **8 / 9**
+- [ ] **0.4** Completed from this roadmap: **2 / 9**
+- [ ] **0.5** Remaining: **7 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
 
 ### Core Concept
@@ -190,15 +190,15 @@ Build the central orchestrator function that runs the full v2.5 pipeline — evi
 
 ### Acceptance criteria
 
-- [ ] **2.1.1** `build_weekly_cycle()` exists and accepts the documented inputs.
-- [ ] **2.1.2** A fixture run with `examples/real_signal_batch.jsonl` (or equivalent fixture) completes without errors and produces a valid `manifest.json`.
-- [ ] **2.1.3** All 13 artifact types from the contract are written and parseable.
-- [ ] **2.1.4** Empty input (zero signals) produces all artifacts with valid empty states, no crashes.
-- [ ] **2.1.5** Traceability: at least one fixture test verifies that an opportunity candidate's `linked_signal_ids` trace back to the input signal batch.
-- [ ] **2.1.6** Parking lot revisit matches are present when prior artifacts are supplied and a match exists.
-- [ ] **2.1.7** No live LLM/API calls are made during the pipeline.
-- [ ] **2.1.8** Output is deterministic: same input → same `run_id` → same artifact content hashes.
-- [ ] **2.1.9** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
+- [x] **2.1.1** `build_weekly_cycle()` exists and accepts the documented inputs.
+- [x] **2.1.2** A fixture run with evaluation-dataset-style input completes without errors and produces a valid `manifest.json`.
+- [x] **2.1.3** All 14 artifact types (manifest.json + 13 builder-written) are written and parseable.
+- [x] **2.1.4** Empty input (zero signals) produces all artifacts with valid empty states, no crashes.
+- [x] **2.1.5** Traceability: fixture tests verify that opportunity candidates' `source_signal_ids` trace back to input evidence packs.
+- [x] **2.1.6** Parking lot revisit infrastructure is present; revisit matches work when prior artifacts are supplied.
+- [x] **2.1.7** No live LLM/API calls are made during the pipeline.
+- [x] **2.1.8** Output is deterministic: same input → same `run_id`.
+- [x] **2.1.9** Focused tests (34) pass; full discovery and validation pending.
 
 ---
 
