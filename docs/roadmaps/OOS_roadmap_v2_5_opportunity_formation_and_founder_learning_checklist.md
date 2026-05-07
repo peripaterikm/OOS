@@ -5,11 +5,11 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **7.3 v2.5 end-to-end fixture validation**
-- [ ] **0.3** Roadmap state: `active / planned`
-- [x] **0.4** Completed from this roadmap: **23 / 24**
-- [x] **0.5** Remaining: **1 / 24**
-- [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
+- [x] **0.2** Current item: **v2.5 complete**
+- [x] **0.3** Roadmap state: `completed`
+- [x] **0.4** Completed from this roadmap: **24 / 24**
+- [x] **0.5** Remaining: **0 / 24**
+- [x] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
 
@@ -1016,18 +1016,18 @@ Validate full v2.5 flow on fixtures.
 
 ### Expected files
 
-- `tests/test_v2_5_end_to_end_fixture.py`
+- `tests/test_v2_5_end_to_end_fixture_validation.py`
 - `docs/dev_ledger/02_mini_epics/7.3-v2-5-end-to-end-fixture-validation.md`
 - `docs/dev_ledger/03_run_reports/7.3-v2-5-end-to-end-fixture-validation.md`
 
 ### Acceptance criteria
 
-- [ ] **7.3.1** End-to-end fixture flow passes.
-- [ ] **7.3.2** Evidence packs feed opportunity sketches/synthesis outputs.
-- [ ] **7.3.3** Quality gate outputs pass/park/reject.
-- [ ] **7.3.4** Founder feedback maps back to signals/evidence.
-- [ ] **7.3.5** Weekly package includes actionable next steps.
-- [ ] **7.3.6** Full validation passes.
+- [x] **7.3.1** End-to-end fixture flow passes.
+- [x] **7.3.2** Evidence packs feed opportunity sketches/synthesis outputs.
+- [x] **7.3.3** Quality gate outputs pass/park/reject.
+- [x] **7.3.4** Founder feedback maps back to signals/evidence.
+- [x] **7.3.5** Weekly package includes actionable next steps.
+- [x] **7.3.6** Full validation passes.
 
 ### Validation expectations
 
