@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- [ ] **0.2** Current item: `4.1` Founder inbox v2
+- [ ] **0.2** Current item: `5.1` Founder decision import
 - [ ] **0.3** Roadmap state: `active / in_progress`
-- [ ] **0.4** Completed from this roadmap: **3 / 9**
-- [ ] **0.5** Remaining: **6 / 9**
+- [x] **0.4** Completed from this roadmap: **4 / 9**
+- [ ] **0.5** Remaining: **5 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
 
 ### Core Concept
@@ -280,16 +280,16 @@ Replace the existing basic founder inbox (`artifacts/ops/founder_review_inbox.md
 
 ### Acceptance criteria
 
-- [ ] **4.1.1** `build_founder_inbox_v2_md()` produces a valid Markdown string with all 10 sections.
-- [ ] **4.1.2** `build_founder_inbox_v2_index()` produces a JSON-serializable dict with `review_items` list.
-- [ ] **4.1.3** Every review item has a stable `review_item_id` (content-hash-based).
-- [ ] **4.1.4** Every review item preserves traceability: `linked_signal_ids`, `linked_evidence_ids`, `linked_opportunity_ids`, `linked_source_urls`.
-- [ ] **4.1.5** Empty sections show explicit empty-state messages, never blank.
-- [ ] **4.1.6** Decision recording commands are correct copy-paste-able PowerShell commands.
-- [ ] **4.1.7** The JSON index includes `decision_options` per item (`pass`, `park`, `kill`, `needs_more_evidence`, `revisit_later`).
-- [ ] **4.1.8** Fixture test with a populated `WeeklyOpportunityReviewPackage` produces non-trivial output in each section.
-- [ ] **4.1.9** Fixture test with empty package produces valid output with all empty-state messages.
-- [ ] **4.1.10** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
+- [x] **4.1.1** `build_founder_inbox_v2_md()` produces a valid Markdown string with all 10 sections.
+- [x] **4.1.2** `build_founder_inbox_v2_index()` produces a JSON-serializable dict with `review_items` list.
+- [x] **4.1.3** Every review item has a stable `review_item_id` (content-hash-based).
+- [x] **4.1.4** Every review item preserves traceability: `linked_signal_ids`, `linked_evidence_ids`, `linked_opportunity_ids`, `linked_source_urls`.
+- [x] **4.1.5** Empty sections show explicit empty-state messages, never blank.
+- [x] **4.1.6** Decision recording commands are correct copy-paste-able PowerShell commands.
+- [x] **4.1.7** The JSON index includes `decision_options` per item (`pass`, `park`, `kill`, `needs_more_evidence`, `revisit_later`).
+- [x] **4.1.8** Fixture test with a populated `WeeklyOpportunityReviewPackage` produces non-trivial output in each section.
+- [x] **4.1.9** Fixture test with empty package produces valid output with all empty-state messages.
+- [x] **4.1.10** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
 
 ---
 

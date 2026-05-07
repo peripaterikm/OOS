@@ -17,6 +17,11 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from oos.founder_inbox_v2 import (
+    build_founder_inbox_v2,
+    founder_inbox_v2_to_json,
+    render_founder_inbox_v2_markdown,
+)
 from oos.evidence_pack import (
     EvidencePack,
     EvidencePackItem,
@@ -365,7 +370,7 @@ def _build_run_report_placeholder(
             "weekly_review": "completed",
             "next_best_actions": "completed",
             "parking_lot": "completed",
-            "founder_inbox": "placeholder",
+            "founder_inbox": "completed",
             "run_report": "placeholder",
         },
         "artifact_counts": artifact_counts,
@@ -380,91 +385,6 @@ def _build_run_report_placeholder(
         "schema_version": "weekly_run_report.v1",
         "placeholder": True,
         "note": "Full WeeklyRunReport model will be implemented in v2.6 item 7.1 (Run Reports and Dashboard Index).",
-    }
-
-
-def _build_founder_inbox_v2_placeholder(
-    run_id: str,
-    package: WeeklyOpportunityReviewPackage | None,
-    actions: list[FounderAction],
-    generated_at: str,
-) -> str:
-    """Placeholder founder inbox v2 Markdown until item 4.1 is implemented."""
-    lines: list[str] = []
-    lines.append("# Founder Inbox v2 (Placeholder)")
-    lines.append("")
-    lines.append(f"- **Run ID**: `{run_id}`")
-    lines.append(f"- **Generated**: {generated_at}")
-    lines.append(f"- **Note**: Full Founder Inbox v2 rendering will be implemented in v2.6 item 4.1.")
-    lines.append("")
-
-    if package is not None:
-        lines.append("## Weekly Review Summary")
-        lines.append("")
-        summary = package.decision_summary
-        if summary:
-            for k, v in sorted(summary.items()):
-                lines.append(f"- {k}: {v}")
-        else:
-            lines.append("- No decisions recorded yet.")
-        lines.append("")
-
-        for section in package.sections:
-            lines.append(f"### {section.title}")
-            lines.append("")
-            if not section.items:
-                lines.append(f"- *{section.empty_state}*")
-            else:
-                for item in section.items:
-                    lines.append(f"- {item.summary}")
-            lines.append("")
-
-    if actions:
-        lines.append("## Next Best Actions")
-        lines.append("")
-        for i, action in enumerate(actions, start=1):
-            lines.append(f"{i}. [{action.action_type}] {action.title}")
-        lines.append("")
-
-    if not package and not actions:
-        lines.append("_No review items available in this cycle._")
-        lines.append("")
-
-    return "\n".join(lines).rstrip() + "\n"
-
-
-def _build_founder_inbox_v2_index_placeholder(
-    run_id: str,
-    package: WeeklyOpportunityReviewPackage | None,
-    generated_at: str,
-) -> dict[str, Any]:
-    """Placeholder founder inbox v2 index JSON until item 4.1 is implemented."""
-    review_items: list[dict[str, Any]] = []
-    if package is not None:
-        for section in package.sections:
-            for item in section.items:
-                review_items.append({
-                    "review_item_id": f"review_{item.item_id}",
-                    "item_id": item.item_id,
-                    "section_id": section.section_id,
-                    "summary": item.summary,
-                    "source_artifact_type": item.source_artifact_type,
-                    "source_artifact_id": item.source_artifact_id,
-                    "linked_decision_ids": item.linked_decision_ids,
-                    "linked_evidence_ids": item.linked_evidence_ids,
-                    "linked_opportunity_ids": item.linked_opportunity_ids,
-                    "decision_options": ["promote", "park", "kill", "needs_more_evidence", "revisit_later"],
-                    "category": item.category,
-                })
-
-    return {
-        "run_id": run_id,
-        "generated_at": generated_at,
-        "review_items": review_items,
-        "total_review_items": len(review_items),
-        "schema_version": "founder_inbox_v2_index.v1",
-        "placeholder": True,
-        "note": "Full Founder Inbox v2 index will be implemented in v2.6 item 4.1.",
     }
 
 
@@ -825,20 +745,45 @@ def build_weekly_cycle(
     )
     artifacts_written.append("run_report")
 
-    # 15k. founder_inbox_v2.md (placeholder)
-    inbox_md = _build_founder_inbox_v2_placeholder(run_id, review_package, actions, generated_at_str)
+    # 15k. founder_inbox_v2.md (real — v2.6 item 4.1)
+    action_dicts = [a.to_dict() for a in actions]
+    gate_dicts = [r.to_dict() for r in gate_results]
+    pack_dicts = [evidence_pack_to_dict(p) for p in evidence_packs]
+    opp_dicts = [opportunity_sketch_to_dict(c) for c in opportunity_candidates]
+    revisit_dicts = [m.to_dict() for m in revisit_matches]
+    pl_dicts = [r.to_dict() for r in parking_lot_records]
+    manifest_path = str(run_dir / "manifest.json")
+    marks_path = canonical_artifact_paths()["founder_inbox_v2_md"]
+    index_path = canonical_artifact_paths()["founder_inbox_v2_index"]
+
+    inbox = build_founder_inbox_v2(
+        run_id=run_id,
+        manifest_path=manifest_path,
+        generated_at=generated_at_str,
+        review_package=review_package.to_dict(),
+        actions=action_dicts,
+        gate_results=gate_dicts,
+        evidence_packs=pack_dicts,
+        opportunity_candidates=opp_dicts,
+        revisit_matches=revisit_dicts,
+        parking_lot_records=pl_dicts,
+        marks_path=marks_path,
+        index_path=index_path,
+    )
+
+    inbox_md = render_founder_inbox_v2_markdown(inbox)
     _write_markdown_artifact(
         run_dir,
-        canonical_artifact_paths()["founder_inbox_v2_md"],
+        marks_path,
         inbox_md,
     )
     artifacts_written.append("founder_inbox_v2_md")
 
-    # 15l. founder_inbox_v2_index.json (placeholder)
-    inbox_index = _build_founder_inbox_v2_index_placeholder(run_id, review_package, generated_at_str)
+    # 15l. founder_inbox_v2_index.json (real — v2.6 item 4.1)
+    inbox_index = founder_inbox_v2_to_json(inbox)
     _write_json_artifact(
         run_dir,
-        canonical_artifact_paths()["founder_inbox_v2_index"],
+        index_path,
         inbox_index,
     )
     artifacts_written.append("founder_inbox_v2_index")
