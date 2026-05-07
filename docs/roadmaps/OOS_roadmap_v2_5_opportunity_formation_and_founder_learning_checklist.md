@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **7.1 Opportunity quality evaluation dataset v1**
+- [ ] **0.2** Current item: **7.2 Regression metrics for opportunity quality**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [x] **0.4** Completed from this roadmap: **21 / 24**
-- [x] **0.5** Remaining: **3 / 24**
+- [x] **0.4** Completed from this roadmap: **22 / 24**
+- [x] **0.5** Remaining: **2 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -915,29 +915,44 @@ Cases:
 - strong opportunity;
 - weak but interesting;
 - generic false positive;
-- no buyer;
-- no evidence;
 - vendor promo false positive;
-- price false positive;
 - duplicate signal;
-- mojibake case;
+- no buyer;
+- weak noisy;
 - killed-pattern repeat;
-- strong pain but weak price evidence.
+- needs more evidence;
+- parked/revisit candidate.
+
+### Actual case types delivered (10 cases)
+
+| Case ID | Quality Label | Founder Posture | Gate Decision |
+|---------|--------------|-----------------|---------------|
+| opp_quality_v1_case_001 | strong_opportunity | promote_candidate | pass |
+| opp_quality_v1_case_002 | weak_but_interesting | park_candidate | park |
+| opp_quality_v1_case_003 | generic_false_positive | kill_candidate | reject |
+| opp_quality_v1_case_004 | vendor_promo_false_positive | kill_candidate | reject |
+| opp_quality_v1_case_005 | duplicate_signal | needs_more_evidence | park |
+| opp_quality_v1_case_006 | no_buyer | park_candidate | park |
+| opp_quality_v1_case_007 | weak_noisy | kill_candidate | reject |
+| opp_quality_v1_case_008 | strong_opportunity | revisit_candidate | pass |
+| opp_quality_v1_case_009 | killed_pattern_repeat | kill_candidate | reject |
+| opp_quality_v1_case_010 | needs_more_evidence | needs_more_evidence | park |
 
 ### Expected files
 
-- `tests/fixtures/opportunity_quality_cases_v1.json`
-- `tests/test_opportunity_quality_dataset.py`
+- `examples/evaluation_dataset_v2_5/opportunity_quality_cases_v1.json`
+- `src/oos/evaluation_dataset.py`
+- `tests/test_opportunity_quality_evaluation_dataset.py`
 - `docs/dev_ledger/02_mini_epics/7.1-opportunity-quality-evaluation-dataset-v1.md`
 - `docs/dev_ledger/03_run_reports/7.1-opportunity-quality-evaluation-dataset-v1.md`
 
 ### Acceptance criteria
 
-- [ ] **7.1.1** Dataset includes all required case types.
-- [ ] **7.1.2** Each case includes expected gate outcome and rationale.
-- [ ] **7.1.3** Each case includes evidence IDs or explicit no-evidence state.
-- [ ] **7.1.4** Dataset is deterministic and fixture-only.
-- [ ] **7.1.5** Full validation passes.
+- [x] **7.1.1** Dataset includes all required case types.
+- [x] **7.1.2** Each case includes expected gate outcome and rationale.
+- [x] **7.1.3** Each case includes evidence IDs or explicit no-evidence state.
+- [x] **7.1.4** Dataset is deterministic and fixture-only.
+- [x] **7.1.5** Full validation passes.
 
 ### Validation expectations
 

@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `7.1 Opportunity quality evaluation dataset v1`
+- Current item: `7.2 Regression metrics for opportunity quality`
 - Roadmap state: `active / planned`
-- Completed: `21 / 24`
-- Remaining: `3 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `6.3` - Parking lot / revisit logic
-- Next planned roadmap item: Roadmap v2.5 `7.1` - Opportunity quality evaluation dataset v1
+- Completed: `22 / 24`
+- Remaining: `2 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `7.1` - Opportunity quality evaluation dataset v1
+- Next planned roadmap item: Roadmap v2.5 `7.2` - Regression metrics for opportunity quality
 
 ## Branch And Commit Strategy
 
@@ -115,3 +115,4 @@
 - Roadmap v2.5 item 6.1 added a deterministic `WeeklyOpportunityReviewPackage` that aggregates existing founder decisions, feedback mappings, preference profiles, and opportunity candidates into a founder-facing weekly review with structured sections, traceability-preserving item IDs, clear empty states, advisory-only enforcement, and JSON/Markdown rendering without live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 6.2 added a deterministic next-best-founder-actions layer (`FounderAction` model, `build_next_best_founder_actions()`) that converts the `WeeklyOpportunityReviewPackage` into a prioritized, flattened list of advisory actions with stable action IDs, 10 action types, priority bands, linked source artifact IDs, suggested next steps, and JSON/Markdown rendering without autonomous decisions, portfolio transitions, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 6.3 added deterministic parking lot / revisit logic (`ParkingLotRecord` model, `RevisitMatch` model, `build_parking_lot_records()`, `match_revisit_candidates()`) that builds parked records from PARK/REVISIT_LATER decisions, matches new evidence using three-tier deterministic matching (pattern keys then token overlap then substring), surfaces advisory revisit matches in the weekly review revisit_queue section, and avoids autonomous portfolio transitions, embeddings, ML, LLM, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 7.1 created the opportunity quality evaluation dataset v1 with 10 synthetic labeled cases under `examples/evaluation_dataset_v2_5/opportunity_quality_cases_v1.json`, a loader with validation in `src/oos/evaluation_dataset.py`, and 14 focused tests covering dataset integrity, case-type coverage, label-decision consistency, and deterministic gate evaluation without live APIs, LLM calls, or internet access.
