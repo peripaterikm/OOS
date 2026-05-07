@@ -2,29 +2,29 @@
 
 ## Current Roadmap
 
-- Roadmap v2.2 status: complete.
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- Inactive/archive roadmap files: older roadmap drafts, `docs/roadmaps/OOS_roadmap_v2_2_ai_meaning_layer_checklist_final.md`, and Roadmap v2.2 completion documents.
+- Roadmap v2.5 status: complete (`24 / 24`, tag `v2.5`).
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
+- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
-- Roadmap v2.3 planning created: yes
-- Current item: `v2.5 complete`
-- Roadmap state: `completed`
-- Completed: `24 / 24`
-- Remaining: `0 / 24`
+- Roadmap v2.6 planning created: yes
+- Current item: `1.1` - Weekly run artifact contract
+- Roadmap state: `active / planned`
+- Completed: `0 / 9`
+- Remaining: `9 / 9`
 - Latest completed roadmap item: Roadmap v2.5 `8.1` - Roadmap v2.5 final validation
-- Next planned roadmap item: Roadmap v2.5 `7.4` - Third controlled live run quality comparison (optional/deferred checkpoint)
+- Next planned roadmap item: Roadmap v2.6 `1.1` - Weekly run artifact contract
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `fix/v2-5-codex-review-followups`
+- Current branch: `planning/v2-6-roadmap`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
-- This branch is a post-v2.5 follow-up fix branch; do not move or recreate the `v2.5` tag.
+- Roadmap v2.6 planning is on this branch; do not push, merge, tag, or release until explicitly approved.
 - Do not push partial or unvalidated follow-up work.
 
 ## Workflow Notes
@@ -121,3 +121,4 @@
 - Roadmap v2.5 item 7.2 created deterministic regression metrics (`OpportunityQualityRegressionMetrics` model, `compute_regression_metrics()`) that load the v1 quality dataset, run the existing `evaluate_opportunity_quality()` pipeline on each case, compare actual gate outputs to expected labels, and produce JSON-serializable aggregate and per-case metrics (total_cases, gate_match_rate=1.0, false_positive_rate=0.4, duplicate_rate=0.1, unsupported_assumptions_count=30) with 52 focused tests and no live APIs, LLM calls, or internet access.
 - Roadmap v2.5 item 7.3 created deterministic end-to-end fixture validation (`V2_5EndToEndValidationReport` model, `run_v2_5_end_to_end_fixture_validation()`) that processes all 10 quality fixture cases through the full v2.5 advisory pipeline — evidence packs, quality gates, founder decisions, feedback mappings, preference profiles, parking lot records, weekly review packaging, and next-best actions — with 37 focused tests, 5-stage traceability verification, advisory-only enforcement (0 autonomous decisions), deterministic output, and no live APIs, LLM calls, or internet access.
 - Roadmap v2.5 item 8.1 closed the roadmap with a final validation checkpoint: 1106 tests, 0 failures; `scripts/oos-validate.ps1` pass; `git diff --check` clean; roadmap state `completed` at `24 / 24`. PR `#40` was merged to `main`, and tag `v2.5` was created and pushed. Item 7.4 (third controlled live run) remains optional/deferred.
+- Roadmap v2.6 planning created the Real Weekly Loop / Operationalization checklist with 9 implementation items: weekly run artifact contract, unified weekly cycle builder, CLI command, founder inbox v2, founder decision import, weekly cycle status command, run reports and dashboard index, fixture end-to-end validation, and final v2.6 checkpoint. Implementation starts at item 1.1; no source code features, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
