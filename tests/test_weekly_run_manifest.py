@@ -135,19 +135,24 @@ class TestWeeklyRunManifestModel(unittest.TestCase):
         keys = m.artifact_keys()
         self.assertIn("manifest", keys)
         self.assertIn("run_report_md", keys)
-        # verify no extra/missing standard keys
+        # 14 canonical artifact keys in the manifest (includes manifest.json itself)
         self.assertEqual(len(keys), 14)
 
     def test_empty_states_default_all_true(self) -> None:
         states = default_empty_states()
         self.assertEqual(len(states), 14)
         self.assertTrue(all(states.values()))
+        self.assertTrue(all(isinstance(v, bool) for v in states.values()))
 
-    def test_canonical_artifact_paths_all_relative(self) -> None:
+    def test_canonical_artifact_paths_all_safe(self) -> None:
         paths = canonical_artifact_paths()
         for key, path in paths.items():
             self.assertFalse(Path(path).is_absolute(), f"{key} path is absolute")
             self.assertNotIn("..", path, f"{key} path contains '..'")
+            self.assertFalse(
+                str(path).startswith(("\\", "/")),
+                f"{key} path is root-relative",
+            )
 
     def test_canonical_schema_versions_all_known(self) -> None:
         versions = canonical_artifact_schema_versions()
@@ -227,6 +232,183 @@ class TestWeeklyRunManifestValidation(unittest.TestCase):
         )
         errors = m.validate()
         self.assertTrue(any("relative" in e.lower() for e in errors))
+
+    # ── Path safety: root-relative paths ────────────────────────────────
+
+    def test_root_relative_backslash_rejected(self) -> None:
+        """\\evil.json must be rejected as root-relative."""
+        m = self._valid_manifest()
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths={**m.artifact_paths, "manifest": "\\evil.json"},
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=m.empty_states,
+        )
+        errors = m.validate()
+        self.assertTrue(any("root-relative" in e.lower() for e in errors))
+
+    def test_root_relative_forward_slash_rejected(self) -> None:
+        """/evil.json must be rejected as root-relative."""
+        m = self._valid_manifest()
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths={**m.artifact_paths, "manifest": "/evil.json"},
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=m.empty_states,
+        )
+        errors = m.validate()
+        self.assertTrue(any("root-relative" in e.lower() for e in errors))
+
+    def test_root_relative_windows_temp_rejected(self) -> None:
+        """\\windows\\temp\\evil.json must be rejected as root-relative."""
+        m = self._valid_manifest()
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths={**m.artifact_paths, "manifest": "\\windows\\temp\\evil.json"},
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=m.empty_states,
+        )
+        errors = m.validate()
+        self.assertTrue(any("root-relative" in e.lower() for e in errors))
+
+    def test_path_starting_with_forward_slash_rejected(self) -> None:
+        """/temp/file.json must be rejected as root-relative."""
+        m = self._valid_manifest()
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths={**m.artifact_paths, "run_report": "/temp/file.json"},
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=m.empty_states,
+        )
+        errors = m.validate()
+        self.assertTrue(any("root-relative" in e.lower() for e in errors))
+
+    # ── Canonical key completeness ──────────────────────────────────────
+
+    def test_missing_canonical_key_in_artifact_paths(self) -> None:
+        """Partial artifact_paths missing a non-manifest key must fail."""
+        m = self._valid_manifest()
+        partial = {k: v for k, v in m.artifact_paths.items() if k != "evidence_packs"}
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths=partial,
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=m.empty_states,
+        )
+        errors = m.validate()
+        self.assertTrue(any("evidence_packs" in e for e in errors))
+        self.assertTrue(any("missing canonical key" in e.lower() for e in errors))
+
+    def test_missing_canonical_key_in_artifact_schema_versions(self) -> None:
+        """Partial artifact_schema_versions missing a key must fail."""
+        m = self._valid_manifest()
+        partial = {k: v for k, v in m.artifact_schema_versions.items() if k != "run_report"}
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths=m.artifact_paths,
+            artifact_schema_versions=partial,
+            empty_states=m.empty_states,
+        )
+        errors = m.validate()
+        self.assertTrue(any("run_report" in e for e in errors))
+        self.assertTrue(any("missing canonical key" in e.lower() for e in errors))
+
+    def test_missing_canonical_key_in_empty_states(self) -> None:
+        """Partial empty_states missing a key must fail."""
+        m = self._valid_manifest()
+        partial = {k: v for k, v in m.empty_states.items() if k != "founder_inbox_v2_md"}
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths=m.artifact_paths,
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=partial,
+        )
+        errors = m.validate()
+        self.assertTrue(any("founder_inbox_v2_md" in e for e in errors))
+        self.assertTrue(any("missing canonical key" in e.lower() for e in errors))
+
+    # ── Safety flag bool strictness ─────────────────────────────────────
+
+    def test_advisory_only_string_false_fails(self) -> None:
+        """'false' string must not coerce to True."""
+        m = self._valid_manifest()
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths=m.artifact_paths,
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=m.empty_states,
+            advisory_only="false",  # type: ignore[arg-type]
+        )
+        errors = m.validate()
+        self.assertTrue(any("advisory_only must be a boolean" in e for e in errors))
+
+    def test_no_live_api_string_false_fails(self) -> None:
+        """'false' string must not coerce to True."""
+        m = self._valid_manifest()
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths=m.artifact_paths,
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=m.empty_states,
+            no_live_api="false",  # type: ignore[arg-type]
+        )
+        errors = m.validate()
+        self.assertTrue(any("no_live_api must be a boolean" in e for e in errors))
+
+    def test_no_live_llm_string_false_fails(self) -> None:
+        """'false' string must not coerce to True."""
+        m = self._valid_manifest()
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths=m.artifact_paths,
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=m.empty_states,
+            no_live_llm="false",  # type: ignore[arg-type]
+        )
+        errors = m.validate()
+        self.assertTrue(any("no_live_llm must be a boolean" in e for e in errors))
+
+    # ── empty_states bool strictness ────────────────────────────────────
+
+    def test_empty_states_string_value_fails(self) -> None:
+        """empty_states value 'false' must not coerce to True."""
+        m = self._valid_manifest()
+        bad = dict(m.empty_states)
+        bad["evidence_packs"] = "false"  # type: ignore[dict-item]
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths=m.artifact_paths,
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=bad,
+        )
+        errors = m.validate()
+        self.assertTrue(any("evidence_packs" in e and "boolean" in e for e in errors))
+
+    def test_empty_states_int_value_fails(self) -> None:
+        """empty_states value 0 must not coerce to False."""
+        m = self._valid_manifest()
+        bad = dict(m.empty_states)
+        bad["opportunity_candidates"] = 0  # type: ignore[dict-item]
+        m = WeeklyRunManifest(
+            run_id=m.run_id,
+            created_at=m.created_at,
+            artifact_paths=m.artifact_paths,
+            artifact_schema_versions=m.artifact_schema_versions,
+            empty_states=bad,
+        )
+        errors = m.validate()
+        self.assertTrue(any("opportunity_candidates" in e and "boolean" in e for e in errors))
 
     def test_missing_manifest_entry_rejected(self) -> None:
         m = self._valid_manifest()
@@ -396,7 +578,10 @@ class TestWriteReadManifest(unittest.TestCase):
             read_weekly_run_manifest(self.run_dir)
 
     def test_full_artifact_path_fixture_roundtrip(self) -> None:
-        """Round-trip a manifest with all 14 artifact paths (excluding manifest itself from count)."""
+        """Round-trip a manifest with all 14 canonical artifact paths
+        (13 run-directory artifacts output by the builder + manifest.json
+        inside the manifest itself).
+        """
         m1 = make_default_manifest(
             "weekly_run_2026-05-07_full",
             "2026-05-07T10:00:00+00:00",
@@ -432,9 +617,10 @@ class TestWriteReadManifest(unittest.TestCase):
         m2 = read_weekly_run_manifest(self.run_dir)
         self.assertEqual(m1, m2)
 
-        # 14 artifact paths total in manifest (all canonical keys present)
+        # 14 artifact paths total in manifest (all canonical keys present,
+        # including manifest.json itself)
         self.assertEqual(len(m2.artifact_paths), 14)
-        # manifest.json is included in artifact_paths but counted separately
+        # manifest.json is included in artifact_paths
         self.assertIn("manifest", m2.artifact_paths)
         # Verify specific paths expected by the contract
         self.assertEqual(m2.artifact_paths["evidence_packs"], "evidence_packs.json")

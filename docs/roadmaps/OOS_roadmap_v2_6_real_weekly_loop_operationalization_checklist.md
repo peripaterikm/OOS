@@ -593,7 +593,7 @@ The validation suite must assert `0` autonomous transitions.
 
 ### B.4 Deterministic output
 
-- `run_id` = `weekly_run_{YYYY_MM_DD}_{content_hash_short}` where `content_hash` = `sha256(input_file_content + run_date)[:12]`.
+- `run_id` = `weekly_run_{YYYY-MM-DD}_{content_hash_short}` where `content_hash` = `sha256(input_file_content + run_date.isoformat())[:12]`.
 - Same input on same date → same `run_id`.
 - Different input or different date → different `run_id`.
 - Artifact content hashes should be stable across runs with the same input.

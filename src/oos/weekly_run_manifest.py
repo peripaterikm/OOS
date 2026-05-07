@@ -81,16 +81,16 @@ def generate_weekly_run_id(
 ) -> str:
     """Generate a deterministic weekly run ID.
 
-    Format: ``weekly_run_{YYYY_MM_DD}_{content_hash_short}``
+    Format: ``weekly_run_{YYYY-MM-DD}_{content_hash_short}``
     where ``content_hash_short`` is the first 12 hex characters of
-    ``sha256(input_file_content + run_date_iso)``.
+    ``sha256(input_file_content + run_date.isoformat())``.
 
     Args:
         run_date: The date the run was initiated (local or UTC).
         input_file_content: Raw bytes of the input file.
 
     Returns:
-        A deterministic run ID string.
+        A deterministic run ID string using ISO 8601 date (YYYY-MM-DD).
     """
     if not isinstance(run_date, date):
         raise TypeError("run_date must be a datetime.date")
@@ -162,9 +162,9 @@ class WeeklyRunManifest:
             empty_states=_normalize_bool_dict(data.get("empty_states", {})),
             input_file=data.get("input_file"),
             input_signal_count=data.get("input_signal_count"),
-            advisory_only=bool(data.get("advisory_only", True)),
-            no_live_api=bool(data.get("no_live_api", True)),
-            no_live_llm=bool(data.get("no_live_llm", True)),
+            advisory_only=_strict_bool(data.get("advisory_only"), True),
+            no_live_api=_strict_bool(data.get("no_live_api"), True),
+            no_live_llm=_strict_bool(data.get("no_live_llm"), True),
         )
 
     def validate(self) -> list[str]:
@@ -182,6 +182,21 @@ class WeeklyRunManifest:
                 f"schema_version must be {WEEKLY_RUN_MANIFEST_SCHEMA_VERSION}"
             )
 
+        # Require complete canonical key set in all three maps
+        canonical_keys = set(_CANONICAL_ARTIFACT_KEYS)
+
+        actual_path_keys = set(self.artifact_paths.keys())
+        for key in sorted(canonical_keys - actual_path_keys):
+            errors.append(f"artifact_paths missing canonical key: '{key}'")
+
+        actual_schema_keys = set(self.artifact_schema_versions.keys())
+        for key in sorted(canonical_keys - actual_schema_keys):
+            errors.append(f"artifact_schema_versions missing canonical key: '{key}'")
+
+        actual_empty_keys = set(self.empty_states.keys())
+        for key in sorted(canonical_keys - actual_empty_keys):
+            errors.append(f"empty_states missing canonical key: '{key}'")
+
         # artifact_paths keys must be known
         for key in self.artifact_paths:
             if key not in KNOWN_ARTIFACT_KEYS:
@@ -194,29 +209,43 @@ class WeeklyRunManifest:
             if version not in KNOWN_SCHEMA_VERSIONS:
                 errors.append(f"Unknown schema version for '{key}': '{version}'")
 
-        # empty_states keys must be known
-        for key in self.empty_states:
+        # empty_states keys must be known, values must be bool
+        for key, val in self.empty_states.items():
             if key not in KNOWN_ARTIFACT_KEYS:
                 errors.append(f"Unknown artifact key in empty_states: '{key}'")
-
-        # Path traversal check: no path may contain '..' or be absolute
-        for key, path in self.artifact_paths.items():
-            if ".." in str(path) or Path(str(path)).is_absolute():
+            if not isinstance(val, bool):
                 errors.append(
-                    f"artifact_paths['{key}'] must be relative and not contain '..': '{path}'"
+                    f"empty_states['{key}'] must be a boolean, got {type(val).__name__}"
+                )
+
+        # Path safety: no path may contain '..', be absolute, or be root-relative
+        for key, path in self.artifact_paths.items():
+            path_str = str(path)
+            if ".." in path_str:
+                errors.append(
+                    f"artifact_paths['{key}'] must not contain '..': '{path}'"
+                )
+            if Path(path_str).is_absolute():
+                errors.append(
+                    f"artifact_paths['{key}'] must be relative: '{path}'"
+                )
+            if path_str.startswith(("\\", "/")):
+                errors.append(
+                    f"artifact_paths['{key}'] must not be root-relative: '{path}'"
                 )
 
         # Must not be missing the 'manifest' entry itself
+        # (kept as explicit guard alongside the canonical-key completeness check)
         if "manifest" not in self.artifact_paths:
             errors.append("artifact_paths must include 'manifest'")
 
-        # Advisory / no-live safety flags
-        if not self.advisory_only:
-            errors.append("advisory_only must be True")
-        if not self.no_live_api:
-            errors.append("no_live_api must be True")
-        if not self.no_live_llm:
-            errors.append("no_live_llm must be True")
+        # Safety flags must be actual booleans
+        for flag_name in ("advisory_only", "no_live_api", "no_live_llm"):
+            val = getattr(self, flag_name)
+            if not isinstance(val, bool):
+                errors.append(f"{flag_name} must be a boolean, got {type(val).__name__}")
+            elif not val:
+                errors.append(f"{flag_name} must be True")
 
         return errors
 
@@ -370,11 +399,25 @@ def _normalize_artifact_dict(raw: Any) -> dict[str, str]:
     return {str(k): str(v) for k, v in raw.items()}
 
 
-def _normalize_bool_dict(raw: Any) -> dict[str, bool]:
-    """Normalize a dict of {key: bool} from JSON input."""
+def _normalize_bool_dict(raw: Any) -> dict[str, Any]:
+    """Normalize a dict of {key: bool} from JSON input.
+
+    Non-bool values pass through unchanged so ``validate()`` can reject them.
+    """
     if not isinstance(raw, dict):
         return {}
-    return {str(k): bool(v) for k, v in raw.items()}
+    return {str(k): v for k, v in raw.items()}
+
+
+def _strict_bool(value: Any, default: bool) -> Any:
+    """Return *value* if it is a ``bool``, else *default* if *value* is
+    ``None``, else return *value* unchanged so ``validate()`` can reject it.
+    """
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return value
 
 
 def _stable_json_dumps(obj: Any) -> str:
