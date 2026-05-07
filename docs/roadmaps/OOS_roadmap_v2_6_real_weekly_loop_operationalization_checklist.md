@@ -92,7 +92,7 @@ LLM integration belongs later (`v2.7+`) unless present only as disabled/future h
 - Unit tests must not make live network calls.
 - Live source runs are explicit, bounded, and approval-gated.
 
-> Roadmap status tracks **9 implementation items**. Items 1–8 are implementation; item 9 is the final checkpoint.
+> Roadmap status tracks **9 implementation items** (items 1.1–9.1). Items 0.1–0.6 are roadmap-state trackers and are not counted in the implementation total. Items 1–8 are implementation; item 9 is the final checkpoint.
 
 ---
 
@@ -121,6 +121,7 @@ Define the exact set of artifacts that one weekly cycle run must produce. This i
   - `parking_lot_records.json` — array of ParkingLotRecord dicts
   - `run_report.json` — WeeklyRunReport dict
   - `founder_inbox_v2.md` — human-readable Markdown inbox
+  - `founder_inbox_v2_index.json` — machine-readable inbox index (JSON companion to `founder_inbox_v2.md`)
   - `run_report.md` — human-readable Markdown run report
 - Define empty-state representation for each artifact (a cycle with no new signals still produces a valid manifest with empty arrays and clear empty-state messages).
 - Every artifact path is relative to the run directory.
@@ -140,7 +141,7 @@ Define the exact set of artifacts that one weekly cycle run must produce. This i
 - [ ] **1.1.3** `read_weekly_run_manifest()` reads and validates a `manifest.json`.
 - [ ] **1.1.4** Validation rejects missing required fields, unknown schema versions, and path traversal outside the run directory.
 - [ ] **1.1.5** Empty-state run produces a valid manifest with all `empty_states` flags set to `true`.
-- [ ] **1.1.6** A fixture test round-trips a full manifest with all 11 artifact paths.
+- [ ] **1.1.6** A fixture test round-trips a full manifest with all 13 artifact paths (excluding `manifest.json` itself).
 - [ ] **1.1.7** `run_id` is deterministic: `weekly_run_{ISO_date}_{content_hash_short}`.
 - [ ] **1.1.8** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
 
@@ -191,7 +192,7 @@ Build the central orchestrator function that runs the full v2.5 pipeline — evi
 
 - [ ] **2.1.1** `build_weekly_cycle()` exists and accepts the documented inputs.
 - [ ] **2.1.2** A fixture run with `examples/real_signal_batch.jsonl` (or equivalent fixture) completes without errors and produces a valid `manifest.json`.
-- [ ] **2.1.3** All 11 artifact types from the contract are written and parseable.
+- [ ] **2.1.3** All 13 artifact types from the contract are written and parseable.
 - [ ] **2.1.4** Empty input (zero signals) produces all artifacts with valid empty states, no crashes.
 - [ ] **2.1.5** Traceability: at least one fixture test verifies that an opportunity candidate's `linked_signal_ids` trace back to the input signal batch.
 - [ ] **2.1.6** Parking lot revisit matches are present when prior artifacts are supplied and a match exists.

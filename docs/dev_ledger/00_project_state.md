@@ -21,7 +21,7 @@
 
 - Work locally in small mini-epic packages.
 - Current branch: `planning/v2-6-roadmap`
-- MVP branch: `feat/source-intelligence-mvp-discovery-loop`
+- MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
 - Roadmap v2.6 planning is on this branch; do not push, merge, tag, or release until explicitly approved.
@@ -55,7 +55,7 @@
 - Roadmap v2.3 item 7.1-lite added a founder-facing discovery package JSON and Markdown artifact with deterministic ranking, signal traceability, recommended founder actions, and MVP limitations without automating founder decisions or making internet/API or live LLM/API calls during validation.
 - Roadmap v2.3 item 8.1-lite added an adapter-only meaning-loop dry run for Source Intelligence CandidateSignals, writing `meaning_loop_dry_run.json` and `meaning_loop_dry_run.md` with compatibility status, adapted records, and candidate-signal-to-source traceability without invoking live LLM/API calls.
 - Source Intelligence MVP+1 live collection mode implemented locally on `feat/source-intelligence-live-collection-mode`, adding explicit `--use-collectors` plus `--allow-live-network` gating, bounded collector routing for implemented Phase B collectors, collector-mode reporting, and mocked validation with no live internet/API calls.
-- Full Roadmap v2.3 item 6.1 Source Yield Analytics and item 7.2 Traceability/compliance hardening are still deferred for the MVP slice; item 8.2 completion checkpoint is not yet complete.
+- Roadmap v2.3 item 6.1 Source Yield Analytics and item 7.2 Traceability/compliance hardening were deferred from the MVP slice and subsumed into subsequent roadmaps (v2.4, v2.5).
 - Roadmap v2.4 item 1.1 hardened live Source Intelligence relevance with HTML/entity cleanup, UTF-8 decode hardening, ai_cfo_smb relevance gating, anti-marketing downgrades, non-flat deterministic scoring, finance-specific HN/GitHub query templates, RSS feed URL skips, and mocked validation without live internet/API or live LLM/API calls.
 - Roadmap v2.4 item 1.1b follow-up hardened founder-package ranking and deduplication, repaired additional mojibake fragments, downgraded GitHub install/tutorial/generic finance copy, added explicit noise coverage for obvious junk, and preserved roadmap counters at current item 1.2.
 - GitHub push / PR remains deferred until the selected 5.x offline review block is complete and the owner explicitly approves.
