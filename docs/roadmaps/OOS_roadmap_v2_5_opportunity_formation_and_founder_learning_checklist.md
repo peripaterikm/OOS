@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **7.2 Regression metrics for opportunity quality**
+- [ ] **0.2** Current item: **7.3 v2.5 end-to-end fixture validation**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [x] **0.4** Completed from this roadmap: **22 / 24**
-- [x] **0.5** Remaining: **2 / 24**
+- [x] **0.4** Completed from this roadmap: **23 / 24**
+- [x] **0.5** Remaining: **1 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -989,11 +989,11 @@ Metrics:
 
 ### Acceptance criteria
 
-- [ ] **7.2.1** Metrics model exists and serializes.
-- [ ] **7.2.2** Metrics are computed deterministically from fixture outputs.
-- [ ] **7.2.3** False-positive and duplicate rates are reported separately.
-- [ ] **7.2.4** Unsupported assumptions are counted.
-- [ ] **7.2.5** Full validation passes.
+- [x] **7.2.1** Metrics model exists and serializes.
+- [x] **7.2.2** Metrics are computed deterministically from fixture outputs.
+- [x] **7.2.3** False-positive and duplicate rates are reported separately.
+- [x] **7.2.4** Unsupported assumptions are counted.
+- [x] **7.2.5** Full validation passes.
 
 ### Validation expectations
 

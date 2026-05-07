@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `7.2 Regression metrics for opportunity quality`
+- Current item: `7.3 v2.5 end-to-end fixture validation`
 - Roadmap state: `active / planned`
-- Completed: `22 / 24`
-- Remaining: `2 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `7.1` - Opportunity quality evaluation dataset v1
-- Next planned roadmap item: Roadmap v2.5 `7.2` - Regression metrics for opportunity quality
+- Completed: `23 / 24`
+- Remaining: `1 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `7.2` - Regression metrics for opportunity quality
+- Next planned roadmap item: Roadmap v2.5 `7.3` - v2.5 end-to-end fixture validation
 
 ## Branch And Commit Strategy
 
@@ -116,3 +116,4 @@
 - Roadmap v2.5 item 6.2 added a deterministic next-best-founder-actions layer (`FounderAction` model, `build_next_best_founder_actions()`) that converts the `WeeklyOpportunityReviewPackage` into a prioritized, flattened list of advisory actions with stable action IDs, 10 action types, priority bands, linked source artifact IDs, suggested next steps, and JSON/Markdown rendering without autonomous decisions, portfolio transitions, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 6.3 added deterministic parking lot / revisit logic (`ParkingLotRecord` model, `RevisitMatch` model, `build_parking_lot_records()`, `match_revisit_candidates()`) that builds parked records from PARK/REVISIT_LATER decisions, matches new evidence using three-tier deterministic matching (pattern keys then token overlap then substring), surfaces advisory revisit matches in the weekly review revisit_queue section, and avoids autonomous portfolio transitions, embeddings, ML, LLM, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 7.1 created the opportunity quality evaluation dataset v1 with 10 synthetic labeled cases under `examples/evaluation_dataset_v2_5/opportunity_quality_cases_v1.json`, a loader with validation in `src/oos/evaluation_dataset.py`, and 14 focused tests covering dataset integrity, case-type coverage, label-decision consistency, and deterministic gate evaluation without live APIs, LLM calls, or internet access.
+- Roadmap v2.5 item 7.2 created deterministic regression metrics (`OpportunityQualityRegressionMetrics` model, `compute_regression_metrics()`) that load the v1 quality dataset, run the existing `evaluate_opportunity_quality()` pipeline on each case, compare actual gate outputs to expected labels, and produce JSON-serializable aggregate and per-case metrics (total_cases, gate_match_rate=1.0, false_positive_rate=0.4, duplicate_rate=0.1, unsupported_assumptions_count=30) with 52 focused tests and no live APIs, LLM calls, or internet access.
