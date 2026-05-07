@@ -71,6 +71,7 @@ class FounderActionModelTests(unittest.TestCase):
             linked_section_ids=["promote_candidates"],
             linked_item_ids=["item_1"],
             linked_decision_ids=["fd_1"],
+            linked_feedback_mapping_ids=["ffm_1"],
             linked_opportunity_ids=["opp_a"],
             linked_evidence_ids=["ev_1"],
             linked_pack_ids=["ep_1"],
@@ -85,6 +86,7 @@ class FounderActionModelTests(unittest.TestCase):
         self.assertEqual(restored.priority, PRIORITY_HIGH)
         self.assertTrue(restored.advisory_only)
         self.assertEqual(restored.linked_decision_ids, ["fd_1"])
+        self.assertEqual(restored.linked_feedback_mapping_ids, ["ffm_1"])
         self.assertEqual(restored.linked_opportunity_ids, ["opp_a"])
         self.assertEqual(restored.schema_version, FOUNDER_ACTION_SCHEMA_VERSION)
 
@@ -362,6 +364,24 @@ class TraceabilityTests(unittest.TestCase):
             self.assertTrue(a.linked_decision_ids, f"Action {a.action_id} missing linked_decision_ids")
             self.assertTrue(a.linked_opportunity_ids, f"Action {a.action_id} missing linked_opportunity_ids")
 
+    def test_actions_preserve_feedback_mapping_ids(self):
+        decisions = [
+            _make_test_decision("opp_x", PROMOTE, ["strong_pain"], 0.8),
+        ]
+        feedback_mappings = [map_founder_decision_to_feedback(d) for d in decisions]
+        package = _package_to_dict(
+            decisions=decisions,
+            feedback_mappings=feedback_mappings,
+        )
+        actions = build_next_best_founder_actions(package)
+
+        mapped_actions = [a for a in actions if a.linked_feedback_mapping_ids]
+        self.assertGreaterEqual(len(mapped_actions), 1)
+        self.assertEqual(
+            mapped_actions[0].linked_feedback_mapping_ids,
+            [feedback_mappings[0].mapping_id],
+        )
+
     def test_every_action_has_action_id(self):
         decisions = [
             _make_test_decision("opp_a", PROMOTE, ["strong_pain"], 0.8),
@@ -462,11 +482,16 @@ class MarkdownRenderingTests(unittest.TestCase):
         decisions = [
             _make_test_decision("opp_x", PROMOTE, ["strong_pain"], 0.8),
         ]
-        package = _package_to_dict(decisions=decisions)
+        feedback_mappings = [map_founder_decision_to_feedback(d) for d in decisions]
+        package = _package_to_dict(
+            decisions=decisions,
+            feedback_mappings=feedback_mappings,
+        )
         actions = build_next_best_founder_actions(package)
 
         md = render_next_best_actions_markdown(actions)
         self.assertIn("Decision IDs", md)
+        self.assertIn("Feedback Mapping IDs", md)
         self.assertIn("Opportunity IDs", md)
         self.assertIn("Evidence IDs", md)
 

@@ -56,6 +56,7 @@ class FounderAction:
     linked_section_ids: list[str] = field(default_factory=list)
     linked_item_ids: list[str] = field(default_factory=list)
     linked_decision_ids: list[str] = field(default_factory=list)
+    linked_feedback_mapping_ids: list[str] = field(default_factory=list)
     linked_opportunity_ids: list[str] = field(default_factory=list)
     linked_evidence_ids: list[str] = field(default_factory=list)
     linked_pack_ids: list[str] = field(default_factory=list)
@@ -73,6 +74,7 @@ class FounderAction:
             "linked_section_ids": list(self.linked_section_ids),
             "linked_item_ids": list(self.linked_item_ids),
             "linked_decision_ids": list(self.linked_decision_ids),
+            "linked_feedback_mapping_ids": list(self.linked_feedback_mapping_ids),
             "linked_opportunity_ids": list(self.linked_opportunity_ids),
             "linked_evidence_ids": list(self.linked_evidence_ids),
             "linked_pack_ids": list(self.linked_pack_ids),
@@ -92,6 +94,7 @@ class FounderAction:
             linked_section_ids=_ordered_strings(data.get("linked_section_ids", [])),
             linked_item_ids=_ordered_strings(data.get("linked_item_ids", [])),
             linked_decision_ids=_ordered_strings(data.get("linked_decision_ids", [])),
+            linked_feedback_mapping_ids=_ordered_strings(data.get("linked_feedback_mapping_ids", [])),
             linked_opportunity_ids=_ordered_strings(data.get("linked_opportunity_ids", [])),
             linked_evidence_ids=_ordered_strings(data.get("linked_evidence_ids", [])),
             linked_pack_ids=_ordered_strings(data.get("linked_pack_ids", [])),
@@ -230,6 +233,7 @@ def _item_to_action(
         linked_section_ids=[section_id],
         linked_item_ids=[item_id],
         linked_decision_ids=linked_decisions,
+        linked_feedback_mapping_ids=linked_mappings,
         linked_opportunity_ids=linked_opp_ids,
         linked_evidence_ids=linked_evidence,
         linked_pack_ids=linked_packs,
@@ -379,6 +383,8 @@ def render_next_best_actions_markdown(actions: list[FounderAction]) -> str:
             lines.append(f"- **Item IDs**: {', '.join(action.linked_item_ids)}")
         if action.linked_decision_ids:
             lines.append(f"- **Decision IDs**: {', '.join(action.linked_decision_ids)}")
+        if action.linked_feedback_mapping_ids:
+            lines.append(f"- **Feedback Mapping IDs**: {', '.join(action.linked_feedback_mapping_ids)}")
         if action.linked_opportunity_ids:
             lines.append(f"- **Opportunity IDs**: {', '.join(action.linked_opportunity_ids)}")
         if action.linked_evidence_ids:

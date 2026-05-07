@@ -183,6 +183,14 @@ class V2_5EndToEndValidationReport:
                 f"cases_processed ({self.cases_processed}) must equal "
                 f"total_cases ({self.total_cases})"
             )
+        regression_mismatch_count = _regression_mismatch_count(
+            self.per_case_results,
+            self.regression_metrics_summary,
+        )
+        if self.validation_passed and regression_mismatch_count > 0:
+            raise ValueError(
+                "validation_passed cannot be true when regression mismatches exist"
+            )
 
 
 def _ordered_strings(values: list[str]) -> list[str]:
@@ -192,6 +200,24 @@ def _ordered_strings(values: list[str]) -> list[str]:
 def _make_report_id(timestamp: str) -> str:
     digest = hashlib.sha256(timestamp.encode("utf-8")).hexdigest()[:12]
     return f"v2_5_e2e_{digest}"
+
+
+def _regression_mismatch_count(
+    per_case_results: list[V2_5EndToEndCaseResult],
+    regression_metrics_summary: dict[str, Any],
+) -> int:
+    per_case_mismatches = sum(
+        1
+        for result in per_case_results
+        if result.regression_expected_gate or result.regression_actual_gate
+        if not result.regression_matched
+    )
+    metrics_mismatches = int(
+        regression_metrics_summary.get("gate_decision_mismatches", 0)
+        if regression_metrics_summary
+        else 0
+    )
+    return max(per_case_mismatches, metrics_mismatches)
 
 
 def _derive_founder_decision_and_reasons(
@@ -560,6 +586,7 @@ def run_v2_5_end_to_end_fixture_validation(
         and len(weekly_review_sections) > 0
         and next_best_actions_count > 0
         and advisory_only_checks["autonomous_decisions"] == 0
+        and _regression_mismatch_count(per_case_results, regression_summary) == 0
     )
 
     limitations = [

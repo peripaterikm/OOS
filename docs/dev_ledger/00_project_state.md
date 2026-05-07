@@ -15,15 +15,17 @@
 - Remaining: `0 / 24`
 - Latest completed roadmap item: Roadmap v2.5 `8.1` - Roadmap v2.5 final validation
 - Next planned roadmap item: Roadmap v2.5 `7.4` - Third controlled live run quality comparison (optional/deferred checkpoint)
+- Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-5-block-5-founder-feedback-loop`
+- Current branch: `fix/v2-5-codex-review-followups`
 - MVP branch: `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
-- GitHub push / PR deferred until the MVP Source Intelligence slice is working and explicitly requested.
-- Do not push partial or unvalidated roadmap work.
+- Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
+- This branch is a post-v2.5 follow-up fix branch; do not move or recreate the `v2.5` tag.
+- Do not push partial or unvalidated follow-up work.
 
 ## Workflow Notes
 
@@ -118,4 +120,4 @@
 - Roadmap v2.5 item 7.1 created the opportunity quality evaluation dataset v1 with 10 synthetic labeled cases under `examples/evaluation_dataset_v2_5/opportunity_quality_cases_v1.json`, a loader with validation in `src/oos/evaluation_dataset.py`, and 14 focused tests covering dataset integrity, case-type coverage, label-decision consistency, and deterministic gate evaluation without live APIs, LLM calls, or internet access.
 - Roadmap v2.5 item 7.2 created deterministic regression metrics (`OpportunityQualityRegressionMetrics` model, `compute_regression_metrics()`) that load the v1 quality dataset, run the existing `evaluate_opportunity_quality()` pipeline on each case, compare actual gate outputs to expected labels, and produce JSON-serializable aggregate and per-case metrics (total_cases, gate_match_rate=1.0, false_positive_rate=0.4, duplicate_rate=0.1, unsupported_assumptions_count=30) with 52 focused tests and no live APIs, LLM calls, or internet access.
 - Roadmap v2.5 item 7.3 created deterministic end-to-end fixture validation (`V2_5EndToEndValidationReport` model, `run_v2_5_end_to_end_fixture_validation()`) that processes all 10 quality fixture cases through the full v2.5 advisory pipeline — evidence packs, quality gates, founder decisions, feedback mappings, preference profiles, parking lot records, weekly review packaging, and next-best actions — with 37 focused tests, 5-stage traceability verification, advisory-only enforcement (0 autonomous decisions), deterministic output, and no live APIs, LLM calls, or internet access.
-- Roadmap v2.5 item 8.1 closed the roadmap with a final validation checkpoint: 1106 tests, 0 failures; `scripts/oos-validate.ps1` pass; `git diff --check` clean; roadmap state `completed` at `24 / 24`. Push, PR, merge, and release tag remain deferred until explicitly requested. Item 7.4 (third controlled live run) remains optional/deferred.
+- Roadmap v2.5 item 8.1 closed the roadmap with a final validation checkpoint: 1106 tests, 0 failures; `scripts/oos-validate.ps1` pass; `git diff --check` clean; roadmap state `completed` at `24 / 24`. PR `#40` was merged to `main`, and tag `v2.5` was created and pushed. Item 7.4 (third controlled live run) remains optional/deferred.
