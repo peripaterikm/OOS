@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `6.2 Next best founder actions`
+- Current item: `6.3 Parking lot / revisit logic`
 - Roadmap state: `active / planned`
-- Completed: `19 / 24`
-- Remaining: `5 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `6.1` - Weekly opportunity review package
-- Next planned roadmap item: Roadmap v2.5 `6.2` - Next best founder actions
+- Completed: `20 / 24`
+- Remaining: `4 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `6.2` - Next best founder actions
+- Next planned roadmap item: Roadmap v2.5 `6.3` - Parking lot / revisit logic
 
 ## Branch And Commit Strategy
 
@@ -111,3 +111,6 @@
 - Roadmap v2.5 item 4.3 added deterministic false-positive opportunity suppression for generic, vendor/SEO, product-submission, disguised-consulting, buyerless, unsupported-assumption-heavy, and low-sufficiency opportunities, with quality-gate integration that prevents pass for high/critical false positives without auto-promotion.
 - Roadmap v2.5 item 5.1 added a structured FounderDecisionV2 taxonomy with five decision values, decision-specific reason categories, deterministic IDs, traceability fields, validation, serialization, and summaries without changing scoring, mapping feedback, or founder preference profiles.
 - Roadmap v2.5 item 5.2 added deterministic founder feedback mapping from `FounderDecisionV2` to opportunity, evidence-pack, optional cluster, evidence, source-signal, and source-URL lineage, with feedback tags, signal impact, recommended future handling, serialization, validation, and record-only semantics without scoring mutation, ML-training claims, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 5.3 added deterministic FounderPreferenceProfile built from `FounderDecisionV2` and optional `FounderFeedbackMapping` inputs, with preferred pain types, rejected/promoted patterns, recurring kill reasons, evidence gap aggregation, scoring hints, package warnings, and fixture-driven tests without ML-training claims, scoring mutation, internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 6.1 added a deterministic `WeeklyOpportunityReviewPackage` that aggregates existing founder decisions, feedback mappings, preference profiles, and opportunity candidates into a founder-facing weekly review with structured sections, traceability-preserving item IDs, clear empty states, advisory-only enforcement, and JSON/Markdown rendering without live collection, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 6.2 added a deterministic next-best-founder-actions layer (`FounderAction` model, `build_next_best_founder_actions()`) that converts the `WeeklyOpportunityReviewPackage` into a prioritized, flattened list of advisory actions with stable action IDs, 10 action types, priority bands, linked source artifact IDs, suggested next steps, and JSON/Markdown rendering without autonomous decisions, portfolio transitions, live internet/API calls, or live LLM/API calls.

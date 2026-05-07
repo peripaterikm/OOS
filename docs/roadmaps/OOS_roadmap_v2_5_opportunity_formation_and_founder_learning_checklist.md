@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **6.2 Next best founder actions**
+- [ ] **0.2** Current item: **6.3 Parking lot / revisit logic**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [x] **0.4** Completed from this roadmap: **19 / 24**
-- [x] **0.5** Remaining: **5 / 24**
+- [x] **0.4** Completed from this roadmap: **20 / 24**
+- [x] **0.5** Remaining: **4 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -850,11 +850,11 @@ Actions:
 
 ### Acceptance criteria
 
-- [ ] **6.2.1** Action recommendation model exists and serializes.
-- [ ] **6.2.2** Actions are deterministic from gate/decision/evidence state.
-- [ ] **6.2.3** Actions never bypass founder approval.
-- [ ] **6.2.4** Suggested customer interviews include evidence rationale.
-- [ ] **6.2.5** Full validation passes.
+- [x] **6.2.1** Action recommendation model exists and serializes.
+- [x] **6.2.2** Actions are deterministic from gate/decision/evidence state.
+- [x] **6.2.3** Actions never bypass founder approval.
+- [x] **6.2.4** Suggested customer interviews include evidence rationale.
+- [x] **6.2.5** Full validation passes.
 
 ### Validation expectations
 
