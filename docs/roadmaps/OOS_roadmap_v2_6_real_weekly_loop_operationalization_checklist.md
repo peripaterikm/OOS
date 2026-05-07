@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- [ ] **0.2** Current item: `6.1` Weekly cycle status command v2
+- [ ] **0.2** Current item: `7.1` Run reports and dashboard index
 - [ ] **0.3** Roadmap state: `active / in_progress`
-- [x] **0.4** Completed from this roadmap: **5 / 9**
-- [ ] **0.5** Remaining: **4 / 9**
+- [x] **0.4** Completed from this roadmap: **6 / 9**
+- [ ] **0.5** Remaining: **3 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
 
 ### Core Concept
@@ -380,13 +380,13 @@ Upgrade the existing `weekly-cycle-status` CLI command to produce a rich status 
 
 ### Acceptance criteria
 
-- [ ] **6.1.1** `weekly-cycle-status --project-root . --run-id weekly_run_2026_01_01_abc123` prints all 10 status sections.
-- [ ] **6.1.2** `weekly-cycle-status --project-root .` (no `--run-id`) discovers and reports on the latest run.
-- [ ] **6.1.3** Pending review run shows "X of Y items undecided" and recommends review.
-- [ ] **6.1.4** Fully decided run shows "All items decided — run is complete."
-- [ ] **6.1.5** Run with no items shows explicit empty/zero counts, not errors.
-- [ ] **6.1.6** Missing or corrupt `manifest.json` produces a clear error and exit code 2.
-- [ ] **6.1.7** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
+- [x] **6.1.1** `weekly-cycle-status-v2 --project-root . --run-id weekly_run_2026_01_01_abc123` prints all 10 status sections.
+- [x] **6.1.2** `weekly-cycle-status-v2 --project-root .` (no `--run-id`) discovers and reports on the latest run.
+- [x] **6.1.3** Pending review run shows "X of Y items undecided" and recommends review.
+- [x] **6.1.4** Fully decided run shows "All items decided — run is complete."
+- [x] **6.1.5** Run with no items shows explicit empty/zero counts, not errors.
+- [x] **6.1.6** Missing or corrupt `manifest.json` produces a clear error and exit code 2.
+- [x] **6.1.7** Focused tests (29), dependent tests, and full validation pass; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
 
 ---
 

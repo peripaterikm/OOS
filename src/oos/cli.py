@@ -12,6 +12,11 @@ from .artifact_store import ArtifactStore
 from .config import OOSConfig
 from .founder_decision_import import import_founder_decisions
 from .weekly_cycle_builder import build_weekly_cycle
+from .weekly_cycle_status import (
+    build_weekly_cycle_status,
+    render_weekly_cycle_status_markdown,
+    weekly_cycle_status_to_json,
+)
 from .customer_voice_queries import (
     approve_customer_voice_query,
     generate_customer_voice_queries,
@@ -933,6 +938,28 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Optional path to a prior weekly run directory for parking lot revisit matching.",
     )
 
+    v2_status_parser = subparsers.add_parser(
+        "weekly-cycle-status-v2",
+        help="Print read-only status for a v2.6 weekly cycle run.",
+    )
+    v2_status_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    v2_status_parser.add_argument(
+        "--run-id",
+        default=None,
+        help="Optional run ID under artifacts/weekly_runs/. Auto-discovers latest if omitted.",
+    )
+    v2_status_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="output_json",
+        help="Output status as JSON instead of Markdown.",
+    )
+
     return parser
 
 
@@ -1261,6 +1288,24 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "weekly-cycle-status":
         return _print_weekly_cycle_status(project_root=args.project_root)
+
+    if args.command == "weekly-cycle-status-v2":
+        status = build_weekly_cycle_status(
+            project_root=args.project_root,
+            run_id=args.run_id,
+        )
+
+        if getattr(args, "output_json", False):
+            print(weekly_cycle_status_to_json(status), end="")
+        else:
+            print(render_weekly_cycle_status_markdown(status))
+
+        if status.validation_passed:
+            return 0
+        elif status.manifest_valid:
+            return 1
+        else:
+            return 2
 
     if args.command == "evaluate-ai-ideation":
         config = OOSConfig.from_env(project_root=args.project_root)
