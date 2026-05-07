@@ -74,6 +74,7 @@ class SignalScoringInput:
     kill_pattern_flag: bool = False
     kill_pattern_penalty: float = 0.0
     vendor_promo_flag: bool = False
+    # Advisory source, actual bounded score adjustment when explicitly supplied.
     founder_preference_advisory_adjustment: float = 0.0
     founder_preference_hint_kind: str = ""
     founder_preference_hint_reason: str = ""

@@ -22,6 +22,7 @@ from oos.v2_5_end_to_end_fixture_validation import (
     V2_5EndToEndCaseResult,
     V2_5EndToEndValidationReport,
     _derive_founder_decision_and_reasons,
+    _regression_mismatch_count,
     run_v2_5_end_to_end_fixture_validation,
 )
 
@@ -98,6 +99,38 @@ class V2_5EndToEndValidationReportTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             report.validate()
 
+    def test_report_pass_rejects_per_case_regression_mismatch(self):
+        report = V2_5EndToEndValidationReport(
+            report_id="v2_5_e2e_test",
+            generated_at="2025-01-01T00:00:00+00:00",
+            total_cases=1,
+            cases_processed=1,
+            per_case_results=[
+                V2_5EndToEndCaseResult(
+                    case_id="case_001",
+                    title="Mismatch case",
+                    regression_expected_gate="pass",
+                    regression_actual_gate="reject",
+                    regression_matched=False,
+                )
+            ],
+            validation_passed=True,
+        )
+        with self.assertRaises(ValueError):
+            report.validate()
+
+    def test_report_pass_rejects_metric_regression_mismatch(self):
+        report = V2_5EndToEndValidationReport(
+            report_id="v2_5_e2e_test",
+            generated_at="2025-01-01T00:00:00+00:00",
+            total_cases=0,
+            cases_processed=0,
+            regression_metrics_summary={"gate_decision_mismatches": 1},
+            validation_passed=True,
+        )
+        with self.assertRaises(ValueError):
+            report.validate()
+
     def test_report_empty_report_id_raises(self):
         report = V2_5EndToEndValidationReport(
             report_id="",
@@ -162,6 +195,28 @@ class V2_5EndToEndValidationReportTests(unittest.TestCase):
         d = report.to_dict()
         self.assertIn("limitations", d)
         self.assertEqual(len(d["limitations"]), 2)
+
+    def test_regression_mismatch_count_detects_per_case_mismatch(self):
+        count = _regression_mismatch_count(
+            [
+                V2_5EndToEndCaseResult(
+                    case_id="case_001",
+                    title="Mismatch case",
+                    regression_expected_gate="pass",
+                    regression_actual_gate="reject",
+                    regression_matched=False,
+                )
+            ],
+            {},
+        )
+        self.assertEqual(count, 1)
+
+    def test_regression_mismatch_count_detects_metric_mismatch(self):
+        count = _regression_mismatch_count(
+            [],
+            {"gate_decision_mismatches": 2},
+        )
+        self.assertEqual(count, 2)
 
 
 class DeriveFounderDecisionAndReasonsTests(unittest.TestCase):
