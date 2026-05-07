@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`
-- [ ] **0.2** Current item: **6.3 Parking lot / revisit logic**
+- [ ] **0.2** Current item: **7.1 Opportunity quality evaluation dataset v1**
 - [ ] **0.3** Roadmap state: `active / planned`
-- [x] **0.4** Completed from this roadmap: **20 / 24**
-- [x] **0.5** Remaining: **4 / 24**
+- [x] **0.4** Completed from this roadmap: **21 / 24**
+- [x] **0.5** Remaining: **3 / 24**
 - [ ] **0.6** Primary architecture reference: `docs/architecture/source_intelligence_signal_strategy_v0_5.md`
 
 ### Core Concept
@@ -886,11 +886,11 @@ Keep parked opportunities visible and revisit them when new matching evidence ap
 
 ### Acceptance criteria
 
-- [ ] **6.3.1** Parked opportunity record exists and serializes.
-- [ ] **6.3.2** New matching evidence can trigger revisit recommendation.
-- [ ] **6.3.3** Revisit logic does not auto-promote.
-- [ ] **6.3.4** Revisit queue is visible in weekly package.
-- [ ] **6.3.5** Full validation passes.
+- [x] **6.3.1** Parked opportunity record exists and serializes.
+- [x] **6.3.2** New matching evidence can trigger revisit recommendation.
+- [x] **6.3.3** Revisit logic does not auto-promote.
+- [x] **6.3.4** Revisit queue is visible in weekly package.
+- [x] **6.3.5** Full validation passes.
 
 ### Validation expectations
 

@@ -9,12 +9,12 @@
 ## Current Progress
 
 - Roadmap v2.3 planning created: yes
-- Current item: `6.3 Parking lot / revisit logic`
+- Current item: `7.1 Opportunity quality evaluation dataset v1`
 - Roadmap state: `active / planned`
-- Completed: `20 / 24`
-- Remaining: `4 / 24`
-- Latest completed roadmap item: Roadmap v2.5 `6.2` - Next best founder actions
-- Next planned roadmap item: Roadmap v2.5 `6.3` - Parking lot / revisit logic
+- Completed: `21 / 24`
+- Remaining: `3 / 24`
+- Latest completed roadmap item: Roadmap v2.5 `6.3` - Parking lot / revisit logic
+- Next planned roadmap item: Roadmap v2.5 `7.1` - Opportunity quality evaluation dataset v1
 
 ## Branch And Commit Strategy
 
@@ -114,3 +114,4 @@
 - Roadmap v2.5 item 5.3 added deterministic FounderPreferenceProfile built from `FounderDecisionV2` and optional `FounderFeedbackMapping` inputs, with preferred pain types, rejected/promoted patterns, recurring kill reasons, evidence gap aggregation, scoring hints, package warnings, and fixture-driven tests without ML-training claims, scoring mutation, internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 6.1 added a deterministic `WeeklyOpportunityReviewPackage` that aggregates existing founder decisions, feedback mappings, preference profiles, and opportunity candidates into a founder-facing weekly review with structured sections, traceability-preserving item IDs, clear empty states, advisory-only enforcement, and JSON/Markdown rendering without live collection, live internet/API calls, or live LLM/API calls.
 - Roadmap v2.5 item 6.2 added a deterministic next-best-founder-actions layer (`FounderAction` model, `build_next_best_founder_actions()`) that converts the `WeeklyOpportunityReviewPackage` into a prioritized, flattened list of advisory actions with stable action IDs, 10 action types, priority bands, linked source artifact IDs, suggested next steps, and JSON/Markdown rendering without autonomous decisions, portfolio transitions, live internet/API calls, or live LLM/API calls.
+- Roadmap v2.5 item 6.3 added deterministic parking lot / revisit logic (`ParkingLotRecord` model, `RevisitMatch` model, `build_parking_lot_records()`, `match_revisit_candidates()`) that builds parked records from PARK/REVISIT_LATER decisions, matches new evidence using three-tier deterministic matching (pattern keys then token overlap then substring), surfaces advisory revisit matches in the weekly review revisit_queue section, and avoids autonomous portfolio transitions, embeddings, ML, LLM, live internet/API calls, or live LLM/API calls.

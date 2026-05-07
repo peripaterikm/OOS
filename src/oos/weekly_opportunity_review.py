@@ -24,6 +24,12 @@ from oos.founder_preference_profile import (
     founder_preference_profile_from_dict,
     profile_founder_package_warnings,
 )
+from oos.parking_lot import (
+    ParkingLotRecord,
+    RevisitMatch,
+    build_parking_lot_records,
+    match_revisit_candidates,
+)
 
 WEEKLY_REVIEW_SCHEMA_VERSION = "weekly_opportunity_review.v1"
 
@@ -221,11 +227,17 @@ def build_weekly_opportunity_review_package(
     evidence_packs: list[dict[str, Any]] | None = None,
     portfolio_states: list[dict[str, Any]] | None = None,
     opportunity_candidates: list[dict[str, Any]] | None = None,
+    parking_lot_records: list[ParkingLotRecord | dict[str, Any]] | None = None,
+    revisit_matches: list[RevisitMatch | dict[str, Any]] | None = None,
 ) -> WeeklyOpportunityReviewPackage:
     """Build a deterministic weekly opportunity review package.
 
     All inputs are optional. When an input is absent or empty, the corresponding
     sections render with clear empty states.
+
+    parking_lot_records/revisit_matches: optional advisory parking lot data.
+    When provided, revisit matches are surfaced in the revisit_queue section.
+    When absent, behavior is unchanged.
 
     The package is advisory only; it does not make autonomous portfolio decisions.
     """
@@ -247,6 +259,16 @@ def build_weekly_opportunity_review_package(
     packs = list(evidence_packs or [])
     portfolios = list(portfolio_states or [])
     opp_candidates = list(opportunity_candidates or [])
+
+    # Normalize parking lot inputs
+    normalized_parking_lot_records: list[ParkingLotRecord] = [
+        ParkingLotRecord.from_dict(r) if isinstance(r, dict) else r
+        for r in (parking_lot_records or [])
+    ]
+    normalized_revisit_matches: list[RevisitMatch] = [
+        RevisitMatch.from_dict(m) if isinstance(m, dict) else m
+        for m in (revisit_matches or [])
+    ]
 
     decision_ids = _ordered_strings([d.decision_id for d in normalized_decisions])
     mapping_ids = _ordered_strings([m.mapping_id for m in normalized_mappings])
@@ -272,7 +294,7 @@ def build_weekly_opportunity_review_package(
             _build_park_candidates(normalized_decisions),
             _build_kill_candidates(normalized_decisions),
             _build_needs_more_evidence(normalized_decisions),
-            _build_revisit_queue(normalized_decisions),
+            _build_revisit_queue(normalized_decisions, normalized_revisit_matches),
             _build_evidence_gaps(normalized_decisions, normalized_mappings, normalized_profile),
             _build_suggested_interviews_or_validation(normalized_decisions, opp_candidates),
             _build_suggested_next_queries(normalized_profile, normalized_decisions, packs),
@@ -509,6 +531,7 @@ def _build_needs_more_evidence(
 
 def _build_revisit_queue(
     decisions: list[FounderDecisionV2],
+    revisit_matches: list[RevisitMatch] | None = None,
 ) -> WeeklyReviewSection:
     revisit_list = [d for d in decisions if d.decision == REVISIT_LATER]
     revisit_list = sorted(revisit_list, key=lambda d: (-d.confidence, d.decision_id))
@@ -532,12 +555,46 @@ def _build_revisit_queue(
             )
         )
 
+    # Surface parking lot revisit matches as advisory items
+    match_count = 0
+    if revisit_matches:
+        for m in revisit_matches:
+            try:
+                errors = m.validate()
+                if errors:
+                    continue
+            except (ValueError, TypeError):
+                continue
+            urgency = "high" if m.confidence == "high" else ("normal" if m.confidence == "medium" else "low")
+            items.append(
+                WeeklyReviewSectionItem(
+                    item_id=f"revisit_match_{m.match_id}",
+                    summary=(
+                        f"[{m.confidence.upper()} MATCH] Parking lot record '{m.parking_lot_record_id}' "
+                        f"matched: {m.match_reason}. "
+                        f"Evidence: {m.matched_evidence_id or 'none'}; "
+                        f"Opportunity: {m.matched_opportunity_id or 'none'}"
+                    ),
+                    source_artifact_type="revisit_match",
+                    source_artifact_id=m.match_id,
+                    linked_evidence_ids=[m.matched_evidence_id] if m.matched_evidence_id else [],
+                    linked_opportunity_ids=[m.matched_opportunity_id] if m.matched_opportunity_id else [],
+                    action_hint=m.suggested_founder_action or "Review parked opportunity for possible revisit.",
+                    urgency=urgency,
+                    category="revisit_match",
+                )
+            )
+            match_count += 1
+
     return WeeklyReviewSection(
         section_id="revisit_queue",
         title="Revisit Queue",
         items=items,
         empty_state="No opportunities queued for revisit.",
-        source_artifact_counts={"revisit_decisions": len(revisit_list)},
+        source_artifact_counts={
+            "revisit_decisions": len(revisit_list),
+            "revisit_matches": match_count,
+        },
     )
 
 
