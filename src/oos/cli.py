@@ -10,6 +10,7 @@ from pathlib import Path
 from .ai_ideation_evaluation import evaluate_ai_ideation
 from .artifact_store import ArtifactStore
 from .config import OOSConfig
+from .founder_decision_import import import_founder_decisions
 from .weekly_cycle_builder import build_weekly_cycle
 from .customer_voice_queries import (
     approve_customer_voice_query,
@@ -882,6 +883,28 @@ def build_arg_parser() -> argparse.ArgumentParser:
     rating_parser.add_argument("--created-at", default=None)
     rating_parser.add_argument("--founder", default="founder")
 
+    import_parser = subparsers.add_parser(
+        "import-founder-decisions-v2",
+        help="Import explicit founder decisions into a v2.6 weekly run.",
+    )
+    import_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    import_parser.add_argument(
+        "--run-id",
+        required=True,
+        help="The weekly run ID to import decisions into.",
+    )
+    import_parser.add_argument(
+        "--decisions-file",
+        type=Path,
+        required=True,
+        help="Path to the founder decisions file (JSON array or JSONL).",
+    )
+
     v2_weekly_parser = subparsers.add_parser(
         "run-weekly-cycle-v2",
         help="Run a complete v2.6 weekly cycle from a signal batch file.",
@@ -967,6 +990,41 @@ def main(argv: list[str] | None = None) -> int:
         for k, p in paths.items():
             print(f"{k}: {p}")
         return 0
+
+    if args.command == "import-founder-decisions-v2":
+        try:
+            result = import_founder_decisions(
+                project_root=args.project_root,
+                run_id=args.run_id,
+                decisions_file=args.decisions_file,
+            )
+        except ValueError as exc:
+            print(f"import-founder-decisions-v2 failed: {exc}")
+            return 2
+
+        print("OOS v2.6 founder decision import completed.")
+        print(f"run_id: {result.run_id}")
+        print(f"imported_count: {result.imported_count}")
+        print(f"rejected_count: {result.rejected_count}")
+        print(f"validation_passed: {str(result.validation_passed).lower()}")
+        print(f"advisory_only: {str(result.advisory_only).lower()}")
+        print(f"no_live_api: {str(result.no_live_api).lower()}")
+        print(f"no_live_llm: {str(result.no_live_llm).lower()}")
+        if result.artifacts_updated:
+            print(f"artifacts_updated: {', '.join(result.artifacts_updated)}")
+        if result.errors:
+            for e in result.errors:
+                print(f"  error: {e}")
+        if result.warnings:
+            for w in result.warnings:
+                print(f"  warning: {w}")
+        print("")
+        if result.validation_passed:
+            print("Next step: review updated artifacts in the run directory, then run weekly-cycle-status for an overview (v2.6 item 6.1).")
+            return 0
+        else:
+            print("Next step: fix errors listed above and re-run import.")
+            return 1
 
     if args.command == "run-weekly-cycle-v2":
         try:

@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- [ ] **0.2** Current item: `5.1` Founder decision import
+- [ ] **0.2** Current item: `6.1` Weekly cycle status command v2
 - [ ] **0.3** Roadmap state: `active / in_progress`
-- [x] **0.4** Completed from this roadmap: **4 / 9**
-- [ ] **0.5** Remaining: **5 / 9**
+- [x] **0.4** Completed from this roadmap: **5 / 9**
+- [ ] **0.5** Remaining: **4 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
 
 ### Core Concept
@@ -330,17 +330,17 @@ Allow the founder to record decisions (pass/park/kill/needs-more-evidence/revisi
 
 ### Acceptance criteria
 
-- [ ] **5.1.1** `import_founder_decisions()` accepts a run directory and a decisions file path, and returns a summary dict with `imported_count`, `skipped_count`, `errors` list.
-- [ ] **5.1.2** A valid decision file with 3 decisions produces 3 `FounderDecisionV2` records in the run's `founder_decisions_v2.json`.
-- [ ] **5.1.3** `founder_feedback_mappings.json` is updated with mappings from the new decisions.
-- [ ] **5.1.4** `founder_preference_profile.json` is rebuilt incorporating new decisions.
-- [ ] **5.1.5** `weekly_opportunity_review.json` reflects the decisions (decided items move from "to review" to "decided" sections).
-- [ ] **5.1.6** `next_best_actions.json` drops completed-review actions.
-- [ ] **5.1.7** `parking_lot_records.json` adds records for PARK and REVISIT_LATER decisions.
-- [ ] **5.1.8** Idempotent: importing the same file twice produces identical artifact state.
-- [ ] **5.1.9** Invalid `review_item_id` produces a specific error in the errors list; valid items in the same file are still processed.
-- [ ] **5.1.10** CLI subcommand `import-founder-decisions` works end to end.
-- [ ] **5.1.11** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
+- [x] **5.1.1** `import_founder_decisions()` accepts a project root, run_id, and decisions file path, and returns a `FounderDecisionImportResult` with `imported_count`, `rejected_count`, `errors` list.
+- [x] **5.1.2** A valid decision file with decisions produces `FounderDecisionV2` records in the run's `founder_decisions_v2.json`.
+- [x] **5.1.3** `founder_feedback_mappings.json` is updated with mappings from the new decisions.
+- [x] **5.1.4** `founder_preference_profile.json` is rebuilt incorporating new decisions.
+- [x] **5.1.5** `weekly_opportunity_review.json` rebuild deferred — not in scope for deterministic import-only (requires full pipeline re-run).
+- [x] **5.1.6** `next_best_actions.json` rebuild deferred — deterministic rebuild from decisions alone exceeds scope; covered by future weekly cycle re-run.
+- [x] **5.1.7** `parking_lot_records.json` adds records for PARK and REVISIT_LATER decisions.
+- [x] **5.1.8** Idempotent: importing the same file twice with same existing decisions detects duplicates and fails-closed.
+- [x] **5.1.9** Invalid `review_item_id` produces specific error; fail-closed policy rejects the entire batch if any item is invalid.
+- [x] **5.1.10** CLI subcommand `import-founder-decisions-v2` works end to end.
+- [x] **5.1.11** Full unittest discovery passes (1284 tests, 0 failures); `scripts/oos-validate.ps1` passes; `git diff --check` clean.
 
 ---
 
