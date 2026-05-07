@@ -9,22 +9,22 @@
 ## Current Progress
 
 - Roadmap v2.6 planning created: yes
-- Current item: `1.1` - Weekly run artifact contract
-- Roadmap state: `active / planned`
-- Completed: `0 / 9`
-- Remaining: `9 / 9`
-- Latest completed roadmap item: Roadmap v2.5 `8.1` - Roadmap v2.5 final validation
-- Next planned roadmap item: Roadmap v2.6 `1.1` - Weekly run artifact contract
+- Current item: `2.1` - Unified weekly cycle builder
+- Roadmap state: `active / in_progress`
+- Completed: `1 / 9`
+- Remaining: `8 / 9`
+- Latest completed roadmap item: Roadmap v2.6 `1.1` - Weekly run artifact contract
+- Next planned roadmap item: Roadmap v2.6 `2.1` - Unified weekly cycle builder
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `planning/v2-6-roadmap`
+- Current branch: `feat/v2-6-weekly-loop-block-1`
 - MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
-- Roadmap v2.6 planning is on this branch; do not push, merge, tag, or release until explicitly approved.
+- Roadmap v2.6 implementation is on this branch; do not push, merge, tag, or release until explicitly approved.
 - Do not push partial or unvalidated follow-up work.
 
 ## Workflow Notes
@@ -122,3 +122,4 @@
 - Roadmap v2.5 item 7.3 created deterministic end-to-end fixture validation (`V2_5EndToEndValidationReport` model, `run_v2_5_end_to_end_fixture_validation()`) that processes all 10 quality fixture cases through the full v2.5 advisory pipeline — evidence packs, quality gates, founder decisions, feedback mappings, preference profiles, parking lot records, weekly review packaging, and next-best actions — with 37 focused tests, 5-stage traceability verification, advisory-only enforcement (0 autonomous decisions), deterministic output, and no live APIs, LLM calls, or internet access.
 - Roadmap v2.5 item 8.1 closed the roadmap with a final validation checkpoint: 1106 tests, 0 failures; `scripts/oos-validate.ps1` pass; `git diff --check` clean; roadmap state `completed` at `24 / 24`. PR `#40` was merged to `main`, and tag `v2.5` was created and pushed. Item 7.4 (third controlled live run) remains optional/deferred.
 - Roadmap v2.6 planning created the Real Weekly Loop / Operationalization checklist with 9 implementation items: weekly run artifact contract, unified weekly cycle builder, CLI command, founder inbox v2, founder decision import, weekly cycle status command, run reports and dashboard index, fixture end-to-end validation, and final v2.6 checkpoint. Implementation starts at item 1.1; no source code features, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
+- Roadmap v2.6 item 1.1 added the canonical `WeeklyRunManifest` model with 14 artifact paths, deterministic `run_id` generation (`weekly_run_{YYYY_MM_DD}_{content_hash_short}`), `write_weekly_run_manifest()` / `read_weekly_run_manifest()` helpers with validation and path-traversal guards, and advisory-only / no-live-api / no-live-llm safety flags enforced by validation. 39 focused tests pass. No full weekly cycle builder, CLI, inbox, or decision import were implemented (deferred to items 2.1–5.1). No real artifacts were written under `artifacts/`. No live collection, live internet/API calls, or live LLM/API calls were made.

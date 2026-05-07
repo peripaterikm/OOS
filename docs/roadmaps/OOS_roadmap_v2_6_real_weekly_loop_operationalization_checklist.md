@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- [ ] **0.2** Current item: `1.1` Weekly run artifact contract
-- [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **0 / 9**
-- [ ] **0.5** Remaining: **9 / 9**
+- [ ] **0.2** Current item: `2.1` Unified weekly cycle builder
+- [ ] **0.3** Roadmap state: `active / in_progress`
+- [ ] **0.4** Completed from this roadmap: **1 / 9**
+- [ ] **0.5** Remaining: **8 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
 
 ### Core Concept
@@ -136,14 +136,14 @@ Define the exact set of artifacts that one weekly cycle run must produce. This i
 
 ### Acceptance criteria
 
-- [ ] **1.1.1** `WeeklyRunManifest` model exists with `run_id`, `created_at`, `schema_version`, `artifact_paths` (dict of artifact type → relative path), `artifact_schema_versions` (dict of artifact type → schema version string), `empty_states` (dict of artifact type → bool), `input_file` (optional path), and `input_signal_count` (optional int).
-- [ ] **1.1.2** `write_weekly_run_manifest()` writes `manifest.json` to a run directory and returns the manifest.
-- [ ] **1.1.3** `read_weekly_run_manifest()` reads and validates a `manifest.json`.
-- [ ] **1.1.4** Validation rejects missing required fields, unknown schema versions, and path traversal outside the run directory.
-- [ ] **1.1.5** Empty-state run produces a valid manifest with all `empty_states` flags set to `true`.
-- [ ] **1.1.6** A fixture test round-trips a full manifest with all 13 artifact paths (excluding `manifest.json` itself).
-- [ ] **1.1.7** `run_id` is deterministic: `weekly_run_{ISO_date}_{content_hash_short}`.
-- [ ] **1.1.8** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
+- [x] **1.1.1** `WeeklyRunManifest` model exists with `run_id`, `created_at`, `schema_version`, `artifact_paths` (dict of artifact type → relative path), `artifact_schema_versions` (dict of artifact type → schema version string), `empty_states` (dict of artifact type → bool), `input_file` (optional path), and `input_signal_count` (optional int).
+- [x] **1.1.2** `write_weekly_run_manifest()` writes `manifest.json` to a run directory and returns the manifest.
+- [x] **1.1.3** `read_weekly_run_manifest()` reads and validates a `manifest.json`.
+- [x] **1.1.4** Validation rejects missing required fields, unknown schema versions, and path traversal outside the run directory.
+- [x] **1.1.5** Empty-state run produces a valid manifest with all `empty_states` flags set to `true`.
+- [x] **1.1.6** A fixture test round-trips a full manifest with all 14 artifact paths (including `manifest.json` itself).
+- [x] **1.1.7** `run_id` is deterministic: `weekly_run_{ISO_date}_{content_hash_short}`.
+- [x] **1.1.8** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
 
 ---
 

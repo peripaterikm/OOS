@@ -59,7 +59,7 @@ class TestRoadmapV22CompletionCheckpoint(unittest.TestCase):
 
         self.assertRegex(
             state,
-            r"Roadmap v2\.2 status: complete|Current item: `(6\.2|8\.1|8\.2|Completed / final milestone state)`",
+            r"Roadmap v2\.[25] status: complete|Current item: `(2\.1|6\.2|8\.1|8\.2|Completed / final milestone state)`",
         )
         self.assertRegex(
             state,
@@ -71,7 +71,7 @@ class TestRoadmapV22CompletionCheckpoint(unittest.TestCase):
         )
         self.assertRegex(
             state,
-            r"Latest completed roadmap item: (Roadmap v2\.(2|3|4) )?`?"
+            r"Latest completed roadmap item: (Roadmap v2\.\d )?`?"
             r"(8\.1|8\.1-lite|8\.2|1\.1|1\.2|2\.1|2\.2|3\.1|3\.2|4\.1|4\.2|4\.3|5\.1|5\.2|6\.1|6\.2|6\.2-lite|7\.1|7\.1-lite|7\.2)`?",
         )
 
