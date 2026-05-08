@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- [x] **0.2** Current item: `7.1` Run reports and dashboard index
+- [x] **0.2** Current item: `8.1` Fixture end-to-end weekly cycle validation
 - [ ] **0.3** Roadmap state: `active / in_progress`
-- [x] **0.4** Completed from this roadmap: **7 / 9**
-- [ ] **0.5** Remaining: **2 / 9**
+- [x] **0.4** Completed from this roadmap: **8 / 9**
+- [ ] **0.5** Remaining: **1 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
 
 ### Core Concept
@@ -484,15 +484,15 @@ Prove the full v2.6 weekly loop works end-to-end with deterministic fixtures, fo
 
 ### Acceptance criteria
 
-- [ ] **8.1.1** `V2_6EndToEndValidationReport` model exists with all documented fields.
-- [ ] **8.1.2** `run_v2_6_end_to_end_fixture_validation()` completes without errors.
-- [ ] **8.1.3** At least 5 stages verified (signal ingestion, evidence packs, quality gates, inbox, decision import).
-- [ ] **8.1.4** Traceability chain is verified end-to-end: input signal ID → inbox review item ID.
-- [ ] **8.1.5** 0 autonomous portfolio transitions confirmed.
-- [ ] **8.1.6** Output is deterministic: two runs with same fixture produce identical `run_id` and artifact content hashes.
-- [ ] **8.1.7** At least 25 focused tests covering each pipeline stage and traceability verification.
-- [ ] **8.1.8** No live LLM/API calls; no live network calls.
-- [ ] **8.1.9** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
+- [x] **8.1.1** `V2_6EndToEndValidationReport` model exists with all documented fields.
+- [x] **8.1.2** `run_v2_6_end_to_end_fixture_validation()` completes without errors.
+- [x] **8.1.3** At least 5 stages verified (signal ingestion, evidence packs, quality gates, inbox, decision import).
+- [x] **8.1.4** Traceability chain is verified end-to-end: input signal ID → inbox review item ID.
+- [x] **8.1.5** 0 autonomous portfolio transitions confirmed.
+- [x] **8.1.6** Output is deterministic: two runs with same fixture produce identical `run_id` and artifact content hashes.
+- [x] **8.1.7** At least 25 focused tests covering each pipeline stage and traceability verification.
+- [x] **8.1.8** No live LLM/API calls; no live network calls.
+- [x] **8.1.9** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
 
 ---
 
