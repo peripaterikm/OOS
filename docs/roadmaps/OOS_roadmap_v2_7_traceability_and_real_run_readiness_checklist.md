@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
-- [ ] **0.2** Current item: `4.1 Developer workflow helper scripts`
+- [ ] **0.2** Current item: `5.1 Controlled weekly run smoke test / runbook`
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **5 / 8**
-- [ ] **0.5** Remaining: **3 / 8**
+- [ ] **0.4** Completed from this roadmap: **6 / 8**
+- [ ] **0.5** Remaining: **2 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` created, merged to main)
 
 ### Core Concept
@@ -403,16 +403,16 @@ Add Windows-native PowerShell helper scripts to `scripts/` for common developer 
 
 ### Acceptance criteria
 
-- [ ] **4.1.1** `scripts/dev-snapshot.ps1` exists and runs without error, producing a snapshot file in `_local_hold/`.
-- [ ] **4.1.2** `scripts/dev-validate-final.ps1` runs full unittest discovery, `oos-validate.ps1`, `git diff --check`, and `git status`; exits 0 on clean pass.
-- [ ] **4.1.3** `scripts/dev-post-merge-sync.ps1` runs `git fetch --prune` and reports current state.
-- [ ] **4.1.4** `scripts/dev-pr-readiness.ps1` runs validation and blocks PR if secrets, env files, or generated artifacts are staged.
-- [ ] **4.1.5** All scripts have comment-based help.
-- [ ] **4.1.6** All scripts use `$ErrorActionPreference = 'Stop'`.
-- [ ] **4.1.7** No bash/zsh constructs; no WSL paths.
-- [ ] **4.1.8** Scripts do not push, PR, merge, tag, or release.
-- [ ] **4.1.9** Scripts do not make live API/LLM calls.
-- [ ] **4.1.10** Manual smoke test: `scripts/dev-validate-final.ps1` passes on the current clean working tree.
+- [x] **4.1.1** `scripts/dev-snapshot.ps1` exists and runs without error, producing a snapshot file in `_local_hold/`.
+- [x] **4.1.2** `scripts/dev-validate-final.ps1` runs full unittest discovery, `oos-validate.ps1`, `git diff --check`, and `git status`; exits 0 on clean pass.
+- [x] **4.1.3** `scripts/dev-post-merge-sync.ps1` defaults to dry-run/instructions-only; `-ExecuteSafeSync` runs safe operations only.
+- [x] **4.1.4** `scripts/dev-pr-readiness.ps1` runs validation and blocks PR if secrets, env files, or generated artifacts are staged.
+- [x] **4.1.5** All scripts have comment-based help.
+- [x] **4.1.6** All scripts use `$ErrorActionPreference = 'Stop'`.
+- [x] **4.1.7** No bash/zsh constructs; no WSL paths.
+- [x] **4.1.8** Scripts do not push, PR, merge, tag, or release.
+- [x] **4.1.9** Scripts do not make live API/LLM calls.
+- [x] **4.1.10** Manual smoke test: `scripts/dev-validate-final.ps1` passes on the current clean working tree.
 
 ---
 

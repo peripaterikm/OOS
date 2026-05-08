@@ -10,12 +10,12 @@
 ## Current Progress
 
 - Roadmap v2.7 planning created: yes
-- Current item: `4.1 Developer workflow helper scripts`
+- Current item: `5.1 Controlled weekly run smoke test / runbook`
 - Roadmap state: `active / in progress`
-- Completed: `5 / 8`
-- Remaining: `3 / 8`
-- Latest completed roadmap item: Roadmap v2.7 `3.1` - Founder decision re-import policy review (policy review complete; replace mode implementation deferred to v2.8+)
-- Next planned roadmap item: Roadmap v2.7 `4.1` - Developer workflow helper scripts
+- Completed: `6 / 8`
+- Remaining: `2 / 8`
+- Latest completed roadmap item: Roadmap v2.7 `4.1` - Developer workflow helper scripts
+- Next planned roadmap item: Roadmap v2.7 `5.1` - Controlled weekly run smoke test / runbook
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
