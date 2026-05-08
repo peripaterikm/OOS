@@ -17,6 +17,12 @@ from .weekly_cycle_status import (
     render_weekly_cycle_status_markdown,
     weekly_cycle_status_to_json,
 )
+from .weekly_run_reports import (
+    build_weekly_dashboard_index,
+    build_weekly_run_report,
+    write_weekly_dashboard_index,
+    write_weekly_run_report,
+)
 from .customer_voice_queries import (
     approve_customer_voice_query,
     generate_customer_voice_queries,
@@ -960,6 +966,39 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Output status as JSON instead of Markdown.",
     )
 
+    report_parser = subparsers.add_parser(
+        "build-weekly-run-report-v2",
+        help="Build a deterministic per-run report JSON and Markdown for a v2.6 weekly run.",
+    )
+    report_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    report_parser.add_argument(
+        "--run-id",
+        required=True,
+        help="The weekly run ID to report on.",
+    )
+
+    dashboard_parser = subparsers.add_parser(
+        "weekly-dashboard-v2",
+        help="Build a cross-run dashboard index JSON and Markdown for all v2.6 weekly runs.",
+    )
+    dashboard_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the OOS project root (defaults to current working directory).",
+    )
+    dashboard_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="output_json",
+        help="Output dashboard as JSON instead of Markdown.",
+    )
+
     return parser
 
 
@@ -1386,6 +1425,72 @@ def main(argv: list[str] | None = None) -> int:
         print("advisory_only: true")
         print(f"rating_artifact: {path}")
         return 0
+
+    if args.command == "build-weekly-run-report-v2":
+        try:
+            report = build_weekly_run_report(
+                project_root=args.project_root,
+                run_id=args.run_id,
+            )
+            run_dir = args.project_root / "artifacts" / "weekly_runs" / args.run_id
+            json_path, md_path = write_weekly_run_report(report, run_dir)
+        except ValueError as exc:
+            print(f"build-weekly-run-report-v2 failed: {exc}")
+            return 2
+
+        print("OOS v2.6 weekly run report built.")
+        print(f"run_id: {report.run_id}")
+        print(f"generated_at: {report.generated_at}")
+        print(f"validation_passed: {str(report.validation_passed).lower()}")
+        print(f"advisory_only: {str(report.advisory_only).lower()}")
+        print(f"no_live_api: {str(report.no_live_api).lower()}")
+        print(f"no_live_llm: {str(report.no_live_llm).lower()}")
+        print(f"report_json: {json_path}")
+        print(f"report_md: {md_path}")
+        if report.warnings:
+            for w in report.warnings:
+                print(f"  warning: {w}")
+        if report.errors:
+            for e in report.errors:
+                print(f"  error: {e}")
+        print(f"recommended_next_step: {report.recommended_next_step}")
+        if report.validation_passed:
+            return 0
+        elif report.status_summary.get("manifest_valid", False):
+            return 1
+        else:
+            return 2
+
+    if args.command == "weekly-dashboard-v2":
+        try:
+            dashboard = build_weekly_dashboard_index(
+                project_root=args.project_root,
+            )
+            weekly_runs_root = args.project_root / "artifacts" / "weekly_runs"
+            json_path, md_path = write_weekly_dashboard_index(dashboard, weekly_runs_root)
+        except ValueError as exc:
+            print(f"weekly-dashboard-v2 failed: {exc}")
+            return 2
+
+        print("OOS v2.6 weekly dashboard index built.")
+        print(f"generated_at: {dashboard.generated_at}")
+        print(f"total_runs: {dashboard.total_runs}")
+        print(f"latest_run_id: {dashboard.latest_run_id}")
+        print(f"complete_run_count: {dashboard.complete_run_count}")
+        print(f"incomplete_run_count: {dashboard.incomplete_run_count}")
+        print(f"invalid_run_count: {dashboard.invalid_run_count}")
+        print(f"dashboard_json: {json_path}")
+        print(f"dashboard_md: {md_path}")
+        if dashboard.warnings:
+            for w in dashboard.warnings:
+                print(f"  warning: {w}")
+        if dashboard.errors:
+            for e in dashboard.errors:
+                print(f"  error: {e}")
+        if dashboard.total_runs > 0:
+            return 0
+        else:
+            return 1
 
     # In Week 1 there are no other commands.
     parser.error(f"Unknown command: {args.command}")

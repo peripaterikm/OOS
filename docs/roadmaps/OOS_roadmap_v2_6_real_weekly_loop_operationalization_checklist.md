@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- [ ] **0.2** Current item: `7.1` Run reports and dashboard index
+- [x] **0.2** Current item: `7.1` Run reports and dashboard index
 - [ ] **0.3** Roadmap state: `active / in_progress`
-- [x] **0.4** Completed from this roadmap: **6 / 9**
-- [ ] **0.5** Remaining: **3 / 9**
+- [x] **0.4** Completed from this roadmap: **7 / 9**
+- [ ] **0.5** Remaining: **2 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
 
 ### Core Concept
@@ -431,15 +431,15 @@ Add structured run reports and a cross-run dashboard index so the founder can se
 
 ### Acceptance criteria
 
-- [ ] **7.1.1** `WeeklyRunReport` model exists with all documented fields.
-- [ ] **7.1.2** `build_weekly_run_report(run_dir)` reads a run manifest and artifacts and produces a valid `WeeklyRunReport`.
-- [ ] **7.1.3** `build_weekly_run_report()` handles missing/corrupt artifacts by populating `errors` list, not crashing.
-- [ ] **7.1.4** `WeeklyDashboardIndex` model exists with all documented fields.
-- [ ] **7.1.5** `update_dashboard_index(project_root)` scans `artifacts/weekly_runs/` and produces `dashboard_index.json` and `dashboard.md`.
-- [ ] **7.1.6** Dashboard correctly aggregates across 2+ fixture runs.
-- [ ] **7.1.7** Empty runs directory produces a valid dashboard with zero counts.
-- [ ] **7.1.8** `dashboard.md` includes a run-summary table and aggregate metrics section.
-- [ ] **7.1.9** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
+- [x] **7.1.1** `WeeklyRunReport` model exists with all documented fields.
+- [x] **7.1.2** `build_weekly_run_report(run_dir)` reads a run manifest and artifacts and produces a valid `WeeklyRunReport`.
+- [x] **7.1.3** `build_weekly_run_report()` handles missing/corrupt artifacts by populating `errors` list, not crashing.
+- [x] **7.1.4** `WeeklyDashboardIndex` model exists with all documented fields.
+- [x] **7.1.5** `update_dashboard_index(project_root)` scans `artifacts/weekly_runs/` and produces `dashboard_index.json` and `dashboard.md`.
+- [x] **7.1.6** Dashboard correctly aggregates across 2+ fixture runs.
+- [x] **7.1.7** Empty runs directory produces a valid dashboard with zero counts.
+- [x] **7.1.8** `dashboard.md` includes a run-summary table and aggregate metrics section.
+- [x] **7.1.9** Full unittest discovery passes; `scripts/oos-validate.ps1` passes; `git diff --check` clean.
 
 ---
 

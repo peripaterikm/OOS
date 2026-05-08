@@ -22,6 +22,11 @@ from oos.founder_inbox_v2 import (
     founder_inbox_v2_to_json,
     render_founder_inbox_v2_markdown,
 )
+from oos.weekly_run_reports import (
+    build_weekly_run_report,
+    render_weekly_run_report_markdown,
+    write_weekly_run_report,
+)
 from oos.evidence_pack import (
     EvidencePack,
     EvidencePackItem,
@@ -342,50 +347,6 @@ def _write_markdown_artifact(run_dir: Path, filename: str, content: str) -> Path
     path = run_dir / filename
     path.write_text(content, encoding="utf-8")
     return path
-
-
-# ---------------------------------------------------------------------------
-# Placeholder artifact builders (for later v2.6 items)
-# ---------------------------------------------------------------------------
-
-
-def _build_run_report_placeholder(
-    run_id: str,
-    artifact_counts: dict[str, int],
-    quality_gate_summary: dict[str, int],
-    generated_at: str,
-) -> dict[str, Any]:
-    """Placeholder WeeklyRunReport dict until item 7.1 is implemented."""
-    return {
-        "run_id": run_id,
-        "created_at": generated_at,
-        "input_signal_count": artifact_counts.get("input_signals", 0),
-        "pipeline_stage_status": {
-            "evidence_packs": "completed" if artifact_counts.get("evidence_packs", 0) > 0 else "empty",
-            "opportunity_candidates": "completed" if artifact_counts.get("opportunity_candidates", 0) > 0 else "empty",
-            "quality_gate": "completed" if artifact_counts.get("quality_gate_decisions", 0) > 0 else "empty",
-            "founder_decisions": "empty",
-            "feedback_mappings": "empty",
-            "preference_profile": "empty",
-            "weekly_review": "completed",
-            "next_best_actions": "completed",
-            "parking_lot": "completed",
-            "founder_inbox": "completed",
-            "run_report": "placeholder",
-        },
-        "artifact_counts": artifact_counts,
-        "quality_gate_summary": quality_gate_summary,
-        "decision_summary": {"promote": 0, "park": 0, "kill": 0, "needs_more_evidence": 0, "revisit_later": 0},
-        "action_summary": {},
-        "parking_lot_summary": {"record_count": artifact_counts.get("parking_lot_records", 0), "revisit_match_count": artifact_counts.get("revisit_matches", 0)},
-        "traceability_summary": {},
-        "preference_warnings": [],
-        "review_completion": 0.0,
-        "errors": [],
-        "schema_version": "weekly_run_report.v1",
-        "placeholder": True,
-        "note": "Full WeeklyRunReport model will be implemented in v2.6 item 7.1 (Run Reports and Dashboard Index).",
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -736,16 +697,7 @@ def build_weekly_cycle(
     )
     artifacts_written.append("parking_lot_records")
 
-    # 15j. run_report.json (placeholder)
-    run_report_data = _build_run_report_placeholder(run_id, artifact_counts, quality_gate_counts, generated_at_str)
-    _write_json_artifact(
-        run_dir,
-        canonical_artifact_paths()["run_report"],
-        run_report_data,
-    )
-    artifacts_written.append("run_report")
-
-    # 15k. founder_inbox_v2.md (real — v2.6 item 4.1)
+    # 15j. founder_inbox_v2.md (real — v2.6 item 4.1)
     action_dicts = [a.to_dict() for a in actions]
     gate_dicts = [r.to_dict() for r in gate_results]
     pack_dicts = [evidence_pack_to_dict(p) for p in evidence_packs]
@@ -788,14 +740,6 @@ def build_weekly_cycle(
     )
     artifacts_written.append("founder_inbox_v2_index")
 
-    # 15m. run_report.md (placeholder)
-    run_report_md = _build_run_report_markdown_placeholder(run_id, artifact_counts, quality_gate_counts, generated_at_str)
-    _write_markdown_artifact(
-        run_dir,
-        canonical_artifact_paths()["run_report_md"],
-        run_report_md,
-    )
-    artifacts_written.append("run_report_md")
 
     # ── 16. Build and write manifest ───────────────────────────────────
     manifest = make_default_manifest(
@@ -808,7 +752,24 @@ def build_weekly_cycle(
     write_weekly_run_manifest(run_dir, manifest)
     artifacts_written.append("manifest")
 
-    # ── 17. Build result ───────────────────────────────────────────────
+    # ── 17. Build and write run report (after manifest is on disk) ────
+    # Remove any stale run_report artifacts from a prior run so that
+    # build_weekly_run_report sees a clean state (determinism requirement).
+    _run_report_json = run_dir / "run_report.json"
+    _run_report_md = run_dir / "run_report.md"
+    if _run_report_json.exists():
+        _run_report_json.unlink()
+    if _run_report_md.exists():
+        _run_report_md.unlink()
+    try:
+        report = build_weekly_run_report(project_root=project_root, run_id=run_id, generated_at=generated_at_str)
+        write_weekly_run_report(report, run_dir)
+    except Exception as exc:
+        errors.append(f"Failed to build weekly run report: {exc}")
+    artifacts_written.append("run_report")
+    artifacts_written.append("run_report_md")
+
+    # ── 18. Build result ───────────────────────────────────────────────
     pipeline_summary = {
         "input_file": str(input_file),
         "input_signal_count": input_signal_count,
@@ -848,44 +809,6 @@ def build_weekly_cycle(
         validation_passed=validation_passed,
         pipeline_summary=pipeline_summary,
     )
-
-
-def _build_run_report_markdown_placeholder(
-    run_id: str,
-    artifact_counts: dict[str, int],
-    quality_gate_counts: dict[str, int],
-    generated_at: str,
-) -> str:
-    """Placeholder run report Markdown until item 7.1 is implemented."""
-    lines: list[str] = []
-    lines.append("# Weekly Run Report (Placeholder)")
-    lines.append("")
-    lines.append(f"- **Run ID**: `{run_id}`")
-    lines.append(f"- **Generated**: {generated_at}")
-    lines.append(f"- **Note**: Full run report will be implemented in v2.6 item 7.1 (Run Reports and Dashboard Index).")
-    lines.append("")
-    lines.append("## Pipeline Summary")
-    lines.append("")
-    for key, value in sorted(artifact_counts.items()):
-        lines.append(f"- **{key}**: {value}")
-    lines.append("")
-    lines.append("## Quality Gate Summary")
-    lines.append("")
-    if quality_gate_counts:
-        for key, value in sorted(quality_gate_counts.items()):
-            lines.append(f"- **{key}**: {value}")
-    else:
-        lines.append("- No quality gate results.")
-    lines.append("")
-    lines.append("## Advisory-Only Status")
-    lines.append("")
-    lines.append("- advisory_only: true")
-    lines.append("- no_live_api: true")
-    lines.append("- no_live_llm: true")
-    lines.append("- All decisions require founder review and explicit import.")
-    lines.append("")
-
-    return "\n".join(lines).rstrip() + "\n"
 
 
 def _count_gate_decisions(gate_results: list[OpportunityGateResult]) -> dict[str, int]:
