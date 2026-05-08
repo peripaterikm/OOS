@@ -3,28 +3,31 @@
 ## Current Roadmap
 
 - Roadmap v2.5 status: complete (`24 / 24`, tag `v2.5`).
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
+- Roadmap v2.6 status: complete (`9 / 9`, local only; no push, PR, merge, or tag yet).
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
+- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
-- Roadmap v2.6 planning created: yes
-- Current item: `none / roadmap complete`
-- Roadmap state: `complete / closed`
-- Completed: `9 / 9`
-- Remaining: `0 / 9`
+- Roadmap v2.7 planning created: yes
+- Current item: `1.1 Source URL traceability contract`
+- Roadmap state: `active / planned`
+- Completed: `0 / 8`
+- Remaining: `8 / 8`
 - Latest completed roadmap item: Roadmap v2.6 `9.1` - Final v2.6 validation checkpoint
-- Next planned roadmap item: `none` (Roadmap v2.6 is closed; next roadmap not yet planned)
+- Next planned roadmap item: Roadmap v2.7 `1.1` - Source URL traceability contract
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-6-weekly-loop-block-1`
+- Current branch: `planning/v2-7-roadmap`
+- Previous branch (v2.6 implementation): `feat/v2-6-weekly-loop-block-1`
 - MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
-- Roadmap v2.6 implementation is on this branch; do not push, merge, tag, or release until explicitly approved.
+- Roadmap v2.6 implementation is on `feat/v2-6-weekly-loop-block-1`; do not push, merge, tag, or release until explicitly approved.
+- Roadmap v2.7 planning is on `planning/v2-7-roadmap`; do not push, merge, tag, or release until explicitly approved.
 - Do not push partial or unvalidated follow-up work.
 
 ## Workflow Notes
@@ -131,3 +134,4 @@
 - Roadmap v2.6 item 7.1 added run reports and dashboard index (`src/oos/weekly_run_reports.py`) — deterministic per-run and cross-run reporting. Key deliverables: `WeeklyRunReport`, `WeeklyDashboardIndex`, `WeeklyDashboardRunSummary` models; `build_weekly_run_report()`, `write_weekly_run_report()`, `render_weekly_run_report_markdown()`; `build_weekly_dashboard_index()`, `write_weekly_dashboard_index()`, `render_weekly_dashboard_markdown()`. Uses `WeeklyCycleStatus` as source of truth. CLI commands `build-weekly-run-report-v2` and `weekly-dashboard-v2` added to `src/oos/cli.py`. Replaced placeholder run report in `weekly_cycle_builder.py` with real integration. 44 focused tests cover model serialization, report building, dashboard building, CLI behavior, determinism, existing command preservation, and safety flags. Artifacts written: per-run `run_report.json`/`run_report.md`, cross-run `dashboard_index.json`/`dashboard.md`. No live APIs/LLMs, no portfolio mutations, no decision import, no rebuild. Fixture end-to-end validation is deferred to item 8.1.
 - Roadmap v2.6 item 8.1 added fixture end-to-end weekly cycle validation (`src/oos/v2_6_end_to_end_weekly_cycle_validation.py`) — deterministic end-to-end validation proving the full v2.6 weekly loop works on fixture data. Key deliverables: `V2_6EndToEndValidationReport` model (30+ fields including schema_version, validation_id, steps, artifact_count, traceability_checks, safety flags), `V2_6EndToEndStepResult` model, `run_v2_6_end_to_end_fixture_validation()` exercising 11 pipeline steps (fixture load → build → manifest → inbox → decision import → count → status → run report → dashboard → traceability → safety), `_check_traceability()` verifying 8-link traceability chain, `_build_fixture_decisions_file()` auto-generating fixture decisions, `v2_6_end_to_end_validation_to_json()` JSON serializer. 43 focused tests cover model serialization/JSON roundtrip, full fixture validation on temp project roots, artifact creation verification, inbox review items, decision import with traceability, feedback mappings, preference profile rebuild, parking lot records, manifest empty_states update, weekly cycle status, run report json/md, dashboard json/md, traceability checks, safety flags, determinism, temp-only enforcement, and failed validation reporting. No new business logic, no semantic changes to existing components. No live APIs/LLMs, no portfolio mutations.
 - Roadmap v2.6 item 9.1 closed the roadmap with a final validation checkpoint: 1400 tests, 0 failures; 43 focused end-to-end validation tests; 246 key suite tests; `scripts/oos-validate.ps1` pass; `git diff --check` clean; roadmap state `complete / closed` at `9 / 9`. No push, PR, merge, tag, or release was performed. Codex audit is deferred until the Codex weekly limit returns; push branch, PR, merge, and optional release tag are deferred until explicitly requested. Roadmap v2.6 is complete.
+- Roadmap v2.7 planning created the Traceability Hardening & Real-Run Readiness checklist with 8 implementation items: source URL traceability contract, founder inbox source URL propagation, founder decision import source URL propagation, E2E source URL traceability validation, founder decision re-import policy review / safe replace mode, developer workflow helper scripts, controlled weekly run smoke test / runbook, and final v2.7 validation checkpoint. Implementation starts at item 1.1; no source code features, tests, artifacts, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
