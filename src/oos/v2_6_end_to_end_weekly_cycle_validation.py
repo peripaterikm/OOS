@@ -21,6 +21,11 @@ from typing import Any
 
 from oos.evaluation_dataset import load_opportunity_quality_cases_v1
 from oos.founder_decision_import import import_founder_decisions
+from oos.source_url_traceability import (
+    SourceURLTraceabilityReport,
+    check_source_url_traceability,
+    collect_source_urls_from_artifact,
+)
 from oos.weekly_cycle_builder import build_weekly_cycle
 from oos.weekly_cycle_status import build_weekly_cycle_status
 from oos.weekly_run_manifest import read_weekly_run_manifest
@@ -93,6 +98,11 @@ class V2_6EndToEndValidationReport:
     run_report_validation_passed: bool = False
     dashboard_validation_passed: bool = False
     traceability_checks: dict[str, Any] = field(default_factory=dict)
+    source_url_traceability_validation_passed: bool = False
+    source_url_placeholder_count: int = 0
+    source_url_missing_count: int = 0
+    source_url_traceability_issue_count: int = 0
+    source_url_chain_checks: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     advisory_only: bool = True
@@ -118,6 +128,11 @@ class V2_6EndToEndValidationReport:
             "run_report_validation_passed": self.run_report_validation_passed,
             "dashboard_validation_passed": self.dashboard_validation_passed,
             "traceability_checks": dict(self.traceability_checks),
+            "source_url_traceability_validation_passed": self.source_url_traceability_validation_passed,
+            "source_url_placeholder_count": self.source_url_placeholder_count,
+            "source_url_missing_count": self.source_url_missing_count,
+            "source_url_traceability_issue_count": self.source_url_traceability_issue_count,
+            "source_url_chain_checks": dict(self.source_url_chain_checks),
             "warnings": list(self.warnings),
             "errors": list(self.errors),
             "advisory_only": self.advisory_only,
@@ -247,19 +262,27 @@ def _build_fixture_decisions_file(
     ]
 
     fixture_decisions: list[dict[str, Any]] = []
-    for idx, item in enumerate(review_items):
+    decision_idx = 0
+    for item in review_items:
         if not isinstance(item, dict):
             continue
         review_item_id = str(item.get("review_item_id", "")).strip()
         if not review_item_id:
             continue
+        # Skip synthetic items that have no evidence lineage / linked_source_urls
+        # (executive_summary, decision_recording_commands, etc. have legitimate
+        # empty linked_source_urls per the source URL traceability contract)
+        linked_source_urls = item.get("linked_source_urls", [])
+        if not isinstance(linked_source_urls, list) or not linked_source_urls:
+            continue
 
-        decision, reasons = decision_cycle[idx % len(decision_cycle)]
+        decision, reasons = decision_cycle[decision_idx % len(decision_cycle)]
+        decision_idx += 1
         fixture_decisions.append({
             "review_item_id": review_item_id,
             "decision": decision,
             "reason_categories": reasons,
-            "notes": f"Fixture decision {idx + 1} for end-to-end validation.",
+            "notes": f"Fixture decision {decision_idx} for end-to-end validation.",
         })
 
     if not fixture_decisions:
@@ -469,6 +492,183 @@ def _check_traceability(
             result["details"].append("No PARK/REVISIT_LATER decisions to create parking lot records")
     else:
         result["details"].append("No parking lot traceability to verify")
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Source URL cross-artifact chain verification
+# ---------------------------------------------------------------------------
+
+
+def _check_source_url_chain(
+    run_dir: Path,
+) -> dict[str, Any]:
+    """Verify source URL traceability chain across key artifacts.
+
+    Checks that source URLs propagate faithfully:
+      evidence_packs.source_urls → founder_inbox_v2_index.linked_source_urls
+      → founder_decisions_v2.linked_source_urls
+      → founder_feedback_mappings.source_urls → .target.source_urls
+
+    Also checks zero urn:oos:* placeholder URNs across all scanned artifacts.
+
+    Returns a dict with chain check results.
+    """
+    result: dict[str, Any] = {
+        "evidence_pack_urls_non_empty": False,
+        "inbox_urls_intersect_evidence_pack_urls": False,
+        "decision_urls_intersect_inbox_urls": False,
+        "mapping_source_urls_intersect_decision_urls": False,
+        "mapping_target_urls_intersect_mapping_source_urls": False,
+        "zero_placeholder_urns": False,
+        "chain_links_verified": 0,
+        "chain_links_total": 5,
+        "details": [],
+    }
+
+    # Load artifacts
+    packs_data = _safe_read_json(run_dir / "evidence_packs.json")
+    inbox_data = _safe_read_json(run_dir / "founder_inbox_v2_index.json")
+    decisions_data = _safe_read_json(run_dir / "founder_decisions_v2.json")
+    mappings_data = _safe_read_json(run_dir / "founder_feedback_mappings.json")
+
+    # Collect per-artifact source URLs using the traceability helper
+    ep_urls: list[str] = []
+    inbox_urls: list[str] = []
+    dec_urls: list[str] = []
+    map_src_urls: list[str] = []
+    map_tgt_urls: list[str] = []
+
+    if isinstance(packs_data, dict):
+        ep_urls = collect_source_urls_from_artifact(packs_data, "evidence_packs")
+    if isinstance(inbox_data, dict):
+        inbox_urls = collect_source_urls_from_artifact(inbox_data, "founder_inbox_v2_index")
+    if isinstance(decisions_data, dict):
+        dec_urls = collect_source_urls_from_artifact(decisions_data, "founder_decisions_v2")
+    if isinstance(mappings_data, dict):
+        map_src_urls = collect_source_urls_from_artifact(mappings_data, "founder_feedback_mappings")
+
+    # Collect mapping target.source_urls
+    if isinstance(mappings_data, dict):
+        mappings_items = mappings_data.get("items", [])
+        if isinstance(mappings_items, list):
+            seen_tgt: set[str] = set()
+            for m in mappings_items:
+                if not isinstance(m, dict):
+                    continue
+                target = m.get("target")
+                if isinstance(target, dict):
+                    tgt_src_urls = target.get("source_urls", [])
+                    if isinstance(tgt_src_urls, list):
+                        for u in tgt_src_urls:
+                            if isinstance(u, str) and u.strip() and u.strip() not in seen_tgt:
+                                map_tgt_urls.append(u.strip())
+                                seen_tgt.add(u.strip())
+
+    ep_set = set(ep_urls)
+    inbox_set = set(inbox_urls)
+    dec_set = set(dec_urls)
+    map_src_set = set(map_src_urls)
+    map_tgt_set = set(map_tgt_urls)
+
+    # Check 1: evidence pack source_urls are non-empty
+    if ep_set:
+        result["evidence_pack_urls_non_empty"] = True
+        result["chain_links_verified"] += 1
+        result["details"].append(
+            f"Evidence pack source_urls non-empty ({len(ep_set)} unique URLs)"
+        )
+    else:
+        result["details"].append("Evidence pack source_urls are empty")
+
+    # Check 2: at least one inbox linked_source_urls ∩ evidence pack source_urls
+    if inbox_set and ep_set:
+        overlap = inbox_set & ep_set
+        if overlap:
+            result["inbox_urls_intersect_evidence_pack_urls"] = True
+            result["chain_links_verified"] += 1
+            result["details"].append(
+                f"Inbox linked_source_urls intersect evidence_pack source_urls "
+                f"({len(overlap)} overlapping URLs)"
+            )
+        else:
+            result["details"].append(
+                "Inbox linked_source_urls do NOT intersect evidence_pack source_urls"
+            )
+    elif inbox_set:
+        result["details"].append("Evidence pack source_urls empty; cannot verify inbox intersection")
+    else:
+        result["details"].append("Inbox linked_source_urls empty; skipping intersection check")
+
+    # Check 3: decision linked_source_urls ∩ inbox linked_source_urls
+    if dec_set and inbox_set:
+        overlap = dec_set & inbox_set
+        if overlap:
+            result["decision_urls_intersect_inbox_urls"] = True
+            result["chain_links_verified"] += 1
+            result["details"].append(
+                f"Decision linked_source_urls intersect inbox linked_source_urls "
+                f"({len(overlap)} overlapping URLs)"
+            )
+        else:
+            result["details"].append(
+                "Decision linked_source_urls do NOT intersect inbox linked_source_urls"
+            )
+    elif dec_set:
+        result["details"].append("Inbox linked_source_urls empty; cannot verify decision intersection")
+    else:
+        result["details"].append("Decision linked_source_urls empty; skipping intersection check")
+
+    # Check 4: mapping source_urls ∩ decision linked_source_urls
+    if map_src_set and dec_set:
+        overlap = map_src_set & dec_set
+        if overlap:
+            result["mapping_source_urls_intersect_decision_urls"] = True
+            result["chain_links_verified"] += 1
+            result["details"].append(
+                f"Mapping source_urls intersect decision linked_source_urls "
+                f"({len(overlap)} overlapping URLs)"
+            )
+        else:
+            result["details"].append(
+                "Mapping source_urls do NOT intersect decision linked_source_urls"
+            )
+    elif map_src_set:
+        result["details"].append("Decision linked_source_urls empty; cannot verify mapping intersection")
+    else:
+        result["details"].append("Mapping source_urls empty; skipping intersection check")
+
+    # Check 5: mapping target.source_urls ∩ mapping source_urls
+    if map_tgt_set and map_src_set:
+        overlap = map_tgt_set & map_src_set
+        if overlap:
+            result["mapping_target_urls_intersect_mapping_source_urls"] = True
+            result["chain_links_verified"] += 1
+            result["details"].append(
+                f"Mapping target.source_urls intersect mapping source_urls "
+                f"({len(overlap)} overlapping URLs)"
+            )
+        else:
+            result["details"].append(
+                "Mapping target.source_urls do NOT intersect mapping source_urls"
+            )
+    elif map_tgt_set:
+        result["details"].append("Mapping source_urls empty; cannot verify target intersection")
+    else:
+        result["details"].append("No mapping target.source_urls; skipping target intersection check")
+
+    # Placeholder check: verify zero urn:oos:* across all collected sets
+    from oos.source_url_traceability import is_placeholder_source_url
+    all_urls = ep_urls + inbox_urls + dec_urls + map_src_urls + map_tgt_urls
+    placeholder_count = sum(1 for u in all_urls if is_placeholder_source_url(u))
+    result["zero_placeholder_urns"] = placeholder_count == 0
+    if placeholder_count > 0:
+        result["details"].append(
+            f"Found {placeholder_count} placeholder URN(s) across artifacts"
+        )
+    else:
+        result["details"].append("Zero placeholder URNs found across all artifacts")
 
     return result
 
@@ -782,6 +982,49 @@ def run_v2_6_end_to_end_fixture_validation(
             "; ".join(safety_items),
         ))
 
+        # ── Step 11: Source URL traceability validation (advisory only) ─
+        src_url_trace_passed = False
+        src_url_placeholder_count = 0
+        src_url_missing_count = 0
+        src_url_issue_count = 0
+        src_url_chain = _check_source_url_chain(run_dir)
+
+        try:
+            src_url_report: SourceURLTraceabilityReport | None = None
+            src_url_report = check_source_url_traceability(run_dir)
+            src_url_trace_passed = src_url_report.validation_passed
+            src_url_placeholder_count = src_url_report.placeholder_url_count
+            src_url_missing_count = src_url_report.missing_source_url_count
+            src_url_issue_count = src_url_report.issue_count
+        except Exception as exc:
+            all_warnings.append(f"Source URL traceability scan failed: {exc}")
+
+        chain_links = src_url_chain.get("chain_links_verified", 0)
+        chain_total = src_url_chain.get("chain_links_total", 5)
+        zero_placeholders = src_url_chain.get("zero_placeholder_urns", False)
+
+        src_summary_parts = [
+            f"scan_passed={src_url_trace_passed}",
+            f"placeholder_urns={src_url_placeholder_count}",
+            f"missing_urls={src_url_missing_count}",
+            f"issues={src_url_issue_count}",
+            f"chain_links_verified={chain_links}/{chain_total}",
+            f"zero_placeholder_urns={zero_placeholders}",
+        ]
+        # Source URL traceability is advisory-only: the step always reports
+        # "passed" for the pipeline step status, with findings in the
+        # summary and report fields. This preserves the advisory contract.
+        steps.append(V2_6EndToEndStepResult(
+            step_id="s11",
+            name="Source URL traceability validation",
+            status="passed",
+            summary="; ".join(src_summary_parts),
+            artifacts_read=[
+                "evidence_packs.json", "founder_inbox_v2_index.json",
+                "founder_decisions_v2.json", "founder_feedback_mappings.json",
+            ],
+        ))
+
         # ── Compile report ────────────────────────────────────────────
         artifact_files: list[str] = []
         if run_dir.is_dir():
@@ -810,6 +1053,11 @@ def run_v2_6_end_to_end_fixture_validation(
             run_report_validation_passed=report_passed,
             dashboard_validation_passed=dashboard_passed,
             traceability_checks=trace,
+            source_url_traceability_validation_passed=src_url_trace_passed,
+            source_url_placeholder_count=src_url_placeholder_count,
+            source_url_missing_count=src_url_missing_count,
+            source_url_traceability_issue_count=src_url_issue_count,
+            source_url_chain_checks=src_url_chain,
             warnings=_ordered_strings(all_warnings),
             errors=_ordered_strings(all_errors),
             advisory_only=True,

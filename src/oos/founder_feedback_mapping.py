@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -13,6 +14,9 @@ from oos.founder_decision_taxonomy import (
     FounderDecisionV2,
     founder_decision_from_dict,
 )
+
+# Placeholder URN pattern matching (avoiding circular import from source_url_traceability.py)
+_PLACEHOLDER_URN_RE = re.compile(r"^urn:oos:", re.IGNORECASE)
 
 
 FOUNDER_FEEDBACK_MAPPING_SCHEMA_VERSION = "founder_feedback_mapping.v1"
@@ -326,6 +330,22 @@ def validate_founder_feedback_mapping(mapping: FounderFeedbackMapping) -> Founde
         errors.append("source_signal_ids must preserve at least one source signal reference")
     if not mapping.source_urls:
         errors.append("source_urls must preserve at least one source URL")
+    # Placeholder URN rejection for source_urls
+    for url in mapping.source_urls:
+        if isinstance(url, str) and _PLACEHOLDER_URN_RE.match(url.strip()):
+            errors.append(
+                f"source_urls must not contain placeholder URNs: '{url.strip()}'. "
+                f"Real http/https source URLs must be propagated from upstream artifacts."
+            )
+            break
+    # Placeholder URN rejection for target.source_urls
+    for url in mapping.target.source_urls:
+        if isinstance(url, str) and _PLACEHOLDER_URN_RE.match(url.strip()):
+            errors.append(
+                f"target.source_urls must not contain placeholder URNs: '{url.strip()}'. "
+                f"Real http/https source URLs must be propagated from upstream artifacts."
+            )
+            break
     if mapping.scoring_mutation_applied:
         errors.append("5.2 records feedback only and must not mutate scoring")
     if not mapping.founder_decision_final:

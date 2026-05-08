@@ -42,6 +42,7 @@ from oos.parking_lot import (
     build_parking_lot_records,
     parking_lot_records_to_json,
 )
+from oos.source_url_traceability import is_placeholder_source_url, is_real_source_url
 from oos.weekly_run_manifest import (
     canonical_artifact_paths,
     canonical_artifact_schema_versions,
@@ -505,17 +506,30 @@ def import_founder_decisions(
         opportunity_id = linked_opportunity_ids[0] if linked_opportunity_ids else f"unknown_{review_item_id}"
         evidence_pack_id = linked_evidence_pack_ids[0] if linked_evidence_pack_ids else f"unknown_ep_{review_item_id}"
 
-        # Collect source_urls from evidence items where possible.
-        # Feedback mapping validation requires at least one source_url;
-        # when none are available from inbox traceability, use a
-        # deterministic placeholder that satisfies the contract without
-        # pretending to be a real URL.
-        source_urls: list[str] = []
+        # Resolve source_urls from the inbox review item's linked_source_urls.
+        # No placeholder URNs are created. Real http/https URLs from the
+        # inbox index are the primary source. Only explicit insufficient-evidence
+        # exemptions (where the review item carries empty linked_source_urls
+        # and has a documented reason) are allowed to have empty source_urls.
+        inbox_source_urls = _safe_string_list(inbox_item.get("linked_source_urls", []))
+        source_urls = _resolve_import_source_urls(
+            review_item_id=review_item_id,
+            inbox_source_urls=inbox_source_urls,
+        )
+
         source_signal_ids = _dedupe_sorted(
             linked_opportunity_ids + linked_quality_gate_ids + linked_action_ids
         )
+
+        # Fail-closed if source URLs are missing and item is not exempt
         if not source_urls:
-            source_urls = ["urn:oos:founder_import:placeholder"]
+            conversion_errors.append(
+                f"review_item_id '{review_item_id}': no source URLs resolved from inbox "
+                f"linked_source_urls. The source URL traceability contract requires at "
+                f"least one real http/https URL per imported decision. "
+                f"Add linked_source_urls to the inbox item or mark the item as exempt."
+            )
+            continue
 
         try:
             decision = create_founder_decision(
@@ -727,6 +741,46 @@ def _merge_parking_lot_records(
     for r in new:
         by_id[r.record_id] = r
     return sorted(by_id.values(), key=lambda r: r.record_id)
+
+
+def _resolve_import_source_urls(
+    *,
+    review_item_id: str,
+    inbox_source_urls: list[str],
+) -> list[str]:
+    """Resolve source URLs for a founder decision import from inbox data.
+
+    Policy:
+    - Accept only non-empty real http:// or https:// URLs from inbox.
+    - Deduplicate deterministically.
+    - Do NOT create urn:oos:* placeholder URNs.
+    - If no real URLs are available, return empty list.
+    - The caller (import_founder_decisions) decides whether empty source_urls
+      is acceptable (fail-closed for non-exempt items).
+
+    Returns:
+        Deduplicated, sorted list of real http/https source URLs.
+    """
+    if not inbox_source_urls:
+        return []
+
+    urls: list[str] = []
+    seen: set[str] = set()
+    for url in inbox_source_urls:
+        url_str = url.strip() if isinstance(url, str) else ""
+        if not url_str:
+            continue
+        # Accept only real http/https URLs
+        if not is_real_source_url(url_str):
+            # Skip placeholder URNs and malformed URLs
+            if is_placeholder_source_url(url_str):
+                continue
+            continue
+        if url_str not in seen:
+            urls.append(url_str)
+            seen.add(url_str)
+
+    return sorted(urls)
 
 
 def _safe_string_list(raw: Any) -> list[str]:

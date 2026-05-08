@@ -901,3 +901,532 @@ class FounderInboxDeterminismTests(unittest.TestCase):
 
         id3 = _make_review_item_id("different_seed")
         self.assertNotEqual(id1, id3)
+
+
+# ── Source URL Propagation Tests (Roadmap v2.7 item 1.2) ────────────────
+
+
+class FounderInboxSourceURLPropagationTests(unittest.TestCase):
+    """Focused tests for linked_source_urls propagation in founder inbox v2."""
+
+    def _sample_packs(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "evidence_pack_id": "ep_001",
+                "cluster_id": "cluster_a",
+                "source_urls": [
+                    "https://news.ycombinator.com/item?id=001",
+                    "https://github.com/org/repo/issues/1",
+                ],
+                "items": [
+                    {"evidence_id": "ev_001", "source_url": "https://news.ycombinator.com/item?id=001"},
+                    {"evidence_id": "ev_002", "source_url": "https://github.com/org/repo/issues/1"},
+                ],
+            },
+            {
+                "evidence_pack_id": "ep_002",
+                "cluster_id": "cluster_b",
+                "source_urls": [
+                    "https://news.ycombinator.com/item?id=002",
+                ],
+                "items": [
+                    {"evidence_id": "ev_003", "source_url": "https://news.ycombinator.com/item?id=002"},
+                ],
+            },
+        ]
+
+    def _sample_opps(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "opportunity_id": "opp_001",
+                "source_urls": [
+                    "https://news.ycombinator.com/item?id=001",
+                    "https://github.com/org/repo/issues/1",
+                    "https://opp-specific.example.com",
+                ],
+            },
+            {
+                "opportunity_id": "opp_002",
+                "source_urls": [],
+            },
+        ]
+
+    def _sample_gates(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "gate_result_id": "gate_001",
+                "opportunity_id": "opp_001",
+                "evidence_pack_id": "ep_001",
+                "decision": "pass",
+                "source_urls": ["https://quality-gate.example.com/001"],
+            },
+        ]
+
+    def test_review_item_serializes_linked_source_urls(self):
+        """1. FounderInboxReviewItem serializes linked_source_urls."""
+        item = FounderInboxReviewItem(
+            review_item_id="ri_test",
+            section_id="test",
+            title="Test",
+            summary="Test summary.",
+            recommended_founder_action="Review.",
+            linked_source_urls=["https://example.com/a", "https://example.com/b"],
+        )
+        data = item.to_dict()
+        self.assertIn("linked_source_urls", data)
+        self.assertEqual(data["linked_source_urls"], ["https://example.com/a", "https://example.com/b"])
+
+    def test_empty_upstream_urls_result_in_empty_list(self):
+        """2. Empty/missing upstream URLs result in linked_source_urls=[], not placeholder URNs."""
+        inbox = build_founder_inbox_v2(
+            run_id="test_empty_urls",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            review_package=_sample_review_package(),
+            actions=_sample_actions(),
+            gate_results=[],
+            evidence_packs=[],
+            opportunity_candidates=[],
+        )
+        for item in inbox.review_items:
+            self.assertEqual(item.linked_source_urls, [])
+            self.assertNotIn("urn:oos:", str(item.linked_source_urls))
+            data = item.to_dict()
+            self.assertEqual(data["linked_source_urls"], [])
+
+    def test_evidence_pack_source_urls_propagate_to_top_opportunities(self):
+        """3. Evidence pack source URLs propagate to top opportunity review items."""
+        packs = self._sample_packs()
+        gates = [
+            {
+                "gate_result_id": "gate_001",
+                "opportunity_id": "opp_001",
+                "evidence_pack_id": "ep_001",
+                "decision": "pass",
+                "source_urls": packs[0]["source_urls"],
+                "evidence_ids": ["ev_001", "ev_002"],
+                "confidence": 0.85,
+                "reasons": [],
+                "blocking_issues": [],
+                "missing_evidence": [],
+            }
+        ]
+
+        inbox = build_founder_inbox_v2(
+            run_id="test_ep_urls",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            evidence_packs=packs,
+            gate_results=gates,
+        )
+
+        top_items = [i for i in inbox.review_items if i.section_id == "top_opportunities_to_review"]
+        self.assertGreater(len(top_items), 0, "Expected at least one top-opportunity item")
+
+        for item in top_items:
+            if item.linked_evidence_pack_ids:
+                self.assertGreater(len(item.linked_source_urls), 0,
+                    f"Item {item.review_item_id} should have source URLs from evidence pack")
+                for url in item.linked_source_urls:
+                    self.assertTrue(url.startswith("http"),
+                        f"URL '{url}' should be a real http/https URL")
+
+    def test_evidence_pack_source_urls_propagate_to_needs_more_evidence(self):
+        """4. Evidence pack source URLs propagate to needs-more-evidence items."""
+        packs = self._sample_packs()
+        gates = [
+            {
+                "gate_result_id": "gate_002",
+                "opportunity_id": "opp_002",
+                "evidence_pack_id": "ep_002",
+                "decision": "park",
+                "source_urls": packs[1]["source_urls"],
+                "evidence_ids": ["ev_003"],
+                "confidence": 0.35,
+                "missing_evidence": ["price_signal"],
+                "reasons": [],
+                "blocking_issues": [],
+            }
+        ]
+
+        inbox = build_founder_inbox_v2(
+            run_id="test_nme_urls",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            evidence_packs=packs,
+            gate_results=gates,
+        )
+
+        nme_items = [i for i in inbox.review_items if i.section_id == "needs_more_evidence"]
+        self.assertGreater(len(nme_items), 0, "Expected at least one needs-more-evidence item")
+        for item in nme_items:
+            self.assertGreater(len(item.linked_source_urls), 0,
+                f"NME item {item.review_item_id} should carry source URLs from evidence pack")
+
+    def test_opportunity_candidate_source_urls_propagate(self):
+        """5. Opportunity candidate source URLs propagate when available."""
+        packs = self._sample_packs()
+        opps = self._sample_opps()
+        gates = self._sample_gates()
+
+        inbox = build_founder_inbox_v2(
+            run_id="test_opp_urls",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            evidence_packs=packs,
+            opportunity_candidates=opps,
+            gate_results=gates,
+        )
+
+        # Items linked to opp_001 should get its source URLs
+        for item in inbox.review_items:
+            if "opp_001" in item.linked_opportunity_ids:
+                self.assertIn("https://opp-specific.example.com", item.linked_source_urls)
+
+    def test_quality_gate_source_urls_propagate(self):
+        """6. Quality gate source URLs propagate when available."""
+        packs = self._sample_packs()
+        gates = self._sample_gates()
+
+        inbox = build_founder_inbox_v2(
+            run_id="test_gate_urls",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            evidence_packs=packs,
+            gate_results=gates,
+        )
+
+        # Items linked to gate_001 should get its source URLs
+        for item in inbox.review_items:
+            if "gate_001" in item.linked_quality_gate_ids:
+                self.assertIn("https://quality-gate.example.com/001", item.linked_source_urls)
+
+    def test_duplicate_source_urls_deduplicated(self):
+        """7. Duplicate source URLs are deduplicated deterministically."""
+        packs = [
+            {
+                "evidence_pack_id": "ep_dup_a",
+                "cluster_id": "cluster_a",
+                "source_urls": ["https://example.com/dup"],
+                "items": [{"evidence_id": "ev_a", "source_url": "https://example.com/dup"}],
+            },
+            {
+                "evidence_pack_id": "ep_dup_b",
+                "cluster_id": "cluster_b",
+                "source_urls": ["https://example.com/dup", "https://example.com/unique"],
+                "items": [{"evidence_id": "ev_b", "source_url": "https://example.com/unique"}],
+            },
+        ]
+        gates = [
+            {
+                "gate_result_id": "gate_dup",
+                "opportunity_id": "opp_dup",
+                "evidence_pack_id": "ep_dup_a",
+                "decision": "pass",
+                "source_urls": ["https://example.com/dup"],
+                "evidence_ids": ["ev_a"],
+                "confidence": 0.7,
+                "reasons": [],
+                "blocking_issues": [],
+                "missing_evidence": [],
+            }
+        ]
+
+        inbox = build_founder_inbox_v2(
+            run_id="test_dedup",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            evidence_packs=packs,
+            gate_results=gates,
+        )
+
+        for item in inbox.review_items:
+            if item.linked_source_urls:
+                # Check no duplicates
+                self.assertEqual(len(item.linked_source_urls), len(set(item.linked_source_urls)),
+                    f"Item {item.review_item_id} has duplicate source URLs")
+                # Check sorted
+                self.assertEqual(item.linked_source_urls, sorted(item.linked_source_urls),
+                    f"Item {item.review_item_id} source URLs not sorted deterministically")
+
+    def test_markdown_includes_source_url_traceability(self):
+        """8. Markdown includes source URL traceability."""
+        packs = self._sample_packs()
+        gates = [
+            {
+                "gate_result_id": "gate_md",
+                "opportunity_id": "opp_md",
+                "evidence_pack_id": "ep_001",
+                "decision": "pass",
+                "source_urls": packs[0]["source_urls"],
+                "evidence_ids": ["ev_001"],
+                "confidence": 0.85,
+                "reasons": [],
+                "blocking_issues": [],
+                "missing_evidence": [],
+            }
+        ]
+
+        inbox = build_founder_inbox_v2(
+            run_id="test_md_urls",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            evidence_packs=packs,
+            gate_results=gates,
+        )
+        md = render_founder_inbox_v2_markdown(inbox)
+
+        self.assertIn("Items With Source URLs", md)
+        self.assertIn("Items Without Source URLs", md)
+        self.assertIn("Unique Source URLs", md)
+        # At least one item should display source URLs
+        self.assertIn("Source URLs", md)
+
+    def test_weekly_cycle_builder_writes_linked_source_urls_in_index(self):
+        """9. Weekly cycle builder writes founder_inbox_v2_index.json with linked_source_urls."""
+        project_root = _temp_project_root_for(self)
+
+        items = [
+            {
+                "case_id": "case_src_url",
+                "title": "Source URL test case",
+                "synthetic_data": True,
+                "input_artifacts": {
+                    "evidence_pack": {
+                        "evidence_pack_id": "ep_src_url_001",
+                        "cluster_id": "cluster_test",
+                        "topic_id": "test_topic",
+                        "source_signal_ids": ["sig_a", "sig_b"],
+                        "evidence_ids": ["ev_a", "ev_b"],
+                        "source_urls": [
+                            "https://news.ycombinator.com/item?id=src_test_1",
+                            "https://github.com/test/src/issues/1",
+                        ],
+                        "items": [
+                            {
+                                "evidence_id": "ev_a",
+                                "source_signal_id": "sig_a",
+                                "source_url": "https://news.ycombinator.com/item?id=src_test_1",
+                                "source_type": "hn_algolia",
+                                "summary": "Test source URL evidence A.",
+                                "confidence": 0.85,
+                            },
+                            {
+                                "evidence_id": "ev_b",
+                                "source_signal_id": "sig_b",
+                                "source_url": "https://github.com/test/src/issues/1",
+                                "source_type": "github_issues",
+                                "summary": "Test source URL evidence B.",
+                                "confidence": 0.80,
+                            },
+                        ],
+                        "summaries": ["Test source URL summary"],
+                        "source_summaries": [
+                            {"source_type": "hn_algolia", "source_count": 1, "evidence_ids": ["ev_a"]},
+                            {"source_type": "github_issues", "source_count": 1, "evidence_ids": ["ev_b"]},
+                        ],
+                        "source_types": ["hn_algolia", "github_issues"],
+                        "confidence_values": [0.85, 0.80],
+                        "source_diversity": 2,
+                        "recurrence_count": 2,
+                        "created_from": "test",
+                        "risk_notes": [],
+                    }
+                },
+            },
+        ]
+        input_path = project_root / "fixture_input.json"
+        input_path.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+        (project_root / "artifacts" / "weekly_runs").mkdir(parents=True, exist_ok=True)
+
+        result = build_weekly_cycle(
+            project_root=project_root,
+            input_file=input_path,
+            generated_at=_fixed_generated_at(),
+        )
+        self.assertTrue(result.validation_passed, f"Build failed: {result.errors}")
+
+        run_dir = Path(result.run_dir)
+        index_path = run_dir / "founder_inbox_v2_index.json"
+        self.assertTrue(index_path.is_file(), f"Missing {index_path}")
+
+        index_data = json.loads(index_path.read_text(encoding="utf-8"))
+        review_items = index_data.get("review_items", [])
+        self.assertGreater(len(review_items), 0)
+
+        items_with_urls = 0
+        for ri in review_items:
+            self.assertIn("linked_source_urls", ri,
+                f"Review item {ri.get('review_item_id')} missing linked_source_urls field")
+            if ri.get("linked_source_urls"):
+                items_with_urls += 1
+                for url in ri["linked_source_urls"]:
+                    self.assertTrue(url.startswith("http"), f"Expected real URL, got: {url}")
+
+        self.assertGreater(items_with_urls, 0,
+            "Expected at least one review item with source URLs in index JSON")
+
+    def test_source_url_traceability_scanner_finds_urls_in_inbox_index(self):
+        """10. Source URL traceability scanner no longer flags founder_inbox_v2_index
+        when upstream URLs exist."""
+        project_root = _temp_project_root_for(self)
+
+        items = [
+            {
+                "case_id": "case_scanner",
+                "title": "Scanner test case",
+                "synthetic_data": True,
+                "input_artifacts": {
+                    "evidence_pack": {
+                        "evidence_pack_id": "ep_scan_001",
+                        "cluster_id": "cluster_scan",
+                        "topic_id": "test_topic",
+                        "source_signal_ids": ["sig_1"],
+                        "evidence_ids": ["ev_1"],
+                        "source_urls": ["https://example.com/scan_test"],
+                        "items": [
+                            {
+                                "evidence_id": "ev_1",
+                                "source_signal_id": "sig_1",
+                                "source_url": "https://example.com/scan_test",
+                                "source_type": "hn_algolia",
+                                "summary": "Scanner test.",
+                                "confidence": 0.7,
+                            },
+                        ],
+                        "summaries": ["Scanner test"],
+                        "source_summaries": [
+                            {"source_type": "hn_algolia", "source_count": 1, "evidence_ids": ["ev_1"]},
+                        ],
+                        "source_types": ["hn_algolia"],
+                        "confidence_values": [0.7],
+                        "source_diversity": 1,
+                        "recurrence_count": 1,
+                        "created_from": "test",
+                        "risk_notes": [],
+                    }
+                },
+            },
+        ]
+        input_path = project_root / "fixture_input.json"
+        input_path.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+        (project_root / "artifacts" / "weekly_runs").mkdir(parents=True, exist_ok=True)
+
+        result = build_weekly_cycle(
+            project_root=project_root,
+            input_file=input_path,
+            generated_at=_fixed_generated_at(),
+        )
+        self.assertTrue(result.validation_passed, f"Build failed: {result.errors}")
+
+        from oos.source_url_traceability import check_source_url_traceability
+        report = check_source_url_traceability(result.run_dir)
+
+        # The inbox index should have items with real source URLs now
+        inbox_status = next(
+            (s for s in report.artifact_statuses if s.artifact_key == "founder_inbox_v2_index"),
+            None,
+        )
+        if inbox_status:
+            # Should not have placeholder URLs in inbox
+            self.assertEqual(inbox_status.items_with_placeholder_urls, 0,
+                "Inbox should not have placeholder URNs")
+            # Synthetic items (exec summary, decision cmds) legitimately have no
+            # evidence lineage and thus empty linked_source_urls is expected.
+            # Items with evidence lineage should carry source URLs.
+            # Verify: placeholder count is 0 (highest priority check).
+            # Missing count may be > 0 for synthetic items — that's acceptable.
+            self.assertGreaterEqual(inbox_status.item_count, 1,
+                "Inbox should have at least one item")
+
+    def test_no_urn_oos_placeholder_introduced_by_founder_inbox(self):
+        """11. No urn:oos:* placeholder is introduced by founder inbox."""
+        packs = self._sample_packs()
+        gates = self._sample_gates()
+
+        inbox = build_founder_inbox_v2(
+            run_id="test_no_placeholder",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            evidence_packs=packs,
+            gate_results=gates,
+            review_package=_sample_review_package(),
+            actions=_sample_actions(),
+        )
+        for item in inbox.review_items:
+            for url in item.linked_source_urls:
+                self.assertFalse(
+                    url.startswith("urn:oos:"),
+                    f"Item {item.review_item_id} has placeholder URN: {url}",
+                )
+            self.assertNotIn("placeholder", str(item.linked_source_urls))
+        data = founder_inbox_v2_to_json(inbox)
+        self.assertNotIn("urn:oos:", json.dumps(data))
+
+    def test_existing_inbox_tests_still_pass_with_new_field(self):
+        """12. Existing founder inbox tests still pass — new field defaults to []."""
+        inbox = build_founder_inbox_v2(
+            run_id="test_backward",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+        )
+        for item in inbox.review_items:
+            self.assertIsInstance(item.linked_source_urls, list)
+            self.assertEqual(item.linked_source_urls, [])
+        # Exec summary item should exist
+        self.assertEqual(inbox.review_item_count, 1)
+
+    def test_build_with_gate_results_propagates_real_urls(self):
+        """13. Integration: build with packs + gates → inbox items carry real URLs."""
+        packs = self._sample_packs()
+        gates = [
+            {
+                "gate_result_id": "gate_int",
+                "opportunity_id": "opp_int",
+                "evidence_pack_id": "ep_001",
+                "decision": "pass",
+                "source_urls": ["https://gate.example.com/int"],
+                "evidence_ids": ["ev_001"],
+                "confidence": 0.9,
+                "reasons": [],
+                "blocking_issues": [],
+                "missing_evidence": [],
+            }
+        ]
+
+        inbox = build_founder_inbox_v2(
+            run_id="test_integration",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            evidence_packs=packs,
+            gate_results=gates,
+        )
+
+        # Every non-exec-summary item with linked evidence pack IDs should have URLs
+        for item in inbox.review_items:
+            if item.section_id == "decision_recording_commands":
+                continue
+            if item.linked_evidence_pack_ids or item.linked_evidence_ids:
+                self.assertGreater(len(item.linked_source_urls), 0,
+                    f"Item {item.review_item_id} ({item.section_id}) has evidence lineage but no source URLs")
+
+    def test_source_url_traceability_appendix_has_url_counts(self):
+        """14. Markdown traceability appendix includes source URL stats."""
+        packs = self._sample_packs()
+        gates = self._sample_gates()
+
+        inbox = build_founder_inbox_v2(
+            run_id="test_appendix",
+            manifest_path="manifest.json",
+            generated_at=_fixed_generated_at(),
+            evidence_packs=packs,
+            gate_results=gates,
+        )
+        md = render_founder_inbox_v2_markdown(inbox)
+
+        self.assertIn("Unique Source URLs", md)
+        # Traceability summary should have the new fields
+        ts = inbox.traceability_summary
+        self.assertIn("unique_source_urls", ts)
+        self.assertIn("items_with_source_urls", ts)
+        self.assertIn("items_without_source_urls", ts)

@@ -10,24 +10,27 @@
 ## Current Progress
 
 - Roadmap v2.7 planning created: yes
-- Current item: `1.1 Source URL traceability contract`
-- Roadmap state: `active / planned`
-- Completed: `0 / 8`
-- Remaining: `8 / 8`
-- Latest completed roadmap item: Roadmap v2.6 `9.1` - Final v2.6 validation checkpoint
-- Next planned roadmap item: Roadmap v2.7 `1.1` - Source URL traceability contract
+- Roadmap v2.7 status: `complete / closed` (`8 / 8`, branch `feat/v2-7-traceability-block-1`).
+- Current item: `none / roadmap complete`
+- Roadmap state: `complete / closed`
+- Completed: `8 / 8`
+- Remaining: `0 / 8`
+- Latest completed roadmap item: Roadmap v2.7 `6.1` — Final v2.7 validation checkpoint
+- Next planned roadmap item: none / TBD (candidates: Pain Discovery Layer integration, live LLM/API integration, founder decision re-import replace/amend mode)
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `planning/v2-7-roadmap`
+- Current branch: `feat/v2-7-traceability-block-1`
 - Previous branch (v2.6 implementation): `feat/v2-6-weekly-loop-block-1`
+- Planning branch (v2.7): `planning/v2-7-roadmap` (merged to main)
 - MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
 - Roadmap v2.6 implementation was merged from `feat/v2-6-weekly-loop-block-1` into `main` and tagged `v2.6`.
-- Roadmap v2.7 planning is on `planning/v2-7-roadmap`; do not push, merge, tag, or release until explicitly approved.
+- Roadmap v2.7 planning was merged from `planning/v2-7-roadmap` into `main`.
+- Roadmap v2.7 implementation is on `feat/v2-7-traceability-block-1`; do not push, merge, tag, or release until explicitly approved.
 - Do not push partial or unvalidated follow-up work.
 
 ## Workflow Notes
@@ -135,3 +138,11 @@
 - Roadmap v2.6 item 8.1 added fixture end-to-end weekly cycle validation (`src/oos/v2_6_end_to_end_weekly_cycle_validation.py`) — deterministic end-to-end validation proving the full v2.6 weekly loop works on fixture data. Key deliverables: `V2_6EndToEndValidationReport` model (30+ fields including schema_version, validation_id, steps, artifact_count, traceability_checks, safety flags), `V2_6EndToEndStepResult` model, `run_v2_6_end_to_end_fixture_validation()` exercising 11 pipeline steps (fixture load → build → manifest → inbox → decision import → count → status → run report → dashboard → traceability → safety), `_check_traceability()` verifying 8-link traceability chain, `_build_fixture_decisions_file()` auto-generating fixture decisions, `v2_6_end_to_end_validation_to_json()` JSON serializer. 43 focused tests cover model serialization/JSON roundtrip, full fixture validation on temp project roots, artifact creation verification, inbox review items, decision import with traceability, feedback mappings, preference profile rebuild, parking lot records, manifest empty_states update, weekly cycle status, run report json/md, dashboard json/md, traceability checks, safety flags, determinism, temp-only enforcement, and failed validation reporting. No new business logic, no semantic changes to existing components. No live APIs/LLMs, no portfolio mutations.
 - Roadmap v2.6 item 9.1 closed the roadmap with a final validation checkpoint: 1400 tests, 0 failures; 43 focused end-to-end validation tests; 246 key suite tests; `scripts/oos-validate.ps1` pass; `git diff --check` clean; roadmap state `complete / closed` at `9 / 9`. No push, PR, merge, tag, or release was performed. Codex audit is deferred until the Codex weekly limit returns; push branch, PR, merge, and optional release tag are deferred until explicitly requested. Roadmap v2.6 is complete.
 - Roadmap v2.7 planning created the Traceability Hardening & Real-Run Readiness checklist with 8 implementation items: source URL traceability contract, founder inbox source URL propagation, founder decision import source URL propagation, E2E source URL traceability validation, founder decision re-import policy review / safe replace mode, developer workflow helper scripts, controlled weekly run smoke test / runbook, and final v2.7 validation checkpoint. Implementation starts at item 1.1; no source code features, tests, artifacts, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
+- Roadmap v2.7 item 1.1 added the Source URL Traceability contract (`docs/contracts/source_url_traceability_contract.md`) and `SourceURLTraceabilityReport` model with validation scanner in `src/oos/source_url_traceability.py`. Placeholder URN detection and missing-source-URL policies defined. No pipeline modifications; contract/advisory only.
+- Roadmap v2.7 item 1.2 added `linked_source_urls` field to `FounderInboxReviewItem` in `src/oos/founder_inbox_v2.py`, populated from upstream evidence packs and opportunity candidates during inbox generation. Updated inbox index JSON schema and Markdown rendering.
+- Roadmap v2.7 item 1.3 replaced the `urn:oos:founder_import:placeholder` fallback in `src/oos/founder_decision_import.py` with real source URLs propagated from the founder inbox index. Updated `FounderDecisionV2` and `FounderFeedbackMapping` validation to reject placeholder URNs.
+- Roadmap v2.7 item 2.1 added source URL traceability verification as step s11 to the v2.6 E2E fixture validation in `src/oos/v2_6_end_to_end_weekly_cycle_validation.py`. 12 focused tests verify placeholder-free traceability, 5-link chain intersection, and empty-state handling.
+- Roadmap v2.7 item 3.1 created the founder decision re-import policy document (`docs/decisions/founder_decision_reimport_policy.md`). Replace/amend mode implementation deferred to v2.8+; policy document records safety properties and evaluation rationale.
+- Roadmap v2.7 item 4.1 added four Windows-native PowerShell developer workflow helper scripts: `scripts/dev-snapshot.ps1`, `scripts/dev-validate-final.ps1`, `scripts/dev-post-merge-sync.ps1`, `scripts/dev-pr-readiness.ps1`. 20 focused tests verify script existence, safety, and correctness.
+- Roadmap v2.7 item 5.1 created the controlled weekly run smoke test runbook (`docs/runbooks/controlled_weekly_run_smoke_test.md`, 18 sections) and automated smoke script (`scripts/run-controlled-smoke.ps1`, 9-step pipeline). 14 focused tests cover runbook content, script safety, and temp-only execution.
+- Roadmap v2.7 item 6.1 closed the roadmap with a final validation checkpoint: 1514 tests, 0 failures; `scripts/oos-validate.ps1` pass; `scripts/dev-validate-final.ps1` pass; `scripts/run-controlled-smoke.ps1` pass; `git diff --check` clean; zero `urn:oos:*` placeholder URNs confirmed; roadmap state `complete / closed` at `8 / 8`. Founder decision re-import replace/amend mode deferred to v2.8+. No push, PR, merge, tag, or release was performed. Roadmap v2.7 is complete.
