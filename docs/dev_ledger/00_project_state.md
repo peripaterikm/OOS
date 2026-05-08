@@ -3,7 +3,7 @@
 ## Current Roadmap
 
 - Roadmap v2.5 status: complete (`24 / 24`, tag `v2.5`).
-- Roadmap v2.6 status: complete (`9 / 9`, local only; no push, PR, merge, or tag yet).
+- Roadmap v2.6 status: complete (`9 / 9`, merged to main, tag `v2.6` created).
 - Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
 - Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
@@ -26,7 +26,7 @@
 - MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
-- Roadmap v2.6 implementation is on `feat/v2-6-weekly-loop-block-1`; do not push, merge, tag, or release until explicitly approved.
+- Roadmap v2.6 implementation was merged from `feat/v2-6-weekly-loop-block-1` into `main` and tagged `v2.6`.
 - Roadmap v2.7 planning is on `planning/v2-7-roadmap`; do not push, merge, tag, or release until explicitly approved.
 - Do not push partial or unvalidated follow-up work.
 

@@ -9,7 +9,7 @@
 - [ ] **0.3** Roadmap state: `active / planned`
 - [ ] **0.4** Completed from this roadmap: **0 / 8**
 - [ ] **0.5** Remaining: **8 / 8**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` not yet created)
+- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` created, merged to main)
 
 ### Core Concept
 
