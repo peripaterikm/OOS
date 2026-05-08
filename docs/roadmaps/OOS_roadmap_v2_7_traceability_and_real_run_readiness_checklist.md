@@ -4,12 +4,12 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
-- [ ] **0.2** Current item: `6.1 Final v2.7 validation checkpoint`
-- [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **7 / 8**
-- [ ] **0.5** Remaining: **1 / 8**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` created, merged to main)
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
+- [x] **0.2** Current item: `none / roadmap complete`
+- [x] **0.3** Roadmap state: `complete / closed`
+- [x] **0.4** Completed from this roadmap: **8 / 8**
+- [x] **0.5** Remaining: **0 / 8**
+- [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` created, merged to main)
 
 ### Core Concept
 
@@ -495,18 +495,18 @@ Close the roadmap: verify all items complete, all tests pass, all validation gat
 
 ### Acceptance criteria
 
-- [ ] **6.1.1** All 8 implementation items have `[x] Done` status.
-- [ ] **6.1.2** Roadmap state is `complete / closed`.
-- [ ] **6.1.3** Completed: `8 / 8`.
-- [ ] **6.1.4** Remaining: `0 / 8`.
-- [ ] **6.1.5** Full unittest discovery: 0 failures.
-- [ ] **6.1.6** `scripts/oos-validate.ps1` passes.
-- [ ] **6.1.7** `scripts/dev-validate-final.ps1` passes.
-- [ ] **6.1.8** `git diff --check` clean.
-- [ ] **6.1.9** Source URL traceability verification: zero `urn:oos:*` placeholder URNs in any artifact.
-- [ ] **6.1.10** Controlled weekly run smoke test completes successfully.
-- [ ] **6.1.11** Dev Ledger updated with final state.
-- [ ] **6.1.12** No push, PR, merge, tag, or release unless explicitly approved.
+- [x] **6.1.1** All 8 implementation items have `[x] Done` status.
+- [x] **6.1.2** Roadmap state is `complete / closed`.
+- [x] **6.1.3** Completed: `8 / 8`.
+- [x] **6.1.4** Remaining: `0 / 8`.
+- [x] **6.1.5** Full unittest discovery: 1514 tests, 0 failures.
+- [x] **6.1.6** `scripts/oos-validate.ps1` passes (1514 tests OK, v1 dry run complete).
+- [x] **6.1.7** `scripts/dev-validate-final.ps1` passes (all gates green).
+- [x] **6.1.8** `git diff --check` clean.
+- [x] **6.1.9** Source URL traceability verification: zero `urn:oos:*` placeholder URNs in any artifact.
+- [x] **6.1.10** Controlled weekly run smoke test completes successfully.
+- [x] **6.1.11** Dev Ledger updated with final state.
+- [x] **6.1.12** No push, PR, merge, tag, or release unless explicitly approved.
 
 ---
 
