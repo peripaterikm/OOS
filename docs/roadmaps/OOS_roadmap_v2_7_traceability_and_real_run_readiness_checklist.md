@@ -5,7 +5,7 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
-- [ ] **0.2** Current item: `0.1 Roadmap v2.7 planning`
+- [ ] **0.2** Current item: `1.1 Source URL traceability contract`
 - [ ] **0.3** Roadmap state: `active / planned`
 - [ ] **0.4** Completed from this roadmap: **0 / 8**
 - [ ] **0.5** Remaining: **8 / 8**
@@ -68,7 +68,7 @@ LLM integration belongs later (`v2.8+`) unless present only as disabled/future h
 - Unit tests must not make live network calls.
 - Live source runs are explicit, bounded, and approval-gated.
 
-> Roadmap status tracks **8 implementation items** (items 0.1–6.1). Item 0.1 is the planning checkpoint itself. Items 0.2–0.6 are roadmap-state trackers and are not counted in the implementation total. Items 1.1–5.1 are implementation; item 6.1 is the final checkpoint.
+> Roadmap status tracks **8 implementation items** (items 1.1–6.1). Item 0.1 (planning) is complete and not counted in the implementation total. Items 0.2–0.6 are roadmap-state trackers and are not counted in the implementation total. Items 1.1–5.1 are implementation; item 6.1 is the final checkpoint.
 
 ---
 
@@ -95,16 +95,16 @@ Create the official Roadmap v2.7 planning checklist, mini-epic, run report, and 
 
 ### Acceptance criteria
 
-- [ ] **0.1.1** Roadmap v2.7 document exists at the expected path with all sections.
-- [ ] **0.1.2** Roadmap state is `active / planned`.
-- [ ] **0.1.3** Current item is `1.1 Source URL traceability contract`.
-- [ ] **0.1.4** Completed: `0 / 8`.
-- [ ] **0.1.5** Remaining: `8 / 8`.
-- [ ] **0.1.6** Mini-epic document exists.
-- [ ] **0.1.7** Run report exists.
-- [ ] **0.1.8** Dev Ledger project state is updated.
-- [ ] **0.1.9** `git diff --check` clean; `git status --short -uall` clean (docs-only changes).
-- [ ] **0.1.10** One local commit made.
+- [x] **0.1.1** Roadmap v2.7 document exists at the expected path with all sections.
+- [x] **0.1.2** Roadmap state is `active / planned`.
+- [x] **0.1.3** Current item is `1.1 Source URL traceability contract`.
+- [x] **0.1.4** Completed: `0 / 8`.
+- [x] **0.1.5** Remaining: `8 / 8`.
+- [x] **0.1.6** Mini-epic document exists.
+- [x] **0.1.7** Run report exists.
+- [x] **0.1.8** Dev Ledger project state is updated.
+- [x] **0.1.9** `git diff --check` clean; `git status --short -uall` clean (docs-only changes).
+- [x] **0.1.10** One local commit made.
 
 ---
 
