@@ -5,11 +5,11 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`
-- [x] **0.2** Current item: `8.1` Fixture end-to-end weekly cycle validation
-- [ ] **0.3** Roadmap state: `active / in_progress`
-- [x] **0.4** Completed from this roadmap: **8 / 9**
-- [ ] **0.5** Remaining: **1 / 9**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
+- [x] **0.2** Current item: `none / roadmap complete`
+- [x] **0.3** Roadmap state: `complete / closed`
+- [x] **0.4** Completed from this roadmap: **9 / 9**
+- [x] **0.5** Remaining: **0 / 9**
+- [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md` (complete, `24 / 24`, tag `v2.5`)
 
 ### Core Concept
 
@@ -521,15 +521,15 @@ Close the roadmap: verify all items complete, all tests pass, all validation gat
 
 ### Acceptance criteria
 
-- [ ] **9.1.1** All 9 implementation items have `[x] Done` status.
-- [ ] **9.1.2** Roadmap state is `completed`.
-- [ ] **9.1.3** Completed: `9 / 9`.
-- [ ] **9.1.4** Remaining: `0 / 9`.
-- [ ] **9.1.5** Full unittest discovery: 0 failures.
-- [ ] **9.1.6** `scripts/oos-validate.ps1` passes.
-- [ ] **9.1.7** `git diff --check` clean.
-- [ ] **9.1.8** Dev Ledger updated with final state.
-- [ ] **9.1.9** No push, PR, merge, tag, or release unless explicitly approved.
+- [x] **9.1.1** All 9 implementation items have `[x] Done` status.
+- [x] **9.1.2** Roadmap state is `completed`.
+- [x] **9.1.3** Completed: `9 / 9`.
+- [x] **9.1.4** Remaining: `0 / 9`.
+- [x] **9.1.5** Full unittest discovery: 1400 tests, 0 failures.
+- [x] **9.1.6** `scripts/oos-validate.ps1` passes (1400 tests OK, verify.ps1 OK).
+- [x] **9.1.7** `git diff --check` clean.
+- [x] **9.1.8** Dev Ledger updated with final state.
+- [x] **9.1.9** No push, PR, merge, tag, or release unless explicitly approved.
 
 ---
 
