@@ -57,9 +57,25 @@ class TestRoadmapV22CompletionCheckpoint(unittest.TestCase):
         self.assertTrue(MINI_EPIC_PATH.exists())
         state = PROJECT_STATE_PATH.read_text(encoding="utf-8")
 
+        # Historical v2.2 assertions (tight): these patterns describe the
+        # exact expected state of the project_state.md record after
+        # completing Roadmap v2.2 item 8.2.
+        historical_v22_patterns = [
+            # v2.2 completion checkpoint is recorded in workflow notes
+            r"Roadmap 8\.2 completed the local Roadmap v2\.2 checkpoint",
+            # Roadmap v2.2 is referenced as a completion document
+            r"Roadmap v2\.2 completion documents",
+        ]
+        for pattern in historical_v22_patterns:
+            self.assertRegex(state, pattern,
+                f"Historical v2.2 state pattern not found: {pattern}")
+
+        # Current-state tolerance (v2.5/v2.6 era): these patterns accept
+        # the project as it exists today without weakening the historical
+        # v2.2 assertions above.
         self.assertRegex(
             state,
-            r"Roadmap v2\.2 status: complete|Current item: `(6\.2|8\.1|8\.2|Completed / final milestone state)`",
+            r"Roadmap v2\.[25] status: complete|Current item: `(2\.1|6\.2|8\.1|8\.2|Completed / final milestone state)`",
         )
         self.assertRegex(
             state,
@@ -71,7 +87,7 @@ class TestRoadmapV22CompletionCheckpoint(unittest.TestCase):
         )
         self.assertRegex(
             state,
-            r"Latest completed roadmap item: (Roadmap v2\.(2|3|4) )?`?"
+            r"Latest completed roadmap item: (Roadmap v2\.\d )?`?"
             r"(8\.1|8\.1-lite|8\.2|1\.1|1\.2|2\.1|2\.2|3\.1|3\.2|4\.1|4\.2|4\.3|5\.1|5\.2|6\.1|6\.2|6\.2-lite|7\.1|7\.1-lite|7\.2)`?",
         )
 
