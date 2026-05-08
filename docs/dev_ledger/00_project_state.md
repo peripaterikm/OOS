@@ -10,24 +10,26 @@
 ## Current Progress
 
 - Roadmap v2.7 planning created: yes
-- Current item: `1.1 Source URL traceability contract`
-- Roadmap state: `active / planned`
-- Completed: `0 / 8`
-- Remaining: `8 / 8`
-- Latest completed roadmap item: Roadmap v2.6 `9.1` - Final v2.6 validation checkpoint
-- Next planned roadmap item: Roadmap v2.7 `1.1` - Source URL traceability contract
+- Current item: `1.2 Founder Inbox source URL propagation`
+- Roadmap state: `active / in progress`
+- Completed: `1 / 8`
+- Remaining: `7 / 8`
+- Latest completed roadmap item: Roadmap v2.7 `1.1` - Source URL traceability contract
+- Next planned roadmap item: Roadmap v2.7 `1.2` - Founder Inbox source URL propagation
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `planning/v2-7-roadmap`
+- Current branch: `feat/v2-7-traceability-block-1`
 - Previous branch (v2.6 implementation): `feat/v2-6-weekly-loop-block-1`
+- Planning branch (v2.7): `planning/v2-7-roadmap` (merged to main)
 - MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
 - Roadmap v2.6 implementation was merged from `feat/v2-6-weekly-loop-block-1` into `main` and tagged `v2.6`.
-- Roadmap v2.7 planning is on `planning/v2-7-roadmap`; do not push, merge, tag, or release until explicitly approved.
+- Roadmap v2.7 planning was merged from `planning/v2-7-roadmap` into `main`.
+- Roadmap v2.7 implementation is on `feat/v2-7-traceability-block-1`; do not push, merge, tag, or release until explicitly approved.
 - Do not push partial or unvalidated follow-up work.
 
 ## Workflow Notes

@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
-- [ ] **0.2** Current item: `1.1 Source URL traceability contract`
-- [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **0 / 8**
-- [ ] **0.5** Remaining: **8 / 8**
+- [ ] **0.2** Current item: `1.2 Founder Inbox source URL propagation`
+- [ ] **0.3** Roadmap state: `active / in progress`
+- [ ] **0.4** Completed from this roadmap: **1 / 8**
+- [ ] **0.5** Remaining: **7 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` created, merged to main)
 
 ### Core Concept
@@ -150,13 +150,13 @@ The v2.6 founder decision import (`src/oos/founder_decision_import.py`, line 517
 
 ### Acceptance criteria
 
-- [ ] **1.1.1** `SourceURLTraceabilityReport` model exists with fields for each artifact type and its source URL status.
-- [ ] **1.1.2** Validation helper `check_source_url_traceability(run_dir)` scans all artifacts in a weekly run and reports which items have placeholder URNs or missing source URLs.
-- [ ] **1.1.3** Audit confirms every relevant module's `source_urls` / `linked_source_urls` field is documented.
-- [ ] **1.1.4** Contract document lists the expected traceability path: `CandidateSignal.source_url` → `EvidencePack.source_urls` → `OpportunityCandidate.source_urls` → `OpportunityGateResult.source_urls` → `FounderInboxReviewItem.linked_source_urls` → `FounderDecisionV2.linked_source_urls` → `FounderFeedbackMapping.source_urls`.
-- [ ] **1.1.5** Placeholder URN detection works: `urn:oos:*` patterns are flagged as traceability gaps.
-- [ ] **1.1.6** Insufficient-evidence artifacts with `insufficient_evidence: true` are exempt from placeholder checks.
-- [ ] **1.1.7** Focused tests pass; no live APIs/LLMs; no autonomous decisions.
+- [x] **1.1.1** `SourceURLTraceabilityReport` model exists with fields for each artifact type and its source URL status.
+- [x] **1.1.2** Validation helper `check_source_url_traceability(run_dir)` scans all artifacts in a weekly run and reports which items have placeholder URNs or missing source URLs.
+- [x] **1.1.3** Audit confirms every relevant module's `source_urls` / `linked_source_urls` field is documented.
+- [x] **1.1.4** Contract document lists the expected traceability path: `CandidateSignal.source_url` → `EvidencePack.source_urls` → `OpportunityCandidate.source_urls` → `OpportunityGateResult.source_urls` → `FounderInboxReviewItem.linked_source_urls` → `FounderDecisionV2.linked_source_urls` → `FounderFeedbackMapping.source_urls`.
+- [x] **1.1.5** Placeholder URN detection works: `urn:oos:*` patterns are flagged as traceability gaps.
+- [x] **1.1.6** Insufficient-evidence artifacts with `insufficient_evidence: true` are exempt from placeholder checks.
+- [x] **1.1.7** Focused tests pass; no live APIs/LLMs; no autonomous decisions.
 
 ---
 
