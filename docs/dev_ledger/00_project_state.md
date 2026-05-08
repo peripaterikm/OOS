@@ -10,12 +10,12 @@
 ## Current Progress
 
 - Roadmap v2.7 planning created: yes
-- Current item: `1.2 Founder Inbox source URL propagation`
+- Current item: `1.3 Founder Decision Import source URL propagation`
 - Roadmap state: `active / in progress`
-- Completed: `1 / 8`
-- Remaining: `7 / 8`
-- Latest completed roadmap item: Roadmap v2.7 `1.1` - Source URL traceability contract
-- Next planned roadmap item: Roadmap v2.7 `1.2` - Founder Inbox source URL propagation
+- Completed: `2 / 8`
+- Remaining: `6 / 8`
+- Latest completed roadmap item: Roadmap v2.7 `1.2` - Founder Inbox source URL propagation
+- Next planned roadmap item: Roadmap v2.7 `1.3` - Founder Decision Import source URL propagation
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy

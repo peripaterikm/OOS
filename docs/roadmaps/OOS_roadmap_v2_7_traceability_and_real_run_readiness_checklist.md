@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
-- [ ] **0.2** Current item: `1.2 Founder Inbox source URL propagation`
+- [ ] **0.2** Current item: `1.3 Founder Decision Import source URL propagation`
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **1 / 8**
-- [ ] **0.5** Remaining: **7 / 8**
+- [ ] **0.4** Completed from this roadmap: **2 / 8**
+- [ ] **0.5** Remaining: **6 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` created, merged to main)
 
 ### Core Concept
@@ -191,14 +191,14 @@ Add a `linked_source_urls` field to `FounderInboxReviewItem` and populate it fro
 
 ### Acceptance criteria
 
-- [ ] **1.2.1** `FounderInboxReviewItem` has a `linked_source_urls: list[str]` field with default `[]`.
-- [ ] **1.2.2** `FounderInboxReviewItem.to_dict()` includes `linked_source_urls`.
-- [ ] **1.2.3** Review items built from evidence packs have non-empty `linked_source_urls` (when source URLs exist upstream).
-- [ ] **1.2.4** Review items built from opportunity candidates have non-empty `linked_source_urls`.
-- [ ] **1.2.5** Synthetic items (e.g., next-best actions without evidence lineage) have empty `linked_source_urls` without error.
-- [ ] **1.2.6** Existing inbox tests pass with the new field (backward compatible — new field defaults to `[]`).
-- [ ] **1.2.7** New focused tests verify source URL propagation from evidence packs and opportunity candidates through inbox items.
-- [ ] **1.2.8** No live APIs/LLMs; no autonomous decisions.
+- [x] **1.2.1** `FounderInboxReviewItem` has a `linked_source_urls: list[str]` field with default `[]`.
+- [x] **1.2.2** `FounderInboxReviewItem.to_dict()` includes `linked_source_urls`.
+- [x] **1.2.3** Review items built from evidence packs have non-empty `linked_source_urls` (when source URLs exist upstream).
+- [x] **1.2.4** Review items built from opportunity candidates have non-empty `linked_source_urls`.
+- [x] **1.2.5** Synthetic items (e.g., next-best actions without evidence lineage) have empty `linked_source_urls` without error.
+- [x] **1.2.6** Existing inbox tests pass with the new field (backward compatible — new field defaults to `[]`).
+- [x] **1.2.7** New focused tests verify source URL propagation from evidence packs and opportunity candidates through inbox items.
+- [x] **1.2.8** No live APIs/LLMs; no autonomous decisions.
 
 ---
 

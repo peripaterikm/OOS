@@ -131,6 +131,7 @@ class FounderInboxReviewItem:
     linked_parking_lot_record_ids: list[str] = field(default_factory=list)
     linked_revisit_match_ids: list[str] = field(default_factory=list)
     linked_source_artifact_ids: list[str] = field(default_factory=list)
+    linked_source_urls: list[str] = field(default_factory=list)
     source_section: str = ""
     advisory_only: bool = True
 
@@ -151,6 +152,7 @@ class FounderInboxReviewItem:
             "linked_parking_lot_record_ids": list(self.linked_parking_lot_record_ids),
             "linked_revisit_match_ids": list(self.linked_revisit_match_ids),
             "linked_source_artifact_ids": list(self.linked_source_artifact_ids),
+            "linked_source_urls": list(self.linked_source_urls),
             "source_section": self.source_section,
             "advisory_only": self.advisory_only,
         }
@@ -212,6 +214,112 @@ class FounderInboxV2:
             "warnings": list(self.warnings),
             "errors": list(self.errors),
         }
+
+
+# ── Source URL resolution ──────────────────────────────────────────────
+
+
+def _resolve_source_urls(
+    *,
+    linked_evidence_pack_ids: list[str],
+    linked_opportunity_ids: list[str],
+    linked_quality_gate_ids: list[str],
+    linked_evidence_ids: list[str],
+    evidence_packs: list[dict[str, Any]],
+    opportunity_candidates: list[dict[str, Any]],
+    gate_results: list[dict[str, Any]],
+) -> list[str]:
+    """Resolve source URLs for a review item from upstream artifacts.
+
+    Resolution order:
+    1. Evidence packs matching linked_evidence_pack_ids → their source_urls
+    2. Opportunity candidates matching linked_opportunity_ids → their source_urls
+    3. Quality gate results matching linked_quality_gate_ids → their source_urls
+    4. Evidence packs matching linked_evidence_ids via items[].evidence_id → pack source_urls
+
+    Returns deduplicated, deterministically sorted list of non-empty http/https URLs.
+    No placeholder URNs are created. Empty list if no upstream URLs exist.
+    """
+    urls: list[str] = []
+    seen: set[str] = set()
+    pack_by_id: dict[str, dict[str, Any]] = {}
+    opp_by_id: dict[str, dict[str, Any]] = {}
+    gate_by_id: dict[str, dict[str, Any]] = {}
+
+    for p in evidence_packs:
+        if isinstance(p, dict):
+            pid = str(p.get("evidence_pack_id", ""))
+            if pid:
+                pack_by_id[pid] = p
+    for o in opportunity_candidates:
+        if isinstance(o, dict):
+            oid = str(o.get("opportunity_id", o.get("id", "")))
+            if oid:
+                opp_by_id[oid] = o
+    for g in gate_results:
+        if isinstance(g, dict):
+            gid = str(g.get("gate_result_id", ""))
+            if gid:
+                gate_by_id[gid] = g
+
+    def _collect(pack: dict[str, Any]) -> None:
+        for u in pack.get("source_urls", []):
+            u_str = str(u).strip() if isinstance(u, str) else ""
+            if u_str and u_str.startswith(("http://", "https://")) and u_str not in seen:
+                urls.append(u_str)
+                seen.add(u_str)
+
+    # 1. Evidence packs by linked pack IDs
+    for pack_id in linked_evidence_pack_ids:
+        pack = pack_by_id.get(pack_id)
+        if pack:
+            _collect(pack)
+
+    # 2. Opportunity candidates by linked opp IDs
+    for opp_id in linked_opportunity_ids:
+        opp = opp_by_id.get(opp_id)
+        if opp:
+            _collect(opp)
+
+    # 3. Quality gate results by linked gate IDs
+    for gate_id in linked_quality_gate_ids:
+        gate = gate_by_id.get(gate_id)
+        if gate:
+            _collect(gate)
+
+    # 4. Evidence packs that contain linked evidence IDs in their items
+    for ev_id in linked_evidence_ids:
+        for pack in evidence_packs:
+            if not isinstance(pack, dict):
+                continue
+            items = pack.get("items", [])
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                if isinstance(item, dict) and str(item.get("evidence_id", "")) == ev_id:
+                    _collect(pack)
+                    break
+
+    return sorted(urls)
+
+
+def _post_process_source_urls(
+    all_items: list[FounderInboxReviewItem],
+    packs: list[dict[str, Any]],
+    opps: list[dict[str, Any]],
+    gates: list[dict[str, Any]],
+) -> None:
+    """Resolve and populate linked_source_urls for every review item in place."""
+    for item in all_items:
+        item.linked_source_urls = _resolve_source_urls(
+            linked_evidence_pack_ids=item.linked_evidence_pack_ids,
+            linked_opportunity_ids=item.linked_opportunity_ids,
+            linked_quality_gate_ids=item.linked_quality_gate_ids,
+            linked_evidence_ids=item.linked_evidence_ids,
+            evidence_packs=packs,
+            opportunity_candidates=opps,
+            gate_results=gates,
+        )
 
 
 # ── Builder ────────────────────────────────────────────────────────────
@@ -390,6 +498,14 @@ def build_founder_inbox_v2(
             items=cmd_items,
             empty_state="No review items to record decisions against.",
         )
+    )
+
+    # ── Post-process source URLs for all review items ──────────────
+    _post_process_source_urls(
+        all_items=all_items,
+        packs=packs,
+        opps=opps,
+        gates=gates,
     )
 
     # ── Build traceability summary ──────────────────────────────────
@@ -1005,6 +1121,9 @@ def _build_traceability_summary(
     all_pl_ids: set[str] = set()
     all_match_ids: set[str] = set()
     all_artifact_ids: set[str] = set()
+    all_source_urls: set[str] = set()
+    items_with_source_urls: int = 0
+    items_without_source_urls: int = 0
 
     for item in all_items:
         all_opp_ids.update(item.linked_opportunity_ids)
@@ -1015,6 +1134,11 @@ def _build_traceability_summary(
         all_pl_ids.update(item.linked_parking_lot_record_ids)
         all_match_ids.update(item.linked_revisit_match_ids)
         all_artifact_ids.update(item.linked_source_artifact_ids)
+        all_source_urls.update(item.linked_source_urls)
+        if item.linked_source_urls:
+            items_with_source_urls += 1
+        else:
+            items_without_source_urls += 1
 
     return {
         "unique_opportunity_ids": len(all_opp_ids),
@@ -1025,6 +1149,9 @@ def _build_traceability_summary(
         "unique_parking_lot_record_ids": len(all_pl_ids),
         "unique_revisit_match_ids": len(all_match_ids),
         "unique_source_artifact_ids": len(all_artifact_ids),
+        "unique_source_urls": len(all_source_urls),
+        "items_with_source_urls": items_with_source_urls,
+        "items_without_source_urls": items_without_source_urls,
         "review_item_count": len(all_items),
     }
 
@@ -1112,6 +1239,8 @@ def render_founder_inbox_v2_markdown(inbox: FounderInboxV2) -> str:
                 lines.append(f"- **Parking Lot Record IDs**: {', '.join(item.linked_parking_lot_record_ids)}")
             if item.linked_revisit_match_ids:
                 lines.append(f"- **Revisit Match IDs**: {', '.join(item.linked_revisit_match_ids)}")
+            if item.linked_source_urls:
+                lines.append(f"- **Source URLs**: {', '.join(item.linked_source_urls)}")
             lines.append(f"- **Advisory Only**: {str(item.advisory_only).lower()}")
             lines.append("")
 
@@ -1120,6 +1249,9 @@ def render_founder_inbox_v2_markdown(inbox: FounderInboxV2) -> str:
     lines.append("")
     ts = inbox.traceability_summary
     lines.append(f"- **Review Items**: {ts.get('review_item_count', 0)}")
+    lines.append(f"- **Items With Source URLs**: {ts.get('items_with_source_urls', 0)}")
+    lines.append(f"- **Items Without Source URLs**: {ts.get('items_without_source_urls', 0)}")
+    lines.append(f"- **Unique Source URLs**: {ts.get('unique_source_urls', 0)}")
     lines.append(f"- **Unique Opportunity IDs**: {ts.get('unique_opportunity_ids', 0)}")
     lines.append(f"- **Unique Evidence IDs**: {ts.get('unique_evidence_ids', 0)}")
     lines.append(f"- **Unique Evidence Pack IDs**: {ts.get('unique_evidence_pack_ids', 0)}")
