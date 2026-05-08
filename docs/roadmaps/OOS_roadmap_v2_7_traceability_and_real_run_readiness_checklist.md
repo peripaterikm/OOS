@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
-- [ ] **0.2** Current item: `3.1 Founder decision re-import policy review / safe replace mode`
+- [ ] **0.2** Current item: `4.1 Developer workflow helper scripts`
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **4 / 8**
-- [ ] **0.5** Remaining: **4 / 8**
+- [ ] **0.4** Completed from this roadmap: **5 / 8**
+- [ ] **0.5** Remaining: **3 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` created, merged to main)
 
 ### Core Concept
@@ -343,13 +343,13 @@ The current `import_founder_decisions()` (`src/oos/founder_decision_import.py`) 
 
 ### Acceptance criteria
 
-- [ ] **3.1.1** Policy review document exists at `docs/decisions/founder_decision_reimport_policy.md`.
-- [ ] **3.1.2** Document records: current behavior, safety properties for replace mode, evaluation of need, and final decision (implement now / defer to v2.8+).
-- [ ] **3.1.3** If deferred: mini-epic and run report record the decision with clear rationale and v2.8 hook note.
-- [ ] **3.1.4** If implemented: `--replace` flag works end-to-end with fixture decisions; old decisions archived; downstream artifacts consistent.
-- [ ] **3.1.5** If implemented: replacement is idempotent (replacing same decision twice = same result).
-- [ ] **3.1.6** If implemented: focused tests (≥12) cover replacement, idempotency, safety, and fail-closed rejection of unsafe inputs.
-- [ ] **3.1.7** No live APIs/LLMs; advisory-only preserved; no autonomous decisions.
+- [x] **3.1.1** Policy review document exists at `docs/decisions/founder_decision_reimport_policy.md`.
+- [x] **3.1.2** Document records: current behavior, safety properties for replace mode, evaluation of need, and final decision (defer to v2.8+).
+- [x] **3.1.3** If deferred: mini-epic and run report record the decision with clear rationale and v2.8 hook note. **Deferred: replace mode implementation deferred to v2.8+.**
+- [ ] **3.1.4** If implemented: `--replace` flag works end-to-end with fixture decisions; old decisions archived; downstream artifacts consistent. **(N/A — Phase B deferred)**
+- [ ] **3.1.5** If implemented: replacement is idempotent (replacing same decision twice = same result). **(N/A — Phase B deferred)**
+- [ ] **3.1.6** If implemented: focused tests (≥12) cover replacement, idempotency, safety, and fail-closed rejection of unsafe inputs. **(N/A — Phase B deferred)**
+- [x] **3.1.7** No live APIs/LLMs; advisory-only preserved; no autonomous decisions.
 
 ---
 

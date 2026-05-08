@@ -10,12 +10,12 @@
 ## Current Progress
 
 - Roadmap v2.7 planning created: yes
-- Current item: `3.1 Founder decision re-import policy review / safe replace mode`
+- Current item: `4.1 Developer workflow helper scripts`
 - Roadmap state: `active / in progress`
-- Completed: `4 / 8`
-- Remaining: `4 / 8`
-- Latest completed roadmap item: Roadmap v2.7 `2.1` - E2E source URL traceability validation
-- Next planned roadmap item: Roadmap v2.7 `3.1` - Founder decision re-import policy review / safe replace mode
+- Completed: `5 / 8`
+- Remaining: `3 / 8`
+- Latest completed roadmap item: Roadmap v2.7 `3.1` - Founder decision re-import policy review (policy review complete; replace mode implementation deferred to v2.8+)
+- Next planned roadmap item: Roadmap v2.7 `4.1` - Developer workflow helper scripts
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
