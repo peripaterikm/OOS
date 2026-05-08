@@ -10,12 +10,12 @@
 ## Current Progress
 
 - Roadmap v2.7 planning created: yes
-- Current item: `2.1 E2E source URL traceability validation`
+- Current item: `3.1 Founder decision re-import policy review / safe replace mode`
 - Roadmap state: `active / in progress`
-- Completed: `3 / 8`
-- Remaining: `5 / 8`
-- Latest completed roadmap item: Roadmap v2.7 `1.3` - Founder Decision Import source URL propagation
-- Next planned roadmap item: Roadmap v2.7 `2.1` - E2E source URL traceability validation
+- Completed: `4 / 8`
+- Remaining: `4 / 8`
+- Latest completed roadmap item: Roadmap v2.7 `2.1` - E2E source URL traceability validation
+- Next planned roadmap item: Roadmap v2.7 `3.1` - Founder decision re-import policy review / safe replace mode
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy

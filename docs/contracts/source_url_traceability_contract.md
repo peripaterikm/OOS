@@ -132,7 +132,7 @@ Every arrow represents a propagation step. A URL must survive each hop without b
 |---|---|---|
 | **1.2** | Add `linked_source_urls` to `FounderInboxReviewItem`; populate from evidence packs and opportunity candidates in inbox builder | 1.1 (this contract) |
 | **1.3** | Remove `urn:oos:founder_import:placeholder` fallback; propagate real URLs from inbox index into founder decisions and feedback mappings | 1.2 |
-| **2.1** | End-to-end source URL traceability gate in weekly cycle validation; run this contract as part of the standard validation pass | 1.1, 1.2, 1.3 |
+| **2.1** | End-to-end source URL traceability gate in weekly cycle validation; run this contract as part of the standard validation pass — **COMPLETED** as step s11 in `V2_6EndToEndValidationReport` | 1.1, 1.2, 1.3 |
 
 ---
 
