@@ -10,12 +10,12 @@
 ## Current Progress
 
 - Roadmap v2.7 planning created: yes
-- Current item: `5.1 Controlled weekly run smoke test / runbook`
+- Current item: `6.1 Final v2.7 validation checkpoint`
 - Roadmap state: `active / in progress`
-- Completed: `6 / 8`
-- Remaining: `2 / 8`
-- Latest completed roadmap item: Roadmap v2.7 `4.1` - Developer workflow helper scripts
-- Next planned roadmap item: Roadmap v2.7 `5.1` - Controlled weekly run smoke test / runbook
+- Completed: `7 / 8`
+- Remaining: `1 / 8`
+- Latest completed roadmap item: Roadmap v2.7 `5.1` - Controlled weekly run smoke test / runbook
+- Next planned roadmap item: Roadmap v2.7 `6.1` - Final v2.7 validation checkpoint
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy

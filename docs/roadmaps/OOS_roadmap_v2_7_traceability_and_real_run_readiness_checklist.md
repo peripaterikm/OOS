@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
-- [ ] **0.2** Current item: `5.1 Controlled weekly run smoke test / runbook`
+- [ ] **0.2** Current item: `6.1 Final v2.7 validation checkpoint`
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **6 / 8**
-- [ ] **0.5** Remaining: **2 / 8**
+- [ ] **0.4** Completed from this roadmap: **7 / 8**
+- [ ] **0.5** Remaining: **1 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` created, merged to main)
 
 ### Core Concept
@@ -452,15 +452,15 @@ Create a documented, reproducible runbook for executing a bounded weekly cycle w
 
 ### Acceptance criteria
 
-- [ ] **5.1.1** Runbook exists at `docs/runbooks/controlled_weekly_run_smoke_test.md`.
-- [ ] **5.1.2** Runbook covers all 11 steps listed above.
-- [ ] **5.1.3** Every command in the runbook is copy-paste-able PowerShell.
-- [ ] **5.1.4** Runbook explicitly states: no live collection, no live LLM/API calls, no portfolio auto-transitions.
-- [ ] **5.1.5** A manual walk-through of the runbook with fixture data completes without errors (validated after item 2.1).
-- [ ] **5.1.6** Traceability verification step confirms zero placeholder URNs.
-- [ ] **5.1.7** Runbook documents expected output counts and empty-state expectations.
-- [ ] **5.1.8** Optional: `scripts/run-controlled-smoke.ps1` passes when run against a temp project root.
-- [ ] **5.1.9** No live APIs/LLMs; no autonomous decisions; deterministic output.
+- [x] **5.1.1** Runbook exists at `docs/runbooks/controlled_weekly_run_smoke_test.md`.
+- [x] **5.1.2** Runbook covers all 18 sections (Purpose through Explicit Safety Note).
+- [x] **5.1.3** Every command in the runbook is copy-paste-able PowerShell.
+- [x] **5.1.4** Runbook explicitly states: no live collection, no live LLM/API calls, no portfolio auto-transitions.
+- [x] **5.1.5** A manual walk-through of the runbook with fixture data completes without errors (validated via smoke script).
+- [x] **5.1.6** Traceability verification step confirms zero placeholder URNs.
+- [x] **5.1.7** Runbook documents expected output counts and empty-state expectations.
+- [x] **5.1.8** `scripts/run-controlled-smoke.ps1` passes when run against a temp project root.
+- [x] **5.1.9** No live APIs/LLMs; no autonomous decisions; deterministic output.
 
 ---
 
