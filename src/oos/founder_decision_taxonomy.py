@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import asdict, dataclass
 from typing import Any
+
+# Placeholder URN pattern matching (copied from source_url_traceability.py
+# to avoid circular imports)
+_PLACEHOLDER_URN_RE = re.compile(r"^urn:oos:", re.IGNORECASE)
 
 
 FOUNDER_DECISION_V2_SCHEMA_VERSION = "founder_decision_v2.v1"
@@ -302,6 +307,15 @@ def validate_founder_decision(decision: FounderDecisionV2) -> FounderDecisionVal
             errors.append(f"{field_name} must be a list")
         elif any(not isinstance(item, str) or not item.strip() for item in values):
             errors.append(f"{field_name} must contain non-empty strings")
+    # Placeholder URN rejection for linked_source_urls
+    if isinstance(decision.linked_source_urls, list):
+        for url in decision.linked_source_urls:
+            if isinstance(url, str) and _PLACEHOLDER_URN_RE.match(url.strip()):
+                errors.append(
+                    f"linked_source_urls must not contain placeholder URNs: '{url.strip()}'. "
+                    f"Real http/https source URLs must be propagated from upstream artifacts."
+                )
+                break
     if not decision.linked_evidence_ids:
         warnings.append("linked_evidence_ids is empty")
     if not decision.linked_source_signal_ids:

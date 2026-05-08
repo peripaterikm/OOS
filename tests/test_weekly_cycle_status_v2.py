@@ -205,7 +205,19 @@ def _build_mock_weekly_run(
 
     # founder_inbox_v2_index.json
     if "founder_inbox_v2_index" not in omit:
-        items = [{"review_item_id": f"ri_{i}", "section_id": "top_opportunities_to_review"} for i in range(inbox_review_items)]
+        items = [
+            {
+                "review_item_id": f"ri_{i}",
+                "section_id": "top_opportunities_to_review",
+                "linked_source_urls": [f"https://example.com/ri_{i}"],
+                "linked_opportunity_ids": [f"opp_ri_{i}"],
+                "linked_evidence_pack_ids": [f"ep_ri_{i}"],
+                "linked_evidence_ids": [f"ev_ri_{i}"],
+                "linked_quality_gate_ids": [f"qg_ri_{i}"],
+                "decision_options": ["PROMOTE", "PARK", "KILL", "NEEDS_MORE_EVIDENCE", "REVISIT_LATER"],
+            }
+            for i in range(inbox_review_items)
+        ]
         (run_dir / "founder_inbox_v2_index.json").write_text(
             json.dumps({"review_items": items, "schema_version": "founder_inbox_v2_index.v1"}, indent=2),
             encoding="utf-8",

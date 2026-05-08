@@ -698,6 +698,7 @@ class FixtureDecisionsFileTests(unittest.TestCase):
                         "linked_opportunity_ids": ["opp_001"],
                         "decision_options": ["PROMOTE", "PARK", "KILL",
                                             "NEEDS_MORE_EVIDENCE", "REVISIT_LATER"],
+                        "linked_source_urls": ["https://example.com/opp_001"],
                     },
                     {
                         "review_item_id": "inbox_review_def456",
@@ -705,6 +706,7 @@ class FixtureDecisionsFileTests(unittest.TestCase):
                         "linked_opportunity_ids": ["opp_002"],
                         "decision_options": ["PROMOTE", "PARK", "KILL",
                                             "NEEDS_MORE_EVIDENCE", "REVISIT_LATER"],
+                        "linked_source_urls": ["https://example.com/opp_002"],
                     },
                 ],
             }

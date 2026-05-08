@@ -74,6 +74,7 @@ def _make_inbox_item(
     linked_evidence_pack_ids: list[str] | None = None,
     linked_evidence_ids: list[str] | None = None,
     decision_options: list[str] | None = None,
+    linked_source_urls: list[str] | None = None,
 ) -> dict:
     return {
         "review_item_id": review_item_id,
@@ -90,6 +91,7 @@ def _make_inbox_item(
         "linked_parking_lot_record_ids": [],
         "linked_revisit_match_ids": [],
         "linked_source_artifact_ids": [],
+        "linked_source_urls": linked_source_urls if linked_source_urls is not None else [f"https://example.com/{review_item_id}"],
         "source_section": section_id,
         "advisory_only": True,
     }
@@ -523,12 +525,14 @@ class TestMergeHelpers(unittest.TestCase):
             evidence_pack_id="ep_1",
             decision="park",
             reasons=["unclear_buyer"],
+            linked_source_urls=["https://example.com/opp_1"],
         )
         d2 = create_founder_decision(
             opportunity_id="opp_1",
             evidence_pack_id="ep_1",
             decision="kill",
             reasons=["too_generic"],
+            linked_source_urls=["https://example.com/opp_1"],
         )
         merged = _merge_decisions([d1], [d2])
         self.assertEqual(len(merged), 1)
@@ -540,12 +544,14 @@ class TestMergeHelpers(unittest.TestCase):
             evidence_pack_id="ep_1",
             decision="park",
             reasons=["unclear_buyer"],
+            linked_source_urls=["https://example.com/opp_1"],
         )
         d2 = create_founder_decision(
             opportunity_id="opp_2",
             evidence_pack_id="ep_2",
             decision="kill",
             reasons=["too_generic"],
+            linked_source_urls=["https://example.com/opp_2"],
         )
         merged = _merge_decisions([d1], [d2])
         self.assertEqual(len(merged), 2)
@@ -768,8 +774,197 @@ class TestImportFounderDecisions(unittest.TestCase):
             self.assertEqual(item["evidence_pack_id"], "ep_inbox_review_001")
             self.assertIn("ev_inbox_review_001", item["linked_evidence_ids"])
             self.assertIn("qg_inbox_review_001", item["linked_source_signal_ids"])
+            # Source URLs from inbox linked_source_urls are propagated
+            self.assertIn("https://example.com/inbox_review_001", item["linked_source_urls"])
         finally:
             dec_file.unlink(missing_ok=True)
+
+    def test_source_urls_propagate_to_founder_decision(self):
+        """Source URLs from inbox linked_source_urls appear in FounderDecisionV2."""
+        self._make_run()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK", "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            self.assertTrue(result.validation_passed, msg=f"errors: {result.errors}")
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            data = json.loads((run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8"))
+            item = data["items"][0]
+            self.assertEqual(item["linked_source_urls"], ["https://example.com/inbox_review_001"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_source_urls_propagate_to_feedback_mapping(self):
+        """Source URLs from inbox linked_source_urls appear in FounderFeedbackMapping."""
+        self._make_run()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK", "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            data = json.loads((run_dir / "founder_feedback_mappings.json").read_text(encoding="utf-8"))
+            item = data["items"][0]
+            self.assertEqual(item["source_urls"], ["https://example.com/inbox_review_001"])
+            self.assertEqual(item["target"]["source_urls"], ["https://example.com/inbox_review_001"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_no_placeholder_urn_in_imported_artifacts(self):
+        """No urn:oos:* appears in any import-created artifacts."""
+        self._make_run()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK", "reason_categories": ["unclear_buyer"]},
+            {"review_item_id": "inbox_review_002", "decision": "KILL", "reason_categories": ["too_generic"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            # Check all import-written files for placeholder URNs
+            for filename in ["founder_decisions_v2.json", "founder_feedback_mappings.json",
+                              "founder_preference_profile.json", "parking_lot_records.json"]:
+                path = run_dir / filename
+                if path.is_file():
+                    content = path.read_text(encoding="utf-8")
+                    self.assertNotIn("urn:oos:", content,
+                        f"Found urn:oos:* placeholder in {filename}")
+                    self.assertNotIn("urn:oos:founder_import:placeholder", content,
+                        f"Found placeholder in {filename}")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_missing_linked_source_urls_non_exempt_fails_closed(self):
+        """Import with inbox items that have empty linked_source_urls fails closed."""
+        # Build a mock run with an inbox item that has NO linked_source_urls
+        inbox_items = [
+            _make_inbox_item("inbox_review_001", linked_source_urls=[]),
+        ]
+        self._make_run(inbox_items=inbox_items)
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK", "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            # Should fail closed because empty source_urls on a non-exempt decision
+            # violates feedback mapping validation (source_urls must preserve at least one source URL)
+            self.assertFalse(result.validation_passed)
+            self.assertGreater(len(result.errors), 0)
+            # No partial artifacts should exist/change
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            decisions_path = run_dir / "founder_decisions_v2.json"
+            if decisions_path.is_file():
+                data = json.loads(decisions_path.read_text(encoding="utf-8"))
+                self.assertTrue(data.get("empty", True) or len(data.get("items", [])) == 0)
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_placeholder_urls_filtered_from_inbox_source_urls(self):
+        """Placeholder URNs in inbox linked_source_urls are filtered out."""
+        inbox_items = [
+            _make_inbox_item("inbox_review_001",
+                linked_source_urls=["https://real.example.com", "urn:oos:should_be_removed"]),
+        ]
+        self._make_run(inbox_items=inbox_items)
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE", "reason_categories": ["strong_pain", "clear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            self.assertTrue(result.validation_passed, msg=f"errors: {result.errors}")
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            data = json.loads((run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8"))
+            urls = data["items"][0]["linked_source_urls"]
+            self.assertIn("https://real.example.com", urls)
+            self.assertNotIn("urn:oos:should_be_removed", urls)
+            self.assertNotIn("urn:oos:", str(urls))
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_multiple_source_urls_deduplicated(self):
+        """Duplicate source URLs in inbox linked_source_urls are deduplicated."""
+        inbox_items = [
+            _make_inbox_item("inbox_review_001",
+                linked_source_urls=["https://example.com/a", "https://example.com/b", "https://example.com/a"]),
+        ]
+        self._make_run(inbox_items=inbox_items)
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK", "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            data = json.loads((run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8"))
+            urls = data["items"][0]["linked_source_urls"]
+            self.assertEqual(len(urls), 2)
+            self.assertEqual(urls, sorted(urls))
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_taxonomy_rejects_placeholder_urns(self):
+        """FounderDecisionV2 validation rejects urn:oos:* in linked_source_urls."""
+        from oos.founder_decision_taxonomy import create_founder_decision
+        with self.assertRaises(ValueError) as ctx:
+            create_founder_decision(
+                opportunity_id="opp_test",
+                evidence_pack_id="ep_test",
+                decision="park",
+                reasons=["unclear_buyer"],
+                linked_source_urls=["urn:oos:founder_import:placeholder"],
+            )
+        self.assertIn("placeholder URNs", str(ctx.exception))
+
+    def test_feedback_mapping_rejects_placeholder_urns(self):
+        """FounderFeedbackMapping validation rejects urn:oos:* in source_urls."""
+        from oos.founder_feedback_mapping import (
+            FounderFeedbackMapping, FounderFeedbackTarget, FounderFeedbackSignalImpact,
+            make_founder_feedback_mapping_id,
+        )
+        target = FounderFeedbackTarget(
+            opportunity_id="opp_test",
+            evidence_pack_id="ep_test",
+            cluster_id="unknown",
+            evidence_ids=["e1"],
+            source_signal_ids=["s1"],
+            source_urls=["urn:oos:placeholder"],
+        )
+        mapping = FounderFeedbackMapping(
+            mapping_id=make_founder_feedback_mapping_id(
+                decision_id="d1", opportunity_id="opp_test",
+                evidence_pack_id="ep_test", cluster_id="unknown",
+            ),
+            decision_id="d1",
+            opportunity_id="opp_test",
+            evidence_pack_id="ep_test",
+            cluster_id="unknown",
+            evidence_ids=["e1"],
+            source_signal_ids=["s1"],
+            source_urls=["urn:oos:placeholder"],
+            decision="park",
+            reasons=["unclear_buyer"],
+            feedback_tags=["parked_pattern"],
+            signal_impact="needs_more_evidence",
+            recommended_future_handling=["park_similar_until_more_evidence"],
+            target=target,
+            impact_detail=FounderFeedbackSignalImpact(
+                impact="needs_more_evidence",
+                feedback_tags=["parked_pattern"],
+                recommended_future_handling=["park_similar_until_more_evidence"],
+                reason_categories=["unclear_buyer"],
+            ),
+        )
+        with self.assertRaises(ValueError) as ctx:
+            mapping.validate()
+        self.assertIn("placeholder URNs", str(ctx.exception))
 
     def test_jsonl_input_supported(self):
         self._make_run()

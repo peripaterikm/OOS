@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
-- [ ] **0.2** Current item: `1.3 Founder Decision Import source URL propagation`
+- [ ] **0.2** Current item: `2.1 E2E source URL traceability validation`
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **2 / 8**
-- [ ] **0.5** Remaining: **6 / 8**
+- [ ] **0.4** Completed from this roadmap: **3 / 8**
+- [ ] **0.5** Remaining: **5 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md` (complete, `9 / 9`, tag `v2.6` created, merged to main)
 
 ### Core Concept
@@ -235,14 +235,14 @@ The current `import_founder_decisions()` in [`src/oos/founder_decision_import.py
 
 ### Acceptance criteria
 
-- [ ] **1.3.1** `urn:oos:founder_import:placeholder` no longer appears in any code path.
-- [ ] **1.3.2** `import_founder_decisions()` resolves `linked_source_urls` from the inbox index for each `review_item_id`.
-- [ ] **1.3.3** When inbox URLs are available, they are used directly and appear in `FounderDecisionV2.linked_source_urls` and `FounderFeedbackMapping.source_urls`.
-- [ ] **1.3.4** `FounderDecisionV2` validation rejects `urn:oos:*` placeholder patterns in `linked_source_urls`.
-- [ ] **1.3.5** `FounderFeedbackMapping` validation rejects `urn:oos:*` placeholder patterns in `source_urls`.
-- [ ] **1.3.6** Existing decision import tests pass with real source URLs (fixture inbox must carry URLs after item 1.2).
-- [ ] **1.3.7** New focused tests verify end-to-end URL propagation: inbox `linked_source_urls` → decision `linked_source_urls` → feedback mapping `source_urls`.
-- [ ] **1.3.8** No live APIs/LLMs; fail-closed behavior preserved; idempotent behavior preserved.
+- [x] **1.3.1** `urn:oos:founder_import:placeholder` no longer appears in any code path.
+- [x] **1.3.2** `import_founder_decisions()` resolves `linked_source_urls` from the inbox index for each `review_item_id`.
+- [x] **1.3.3** When inbox URLs are available, they are used directly and appear in `FounderDecisionV2.linked_source_urls` and `FounderFeedbackMapping.source_urls`.
+- [x] **1.3.4** `FounderDecisionV2` validation rejects `urn:oos:*` placeholder patterns in `linked_source_urls`.
+- [x] **1.3.5** `FounderFeedbackMapping` validation rejects `urn:oos:*` placeholder patterns in `source_urls`.
+- [x] **1.3.6** Existing decision import tests pass with real source URLs (fixture inbox must carry URLs after item 1.2).
+- [x] **1.3.7** New focused tests verify end-to-end URL propagation: inbox `linked_source_urls` → decision `linked_source_urls` → feedback mapping `source_urls`.
+- [x] **1.3.8** No live APIs/LLMs; fail-closed behavior preserved; idempotent behavior preserved.
 
 ---
 

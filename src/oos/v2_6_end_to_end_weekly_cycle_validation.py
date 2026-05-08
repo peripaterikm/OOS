@@ -247,19 +247,27 @@ def _build_fixture_decisions_file(
     ]
 
     fixture_decisions: list[dict[str, Any]] = []
-    for idx, item in enumerate(review_items):
+    decision_idx = 0
+    for item in review_items:
         if not isinstance(item, dict):
             continue
         review_item_id = str(item.get("review_item_id", "")).strip()
         if not review_item_id:
             continue
+        # Skip synthetic items that have no evidence lineage / linked_source_urls
+        # (executive_summary, decision_recording_commands, etc. have legitimate
+        # empty linked_source_urls per the source URL traceability contract)
+        linked_source_urls = item.get("linked_source_urls", [])
+        if not isinstance(linked_source_urls, list) or not linked_source_urls:
+            continue
 
-        decision, reasons = decision_cycle[idx % len(decision_cycle)]
+        decision, reasons = decision_cycle[decision_idx % len(decision_cycle)]
+        decision_idx += 1
         fixture_decisions.append({
             "review_item_id": review_item_id,
             "decision": decision,
             "reason_categories": reasons,
-            "notes": f"Fixture decision {idx + 1} for end-to-end validation.",
+            "notes": f"Fixture decision {decision_idx} for end-to-end validation.",
         })
 
     if not fixture_decisions:
