@@ -4,33 +4,37 @@
 
 - Roadmap v2.5 status: complete (`24 / 24`, tag `v2.5`).
 - Roadmap v2.6 status: complete (`9 / 9`, merged to main, tag `v2.6` created).
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`
-- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
+- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
 - Roadmap v2.7 planning created: yes
-- Roadmap v2.7 status: `complete / closed` (`8 / 8`, branch `feat/v2-7-traceability-block-1`).
-- Current item: `none / roadmap complete`
-- Roadmap state: `complete / closed`
-- Completed: `8 / 8`
-- Remaining: `0 / 8`
+- Roadmap v2.7 status: `complete / closed` (`8 / 8`, branch `feat/v2-7-traceability-block-1`, tag `v2.7`, merged to main).
+- Roadmap v2.8 planning created: yes
+- Roadmap v2.8 status: `active / planned` (`0 / 9`, branch `planning/v2-8-roadmap`)
+- Current item: `1.1 Founder decision correction artifact contract`
+- Roadmap state: `active / planned`
+- Completed: `0 / 9`
+- Remaining: `9 / 9`
 - Latest completed roadmap item: Roadmap v2.7 `6.1` — Final v2.7 validation checkpoint
-- Next planned roadmap item: none / TBD (candidates: Pain Discovery Layer integration, live LLM/API integration, founder decision re-import replace/amend mode)
+- Next planned roadmap item: Roadmap v2.8 `1.1` — Founder decision correction artifact contract
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-7-traceability-block-1`
-- Previous branch (v2.6 implementation): `feat/v2-6-weekly-loop-block-1`
-- Planning branch (v2.7): `planning/v2-7-roadmap` (merged to main)
+- Current branch: `planning/v2-8-roadmap`
+- Previous branch (v2.7 implementation): `feat/v2-7-traceability-block-1`
+- Planning branch (v2.8): `planning/v2-8-roadmap` (active, not merged)
+- Previous planning branch (v2.7): `planning/v2-7-roadmap` (merged to main)
 - MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
 - Roadmap v2.6 implementation was merged from `feat/v2-6-weekly-loop-block-1` into `main` and tagged `v2.6`.
 - Roadmap v2.7 planning was merged from `planning/v2-7-roadmap` into `main`.
-- Roadmap v2.7 implementation is on `feat/v2-7-traceability-block-1`; do not push, merge, tag, or release until explicitly approved.
+- Roadmap v2.7 implementation was completed on `feat/v2-7-traceability-block-1`, merged to main, and tagged `v2.7`.
+- Roadmap v2.8 planning is docs-only on `planning/v2-8-roadmap`; do not push, merge, tag, or release until explicitly approved.
 - Do not push partial or unvalidated follow-up work.
 
 ## Workflow Notes
@@ -145,4 +149,5 @@
 - Roadmap v2.7 item 3.1 created the founder decision re-import policy document (`docs/decisions/founder_decision_reimport_policy.md`). Replace/amend mode implementation deferred to v2.8+; policy document records safety properties and evaluation rationale.
 - Roadmap v2.7 item 4.1 added four Windows-native PowerShell developer workflow helper scripts: `scripts/dev-snapshot.ps1`, `scripts/dev-validate-final.ps1`, `scripts/dev-post-merge-sync.ps1`, `scripts/dev-pr-readiness.ps1`. 20 focused tests verify script existence, safety, and correctness.
 - Roadmap v2.7 item 5.1 created the controlled weekly run smoke test runbook (`docs/runbooks/controlled_weekly_run_smoke_test.md`, 18 sections) and automated smoke script (`scripts/run-controlled-smoke.ps1`, 9-step pipeline). 14 focused tests cover runbook content, script safety, and temp-only execution.
-- Roadmap v2.7 item 6.1 closed the roadmap with a final validation checkpoint: 1514 tests, 0 failures; `scripts/oos-validate.ps1` pass; `scripts/dev-validate-final.ps1` pass; `scripts/run-controlled-smoke.ps1` pass; `git diff --check` clean; zero `urn:oos:*` placeholder URNs confirmed; roadmap state `complete / closed` at `8 / 8`. Founder decision re-import replace/amend mode deferred to v2.8+. No push, PR, merge, tag, or release was performed. Roadmap v2.7 is complete.
+- Roadmap v2.7 item 6.1 closed the roadmap with a final validation checkpoint: 1514 tests, 0 failures; `scripts/oos-validate.ps1` pass; `scripts/dev-validate-final.ps1` pass; `scripts/run-controlled-smoke.ps1` pass; `git diff --check` clean; zero `urn:oos:*` placeholder URNs confirmed; roadmap state `complete / closed` at `8 / 8`. Founder decision re-import replace/amend mode deferred to v2.8+. Push, PR, merge, tag v2.7 were performed. Roadmap v2.7 is complete and released.
+- Roadmap v2.8 planning created the Founder Decision Correction & Operational Polish checklist with 9 implementation items: founder decision correction artifact contract, parking lot orphan cleanup and derived artifact rebuild model, safe replace/amend implementation in founder decision import, import history / audit trail, CLI and status/report integration for correction state, Windows CLI output hardening, quality gate source_urls review, E2E correction workflow validation, and final v2.8 validation checkpoint. Implementation starts at item 1.1; no source code features, tests, artifacts, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
