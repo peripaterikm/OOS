@@ -34,6 +34,15 @@ $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path $ProjectRoot).Path
 Set-Location $ProjectRoot
 
+# Read-only guard: detect if a literal "$null" file exists (created by cmd.exe redirection)
+$NullFilePath = Join-Path $ProjectRoot '$null'
+if (Test-Path $NullFilePath -PathType Leaf) {
+    Write-Host "WARNING: File named '$null' found in repo root."
+    Write-Host "         This is typically created by cmd.exe redirection (e.g., 2>`$null in cmd.exe)."
+    Write-Host "         The script will not delete it (read-only policy)."
+    Write-Host "         Run:  del `"``$null`"`"  (PowerShell)  or  del $null  (cmd.exe)"
+}
+
 $Failures = @()
 $Passes = @()
 
