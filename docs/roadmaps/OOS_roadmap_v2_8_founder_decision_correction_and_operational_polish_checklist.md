@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
-- [ ] **0.2** Current item: `1.1 Founder decision correction artifact contract`
-- [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **0 / 9**
-- [ ] **0.5** Remaining: **9 / 9**
+- [ ] **0.2** Current item: `1.2 Parking lot orphan cleanup and derived artifact rebuild model`
+- [ ] **0.3** Roadmap state: `active / in progress`
+- [ ] **0.4** Completed from this roadmap: **1 / 9**
+- [ ] **0.5** Remaining: **8 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md` (complete, `8 / 8`, tag `v2.7` created, merged to main)
 
 ### Core Concept
@@ -154,17 +154,17 @@ The v2.7 system rejects re-import of decisions for already-decided opportunities
 
 ### Acceptance criteria
 
-- [ ] **1.1.1** Contract document exists at `docs/contracts/founder_decision_correction_contract.md`.
-- [ ] **1.1.2** Contract defines replace semantics with explicit `--replace-review-items` flag behavior.
-- [ ] **1.1.3** Contract defines amend semantics with explicit `--amend-notes-only` flag behavior.
-- [ ] **1.1.4** Contract specifies all-or-nothing rule: no partial writes.
-- [ ] **1.1.5** Artifact rewrite table covers all 8 derived artifacts with replace and amend behaviors.
-- [ ] **1.1.6** Source URL traceability guarantee is explicit: no placeholder URNs after correction.
-- [ ] **1.1.7** Import history/audit fields are defined: `original_decision_id`, `replaced_at`, `replacement_reason`, `superseded_by`.
-- [ ] **1.1.8** Parking lot orphan cleanup model is specified.
-- [ ] **1.1.9** Fail-closed and idempotency guarantees are documented.
-- [ ] **1.1.10** All 13 safety requirements (R1–R13) from v2.7 re-import policy are addressed.
-- [ ] **1.1.11** No source code changes. No live APIs/LLMs.
+- [x] **1.1.1** Contract document exists at `docs/contracts/founder_decision_correction_artifact_contract.md`.
+- [x] **1.1.2** Contract defines replace semantics with explicit `--replace-review-items` flag behavior.
+- [x] **1.1.3** Contract defines amend semantics with explicit `--amend-notes-only` flag behavior.
+- [x] **1.1.4** Contract specifies all-or-nothing rule: no partial writes.
+- [x] **1.1.5** Artifact rewrite table covers all 8 derived artifacts with replace and amend behaviors.
+- [x] **1.1.6** Source URL traceability guarantee is explicit: no placeholder URNs after correction.
+- [x] **1.1.7** Import history/audit fields are defined: `correction_id`, `corrected_at`, `correction_mode`, `replaced_review_item_ids`, `old_decision_ids`, `new_decision_ids`, `old_artifact_checksums`, `new_artifact_checksums`.
+- [x] **1.1.8** Parking lot orphan cleanup model is specified.
+- [x] **1.1.9** Fail-closed and idempotency guarantees are documented.
+- [x] **1.1.10** All 13 safety requirements (R1–R13) from v2.7 re-import policy are addressed.
+- [x] **1.1.11** No source code changes. No live APIs/LLMs.
 
 ---
 

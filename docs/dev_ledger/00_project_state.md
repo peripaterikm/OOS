@@ -12,19 +12,19 @@
 - Roadmap v2.7 planning created: yes
 - Roadmap v2.7 status: `complete / closed` (`8 / 8`, branch `feat/v2-7-traceability-block-1`, tag `v2.7`, merged to main).
 - Roadmap v2.8 planning created: yes
-- Roadmap v2.8 status: `active / planned` (`0 / 9`, branch `planning/v2-8-roadmap`)
-- Current item: `1.1 Founder decision correction artifact contract`
-- Roadmap state: `active / planned`
-- Completed: `0 / 9`
-- Remaining: `9 / 9`
-- Latest completed roadmap item: Roadmap v2.7 `6.1` — Final v2.7 validation checkpoint
-- Next planned roadmap item: Roadmap v2.8 `1.1` — Founder decision correction artifact contract
+- Roadmap v2.8 status: `active / in progress` (`1 / 9`, branch `feat/v2-8-decision-correction-block-1`)
+- Current item: `1.2 Parking lot orphan cleanup and derived artifact rebuild model`
+- Roadmap state: `active / in progress`
+- Completed: `1 / 9`
+- Remaining: `8 / 9`
+- Latest completed roadmap item: Roadmap v2.8 `1.1` — Founder decision correction artifact contract
+- Next planned roadmap item: Roadmap v2.8 `1.2` — Parking lot orphan cleanup and derived artifact rebuild model
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `planning/v2-8-roadmap`
+- Current branch: `feat/v2-8-decision-correction-block-1`
 - Previous branch (v2.7 implementation): `feat/v2-7-traceability-block-1`
 - Planning branch (v2.8): `planning/v2-8-roadmap` (active, not merged)
 - Previous planning branch (v2.7): `planning/v2-7-roadmap` (merged to main)
@@ -150,4 +150,5 @@
 - Roadmap v2.7 item 4.1 added four Windows-native PowerShell developer workflow helper scripts: `scripts/dev-snapshot.ps1`, `scripts/dev-validate-final.ps1`, `scripts/dev-post-merge-sync.ps1`, `scripts/dev-pr-readiness.ps1`. 20 focused tests verify script existence, safety, and correctness.
 - Roadmap v2.7 item 5.1 created the controlled weekly run smoke test runbook (`docs/runbooks/controlled_weekly_run_smoke_test.md`, 18 sections) and automated smoke script (`scripts/run-controlled-smoke.ps1`, 9-step pipeline). 14 focused tests cover runbook content, script safety, and temp-only execution.
 - Roadmap v2.7 item 6.1 closed the roadmap with a final validation checkpoint: 1514 tests, 0 failures; `scripts/oos-validate.ps1` pass; `scripts/dev-validate-final.ps1` pass; `scripts/run-controlled-smoke.ps1` pass; `git diff --check` clean; zero `urn:oos:*` placeholder URNs confirmed; roadmap state `complete / closed` at `8 / 8`. Founder decision re-import replace/amend mode deferred to v2.8+. Push, PR, merge, tag v2.7 were performed. Roadmap v2.7 is complete and released.
-- Roadmap v2.8 planning created the Founder Decision Correction & Operational Polish checklist with 9 implementation items: founder decision correction artifact contract, parking lot orphan cleanup and derived artifact rebuild model, safe replace/amend implementation in founder decision import, import history / audit trail, CLI and status/report integration for correction state, Windows CLI output hardening, quality gate source_urls review, E2E correction workflow validation, and final v2.8 validation checkpoint. Implementation starts at item 1.1; no source code features, tests, artifacts, live collection, live internet/API calls, or live LLM/API calls were performed by this planning checkpoint.
+- Roadmap v2.8 planning created the Founder Decision Correction & Operational Polish checklist with 9 implementation items: founder decision correction artifact contract, parking lot orphan cleanup and derived artifact rebuild model, safe replace/amend implementation in founder decision import, import history / audit trail, CLI and status/report integration for correction state, Windows CLI output hardening, quality gate source_urls review, E2E correction workflow validation, and final v2.8 validation checkpoint. Implementation started at item 1.1.
+- Roadmap v2.8 item 1.1 created the Founder Decision Correction Artifact Contract (`docs/contracts/founder_decision_correction_artifact_contract.md`) defining 4 correction modes (reject-on-reimport, replace-review-items, amend-notes-only, replace-all), artifact rewrite rules for 8 derived artifacts, parking lot orphan/supersession policy, derived artifact rebuild policy, import history/audit trail schema (`CorrectionEntry` + `ImportHistoryLog` models), and source URL traceability guarantee post-correction. All 13 safety requirements (R1–R13) from the v2.7 re-import policy are addressed. Docs-only; no source code, tests, or live API/LLM calls.
