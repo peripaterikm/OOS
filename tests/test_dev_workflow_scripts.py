@@ -44,6 +44,9 @@ class TestDevWorkflowScriptsExist(unittest.TestCase):
     def test_dev_post_merge_sync_exists(self) -> None:
         self.assertTrue((SCRIPTS_DIR / "dev-post-merge-sync.ps1").is_file())
 
+    def test_dev_git_check_exists(self) -> None:
+        self.assertTrue((SCRIPTS_DIR / "dev-git-check.ps1").is_file())
+
 
 class TestDevWorkflowScriptsNoForbiddenCommands(unittest.TestCase):
     """Verify no script contains forbidden git or destructive commands."""
@@ -90,6 +93,10 @@ class TestDevWorkflowScriptsNoForbiddenCommands(unittest.TestCase):
         self._assert_no_forbidden("dev-post-merge-sync.ps1",
                                    _read_script_text("dev-post-merge-sync.ps1"))
 
+    def test_dev_git_check_no_forbidden(self) -> None:
+        self._assert_no_forbidden("dev-git-check.ps1",
+                                   _read_script_text("dev-git-check.ps1"))
+
 
 class TestDevWorkflowScriptsStrictMode(unittest.TestCase):
     """Verify all scripts use Set-StrictMode and ErrorActionPreference Stop."""
@@ -115,6 +122,10 @@ class TestDevWorkflowScriptsStrictMode(unittest.TestCase):
     def test_dev_post_merge_sync_has_strict_mode(self) -> None:
         self._assert_has_strict_mode("dev-post-merge-sync.ps1",
                                       _read_script_text("dev-post-merge-sync.ps1"))
+
+    def test_dev_git_check_has_strict_mode(self) -> None:
+        self._assert_has_strict_mode("dev-git-check.ps1",
+                                      _read_script_text("dev-git-check.ps1"))
 
 
 class TestDevWorkflowScriptsCommentBasedHelp(unittest.TestCase):
@@ -142,7 +153,11 @@ class TestDevWorkflowScriptsCommentBasedHelp(unittest.TestCase):
 
     def test_dev_post_merge_sync_has_help(self) -> None:
         self._assert_has_help("dev-post-merge-sync.ps1",
-                               _read_script_text("dev-post-merge-sync.ps1"))
+                                _read_script_text("dev-post-merge-sync.ps1"))
+
+    def test_dev_git_check_has_help(self) -> None:
+        self._assert_has_help("dev-git-check.ps1",
+                               _read_script_text("dev-git-check.ps1"))
 
 
 class TestDevValidateFinalHasDiffCheck(unittest.TestCase):
@@ -235,6 +250,10 @@ class TestDevWorkflowScriptsNoLiveApi(unittest.TestCase):
     def test_dev_post_merge_sync_no_live_calls(self) -> None:
         self._assert_no_live_calls("dev-post-merge-sync.ps1",
                                     _read_script_text("dev-post-merge-sync.ps1"))
+
+    def test_dev_git_check_no_live_calls(self) -> None:
+        self._assert_no_live_calls("dev-git-check.ps1",
+                                    _read_script_text("dev-git-check.ps1"))
 
 
 class TestDevSnapshotWritesOnlyToLocalHold(unittest.TestCase):
@@ -446,6 +465,186 @@ class TestDevWorkflowScriptsWindowsNative(unittest.TestCase):
     def test_dev_post_merge_sync_no_unix(self) -> None:
         self._assert_no_unix_constructs("dev-post-merge-sync.ps1",
                                          _read_script_text("dev-post-merge-sync.ps1"))
+
+    def test_dev_git_check_no_unix(self) -> None:
+        self._assert_no_unix_constructs("dev-git-check.ps1",
+                                         _read_script_text("dev-git-check.ps1"))
+
+
+class TestDevGitCheckReadOnly(unittest.TestCase):
+    """dev-git-check.ps1 must be read-only with expected Git commands."""
+
+    def test_contains_expected_read_only_commands(self) -> None:
+        text = _read_script_text("dev-git-check.ps1")
+        required = [
+            "git branch --show-current",
+            "git status --short",
+            "git log -8 --oneline",
+            "git show --stat --oneline HEAD",
+            "git diff --check",
+        ]
+        for cmd in required:
+            self.assertIn(cmd, text,
+                          f"dev-git-check.ps1 missing required command: {cmd}")
+
+    def test_contains_head_parent_diff_check(self) -> None:
+        text = _read_script_text("dev-git-check.ps1")
+        self.assertIn("HEAD~1..HEAD", text,
+                      "dev-git-check.ps1 should check HEAD~1..HEAD whitespace")
+
+    def test_no_mutating_git_commands(self) -> None:
+        text = _read_script_text("dev-git-check.ps1")
+        mutating = [
+            "git add", "git commit", "git push", "git merge",
+            "git tag", "git reset", "git clean",
+            "gh pr create", "gh pr merge",
+        ]
+        for cmd in mutating:
+            self.assertNotIn(cmd, text,
+                             f"dev-git-check.ps1 contains mutating command: {cmd}")
+
+    def test_no_file_deletion(self) -> None:
+        text = _read_script_text("dev-git-check.ps1")
+        destructive = ["Remove-Item", "rm ", "del "]
+        for cmd in destructive:
+            self.assertNotIn(cmd, text,
+                             f"dev-git-check.ps1 contains destructive command: {cmd}")
+
+
+class TestDevGitCheckExecution(unittest.TestCase):
+    """Lightweight execution test for dev-git-check.ps1 in a temp repo."""
+
+    def test_lightweight_execution_in_temp_dir(self) -> None:
+        """Run dev-git-check.ps1 in a temp git repo and verify it passes."""
+        script = SCRIPTS_DIR / "dev-git-check.ps1"
+
+        with TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp) / "repo"
+            tmp_root.mkdir()
+
+            # Initialize a minimal git repo
+            subprocess.run(
+                ["git", "init"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@test.local"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "Test"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            # Create a dummy file and commit so HEAD and HEAD~1 exist later
+            (tmp_root / "README.md").write_text("# Test")
+            subprocess.run(
+                ["git", "add", "README.md"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "commit", "-m", "init"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            # Create a second commit so HEAD~1 exists
+            (tmp_root / "README.md").write_text("# Test\nline2")
+            subprocess.run(
+                ["git", "add", "README.md"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "commit", "-m", "second commit"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                 "-File", str(script), "-ProjectRoot", str(tmp_root)],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0,
+                             f"dev-git-check.ps1 failed on clean repo: "
+                             f"stdout={result.stdout} stderr={result.stderr}")
+
+            output = result.stdout
+            self.assertIn("OVERALL: PASS", output)
+            self.assertIn("Current Branch", output)
+            self.assertIn("Git Status", output)
+            self.assertIn("Git Log", output)
+            self.assertIn("HEAD Summary", output)
+            self.assertIn("Git Diff --check", output)
+
+    def test_dirty_working_tree_returns_fail(self) -> None:
+        """Run dev-git-check.ps1 with uncommitted changes; should exit 1."""
+        script = SCRIPTS_DIR / "dev-git-check.ps1"
+
+        with TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp) / "repo"
+            tmp_root.mkdir()
+
+            # Initialize a minimal git repo with one commit
+            subprocess.run(
+                ["git", "init"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@test.local"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "Test"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            (tmp_root / "README.md").write_text("# Test")
+            subprocess.run(
+                ["git", "add", "README.md"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "commit", "-m", "init"],
+                cwd=str(tmp_root),
+                capture_output=True,
+                check=True,
+            )
+            # Make the working tree dirty
+            (tmp_root / "untracked.txt").write_text("dirty")
+
+            result = subprocess.run(
+                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                 "-File", str(script), "-ProjectRoot", str(tmp_root)],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 1,
+                             f"dev-git-check.ps1 should exit 1 on dirty tree: "
+                             f"stdout={result.stdout} stderr={result.stderr}")
+
+            output = result.stdout
+            self.assertIn("OVERALL: FAIL", output)
 
 
 if __name__ == "__main__":
