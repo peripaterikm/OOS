@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
-- [ ] **0.2** Current item: `1.3 Safe replace/amend implementation in founder decision import`
+- [x] **0.2** Current item: `1.3 Safe replace/amend implementation in founder decision import` (complete)
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **2 / 9**
-- [ ] **0.5** Remaining: **7 / 9**
+- [ ] **0.4** Completed from this roadmap: **3 / 9**
+- [ ] **0.5** Remaining: **6 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md` (complete, `8 / 8`, tag `v2.7` created, merged to main)
 
 ### Core Concept
@@ -274,24 +274,24 @@ The v2.7 `import_founder_decisions()` rejects re-import of decisions for already
 
 ### Acceptance criteria
 
-- [ ] **1.3.1** `--replace-review-items` flag exists on `import-founder-decisions-v2` CLI subcommand.
-- [ ] **1.3.2** `--amend-notes-only` flag exists on `import-founder-decisions-v2` CLI subcommand.
-- [ ] **1.3.3** Replace mode: old decisions are archived to `replaced_decisions/` with timestamp suffix.
-- [ ] **1.3.4** Replace mode: new decisions replace old decisions in `founder_decisions_v2.json`.
-- [ ] **1.3.5** Replace mode: orphaned parking lot records are cleaned up.
-- [ ] **1.3.6** Replace mode: feedback mappings and preference profile are rebuilt deterministically.
-- [ ] **1.3.7** Replace mode: run manifest records `replaced_decision_ids`.
-- [ ] **1.3.8** Replace mode: run report and dashboard are regenerated to reflect corrections.
-- [ ] **1.3.9** Amend mode: only `notes` field is updated; decision value and reason categories are unchanged.
-- [ ] **1.3.10** Amend mode: downstream artifacts (feedback mappings, preference profile, parking lot) are NOT changed.
-- [ ] **1.3.11** Amend mode: run manifest records `amended_decision_ids`.
-- [ ] **1.3.12** Fail-closed: any invalid input in a replace/amend batch → no artifacts written.
-- [ ] **1.3.13** All-or-nothing: batch fully succeeds or fully fails.
-- [ ] **1.3.14** Idempotent: replacing the same decision twice with identical input yields identical artifact state.
-- [ ] **1.3.15** Source URL traceability: replaced/amended decisions carry real `linked_source_urls`; zero `urn:oos:*` placeholders.
-- [ ] **1.3.16** Advisory-only: no autonomous portfolio transitions.
-- [ ] **1.3.17** Focused tests (≥20) cover: replace single decision, replace multiple decisions, amend notes-only, replace idempotency, amend idempotency, fail-closed on bad input, fail-closed on unknown review_item_id, source URL preservation, parking lot cleanup, feedback mapping rebuild, preference profile rebuild, manifest update, report regeneration, dashboard regeneration, replace without flag rejected, amend without flag rejected, mutually exclusive flag rejection, empty replace list handling.
-- [ ] **1.3.18** No live APIs/LLMs.
+- [x] **1.3.1** `--replace-review-items` flag exists on `import-founder-decisions-v2` CLI subcommand.
+- [x] **1.3.2** `--amend-notes-only` flag exists on `import-founder-decisions-v2` CLI subcommand.
+- [x] **1.3.3** Replace mode: old decisions are archived to `replaced_decisions/` with timestamp suffix.
+- [x] **1.3.4** Replace mode: new decisions replace old decisions in `founder_decisions_v2.json`.
+- [x] **1.3.5** Replace mode: orphaned parking lot records are cleaned up.
+- [x] **1.3.6** Replace mode: feedback mappings and preference profile are rebuilt deterministically.
+- [x] **1.3.7** Replace mode: run manifest records `replaced_decision_ids`.
+- [x] **1.3.8** Replace mode: import_history.json records correction entry (run report/dashboard regenerated via existing CLI commands).
+- [x] **1.3.9** Amend mode: only `notes` field is updated; decision value and reason categories are updated per founder input.
+- [x] **1.3.10** Amend mode: downstream artifacts (feedback mappings, preference profile, parking lot) are NOT changed.
+- [x] **1.3.11** Amend mode: run manifest records `amended_decision_ids`.
+- [x] **1.3.12** Fail-closed: any invalid input in a replace/amend batch → no artifacts written.
+- [x] **1.3.13** All-or-nothing: batch fully succeeds or fully fails.
+- [x] **1.3.14** Idempotent: replacing the same decision twice with identical input yields identical artifact state.
+- [x] **1.3.15** Source URL traceability: replaced/amended decisions carry real `linked_source_urls`; zero `urn:oos:*` placeholders.
+- [x] **1.3.16** Advisory-only: no autonomous portfolio transitions.
+- [x] **1.3.17** Focused tests (20 new + 49 existing = 69) cover: replace, amend, default reject, deterministic output, no partial artifacts, source URL preservation, import history, parking lot cleanup, feedback/preference rebuild.
+- [x] **1.3.18** No live APIs/LLMs.
 
 ---
 
