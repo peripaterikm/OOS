@@ -1132,3 +1132,190 @@ class TestExistingCommandsUntouched(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# Tests: Import History Audit Trail Visibility (v2.8 item 2.1)
+# ---------------------------------------------------------------------------
+
+
+class TestImportHistoryReportVisibility(unittest.TestCase):
+    """Import history visibility in run reports and dashboard."""
+
+    def test_report_includes_import_history_summary(self):
+        """Run report includes import history summary."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_rpt"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        # Write import_history.json
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_rpt1",
+                    "corrected_at": "2026-05-09T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_001"],
+                    "old_decision_ids": ["fd_old"],
+                    "new_decision_ids": ["fd_new"],
+                    "old_artifact_checksums": {"fd": "abc"},
+                    "new_artifact_checksums": {"fd": "def"},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        report = build_weekly_run_report(
+            project_root=root,
+            run_id=run_id,
+        )
+        self.assertIn("import_history_summary", report.to_dict())
+        ihs = report.import_history_summary
+        self.assertTrue(ihs.get("present"))
+        self.assertEqual(ihs.get("entry_count"), 1)
+        self.assertEqual(ihs.get("latest_correction_mode"), "replace")
+        self.assertEqual(ihs.get("replaced_decision_ids"), ["fd_old"])
+
+        # Markdown rendering
+        md = render_weekly_run_report_markdown(report)
+        self.assertIn("Import History / Audit Trail", md)
+        self.assertIn("Correction entries", md)
+
+    def test_dashboard_includes_correction_count(self):
+        """Dashboard run summary includes correction_count."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_dash"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_d1",
+                    "corrected_at": "2026-05-09T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_a"],
+                    "old_decision_ids": ["fd_a"],
+                    "new_decision_ids": ["fd_b"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+                {
+                    "correction_id": "corr_d2",
+                    "corrected_at": "2026-05-09T13:00:00+00:00",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": ["ri_b"],
+                    "old_decision_ids": ["fd_c"],
+                    "new_decision_ids": ["fd_c"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        self.assertGreaterEqual(len(dashboard.runs), 1)
+        r = [s for s in dashboard.runs if s.run_id == run_id][0]
+        self.assertEqual(r.correction_count, 2)
+
+        # Dashboard markdown should show correction count
+        md = render_weekly_dashboard_markdown(dashboard)
+        self.assertIn("Corrections", md)
+
+    def test_report_handles_missing_import_history_gracefully(self):
+        """Run report handles missing import_history.json without errors."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_nohist"
+        _build_mock_weekly_run(root, run_id)
+
+        report = build_weekly_run_report(
+            project_root=root,
+            run_id=run_id,
+        )
+        ihs = report.import_history_summary
+        self.assertFalse(ihs.get("present"))
+        self.assertEqual(ihs.get("entry_count"), 0)
+
+        md = render_weekly_run_report_markdown(report)
+        self.assertIn("Import History / Audit Trail", md)
+        self.assertIn("No corrections recorded", md)
+
+    def test_report_includes_replaced_amended_decision_ids(self):
+        """Run report includes replaced/amended decision IDs where available."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_ids"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_ids1",
+                    "corrected_at": "2026-05-09T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_x"],
+                    "old_decision_ids": ["fd_replaced_1", "fd_replaced_2"],
+                    "new_decision_ids": ["fd_new_1", "fd_new_2"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+                {
+                    "correction_id": "corr_ids2",
+                    "corrected_at": "2026-05-09T13:00:00+00:00",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": ["ri_y"],
+                    "old_decision_ids": ["fd_amended"],
+                    "new_decision_ids": ["fd_amended"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        report = build_weekly_run_report(
+            project_root=root,
+            run_id=run_id,
+        )
+        ihs = report.import_history_summary
+        self.assertIn("fd_replaced_1", ihs.get("replaced_decision_ids", []))
+        self.assertIn("fd_replaced_2", ihs.get("replaced_decision_ids", []))
+        self.assertIn("fd_amended", ihs.get("amended_decision_ids", []))
+        self.assertEqual(len(ihs.get("replaced_decision_ids", [])), 2)
+        self.assertEqual(len(ihs.get("amended_decision_ids", [])), 1)

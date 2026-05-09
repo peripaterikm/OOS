@@ -30,6 +30,7 @@ from oos.weekly_run_manifest import (
     canonical_artifact_paths,
     read_weekly_run_manifest,
 )
+from oos.founder_decision_import import build_import_history_summary
 
 WEEKLY_RUN_REPORT_SCHEMA_VERSION = "weekly_run_report.v1"
 WEEKLY_DASHBOARD_INDEX_SCHEMA_VERSION = "weekly_dashboard_index.v1"
@@ -52,6 +53,7 @@ class WeeklyRunReport:
     pipeline_counts: dict[str, int] = field(default_factory=dict)
     founder_inbox_summary: dict[str, Any] = field(default_factory=dict)
     decision_import_summary: dict[str, Any] = field(default_factory=dict)
+    import_history_summary: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     recommended_next_step: str = ""
@@ -71,6 +73,7 @@ class WeeklyRunReport:
             "pipeline_counts": dict(self.pipeline_counts),
             "founder_inbox_summary": dict(self.founder_inbox_summary),
             "decision_import_summary": dict(self.decision_import_summary),
+            "import_history_summary": dict(self.import_history_summary),
             "warnings": list(self.warnings),
             "errors": list(self.errors),
             "recommended_next_step": self.recommended_next_step,
@@ -96,6 +99,7 @@ class WeeklyDashboardRunSummary:
     founder_inbox_review_item_count: int = 0
     founder_decision_count: int = 0
     next_best_action_count: int = 0
+    correction_count: int = 0
     warning_count: int = 0
     error_count: int = 0
     recommended_next_step: str = ""
@@ -112,6 +116,7 @@ class WeeklyDashboardRunSummary:
             "founder_inbox_review_item_count": self.founder_inbox_review_item_count,
             "founder_decision_count": self.founder_decision_count,
             "next_best_action_count": self.next_best_action_count,
+            "correction_count": self.correction_count,
             "warning_count": self.warning_count,
             "error_count": self.error_count,
             "recommended_next_step": self.recommended_next_step,
@@ -410,6 +415,7 @@ def build_weekly_run_report(
             "preference_warnings": preference_warnings,
             "review_completion": review_completion,
         },
+        import_history_summary=build_import_history_summary(run_dir),
         warnings=warnings,
         errors=errors,
         recommended_next_step=recommended_next_step,
@@ -541,6 +547,25 @@ def render_weekly_run_report_markdown(report: WeeklyRunReport) -> str:
     lines.append("")
 
     pw = dis.get("preference_warnings", [])
+    lines.append("## Import History / Audit Trail")
+    lines.append("")
+    ihs = report.import_history_summary
+    if ihs.get("present"):
+        lines.append(f"- **Correction entries**: {ihs.get('entry_count', 0)}")
+        lines.append(f"- **Latest correction mode**: `{ihs.get('latest_correction_mode', '')}`")
+        mode_counts = ihs.get("mode_counts", {})
+        if mode_counts:
+            mc_str = ", ".join(f"`{m}`: {c}" for m, c in sorted(mode_counts.items()))
+            lines.append(f"- **Corrections by mode**: {mc_str}")
+        replaced = ihs.get("replaced_decision_ids", [])
+        if replaced:
+            lines.append(f"- **Replaced decision IDs**: {', '.join(f'`{did}`' for did in replaced)}")
+        amended = ihs.get("amended_decision_ids", [])
+        if amended:
+            lines.append(f"- **Amended decision IDs**: {', '.join(f'`{did}`' for did in amended)}")
+    else:
+        lines.append("- No corrections recorded.")
+    lines.append("")
     lines.append("## Preference Profile Warnings")
     lines.append("")
     if pw:
@@ -671,6 +696,7 @@ def build_weekly_dashboard_index(
             founder_inbox_review_item_count=status.founder_inbox_review_item_count,
             founder_decision_count=status.founder_decision_count,
             next_best_action_count=status.next_best_action_count,
+            correction_count=status.import_history_entry_count,
             warning_count=len(status.warnings),
             error_count=len(status.errors),
             recommended_next_step=status.recommended_next_step,

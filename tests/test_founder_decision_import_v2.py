@@ -1739,3 +1739,347 @@ def _safe_rmtree(path: Path):
 
 if __name__ == "__main__":
     unittest.main()
+
+# ---------------------------------------------------------------------------
+# Tests: Import History / Audit Trail (v2.8 item 2.1)
+# ---------------------------------------------------------------------------
+
+
+class TestImportHistoryAuditTrail(unittest.TestCase):
+    """Import history / audit trail hardening tests."""
+
+    def setUp(self):
+        self.tmp_root = Path(tempfile.mkdtemp())
+        self.run_id = "test_import_history_audit"
+
+    def tearDown(self):
+        _safe_rmtree(self.tmp_root)
+
+    def _make_run_with_decisions(self, decisions=None):
+        items = [
+            _make_inbox_item("inbox_review_001"),
+            _make_inbox_item("inbox_review_002"),
+        ]
+        existing = decisions or [
+            {
+                "decision_id": "fd_opp_inbox_review_001",
+                "opportunity_id": "opp_inbox_review_001",
+                "evidence_pack_id": "ep_inbox_review_001",
+                "review_item_id": "inbox_review_001",
+                "decision": "park",
+                "reasons": [{"category": "unclear_buyer", "note": ""}],
+                "notes": "Initial decision.",
+                "confidence": 0.9,
+                "linked_evidence_ids": ["ev_inbox_review_001"],
+                "linked_source_signal_ids": ["sig_inbox_review_001"],
+                "linked_source_urls": ["https://example.com/inbox_review_001"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:00:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            },
+            {
+                "decision_id": "fd_opp_inbox_review_002",
+                "opportunity_id": "opp_inbox_review_002",
+                "evidence_pack_id": "ep_inbox_review_002",
+                "review_item_id": "inbox_review_002",
+                "decision": "kill",
+                "reasons": [{"category": "too_generic", "note": ""}],
+                "notes": "Killed.",
+                "confidence": 0.9,
+                "linked_evidence_ids": ["ev_inbox_review_002"],
+                "linked_source_signal_ids": ["sig_inbox_review_002"],
+                "linked_source_urls": ["https://example.com/inbox_review_002"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:01:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            },
+        ]
+        _build_mock_weekly_run(
+            self.tmp_root, self.run_id,
+            inbox_items=items,
+            existing_decisions=existing,
+        )
+
+    def test_correction_entry_deterministic_json(self):
+        """CorrectionEntry serializes to deterministic JSON."""
+        from oos.founder_decision_import import CorrectionEntry
+        entry = CorrectionEntry(
+            correction_id="corr_abc123",
+            corrected_at="2026-05-09T12:00:00+00:00",
+            correction_mode="replace",
+            replaced_review_item_ids=["ri_2", "ri_1"],
+            old_decision_ids=["fd_old"],
+            new_decision_ids=["fd_new"],
+            old_artifact_checksums={"founder_decisions_v2": "abc"},
+            new_artifact_checksums={"founder_decisions_v2": "def"},
+            warnings=["warning_a"],
+            errors=[],
+            advisory_only=True,
+            no_live_api=True,
+            no_live_llm=True,
+        )
+        d1 = entry.to_dict()
+        d2 = entry.to_dict()
+        j1 = json.dumps(d1, sort_keys=True)
+        j2 = json.dumps(d2, sort_keys=True)
+        self.assertEqual(j1, j2)
+        # Verify sorted lists
+        self.assertEqual(d1["replaced_review_item_ids"], ["ri_1", "ri_2"])
+        self.assertEqual(d1["old_decision_ids"], ["fd_old"])
+        # Verify flags
+        self.assertTrue(d1["advisory_only"])
+        self.assertTrue(d1["no_live_api"])
+        self.assertTrue(d1["no_live_llm"])
+
+    def test_import_history_log_deterministic_roundtrip(self):
+        """ImportHistoryLog roundtrip via from_dict/to_dict is deterministic."""
+        from oos.founder_decision_import import CorrectionEntry, ImportHistoryLog
+        entry = CorrectionEntry(
+            correction_id="corr_test1",
+            corrected_at="2026-05-09T12:00:00+00:00",
+            correction_mode="replace",
+            replaced_review_item_ids=["ri_1"],
+            old_decision_ids=["fd_old"],
+            new_decision_ids=["fd_new"],
+            old_artifact_checksums={},
+            new_artifact_checksums={},
+            warnings=[],
+            errors=[],
+        )
+        log = ImportHistoryLog(run_id="test_run", entries=[entry])
+        data = log.to_dict()
+        roundtripped = ImportHistoryLog.from_dict(data)
+        self.assertEqual(roundtripped.run_id, "test_run")
+        self.assertEqual(roundtripped.entry_count(), 1)
+        self.assertEqual(roundtripped.entries[0].correction_id, "corr_test1")
+        self.assertEqual(roundtripped.entries[0].correction_mode, "replace")
+
+    def test_replace_mode_appends_import_history(self):
+        """Replace mode appends import_history.json."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"], "notes": "Replacing."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist_path = run_dir / "import_history.json"
+            self.assertTrue(hist_path.is_file())
+            hist = json.loads(hist_path.read_text(encoding="utf-8"))
+            self.assertGreaterEqual(len(hist["entries"]), 1)
+            entry = hist["entries"][0]
+            self.assertEqual(entry["correction_mode"], "replace")
+            self.assertIn("fd_opp_inbox_review_001", entry["old_decision_ids"])
+            self.assertTrue(entry["advisory_only"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_amend_mode_appends_import_history(self):
+        """Amend mode appends import_history.json."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"],
+             "notes": "Amended notes."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                amend_notes_only=True,
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist_path = run_dir / "import_history.json"
+            self.assertTrue(hist_path.is_file())
+            hist = json.loads(hist_path.read_text(encoding="utf-8"))
+            self.assertGreaterEqual(len(hist["entries"]), 1)
+            entry = hist["entries"][0]
+            self.assertEqual(entry["correction_mode"], "amend")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_multiple_corrections_append_multiple_entries(self):
+        """Multiple corrections append multiple entries in deterministic order."""
+        self._make_run_with_decisions()
+        # First: replace
+        decisions1 = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file1 = _make_temp_decisions_file(decisions1)
+        try:
+            result1 = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file1,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result1.validation_passed)
+        finally:
+            dec_file1.unlink(missing_ok=True)
+
+        # Second: amend
+        decisions2 = [
+            {"review_item_id": "inbox_review_002", "decision": "KILL",
+             "reason_categories": ["too_generic"],
+             "notes": "Amended kill notes."},
+        ]
+        dec_file2 = _make_temp_decisions_file(decisions2)
+        try:
+            result2 = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file2,
+                amend_notes_only=True,
+            )
+            self.assertTrue(result2.validation_passed)
+        finally:
+            dec_file2.unlink(missing_ok=True)
+
+        run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+        hist = json.loads((run_dir / "import_history.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(hist["entries"]), 2)
+        self.assertEqual(hist["entries"][0]["correction_mode"], "replace")
+        self.assertEqual(hist["entries"][1]["correction_mode"], "amend")
+
+    def test_failed_correction_does_not_append_history(self):
+        """Failed correction does not append import_history.json entry."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+            {"review_item_id": "inbox_review_nonexistent", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001", "inbox_review_nonexistent"],
+            )
+            self.assertFalse(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist_path = run_dir / "import_history.json"
+            # Either no file, or file has 0 entries
+            if hist_path.is_file():
+                hist = json.loads(hist_path.read_text(encoding="utf-8"))
+                self.assertEqual(len(hist.get("entries", [])), 0)
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_correction_entry_includes_advisory_no_live_flags(self):
+        """Correction entries include advisory_only, no_live_api, no_live_llm."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist = json.loads((run_dir / "import_history.json").read_text(encoding="utf-8"))
+            entry = hist["entries"][0]
+            self.assertTrue(entry["advisory_only"])
+            self.assertTrue(entry["no_live_api"])
+            self.assertTrue(entry["no_live_llm"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_correction_entry_includes_old_new_decision_ids(self):
+        """Correction entries include old and new decision IDs."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist = json.loads((run_dir / "import_history.json").read_text(encoding="utf-8"))
+            entry = hist["entries"][0]
+            self.assertIn("fd_opp_inbox_review_001", entry["old_decision_ids"])
+            self.assertTrue(len(entry["new_decision_ids"]) >= 1)
+            self.assertNotEqual(entry["old_decision_ids"], entry["new_decision_ids"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_correction_entry_includes_artifact_checksums(self):
+        """Correction entries include old/new artifact checksums."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist = json.loads((run_dir / "import_history.json").read_text(encoding="utf-8"))
+            entry = hist["entries"][0]
+            self.assertIsInstance(entry["old_artifact_checksums"], dict)
+            self.assertIsInstance(entry["new_artifact_checksums"], dict)
+            self.assertTrue(
+                len(entry["old_artifact_checksums"]) > 0 or
+                len(entry["new_artifact_checksums"]) > 0
+            )
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_read_import_history_returns_none_for_missing(self):
+        """read_import_history returns None when file does not exist."""
+        from oos.founder_decision_import import read_import_history
+        tmp_dir2 = Path(tempfile.mkdtemp())
+        result = read_import_history(tmp_dir2)
+        self.assertIsNone(result)
+
+    def test_build_import_history_summary_handles_missing(self):
+        """build_import_history_summary returns empty dict when missing."""
+        from oos.founder_decision_import import build_import_history_summary
+        tmp_dir2 = Path(tempfile.mkdtemp())
+        summary = build_import_history_summary(tmp_dir2)
+        self.assertFalse(summary["present"])
+        self.assertEqual(summary["entry_count"], 0)
+        self.assertEqual(summary["latest_correction_mode"], "")
+        self.assertEqual(summary["mode_counts"], {})
+
+    def test_import_history_log_helper_methods(self):
+        """ImportHistoryLog helper methods return correct values."""
+        from oos.founder_decision_import import CorrectionEntry, ImportHistoryLog
+        e1 = CorrectionEntry(
+            correction_id="c1", corrected_at="2026-01-01T00:00:00Z",
+            correction_mode="replace",
+            old_decision_ids=["fd_a"], new_decision_ids=["fd_b"],
+        )
+        e2 = CorrectionEntry(
+            correction_id="c2", corrected_at="2026-01-02T00:00:00Z",
+            correction_mode="amend",
+            old_decision_ids=["fd_c"], new_decision_ids=["fd_c"],
+        )
+        log = ImportHistoryLog(run_id="test", entries=[e1, e2])
+        self.assertEqual(log.entry_count(), 2)
+        self.assertEqual(log.latest_correction_mode(), "amend")
+        counts = log.correction_modes_summary()
+        self.assertEqual(counts, {"replace": 1, "amend": 1})
+        self.assertEqual(log.all_replaced_decision_ids(), ["fd_a"])
+        self.assertEqual(log.all_amended_decision_ids(), ["fd_c"])

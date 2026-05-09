@@ -7,9 +7,17 @@ Fail-closed: if any input decision is invalid, no artifacts are written.
 Reject duplicates: duplicate review_item_id entries are rejected.
 Idempotent: re-running the same import yields identical artifact state.
 
-Roadmap v2.8 item 1.3. Adds safe replace/amend correction modes:
+Roadmap v2.8 item 1.3: Safe replace/amend correction modes:
 - replace_review_item_ids: surgical replacement of listed review items
 - amend_notes_only: notes/reason amendment (decision value unchanged)
+
+Roadmap v2.8 item 2.1: Import history / audit trail (hardened here).
+- import_history.json is append-only; entries are never modified or deleted.
+- CorrectionEntry JSON roundtrip is deterministic (sort_keys=True).
+- correction_id is deterministic (SHA-256 of composite key).
+- Failed correction attempts do NOT append history entries.
+- read_import_history() and build_import_history_summary() are the public
+  read API for status/report visibility.
 
 No live LLM/API calls. No autonomous decisions. No portfolio mutations.
 Advisory-only throughout.
@@ -126,8 +134,13 @@ class FounderDecisionImportResult:
 class CorrectionEntry:
     """A single correction operation record for the import history audit trail.
 
-    Roadmap v2.8 item 1.3 — every replace or amend operation produces one
-    CorrectionEntry appended to {run_dir}/import_history.json.
+    Roadmap v2.8 items 1.3 + 2.1 — every replace or amend operation produces
+    one CorrectionEntry appended to {run_dir}/import_history.json.
+
+    Append-only contract: entries are never modified or deleted once written.
+    Failed correction attempts do NOT create entries.
+    correction_id is deterministic: SHA-256(run_id|corrected_at|mode|old_ids|new_ids)[:12].
+    JSON roundtrip is deterministic via sort_keys=True in _write_import_history().
     """
 
     correction_id: str
@@ -149,13 +162,13 @@ class CorrectionEntry:
             "correction_id": self.correction_id,
             "corrected_at": self.corrected_at,
             "correction_mode": self.correction_mode,
-            "replaced_review_item_ids": list(self.replaced_review_item_ids),
-            "old_decision_ids": list(self.old_decision_ids),
-            "new_decision_ids": list(self.new_decision_ids),
-            "old_artifact_checksums": dict(self.old_artifact_checksums),
-            "new_artifact_checksums": dict(self.new_artifact_checksums),
-            "warnings": list(self.warnings),
-            "errors": list(self.errors),
+            "replaced_review_item_ids": sorted(self.replaced_review_item_ids),
+            "old_decision_ids": sorted(self.old_decision_ids),
+            "new_decision_ids": sorted(self.new_decision_ids),
+            "old_artifact_checksums": dict(sorted(self.old_artifact_checksums.items())),
+            "new_artifact_checksums": dict(sorted(self.new_artifact_checksums.items())),
+            "warnings": sorted(self.warnings),
+            "errors": sorted(self.errors),
             "advisory_only": self.advisory_only,
             "no_live_api": self.no_live_api,
             "no_live_llm": self.no_live_llm,
@@ -167,7 +180,9 @@ class ImportHistoryLog:
     """Append-only log of correction operations for a single run.
 
     Written to {run_dir}/import_history.json.  Entries are never modified
-    or deleted once written.
+    or deleted once written (append-only contract per v2.8 item 2.1).
+
+    The file uses sort_keys=True for deterministic JSON roundtrip.
     """
 
     schema_version: str = IMPORT_HISTORY_SCHEMA_VERSION
@@ -180,6 +195,41 @@ class ImportHistoryLog:
             "run_id": self.run_id,
             "entries": [e.to_dict() for e in self.entries],
         }
+
+    def entry_count(self) -> int:
+        """Return the number of correction entries in this log."""
+        return len(self.entries)
+
+    def latest_correction_mode(self) -> str:
+        """Return the correction_mode of the last entry, or empty string."""
+        if not self.entries:
+            return ""
+        return self.entries[-1].correction_mode
+
+    def correction_modes_summary(self) -> dict[str, int]:
+        """Return counts of correction entries by mode."""
+        counts: dict[str, int] = {}
+        for e in self.entries:
+            mode = e.correction_mode
+            counts[mode] = counts.get(mode, 0) + 1
+        return counts
+
+    def all_replaced_decision_ids(self) -> list[str]:
+        """Return sorted unique replaced decision IDs across all entries
+        that are 'replace' mode (not amend)."""
+        ids: set[str] = set()
+        for e in self.entries:
+            if e.correction_mode == "replace":
+                ids.update(e.old_decision_ids)
+        return sorted(ids)
+
+    def all_amended_decision_ids(self) -> list[str]:
+        """Return sorted unique amended decision IDs across all entries."""
+        ids: set[str] = set()
+        for e in self.entries:
+            if e.correction_mode == "amend":
+                ids.update(e.old_decision_ids)
+        return sorted(ids)
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "ImportHistoryLog":
@@ -1601,7 +1651,7 @@ def _write_import_history(
     log.entries.append(entry)
 
     history_path.write_text(
-        json.dumps(log.to_dict(), ensure_ascii=False, indent=2, sort_keys=False) + "\n",
+        json.dumps(log.to_dict(), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return history_path
@@ -1622,3 +1672,58 @@ def _load_parking_lot_as_objects(
             except (ValueError, TypeError):
                 pass
     return result
+
+
+# ---------------------------------------------------------------------------
+# Public import history read API (v2.8 item 2.1)
+# ---------------------------------------------------------------------------
+
+
+def read_import_history(run_dir: Path) -> ImportHistoryLog | None:
+    """Read import_history.json from a run directory.
+
+    Returns ImportHistoryLog on success, None if the file is missing
+    or unparseable.  Read-only — never modifies the file.
+    """
+    history_path = run_dir / "import_history.json"
+    if not history_path.is_file():
+        return None
+    try:
+        data = json.loads(history_path.read_text(encoding="utf-8"))
+        return ImportHistoryLog.from_dict(data)
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+
+def build_import_history_summary(run_dir: Path) -> dict[str, Any]:
+    """Build a summary dict describing the import history for a run.
+
+    Used by status and report builders to surface correction state.
+
+    Returns:
+        dict with keys:
+        - present: bool — whether import_history.json exists and is readable
+        - entry_count: int — number of correction entries
+        - latest_correction_mode: str — mode of latest entry ('' if none)
+        - mode_counts: dict[str, int] — counts by correction_mode
+        - replaced_decision_ids: list[str] — all replaced decision IDs
+        - amended_decision_ids: list[str] — all amended decision IDs
+    """
+    history = read_import_history(run_dir)
+    if history is None:
+        return {
+            "present": False,
+            "entry_count": 0,
+            "latest_correction_mode": "",
+            "mode_counts": {},
+            "replaced_decision_ids": [],
+            "amended_decision_ids": [],
+        }
+    return {
+        "present": True,
+        "entry_count": history.entry_count(),
+        "latest_correction_mode": history.latest_correction_mode(),
+        "mode_counts": history.correction_modes_summary(),
+        "replaced_decision_ids": history.all_replaced_decision_ids(),
+        "amended_decision_ids": history.all_amended_decision_ids(),
+    }

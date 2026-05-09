@@ -312,7 +312,7 @@ class WeeklyCycleStatusModelTests(unittest.TestCase):
         self.assertIn("## 7. Feedback / Profile / Parking Lot Status", md)
         self.assertIn("## 8. Warnings / Errors", md)
         self.assertIn("## 9. Recommended Next Step", md)
-        self.assertIn("## 10. Artifact Paths", md)
+        self.assertIn("## 11. Artifact Paths", md)
         self.assertIn("## Safety", md)
         self.assertIn("All is well.", md)
 
@@ -948,3 +948,137 @@ class WeeklyCycleStatusCLITests(unittest.TestCase):
         self.assertTrue(status.no_live_api)
         self.assertTrue(status.no_live_llm)
         self.assertTrue(status.validation_passed)
+
+
+# ---------------------------------------------------------------------------
+# Tests: Import History Audit Trail Visibility (v2.8 item 2.1)
+# ---------------------------------------------------------------------------
+
+
+class TestImportHistoryStatusVisibility(unittest.TestCase):
+    """Import history visibility in weekly-cycle-status-v2."""
+
+    def test_status_reports_import_history_when_present(self):
+        """Status reports import history entry count when import_history.json exists."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_hist01"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        # Write import_history.json
+        hist_path = run_dir / "import_history.json"
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_abc123",
+                    "corrected_at": "2026-05-09T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_001"],
+                    "old_decision_ids": ["fd_old"],
+                    "new_decision_ids": ["fd_new"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        hist_path.write_text(json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8")
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        self.assertTrue(status.import_history_present)
+        self.assertEqual(status.import_history_entry_count, 1)
+        self.assertEqual(status.import_history_latest_correction_mode, "replace")
+        self.assertEqual(status.import_history_mode_counts, {"replace": 1})
+        self.assertEqual(status.import_history_replaced_decision_ids, ["fd_old"])
+
+        # Check markdown rendering
+        md = render_weekly_cycle_status_markdown(status)
+        self.assertIn("Import History / Audit Trail", md)
+        self.assertIn("- **Correction entry count**: 1", md)
+        self.assertIn("replace", md)
+
+    def test_status_reports_latest_correction_mode(self):
+        """Status reports latest correction mode from import history."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_hist02"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_1",
+                    "corrected_at": "2026-05-09T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_a"],
+                    "old_decision_ids": ["fd_a"],
+                    "new_decision_ids": ["fd_b"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+                {
+                    "correction_id": "corr_2",
+                    "corrected_at": "2026-05-09T13:00:00+00:00",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": ["ri_b"],
+                    "old_decision_ids": ["fd_c"],
+                    "new_decision_ids": ["fd_c"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+            ],
+        }
+        hist_path = run_dir / "import_history.json"
+        hist_path.write_text(json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8")
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        self.assertTrue(status.import_history_present)
+        self.assertEqual(status.import_history_entry_count, 2)
+        self.assertEqual(status.import_history_latest_correction_mode, "amend")
+        self.assertEqual(status.import_history_mode_counts, {"replace": 1, "amend": 1})
+
+    def test_status_handles_missing_import_history_gracefully(self):
+        """Status handles missing import_history.json without errors."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_no_hist"
+        _build_mock_weekly_run(root, run_id)
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        self.assertFalse(status.import_history_present)
+        self.assertEqual(status.import_history_entry_count, 0)
+        self.assertEqual(status.import_history_latest_correction_mode, "")
+        self.assertEqual(status.import_history_mode_counts, {})
+        self.assertEqual(status.import_history_replaced_decision_ids, [])
+        self.assertEqual(status.import_history_amended_decision_ids, [])
+
+        # Markdown should not error
+        md = render_weekly_cycle_status_markdown(status)
+        self.assertIn("Import History / Audit Trail", md)
+        self.assertIn("no corrections applied", md)
+
+    def test_status_handles_malformed_import_history_gracefully(self):
+        """Status handles malformed import_history.json without crashing."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_bad_hist"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        (run_dir / "import_history.json").write_text("not valid json {{{", encoding="utf-8")
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        self.assertFalse(status.import_history_present)
+        self.assertEqual(status.import_history_entry_count, 0)

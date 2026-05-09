@@ -12,6 +12,10 @@ Roadmap v2.6 item 6.1. Inspects an existing weekly run directory and reports:
 - warnings/errors from manifest or artifacts where available;
 - recommended next step for the founder/developer.
 
+Roadmap v2.8 item 2.1: Import history / audit trail visibility.
+- Surfaces import_history.json summary if present.
+- Reports entry count, latest correction mode, and correction mode counts.
+
 Read-only. No artifact modification. No rebuild. No import. No portfolio mutation.
 No live APIs/LLMs.
 """
@@ -29,6 +33,7 @@ from oos.weekly_run_manifest import (
     canonical_artifact_paths,
     read_weekly_run_manifest,
 )
+from oos.founder_decision_import import build_import_history_summary
 
 WEEKLY_CYCLE_STATUS_SCHEMA_VERSION = "weekly_cycle_status.v1"
 
@@ -91,6 +96,13 @@ class WeeklyCycleStatus:
     parking_lot_record_count: int = 0
     next_best_action_count: int = 0
     run_report_present: bool = False
+    # Import history / audit trail (v2.8 item 2.1)
+    import_history_present: bool = False
+    import_history_entry_count: int = 0
+    import_history_latest_correction_mode: str = ""
+    import_history_mode_counts: dict[str, int] = field(default_factory=dict)
+    import_history_replaced_decision_ids: list[str] = field(default_factory=list)
+    import_history_amended_decision_ids: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     recommended_next_step: str = ""
@@ -120,6 +132,12 @@ class WeeklyCycleStatus:
             "parking_lot_record_count": self.parking_lot_record_count,
             "next_best_action_count": self.next_best_action_count,
             "run_report_present": self.run_report_present,
+            "import_history_present": self.import_history_present,
+            "import_history_entry_count": self.import_history_entry_count,
+            "import_history_latest_correction_mode": self.import_history_latest_correction_mode,
+            "import_history_mode_counts": dict(self.import_history_mode_counts),
+            "import_history_replaced_decision_ids": list(self.import_history_replaced_decision_ids),
+            "import_history_amended_decision_ids": list(self.import_history_amended_decision_ids),
             "warnings": list(self.warnings),
             "errors": list(self.errors),
             "recommended_next_step": self.recommended_next_step,
@@ -425,6 +443,15 @@ def build_weekly_cycle_status(
     # Run report
     run_report_present = _is_present(run_dir, paths.get("run_report", "run_report.json"))
 
+    # ── 5b. Import history / audit trail (v2.8 item 2.1) ─────────
+    ih_summary = build_import_history_summary(run_dir)
+    import_history_present = ih_summary["present"]
+    import_history_entry_count = ih_summary["entry_count"]
+    import_history_latest_correction_mode = ih_summary["latest_correction_mode"]
+    import_history_mode_counts = ih_summary["mode_counts"]
+    import_history_replaced_decision_ids = ih_summary["replaced_decision_ids"]
+    import_history_amended_decision_ids = ih_summary["amended_decision_ids"]
+
     # ── 6. Collect per-artifact JSON errors ────────────────────────
     for art_status in artifact_statuses:
         for art_err in art_status.errors:
@@ -467,6 +494,12 @@ def build_weekly_cycle_status(
         parking_lot_record_count=parking_lot_record_count,
         next_best_action_count=next_best_action_count,
         run_report_present=run_report_present,
+        import_history_present=import_history_present,
+        import_history_entry_count=import_history_entry_count,
+        import_history_latest_correction_mode=import_history_latest_correction_mode,
+        import_history_mode_counts=import_history_mode_counts,
+        import_history_replaced_decision_ids=import_history_replaced_decision_ids,
+        import_history_amended_decision_ids=import_history_amended_decision_ids,
         warnings=warnings,
         errors=errors,
         recommended_next_step=recommended_next_step,
@@ -631,8 +664,30 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     lines.append(status.recommended_next_step)
     lines.append("")
 
-    # ── 10. Artifact paths ───────────────────────────────
-    lines.append("## 10. Artifact Paths")
+    # ── 10. Import History / Audit Trail (v2.8 item 2.1) ─
+    lines.append("## 10. Import History / Audit Trail")
+    lines.append("")
+    if status.import_history_present:
+        lines.append(f"- **Import history present**: true")
+        lines.append(f"- **Correction entry count**: {status.import_history_entry_count}")
+        lines.append(f"- **Latest correction mode**: `{status.import_history_latest_correction_mode}`")
+        if status.import_history_mode_counts:
+            mode_str = ", ".join(
+                f"`{mode}`: {count}"
+                for mode, count in sorted(status.import_history_mode_counts.items())
+            )
+            lines.append(f"- **Corrections by mode**: {mode_str}")
+        if status.import_history_replaced_decision_ids:
+            lines.append(f"- **Replaced decision IDs**: {', '.join(f'`{did}`' for did in status.import_history_replaced_decision_ids)}")
+        if status.import_history_amended_decision_ids:
+            lines.append(f"- **Amended decision IDs**: {', '.join(f'`{did}`' for did in status.import_history_amended_decision_ids)}")
+    else:
+        lines.append(f"- **Import history present**: false")
+        lines.append(f"- **Correction entries**: 0 (no corrections applied)")
+    lines.append("")
+
+    # ── 11. Artifact paths ───────────────────────────────
+    lines.append("## 11. Artifact Paths")
     lines.append("")
     for art in status.artifact_statuses:
         abs_path = Path(status.run_dir) / art.relative_path

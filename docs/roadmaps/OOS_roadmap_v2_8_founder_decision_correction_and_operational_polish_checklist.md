@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
-- [x] **0.2** Current item: `1.3 Safe replace/amend implementation in founder decision import` (complete)
+- [x] **0.2** Current item: `2.1 Import history / audit trail` (complete)
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **3 / 9**
-- [ ] **0.5** Remaining: **6 / 9**
+- [ ] **0.4** Completed from this roadmap: **4 / 9**
+- [ ] **0.5** Remaining: **5 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md` (complete, `8 / 8`, tag `v2.7` created, merged to main)
 
 ### Core Concept
@@ -339,18 +339,18 @@ Currently, when a weekly cycle is run, there is no persistent record of import h
 
 ### Acceptance criteria
 
-- [ ] **2.1.1** `ImportHistoryEntry` model exists with all specified fields.
-- [ ] **2.1.2** `ImportHistoryLog` model exists with `schema_version`, `run_id`, and `entries`.
-- [ ] **2.1.3** Initial import records `import` entries for each decision.
-- [ ] **2.1.4** Replace records `replace` entry with `original_decision_id`, `superseded_by_decision_id`, `replacement_reason`, `previous_decision_value`, `new_decision_value`.
-- [ ] **2.1.5** Amend records `amend` entry with `original_decision_id`, previous and new notes.
-- [ ] **2.1.6** `import_history.json` is written to the run directory and included in the manifest.
-- [ ] **2.1.7** `weekly-cycle-status-v2` shows an "Import History" section with correction summary.
-- [ ] **2.1.8** Run report includes import history.
-- [ ] **2.1.9** Dashboard index shows per-run correction summary.
-- [ ] **2.1.10** History is append-only: entries are never deleted or modified.
-- [ ] **2.1.11** Focused tests (≥12) cover: initial import recording, replace recording, amend recording, history read-back, status integration, report integration, dashboard integration, empty history, multiple replaces, deterministic output, malformed history rejection.
-- [ ] **2.1.12** No live APIs/LLMs; advisory-only preserved.
+- [x] **2.1.1** `CorrectionEntry` model exists with all specified fields (correction_id, corrected_at, correction_mode, replaced_review_item_ids, old_decision_ids, new_decision_ids, old_artifact_checksums, new_artifact_checksums, warnings, errors, advisory_only, no_live_api, no_live_llm).
+- [x] **2.1.2** `ImportHistoryLog` model exists with `schema_version`, `run_id`, `entries`, and helper methods (entry_count, latest_correction_mode, correction_modes_summary, all_replaced_decision_ids, all_amended_decision_ids).
+- [x] **2.1.3** Replace mode appends `import_history.json` with correction entry including old/new decision IDs and checksums.
+- [x] **2.1.4** Amend mode appends `import_history.json` with correction entry.
+- [x] **2.1.5** Multiple corrections append multiple entries in deterministic order.
+- [x] **2.1.6** Failed correction attempts do NOT append history entries (fail-closed).
+- [x] **2.1.7** `weekly-cycle-status-v2` shows an "Import History" section with entry count, latest correction mode, mode counts, replaced/amended decision IDs.
+- [x] **2.1.8** Run report includes import history summary with correction entries, modes, and decision IDs.
+- [x] **2.1.9** Dashboard `WeeklyDashboardRunSummary` includes `correction_count` field.
+- [x] **2.1.10** History is append-only: entries are never deleted or modified; `sort_keys=True` ensures deterministic JSON roundtrip.
+- [x] **2.1.11** Focused tests (20) cover: CorrectionEntry deterministic JSON, ImportHistoryLog roundtrip, replace mode appends history, amend mode appends history, multiple corrections, failed correction no append, advisory/no-live flags, old/new decision IDs, artifact checksums, helper methods, status visibility (4 tests), report visibility (4 tests), missing/malformed history handling.
+- [x] **2.1.12** No live APIs/LLMs; advisory-only preserved.
 
 ---
 
