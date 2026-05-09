@@ -12,13 +12,13 @@
 - Roadmap v2.7 planning created: yes
 - Roadmap v2.7 status: `complete / closed` (`8 / 8`, branch `feat/v2-7-traceability-block-1`, tag `v2.7`, merged to main).
 - Roadmap v2.8 planning created: yes
-- Roadmap v2.8 status: `active / in progress` (`1 / 9`, branch `feat/v2-8-decision-correction-block-1`)
-- Current item: `1.2 Parking lot orphan cleanup and derived artifact rebuild model`
+- Roadmap v2.8 status: `active / in progress` (`2 / 9`, branch `feat/v2-8-decision-correction-block-1`)
+- Current item: `1.3 Safe replace/amend implementation in founder decision import`
 - Roadmap state: `active / in progress`
-- Completed: `1 / 9`
-- Remaining: `8 / 9`
-- Latest completed roadmap item: Roadmap v2.8 `1.1` — Founder decision correction artifact contract
-- Next planned roadmap item: Roadmap v2.8 `1.2` — Parking lot orphan cleanup and derived artifact rebuild model
+- Completed: `2 / 9`
+- Remaining: `7 / 9`
+- Latest completed roadmap item: Roadmap v2.8 `1.2` — Parking lot orphan cleanup and derived artifact rebuild model
+- Next planned roadmap item: Roadmap v2.8 `1.3` — Safe replace/amend implementation in founder decision import
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy

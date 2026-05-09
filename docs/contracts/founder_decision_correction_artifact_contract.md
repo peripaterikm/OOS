@@ -1,8 +1,8 @@
 # Founder Decision Correction Artifact Contract
 
 **Version:** founder_decision_correction.v1
-**Roadmap:** v2.8 item 1.1
-**Status:** contract / advisory only — no implementation
+**Roadmap:** v2.8 item 1.1 (contract); item 1.2 (implementation)
+**Status:** contract active; implementation completed in `src/oos/decision_correction_rebuild.py`
 **Depends on:**
 - [`founder_decision_reimport_policy.md`](../decisions/founder_decision_reimport_policy.md) (v2.7 item 3.1)
 - [`source_url_traceability_contract.md`](source_url_traceability_contract.md) (v2.7 item 1.1)

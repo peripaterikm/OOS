@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
-- [ ] **0.2** Current item: `1.2 Parking lot orphan cleanup and derived artifact rebuild model`
+- [ ] **0.2** Current item: `1.3 Safe replace/amend implementation in founder decision import`
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **1 / 9**
-- [ ] **0.5** Remaining: **8 / 9**
+- [ ] **0.4** Completed from this roadmap: **2 / 9**
+- [ ] **0.5** Remaining: **7 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md` (complete, `8 / 8`, tag `v2.7` created, merged to main)
 
 ### Core Concept
@@ -204,16 +204,16 @@ The current parking lot module (`src/oos/parking_lot.py`) builds records from PA
 
 ### Acceptance criteria
 
-- [ ] **1.2.1** `cleanup_orphaned_parking_lot_records()` correctly removes records whose `source_decision_id` matches replaced decision IDs.
-- [ ] **1.2.2** `cleanup_orphaned_parking_lot_records()` leaves unrelated records untouched.
-- [ ] **1.2.3** `build_parking_lot_records_for_decisions()` produces identical records to existing `build_parking_lot_records()` for equivalent input.
-- [ ] **1.2.4** Rebuild model is deterministic: same input decisions → same derived artifacts.
-- [ ] **1.2.5** Rebuild model is fail-closed: any inconsistency in input → no writes.
-- [ ] **1.2.6** Feedback mappings rebuild correctly after replacing a decision.
-- [ ] **1.2.7** Preference profile rebuild correctly after replacing a decision.
-- [ ] **1.2.8** Source URL traceability is preserved through all rebuild paths.
-- [ ] **1.2.9** Focused tests (≥12) cover: orphan removal, new record creation, mixed replace (some parked → promoted, some promoted → parked), empty input, deterministic output, fail-closed behavior, and source URL preservation.
-- [ ] **1.2.10** No live APIs/LLMs; advisory-only preserved; no autonomous portfolio transitions.
+- [x] **1.2.1** `cleanup_orphaned_parking_lot_records()` correctly removes records whose `source_decision_id` matches replaced decision IDs.
+- [x] **1.2.2** `cleanup_orphaned_parking_lot_records()` leaves unrelated records untouched.
+- [x] **1.2.3** `build_parking_lot_records_for_decisions()` produces identical records to existing `build_parking_lot_records()` for equivalent input.
+- [x] **1.2.4** Rebuild model is deterministic: same input decisions → same derived artifacts.
+- [x] **1.2.5** Rebuild model is fail-closed: any inconsistency in input → no writes.
+- [x] **1.2.6** Feedback mappings rebuild correctly after replacing a decision.
+- [x] **1.2.7** Preference profile rebuild correctly after replacing a decision.
+- [x] **1.2.8** Source URL traceability is preserved through all rebuild paths.
+- [x] **1.2.9** Focused tests (≥12) cover: orphan removal, new record creation, mixed replace (some parked → promoted, some promoted → parked), empty input, deterministic output, fail-closed behavior, and source URL preservation.
+- [x] **1.2.10** No live APIs/LLMs; advisory-only preserved; no autonomous portfolio transitions.
 
 ---
 
