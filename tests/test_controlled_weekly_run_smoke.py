@@ -382,5 +382,72 @@ class TestSmokeScriptLightweightExecution(unittest.TestCase):
 
         # Note: The smoke script may return non-zero exit code if
         # downstream steps (status/reports/dashboard) encounter
-        # pre-existing pipeline issues in the temp-root context.
+        # pipeline issues in the temp-root context.
+        # After v2.8 item 4.1, weekly-cycle-status-v2 should pass normally.
         # This is acceptable for item 5.1 scope.
+
+
+class TestSmokeScriptExpectsStatusPass(unittest.TestCase):
+    """After v2.8 item 4.1: weekly-cycle-status-v2 must be expected to pass."""
+
+    def test_smoke_script_no_longer_treats_status_as_pre_existing(self):
+        """The smoke script must NOT treat weekly-cycle-status-v2 non-zero
+        as pre-existing. The status step (Step 5) must not contain
+        'pre-existing issue'. Other steps (6/7) may still use it for steps
+        that legitimately have partial artifact issues."""
+        script = SCRIPTS_DIR / "run-controlled-smoke.ps1"
+        text = script.read_text(encoding="utf-8")
+
+        # Extract the Step 5 block (between "STEP 5:" and "STEP 6:")
+        step5_match = None
+        import re
+        step5_re = re.compile(
+            r'# STEP 5:.*?(?=# STEP 6:)', re.DOTALL
+        )
+        step5_match = step5_re.search(text)
+
+        if step5_match:
+            step5_block = step5_match.group(0)
+            self.assertNotIn(
+                "pre-existing issue",
+                step5_block,
+                "Step 5 (Weekly Cycle Status) still treats "
+                "weekly-cycle-status-v2 non-zero as pre-existing. "
+                "Item 4.1 requires it to pass normally."
+            )
+        else:
+            self.fail("Could not find STEP 5 block in smoke script")
+
+    def test_smoke_script_status_step_is_record_fail_on_nonzero(self):
+        """On non-zero exit, the smoke script must Record-Fail (not Record-Pass)."""
+        script = SCRIPTS_DIR / "run-controlled-smoke.ps1"
+        text = script.read_text(encoding="utf-8")
+
+        # Find the status step block
+        self.assertIn('Record-Fail "weekly-cycle-status-v2"', text,
+                      "Smoke script must Record-Fail on status non-zero exit, "
+                      "not Record-Pass as pre-existing issue.")
+
+    def test_smoke_script_status_step_matches_expected_pattern(self):
+        """Verify the exact pattern of the status step after hardening."""
+        script = SCRIPTS_DIR / "run-controlled-smoke.ps1"
+        text = script.read_text(encoding="utf-8")
+        lines = text.splitlines()
+
+        # Find the weekly-cycle-status-v2 step
+        in_status_section = False
+        found_check = False
+        for line in lines:
+            if "STEP 5:" in line and "Weekly Cycle Status" in line:
+                in_status_section = True
+            if in_status_section and "Record-Pass" in line and "weekly-cycle-status-v2" in line:
+                # The only Record-Pass should be for exit 0, not for "pre-existing"
+                if "pre-existing" in line:
+                    self.fail(f"Status step still uses 'pre-existing' label: {line}")
+                found_check = True
+            if in_status_section and "Record-Fail" in line and "weekly-cycle-status-v2" in line:
+                # Record-Fail is expected for non-zero
+                found_check = True
+                break
+
+        self.assertTrue(found_check, "Could not find weekly-cycle-status-v2 pass/fail pattern")

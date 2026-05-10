@@ -12,6 +12,19 @@ Roadmap v2.6 item 6.1. Inspects an existing weekly run directory and reports:
 - warnings/errors from manifest or artifacts where available;
 - recommended next step for the founder/developer.
 
+Roadmap v2.8 item 2.1: Import history / audit trail visibility.
+- Surfaces import_history.json summary if present.
+- Reports entry count, latest correction mode, and correction mode counts.
+
+Roadmap v2.8 item 3.1: CLI and status/report integration for correction state.
+- Adds corrected_decision_count, replaced_decision_ids, amended_decision_ids
+  aliases for ergonomic access.
+- Adds per-correction entry details (correction_id, corrected_at, correction_mode,
+  old_decision_ids, new_decision_ids, replaced_review_item_ids).
+- Adds [CORRECTED] indicator in Run Identity section when corrections exist.
+- Adds "Decision Corrections" Markdown section with per-correction details.
+- Shows clear "NONE" state when no import_history.json exists.
+
 Read-only. No artifact modification. No rebuild. No import. No portfolio mutation.
 No live APIs/LLMs.
 """
@@ -29,6 +42,7 @@ from oos.weekly_run_manifest import (
     canonical_artifact_paths,
     read_weekly_run_manifest,
 )
+from oos.founder_decision_import import build_import_history_summary, read_import_history
 
 WEEKLY_CYCLE_STATUS_SCHEMA_VERSION = "weekly_cycle_status.v1"
 
@@ -91,6 +105,18 @@ class WeeklyCycleStatus:
     parking_lot_record_count: int = 0
     next_best_action_count: int = 0
     run_report_present: bool = False
+    # Import history / audit trail (v2.8 item 2.1)
+    import_history_present: bool = False
+    import_history_entry_count: int = 0
+    import_history_latest_correction_mode: str = ""
+    import_history_mode_counts: dict[str, int] = field(default_factory=dict)
+    import_history_replaced_decision_ids: list[str] = field(default_factory=list)
+    import_history_amended_decision_ids: list[str] = field(default_factory=list)
+    # Correction-specific aliases (v2.8 item 3.1)
+    corrected_decision_count: int = 0
+    replaced_decision_ids: list[str] = field(default_factory=list)
+    amended_decision_ids: list[str] = field(default_factory=list)
+    correction_entries: list[dict[str, Any]] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     recommended_next_step: str = ""
@@ -120,6 +146,16 @@ class WeeklyCycleStatus:
             "parking_lot_record_count": self.parking_lot_record_count,
             "next_best_action_count": self.next_best_action_count,
             "run_report_present": self.run_report_present,
+            "import_history_present": self.import_history_present,
+            "import_history_entry_count": self.import_history_entry_count,
+            "import_history_latest_correction_mode": self.import_history_latest_correction_mode,
+            "import_history_mode_counts": dict(self.import_history_mode_counts),
+            "import_history_replaced_decision_ids": list(self.import_history_replaced_decision_ids),
+            "import_history_amended_decision_ids": list(self.import_history_amended_decision_ids),
+            "corrected_decision_count": self.corrected_decision_count,
+            "replaced_decision_ids": list(self.replaced_decision_ids),
+            "amended_decision_ids": list(self.amended_decision_ids),
+            "correction_entries": list(self.correction_entries),
             "warnings": list(self.warnings),
             "errors": list(self.errors),
             "recommended_next_step": self.recommended_next_step,
@@ -425,6 +461,33 @@ def build_weekly_cycle_status(
     # Run report
     run_report_present = _is_present(run_dir, paths.get("run_report", "run_report.json"))
 
+    # ── 5b. Import history / audit trail (v2.8 item 2.1) ─────────
+    ih_summary = build_import_history_summary(run_dir)
+    import_history_present = ih_summary["present"]
+    import_history_entry_count = ih_summary["entry_count"]
+    import_history_latest_correction_mode = ih_summary["latest_correction_mode"]
+    import_history_mode_counts = ih_summary["mode_counts"]
+    import_history_replaced_decision_ids = ih_summary["replaced_decision_ids"]
+    import_history_amended_decision_ids = ih_summary["amended_decision_ids"]
+
+    # ── 5c. Correction aliases / per-entry details (v2.8 item 3.1) ─
+    corrected_decision_count = import_history_entry_count
+    replaced_decision_ids = list(import_history_replaced_decision_ids)
+    amended_decision_ids = list(import_history_amended_decision_ids)
+    correction_entries: list[dict[str, Any]] = []
+    if import_history_present:
+        history = read_import_history(run_dir)
+        if history is not None:
+            for entry in history.entries:
+                correction_entries.append({
+                    "correction_id": entry.correction_id,
+                    "corrected_at": entry.corrected_at,
+                    "correction_mode": entry.correction_mode,
+                    "replaced_review_item_ids": sorted(entry.replaced_review_item_ids),
+                    "old_decision_ids": sorted(entry.old_decision_ids),
+                    "new_decision_ids": sorted(entry.new_decision_ids),
+                })
+
     # ── 6. Collect per-artifact JSON errors ────────────────────────
     for art_status in artifact_statuses:
         for art_err in art_status.errors:
@@ -467,6 +530,16 @@ def build_weekly_cycle_status(
         parking_lot_record_count=parking_lot_record_count,
         next_best_action_count=next_best_action_count,
         run_report_present=run_report_present,
+        import_history_present=import_history_present,
+        import_history_entry_count=import_history_entry_count,
+        import_history_latest_correction_mode=import_history_latest_correction_mode,
+        import_history_mode_counts=import_history_mode_counts,
+        import_history_replaced_decision_ids=import_history_replaced_decision_ids,
+        import_history_amended_decision_ids=import_history_amended_decision_ids,
+        corrected_decision_count=corrected_decision_count,
+        replaced_decision_ids=replaced_decision_ids,
+        amended_decision_ids=amended_decision_ids,
+        correction_entries=correction_entries,
         warnings=warnings,
         errors=errors,
         recommended_next_step=recommended_next_step,
@@ -546,7 +619,10 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     # ── 1. Run identity ──────────────────────────────────
     lines.append("## 1. Run Identity")
     lines.append("")
-    lines.append(f"- **Run ID**: `{status.run_id}`")
+    run_id_label = f"`{status.run_id}`"
+    if status.corrected_decision_count > 0:
+        run_id_label += " **[CORRECTED]**"
+    lines.append(f"- **Run ID**: {run_id_label}")
     lines.append(f"- **Run Directory**: `{status.run_dir}`")
     lines.append(f"- **Manifest Path**: `{status.manifest_path}`")
     lines.append("")
@@ -573,9 +649,9 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     lines.append("## 4. Pipeline Artifact Counts")
     lines.append("")
     for art in status.artifact_statuses:
-        present_mark = "✓" if art.exists else "✗"
+        present_mark = "OK" if art.exists else "FAIL"
         empty_note = " (empty)" if art.is_empty_state and art.exists else ""
-        count_info = f" — {art.item_count} items" if art.exists else " — missing"
+        count_info = f" -- {art.item_count} items" if art.exists else " -- missing"
         lines.append(f"- {present_mark} **{art.artifact_key}**{count_info}{empty_note}")
     lines.append("")
 
@@ -631,12 +707,67 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     lines.append(status.recommended_next_step)
     lines.append("")
 
-    # ── 10. Artifact paths ───────────────────────────────
-    lines.append("## 10. Artifact Paths")
+    # ── 10. Import History / Audit Trail (v2.8 item 2.1) ─
+    lines.append("## 10. Import History / Audit Trail")
+    lines.append("")
+    if status.import_history_present:
+        lines.append(f"- **Import history present**: true")
+        lines.append(f"- **Correction entry count**: {status.import_history_entry_count}")
+        lines.append(f"- **Latest correction mode**: `{status.import_history_latest_correction_mode}`")
+        if status.import_history_mode_counts:
+            mode_str = ", ".join(
+                f"`{mode}`: {count}"
+                for mode, count in sorted(status.import_history_mode_counts.items())
+            )
+            lines.append(f"- **Corrections by mode**: {mode_str}")
+        if status.import_history_replaced_decision_ids:
+            lines.append(f"- **Replaced decision IDs**: {', '.join(f'`{did}`' for did in status.import_history_replaced_decision_ids)}")
+        if status.import_history_amended_decision_ids:
+            lines.append(f"- **Amended decision IDs**: {', '.join(f'`{did}`' for did in status.import_history_amended_decision_ids)}")
+    else:
+        lines.append(f"- **Import history present**: false")
+        lines.append(f"- **Correction entries**: 0 (no corrections applied)")
+    lines.append("")
+
+    # ── 11. Decision Corrections (v2.8 item 3.1) ────────
+    lines.append("## 11. Decision Corrections")
+    lines.append("")
+    if status.corrected_decision_count > 0:
+        lines.append(f"- **Corrected decision count**: {status.corrected_decision_count}")
+        lines.append(f"- **Replaced decision IDs**: {', '.join(f'`{did}`' for did in status.replaced_decision_ids) if status.replaced_decision_ids else 'NONE'}")
+        lines.append(f"- **Amended decision IDs**: {', '.join(f'`{did}`' for did in status.amended_decision_ids) if status.amended_decision_ids else 'NONE'}")
+        lines.append("")
+        lines.append("### Per-Correction Details")
+        lines.append("")
+        for i, entry in enumerate(status.correction_entries, start=1):
+            cid = entry.get("correction_id", "unknown")
+            cat = entry.get("corrected_at", "unknown")
+            cmode = entry.get("correction_mode", "unknown")
+            rrids = entry.get("replaced_review_item_ids", [])
+            olds = entry.get("old_decision_ids", [])
+            news = entry.get("new_decision_ids", [])
+            lines.append(f"**Correction {i}** (`{cid}`)")
+            lines.append(f"- Corrected at: `{cat}`")
+            lines.append(f"- Correction mode: `{cmode}`")
+            if rrids:
+                lines.append(f"- Replaced review item IDs: {', '.join(f'`{r}`' for r in rrids)}")
+            if olds:
+                lines.append(f"- Old decision IDs: {', '.join(f'`{d}`' for d in olds)}")
+            if news:
+                lines.append(f"- New decision IDs: {', '.join(f'`{d}`' for d in news)}")
+            lines.append("")
+    else:
+        lines.append("- **Corrected decision count**: 0")
+        lines.append("- **Correction entries**: NONE (no corrections have been applied to this run)")
+        lines.append("")
+    lines.append("")
+
+    # ── 12. Artifact paths ───────────────────────────────
+    lines.append("## 12. Artifact Paths")
     lines.append("")
     for art in status.artifact_statuses:
         abs_path = Path(status.run_dir) / art.relative_path
-        lines.append(f"- `{art.relative_path}` → `{abs_path}`")
+        lines.append(f"- `{art.relative_path}` -> `{abs_path}`")
     lines.append("")
 
     # ── Safety flags ─────────────────────────────────────

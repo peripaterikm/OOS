@@ -915,6 +915,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
         required=True,
         help="Path to the founder decisions file (JSON array or JSONL).",
     )
+    import_parser.add_argument(
+        "--replace-review-items",
+        type=str,
+        default=None,
+        help="Comma-separated review_item_id values to replace (surgical replacement mode).",
+    )
+    import_parser.add_argument(
+        "--amend-notes-only",
+        action="store_true",
+        default=False,
+        help="Amend notes/reason categories only; decision values are preserved.",
+    )
 
     v2_weekly_parser = subparsers.add_parser(
         "run-weekly-cycle-v2",
@@ -1058,17 +1070,28 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "import-founder-decisions-v2":
+        replace_rids: list[str] | None = None
+        if getattr(args, "replace_review_items", None):
+            replace_rids = [
+                rid.strip()
+                for rid in str(args.replace_review_items).split(",")
+                if rid.strip()
+            ]
+        amend_notes_only = bool(getattr(args, "amend_notes_only", False))
+
         try:
             result = import_founder_decisions(
                 project_root=args.project_root,
                 run_id=args.run_id,
                 decisions_file=args.decisions_file,
+                replace_review_item_ids=replace_rids,
+                amend_notes_only=amend_notes_only,
             )
         except ValueError as exc:
             print(f"import-founder-decisions-v2 failed: {exc}")
             return 2
 
-        print("OOS v2.6 founder decision import completed.")
+        print("OOS v2.8 founder decision import completed.")
         print(f"run_id: {result.run_id}")
         print(f"imported_count: {result.imported_count}")
         print(f"rejected_count: {result.rejected_count}")

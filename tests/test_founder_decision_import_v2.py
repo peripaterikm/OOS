@@ -1062,9 +1062,1024 @@ class TestImportFounderDecisions(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+# Tests: Default behavior preservation (v2.8 item 1.3 — safety)
+# ---------------------------------------------------------------------------
+
+
+class TestDefaultRejectOnReimportPreserved(unittest.TestCase):
+    """Default behavior: re-import without flags still fails closed."""
+
+    def setUp(self):
+        self.tmp_root = Path(tempfile.mkdtemp())
+        self.run_id = "weekly_run_test_replace_default"
+
+    def tearDown(self):
+        _safe_rmtree(self.tmp_root)
+
+    def _make_run(self, with_existing_decisions: bool = False):
+        items = [
+            _make_inbox_item("inbox_review_001"),
+            _make_inbox_item("inbox_review_002"),
+        ]
+        if with_existing_decisions:
+            existing = [
+                {
+                    "decision_id": "fd_opp_inbox_review_001",
+                    "opportunity_id": "opp_inbox_review_001",
+                    "evidence_pack_id": "ep_inbox_review_001",
+                    "decision": "park",
+                    "reasons": [{"category": "unclear_buyer", "note": ""}],
+                    "notes": "Initial decision",
+                    "confidence": 0.9,
+                    "linked_evidence_ids": ["ev_inbox_review_001"],
+                    "linked_source_signal_ids": ["sig_inbox_review_001"],
+                    "linked_source_urls": ["https://example.com/inbox_review_001"],
+                    "decided_by": "founder",
+                    "decided_at": "2026-05-01T10:00:00Z",
+                    "schema_version": "founder_decision_v2.v1",
+                    "auto_promote": False,
+                    "founder_decision_authority": "founder_decision_record_only",
+                }
+            ]
+        else:
+            existing = None
+        _build_mock_weekly_run(
+            self.tmp_root, self.run_id,
+            inbox_items=items,
+            existing_decisions=existing,
+        )
+
+    def test_default_reimport_without_flags_still_fails_closed(self):
+        """Without any correction flags, duplicate reimport is still rejected."""
+        self._make_run(with_existing_decisions=True)
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            self.assertFalse(result.validation_passed)
+            self.assertIn("idempotent", result.errors[0] if result.errors else "")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_duplicate_rid_still_rejected_by_default(self):
+        """Duplicate review_item_id (no correction flags) still rejected."""
+        self._make_run()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"]},
+            {"review_item_id": "inbox_review_001", "decision": "KILL",
+             "reason_categories": ["too_generic"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            self.assertFalse(result.validation_passed)
+            self.assertIn("duplicate", result.errors[0] if result.errors else "")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_unknown_rid_still_rejected(self):
+        """Unknown review_item_id still rejected without correction flags."""
+        self._make_run()
+        decisions = [
+            {"review_item_id": "nonexistent_rid", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            self.assertFalse(result.validation_passed)
+            self.assertIn("not found", result.errors[0] if result.errors else "")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_invalid_decision_still_rejected(self):
+        """Invalid decision value still rejected without correction flags."""
+        self._make_run()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "INVALID",
+             "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(self.tmp_root, self.run_id, dec_file)
+            self.assertFalse(result.validation_passed)
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Tests: Replace mode
+# ---------------------------------------------------------------------------
+
+
+class TestReplaceMode(unittest.TestCase):
+    """Replace mode tests (v2.8 item 1.3)."""
+
+    def setUp(self):
+        self.tmp_root = Path(tempfile.mkdtemp())
+        self.run_id = "weekly_run_test_replace_mode"
+
+    def tearDown(self):
+        _safe_rmtree(self.tmp_root)
+
+    def _make_run_with_decisions(self, decisions: list[dict] | None = None):
+        items = [
+            _make_inbox_item("inbox_review_001"),
+            _make_inbox_item("inbox_review_002"),
+            _make_inbox_item("inbox_review_003"),
+        ]
+        existing = decisions or [
+            {
+                "decision_id": "fd_opp_inbox_review_001",
+                "opportunity_id": "opp_inbox_review_001",
+                "evidence_pack_id": "ep_inbox_review_001",
+                "review_item_id": "inbox_review_001",
+                "decision": "park",
+                "reasons": [{"category": "unclear_buyer", "note": ""}],
+                "notes": "Initial decision",
+                "confidence": 0.9,
+                "linked_evidence_ids": ["ev_inbox_review_001"],
+                "linked_source_signal_ids": ["sig_inbox_review_001"],
+                "linked_source_urls": ["https://example.com/inbox_review_001"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:00:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            },
+            {
+                "decision_id": "fd_opp_inbox_review_002",
+                "opportunity_id": "opp_inbox_review_002",
+                "evidence_pack_id": "ep_inbox_review_002",
+                "review_item_id": "inbox_review_002",
+                "decision": "kill",
+                "reasons": [{"category": "too_generic", "note": ""}],
+                "notes": "Killed for being generic.",
+                "confidence": 0.9,
+                "linked_evidence_ids": ["ev_inbox_review_002"],
+                "linked_source_signal_ids": ["sig_inbox_review_002"],
+                "linked_source_urls": ["https://example.com/inbox_review_002"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:01:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            },
+        ]
+        _build_mock_weekly_run(
+            self.tmp_root, self.run_id,
+            inbox_items=items,
+            existing_decisions=existing,
+        )
+
+    def test_replace_mode_succeeds_for_listed_rid(self):
+        """Replace mode succeeds for explicitly listed existing review_item_id."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"], "notes": "Re-evaluated — promoting."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed, f"Errors: {result.errors}")
+            self.assertEqual(result.imported_count, 1)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            data = json.loads((run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8"))
+            decisions_list = data["items"]
+            self.assertEqual(len(decisions_list), 2)
+            # Verify the replaced one is now PROMOTE
+            opp_001 = [d for d in decisions_list if d["opportunity_id"] == "opp_inbox_review_001"]
+            self.assertEqual(len(opp_001), 1)
+            self.assertEqual(opp_001[0]["decision"], "promote")
+            # Verify the other one is untouched
+            opp_002 = [d for d in decisions_list if d["opportunity_id"] == "opp_inbox_review_002"]
+            self.assertEqual(len(opp_002), 1)
+            self.assertEqual(opp_002[0]["decision"], "kill")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_replace_mode_rejects_rid_not_in_replace_list(self):
+        """Replace mode rejects incoming rid not in --replace-review-items."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+            {"review_item_id": "inbox_review_003", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertFalse(result.validation_passed)
+            self.assertIn("not in --replace-review-items", result.errors[0] if result.errors else "")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_replace_mode_rejects_nonexisting_rid(self):
+        """Replace mode rejects review_item_id with no existing decision."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_003", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_003"],
+            )
+            self.assertFalse(result.validation_passed)
+            self.assertIn("no existing decision", result.errors[0] if result.errors else "")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_replace_mode_preserves_unrelated_decisions(self):
+        """Replace mode keeps unrelated existing decisions untouched."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            data = json.loads((run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8"))
+            # second decision must still be "kill"
+            opp_002 = [d for d in data["items"] if d["opportunity_id"] == "opp_inbox_review_002"]
+            self.assertEqual(len(opp_002), 1)
+            self.assertEqual(opp_002[0]["decision"], "kill")
+            self.assertEqual(opp_002[0]["notes"], "Killed for being generic.")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_replace_mode_rebuilds_feedback_mappings(self):
+        """Replace mode rebuilds feedback mappings."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            self.assertIn("founder_feedback_mappings", result.artifacts_updated)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            fb_data = json.loads((run_dir / "founder_feedback_mappings.json").read_text(encoding="utf-8"))
+            self.assertGreaterEqual(len(fb_data["items"]), 2)
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_replace_mode_rebuilds_preference_profile(self):
+        """Replace mode rebuilds preference profile."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            self.assertIn("founder_preference_profile", result.artifacts_updated)
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_replace_mode_preserves_real_source_urls(self):
+        """Replace mode preserves real source URLs."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "KILL",
+             "reason_categories": ["too_generic"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            data = json.loads((run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8"))
+            for item in data["items"]:
+                urls = item.get("linked_source_urls", [])
+                self.assertTrue(len(urls) >= 1, f"No source URLs for {item['decision_id']}")
+                for url in urls:
+                    self.assertTrue(url.startswith("https://"), f"Expected https:// URL, got {url}")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_replace_mode_rejects_placeholder_urn(self):
+        """Replace mode rejects urn:oos:* placeholder URLs in incoming decisions."""
+        items = [
+            _make_inbox_item("inbox_review_001", linked_source_urls=["urn:oos:placeholder"]),
+            _make_inbox_item("inbox_review_002"),
+        ]
+        existing = [
+            {
+                "decision_id": "fd_opp_inbox_review_001",
+                "opportunity_id": "opp_inbox_review_001",
+                "evidence_pack_id": "ep_inbox_review_001",
+                "review_item_id": "inbox_review_001",
+                "decision": "park",
+                "reasons": [{"category": "unclear_buyer", "note": ""}],
+                "notes": "Initial",
+                "confidence": 0.9,
+                "linked_evidence_ids": ["ev_inbox_review_001"],
+                "linked_source_signal_ids": ["sig_inbox_review_001"],
+                "linked_source_urls": ["https://example.com/inbox_review_001"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:00:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            }
+        ]
+        _build_mock_weekly_run(
+            self.tmp_root, self.run_id,
+            inbox_items=items,
+            existing_decisions=existing,
+        )
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "KILL",
+             "reason_categories": ["too_generic"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertFalse(result.validation_passed)
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_replace_mode_writes_import_history(self):
+        """Replace mode writes import_history.json."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist_path = run_dir / "import_history.json"
+            self.assertTrue(hist_path.is_file(), "import_history.json not written")
+            hist = json.loads(hist_path.read_text(encoding="utf-8"))
+            self.assertEqual(hist["schema_version"], "import_history.v1")
+            self.assertGreaterEqual(len(hist["entries"]), 1)
+            entry = hist["entries"][0]
+            self.assertEqual(entry["correction_mode"], "replace")
+            self.assertTrue(entry["advisory_only"])
+            self.assertTrue(entry["no_live_api"])
+            self.assertTrue(entry["no_live_llm"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_replace_mode_is_deterministic(self):
+        """Replace mode with identical input yields identical artifact state."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+
+        # First replace
+        dec_file1 = _make_temp_decisions_file(decisions)
+        try:
+            result1 = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file1,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result1.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            content1 = (run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8")
+        finally:
+            dec_file1.unlink(missing_ok=True)
+
+        # Reset and do again
+        self.tearDown()
+        self.setUp()
+        self._make_run_with_decisions()
+        dec_file2 = _make_temp_decisions_file(decisions)
+        try:
+            result2 = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file2,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result2.validation_passed)
+            run_dir2 = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            content2 = (run_dir2 / "founder_decisions_v2.json").read_text(encoding="utf-8")
+        finally:
+            dec_file2.unlink(missing_ok=True)
+
+        # Compare decisions list (ignore timestamps in notes)
+        items1 = json.loads(content1)["items"]
+        items2 = json.loads(content2)["items"]
+        self.assertEqual(len(items1), len(items2))
+        for i1, i2 in zip(items1, items2):
+            self.assertEqual(i1["decision"], i2["decision"])
+            self.assertEqual(i1["decision_id"], i2["decision_id"])
+            self.assertEqual(sorted(i1.get("linked_source_urls", [])),
+                             sorted(i2.get("linked_source_urls", [])))
+
+    def test_replace_mode_failure_no_partial_artifacts(self):
+        """Replace mode failure writes no partial artifacts."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+            {"review_item_id": "inbox_review_099", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001", "inbox_review_099"],
+            )
+            self.assertFalse(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            # Decisions file should be unchanged
+            data = json.loads((run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(data["items"]), 2)
+            opp_001 = [d for d in data["items"] if d["opportunity_id"] == "opp_inbox_review_001"]
+            self.assertEqual(opp_001[0]["decision"], "park")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Tests: Amend mode
+# ---------------------------------------------------------------------------
+
+
+class TestAmendMode(unittest.TestCase):
+    """Amend-notes-only mode tests (v2.8 item 1.3)."""
+
+    def setUp(self):
+        self.tmp_root = Path(tempfile.mkdtemp())
+        self.run_id = "weekly_run_test_amend_mode"
+
+    def tearDown(self):
+        _safe_rmtree(self.tmp_root)
+
+    def _make_run_with_decisions(self):
+        items = [
+            _make_inbox_item("inbox_review_001"),
+            _make_inbox_item("inbox_review_002"),
+        ]
+        existing = [
+            {
+                "decision_id": "fd_opp_inbox_review_001",
+                "opportunity_id": "opp_inbox_review_001",
+                "evidence_pack_id": "ep_inbox_review_001",
+                "review_item_id": "inbox_review_001",
+                "decision": "park",
+                "reasons": [{"category": "unclear_buyer", "note": ""}],
+                "notes": "Initial notes.",
+                "confidence": 0.9,
+                "linked_evidence_ids": ["ev_inbox_review_001"],
+                "linked_source_signal_ids": ["sig_inbox_review_001"],
+                "linked_source_urls": ["https://example.com/inbox_review_001"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:00:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            },
+            {
+                "decision_id": "fd_opp_inbox_review_002",
+                "opportunity_id": "opp_inbox_review_002",
+                "evidence_pack_id": "ep_inbox_review_002",
+                "review_item_id": "inbox_review_002",
+                "decision": "kill",
+                "reasons": [{"category": "too_generic", "note": ""}],
+                "notes": "Killed for generic.",
+                "confidence": 0.9,
+                "linked_evidence_ids": ["ev_inbox_review_002"],
+                "linked_source_signal_ids": ["sig_inbox_review_002"],
+                "linked_source_urls": ["https://example.com/inbox_review_002"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:01:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            },
+        ]
+        _build_mock_weekly_run(
+            self.tmp_root, self.run_id,
+            inbox_items=items,
+            existing_decisions=existing,
+        )
+
+    def test_amend_notes_updates_notes(self):
+        """Amend-notes-only updates notes field."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"],
+             "notes": "Updated notes — revised rationale."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                amend_notes_only=True,
+            )
+            self.assertTrue(result.validation_passed, f"Errors: {result.errors}")
+            self.assertEqual(result.imported_count, 1)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            data = json.loads((run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8"))
+            opp_001 = [d for d in data["items"] if d["opportunity_id"] == "opp_inbox_review_001"][0]
+            self.assertEqual(opp_001["decision"], "park")
+            self.assertIn("Updated notes", opp_001["notes"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_amend_notes_rejects_decision_value_change(self):
+        """Amend-notes-only rejects decision value change."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"],
+             "notes": "Changed my mind — promoting."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                amend_notes_only=True,
+            )
+            self.assertFalse(result.validation_passed)
+            self.assertIn("cannot change decision", result.errors[0] if result.errors else "")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_amend_notes_no_parking_lot_rebuild_unnecessary(self):
+        """Amend-notes-only does NOT rebuild parking lot records unnecessarily."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"],
+             "notes": "Updated notes."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                amend_notes_only=True,
+            )
+            self.assertTrue(result.validation_passed)
+            # Should NOT include parking_lot_records in artifacts_updated
+            self.assertNotIn("parking_lot_records", result.artifacts_updated)
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_amend_notes_writes_import_history(self):
+        """Amend-notes-only writes import_history.json."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"],
+             "notes": "Updated rationale for parking."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                amend_notes_only=True,
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist_path = run_dir / "import_history.json"
+            self.assertTrue(hist_path.is_file())
+            hist = json.loads(hist_path.read_text(encoding="utf-8"))
+            self.assertGreaterEqual(len(hist["entries"]), 1)
+            entry = hist["entries"][0]
+            self.assertEqual(entry["correction_mode"], "amend")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_amend_notes_preserves_source_urls(self):
+        """Amend-notes-only preserves existing source URLs."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"],
+             "notes": "Updated notes."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                amend_notes_only=True,
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            data = json.loads((run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8"))
+            opp_001 = [d for d in data["items"] if d["decision_id"] == "fd_opp_inbox_review_001"][0]
+            self.assertEqual(opp_001["linked_source_urls"], ["https://example.com/inbox_review_001"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Helper for temp dir cleanup
+# ---------------------------------------------------------------------------
+
+
+def _safe_rmtree(path: Path):
+    """Recursively remove a temporary directory tree."""
+    try:
+        for child in path.glob("**/*"):
+            if child.is_file():
+                child.unlink(missing_ok=True)
+        for child in sorted(path.glob("**/*"), reverse=True):
+            if child.is_dir():
+                child.rmdir()
+        if path.exists():
+            path.rmdir()
+    except (OSError, PermissionError):
+        pass
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 
 if __name__ == "__main__":
     unittest.main()
+
+# ---------------------------------------------------------------------------
+# Tests: Import History / Audit Trail (v2.8 item 2.1)
+# ---------------------------------------------------------------------------
+
+
+class TestImportHistoryAuditTrail(unittest.TestCase):
+    """Import history / audit trail hardening tests."""
+
+    def setUp(self):
+        self.tmp_root = Path(tempfile.mkdtemp())
+        self.run_id = "test_import_history_audit"
+
+    def tearDown(self):
+        _safe_rmtree(self.tmp_root)
+
+    def _make_run_with_decisions(self, decisions=None):
+        items = [
+            _make_inbox_item("inbox_review_001"),
+            _make_inbox_item("inbox_review_002"),
+        ]
+        existing = decisions or [
+            {
+                "decision_id": "fd_opp_inbox_review_001",
+                "opportunity_id": "opp_inbox_review_001",
+                "evidence_pack_id": "ep_inbox_review_001",
+                "review_item_id": "inbox_review_001",
+                "decision": "park",
+                "reasons": [{"category": "unclear_buyer", "note": ""}],
+                "notes": "Initial decision.",
+                "confidence": 0.9,
+                "linked_evidence_ids": ["ev_inbox_review_001"],
+                "linked_source_signal_ids": ["sig_inbox_review_001"],
+                "linked_source_urls": ["https://example.com/inbox_review_001"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:00:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            },
+            {
+                "decision_id": "fd_opp_inbox_review_002",
+                "opportunity_id": "opp_inbox_review_002",
+                "evidence_pack_id": "ep_inbox_review_002",
+                "review_item_id": "inbox_review_002",
+                "decision": "kill",
+                "reasons": [{"category": "too_generic", "note": ""}],
+                "notes": "Killed.",
+                "confidence": 0.9,
+                "linked_evidence_ids": ["ev_inbox_review_002"],
+                "linked_source_signal_ids": ["sig_inbox_review_002"],
+                "linked_source_urls": ["https://example.com/inbox_review_002"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:01:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            },
+        ]
+        _build_mock_weekly_run(
+            self.tmp_root, self.run_id,
+            inbox_items=items,
+            existing_decisions=existing,
+        )
+
+    def test_correction_entry_deterministic_json(self):
+        """CorrectionEntry serializes to deterministic JSON."""
+        from oos.founder_decision_import import CorrectionEntry
+        entry = CorrectionEntry(
+            correction_id="corr_abc123",
+            corrected_at="2026-05-09T12:00:00+00:00",
+            correction_mode="replace",
+            replaced_review_item_ids=["ri_2", "ri_1"],
+            old_decision_ids=["fd_old"],
+            new_decision_ids=["fd_new"],
+            old_artifact_checksums={"founder_decisions_v2": "abc"},
+            new_artifact_checksums={"founder_decisions_v2": "def"},
+            warnings=["warning_a"],
+            errors=[],
+            advisory_only=True,
+            no_live_api=True,
+            no_live_llm=True,
+        )
+        d1 = entry.to_dict()
+        d2 = entry.to_dict()
+        j1 = json.dumps(d1, sort_keys=True)
+        j2 = json.dumps(d2, sort_keys=True)
+        self.assertEqual(j1, j2)
+        # Verify sorted lists
+        self.assertEqual(d1["replaced_review_item_ids"], ["ri_1", "ri_2"])
+        self.assertEqual(d1["old_decision_ids"], ["fd_old"])
+        # Verify flags
+        self.assertTrue(d1["advisory_only"])
+        self.assertTrue(d1["no_live_api"])
+        self.assertTrue(d1["no_live_llm"])
+
+    def test_import_history_log_deterministic_roundtrip(self):
+        """ImportHistoryLog roundtrip via from_dict/to_dict is deterministic."""
+        from oos.founder_decision_import import CorrectionEntry, ImportHistoryLog
+        entry = CorrectionEntry(
+            correction_id="corr_test1",
+            corrected_at="2026-05-09T12:00:00+00:00",
+            correction_mode="replace",
+            replaced_review_item_ids=["ri_1"],
+            old_decision_ids=["fd_old"],
+            new_decision_ids=["fd_new"],
+            old_artifact_checksums={},
+            new_artifact_checksums={},
+            warnings=[],
+            errors=[],
+        )
+        log = ImportHistoryLog(run_id="test_run", entries=[entry])
+        data = log.to_dict()
+        roundtripped = ImportHistoryLog.from_dict(data)
+        self.assertEqual(roundtripped.run_id, "test_run")
+        self.assertEqual(roundtripped.entry_count(), 1)
+        self.assertEqual(roundtripped.entries[0].correction_id, "corr_test1")
+        self.assertEqual(roundtripped.entries[0].correction_mode, "replace")
+
+    def test_replace_mode_appends_import_history(self):
+        """Replace mode appends import_history.json."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"], "notes": "Replacing."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist_path = run_dir / "import_history.json"
+            self.assertTrue(hist_path.is_file())
+            hist = json.loads(hist_path.read_text(encoding="utf-8"))
+            self.assertGreaterEqual(len(hist["entries"]), 1)
+            entry = hist["entries"][0]
+            self.assertEqual(entry["correction_mode"], "replace")
+            self.assertIn("fd_opp_inbox_review_001", entry["old_decision_ids"])
+            self.assertTrue(entry["advisory_only"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_amend_mode_appends_import_history(self):
+        """Amend mode appends import_history.json."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"],
+             "notes": "Amended notes."},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                amend_notes_only=True,
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist_path = run_dir / "import_history.json"
+            self.assertTrue(hist_path.is_file())
+            hist = json.loads(hist_path.read_text(encoding="utf-8"))
+            self.assertGreaterEqual(len(hist["entries"]), 1)
+            entry = hist["entries"][0]
+            self.assertEqual(entry["correction_mode"], "amend")
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_multiple_corrections_append_multiple_entries(self):
+        """Multiple corrections append multiple entries in deterministic order."""
+        self._make_run_with_decisions()
+        # First: replace
+        decisions1 = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file1 = _make_temp_decisions_file(decisions1)
+        try:
+            result1 = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file1,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result1.validation_passed)
+        finally:
+            dec_file1.unlink(missing_ok=True)
+
+        # Second: amend
+        decisions2 = [
+            {"review_item_id": "inbox_review_002", "decision": "KILL",
+             "reason_categories": ["too_generic"],
+             "notes": "Amended kill notes."},
+        ]
+        dec_file2 = _make_temp_decisions_file(decisions2)
+        try:
+            result2 = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file2,
+                amend_notes_only=True,
+            )
+            self.assertTrue(result2.validation_passed)
+        finally:
+            dec_file2.unlink(missing_ok=True)
+
+        run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+        hist = json.loads((run_dir / "import_history.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(hist["entries"]), 2)
+        self.assertEqual(hist["entries"][0]["correction_mode"], "replace")
+        self.assertEqual(hist["entries"][1]["correction_mode"], "amend")
+
+    def test_failed_correction_does_not_append_history(self):
+        """Failed correction does not append import_history.json entry."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+            {"review_item_id": "inbox_review_nonexistent", "decision": "PARK",
+             "reason_categories": ["unclear_buyer"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001", "inbox_review_nonexistent"],
+            )
+            self.assertFalse(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist_path = run_dir / "import_history.json"
+            # Either no file, or file has 0 entries
+            if hist_path.is_file():
+                hist = json.loads(hist_path.read_text(encoding="utf-8"))
+                self.assertEqual(len(hist.get("entries", [])), 0)
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_correction_entry_includes_advisory_no_live_flags(self):
+        """Correction entries include advisory_only, no_live_api, no_live_llm."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist = json.loads((run_dir / "import_history.json").read_text(encoding="utf-8"))
+            entry = hist["entries"][0]
+            self.assertTrue(entry["advisory_only"])
+            self.assertTrue(entry["no_live_api"])
+            self.assertTrue(entry["no_live_llm"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_correction_entry_includes_old_new_decision_ids(self):
+        """Correction entries include old and new decision IDs."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist = json.loads((run_dir / "import_history.json").read_text(encoding="utf-8"))
+            entry = hist["entries"][0]
+            self.assertIn("fd_opp_inbox_review_001", entry["old_decision_ids"])
+            self.assertTrue(len(entry["new_decision_ids"]) >= 1)
+            self.assertNotEqual(entry["old_decision_ids"], entry["new_decision_ids"])
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_correction_entry_includes_artifact_checksums(self):
+        """Correction entries include old/new artifact checksums."""
+        self._make_run_with_decisions()
+        decisions = [
+            {"review_item_id": "inbox_review_001", "decision": "PROMOTE",
+             "reason_categories": ["strong_pain"]},
+        ]
+        dec_file = _make_temp_decisions_file(decisions)
+        try:
+            result = import_founder_decisions(
+                self.tmp_root, self.run_id, dec_file,
+                replace_review_item_ids=["inbox_review_001"],
+            )
+            self.assertTrue(result.validation_passed)
+            run_dir = self.tmp_root / "artifacts" / "weekly_runs" / self.run_id
+            hist = json.loads((run_dir / "import_history.json").read_text(encoding="utf-8"))
+            entry = hist["entries"][0]
+            self.assertIsInstance(entry["old_artifact_checksums"], dict)
+            self.assertIsInstance(entry["new_artifact_checksums"], dict)
+            self.assertTrue(
+                len(entry["old_artifact_checksums"]) > 0 or
+                len(entry["new_artifact_checksums"]) > 0
+            )
+        finally:
+            dec_file.unlink(missing_ok=True)
+
+    def test_read_import_history_returns_none_for_missing(self):
+        """read_import_history returns None when file does not exist."""
+        from oos.founder_decision_import import read_import_history
+        tmp_dir2 = Path(tempfile.mkdtemp())
+        result = read_import_history(tmp_dir2)
+        self.assertIsNone(result)
+
+    def test_build_import_history_summary_handles_missing(self):
+        """build_import_history_summary returns empty dict when missing."""
+        from oos.founder_decision_import import build_import_history_summary
+        tmp_dir2 = Path(tempfile.mkdtemp())
+        summary = build_import_history_summary(tmp_dir2)
+        self.assertFalse(summary["present"])
+        self.assertEqual(summary["entry_count"], 0)
+        self.assertEqual(summary["latest_correction_mode"], "")
+        self.assertEqual(summary["mode_counts"], {})
+
+    def test_import_history_log_helper_methods(self):
+        """ImportHistoryLog helper methods return correct values."""
+        from oos.founder_decision_import import CorrectionEntry, ImportHistoryLog
+        e1 = CorrectionEntry(
+            correction_id="c1", corrected_at="2026-01-01T00:00:00Z",
+            correction_mode="replace",
+            old_decision_ids=["fd_a"], new_decision_ids=["fd_b"],
+        )
+        e2 = CorrectionEntry(
+            correction_id="c2", corrected_at="2026-01-02T00:00:00Z",
+            correction_mode="amend",
+            old_decision_ids=["fd_c"], new_decision_ids=["fd_c"],
+        )
+        log = ImportHistoryLog(run_id="test", entries=[e1, e2])
+        self.assertEqual(log.entry_count(), 2)
+        self.assertEqual(log.latest_correction_mode(), "amend")
+        counts = log.correction_modes_summary()
+        self.assertEqual(counts, {"replace": 1, "amend": 1})
+        self.assertEqual(log.all_replaced_decision_ids(), ["fd_a"])
+        self.assertEqual(log.all_amended_decision_ids(), ["fd_c"])

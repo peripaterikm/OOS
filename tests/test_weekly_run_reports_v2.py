@@ -1132,3 +1132,542 @@ class TestExistingCommandsUntouched(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# Tests: Import History Audit Trail Visibility (v2.8 item 2.1)
+# ---------------------------------------------------------------------------
+
+
+class TestImportHistoryReportVisibility(unittest.TestCase):
+    """Import history visibility in run reports and dashboard."""
+
+    def test_report_includes_import_history_summary(self):
+        """Run report includes import history summary."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_rpt"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        # Write import_history.json
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_rpt1",
+                    "corrected_at": "2026-05-09T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_001"],
+                    "old_decision_ids": ["fd_old"],
+                    "new_decision_ids": ["fd_new"],
+                    "old_artifact_checksums": {"fd": "abc"},
+                    "new_artifact_checksums": {"fd": "def"},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        report = build_weekly_run_report(
+            project_root=root,
+            run_id=run_id,
+        )
+        self.assertIn("import_history_summary", report.to_dict())
+        ihs = report.import_history_summary
+        self.assertTrue(ihs.get("present"))
+        self.assertEqual(ihs.get("entry_count"), 1)
+        self.assertEqual(ihs.get("latest_correction_mode"), "replace")
+        self.assertEqual(ihs.get("replaced_decision_ids"), ["fd_old"])
+
+        # Markdown rendering
+        md = render_weekly_run_report_markdown(report)
+        self.assertIn("Import History / Audit Trail", md)
+        self.assertIn("Correction entries", md)
+
+    def test_dashboard_includes_correction_count(self):
+        """Dashboard run summary includes correction_count."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_dash"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_d1",
+                    "corrected_at": "2026-05-09T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_a"],
+                    "old_decision_ids": ["fd_a"],
+                    "new_decision_ids": ["fd_b"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+                {
+                    "correction_id": "corr_d2",
+                    "corrected_at": "2026-05-09T13:00:00+00:00",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": ["ri_b"],
+                    "old_decision_ids": ["fd_c"],
+                    "new_decision_ids": ["fd_c"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        self.assertGreaterEqual(len(dashboard.runs), 1)
+        r = [s for s in dashboard.runs if s.run_id == run_id][0]
+        self.assertEqual(r.correction_count, 2)
+
+        # Dashboard markdown should show correction count
+        md = render_weekly_dashboard_markdown(dashboard)
+        self.assertIn("Corrections", md)
+
+    def test_report_handles_missing_import_history_gracefully(self):
+        """Run report handles missing import_history.json without errors."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_nohist"
+        _build_mock_weekly_run(root, run_id)
+
+        report = build_weekly_run_report(
+            project_root=root,
+            run_id=run_id,
+        )
+        ihs = report.import_history_summary
+        self.assertFalse(ihs.get("present"))
+        self.assertEqual(ihs.get("entry_count"), 0)
+
+        md = render_weekly_run_report_markdown(report)
+        self.assertIn("Import History / Audit Trail", md)
+        self.assertIn("No corrections recorded", md)
+
+    def test_report_includes_replaced_amended_decision_ids(self):
+        """Run report includes replaced/amended decision IDs where available."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_09_ids"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_ids1",
+                    "corrected_at": "2026-05-09T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_x"],
+                    "old_decision_ids": ["fd_replaced_1", "fd_replaced_2"],
+                    "new_decision_ids": ["fd_new_1", "fd_new_2"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+                {
+                    "correction_id": "corr_ids2",
+                    "corrected_at": "2026-05-09T13:00:00+00:00",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": ["ri_y"],
+                    "old_decision_ids": ["fd_amended"],
+                    "new_decision_ids": ["fd_amended"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        report = build_weekly_run_report(
+            project_root=root,
+            run_id=run_id,
+        )
+        ihs = report.import_history_summary
+        self.assertIn("fd_replaced_1", ihs.get("replaced_decision_ids", []))
+        self.assertIn("fd_replaced_2", ihs.get("replaced_decision_ids", []))
+        self.assertIn("fd_amended", ihs.get("amended_decision_ids", []))
+        self.assertEqual(len(ihs.get("replaced_decision_ids", [])), 2)
+        self.assertEqual(len(ihs.get("amended_decision_ids", [])), 1)
+
+
+# ---------------------------------------------------------------------------
+# Tests: Decision Corrections in Reports/Dashboard (v2.8 item 3.1)
+# ---------------------------------------------------------------------------
+
+
+class TestDecisionCorrectionsReportIntegration(unittest.TestCase):
+    """Decision Corrections visibility in run reports and dashboard."""
+
+    def test_run_report_json_includes_import_history_summary(self):
+        """run_report.json includes import_history_summary with corrections."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_rr01"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_rr1",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_x"],
+                    "old_decision_ids": ["fd_old"],
+                    "new_decision_ids": ["fd_new"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        report = build_weekly_run_report(
+            project_root=root,
+            run_id=run_id,
+        )
+        data = report.to_dict()
+        self.assertIn("import_history_summary", data)
+        ihs = data["import_history_summary"]
+        self.assertTrue(ihs.get("present"))
+        self.assertEqual(ihs.get("entry_count"), 1)
+        self.assertEqual(ihs.get("latest_correction_mode"), "replace")
+        self.assertIn("fd_old", ihs.get("replaced_decision_ids", []))
+
+    def test_run_report_md_includes_per_correction_details(self):
+        """run_report.md includes per-correction details section."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_rr02"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_md_r1",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_a"],
+                    "old_decision_ids": ["fd_a"],
+                    "new_decision_ids": ["fd_b"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+                {
+                    "correction_id": "corr_md_r2",
+                    "corrected_at": "2026-05-10T13:00:00+00:00",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": ["ri_b"],
+                    "old_decision_ids": ["fd_c"],
+                    "new_decision_ids": ["fd_c"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                },
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        report = build_weekly_run_report(
+            project_root=root,
+            run_id=run_id,
+        )
+        md = render_weekly_run_report_markdown(report)
+        self.assertIn("Import History / Audit Trail", md)
+        self.assertIn("Correction entries**: 2", md)
+        self.assertIn("Per-Correction Details", md)
+
+    def test_dashboard_md_includes_corrections_column(self):
+        """Dashboard Markdown table includes Corrections column."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_dash01"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_dc1",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_d"],
+                    "old_decision_ids": ["fd_d1"],
+                    "new_decision_ids": ["fd_d2"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+        self.assertIn("Corrections", md)
+        # Check for corrected run in the table
+        self.assertIn(run_id, md)
+
+        # Verify correction_count in run summary
+        r_summaries = [r for r in dashboard.runs if r.run_id == run_id]
+        self.assertEqual(len(r_summaries), 1)
+        self.assertEqual(r_summaries[0].correction_count, 1)
+
+    def test_dashboard_md_includes_corrected_indicator(self):
+        """Dashboard Markdown includes [CORRECTED] indicator for corrected runs."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_dash02"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_ind_d",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": ["ri_e"],
+                    "old_decision_ids": ["fd_e"],
+                    "new_decision_ids": ["fd_e"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+        self.assertIn("[CORRECTED]", md)
+
+    def test_missing_import_history_handled_cleanly_by_reports(self):
+        """Run report and dashboard handle missing import_history.json cleanly."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_no_hist"
+        _build_mock_weekly_run(root, run_id)
+
+        # Run report
+        report = build_weekly_run_report(
+            project_root=root,
+            run_id=run_id,
+        )
+        ihs = report.import_history_summary
+        self.assertFalse(ihs.get("present"))
+        self.assertEqual(ihs.get("entry_count"), 0)
+        md_report = render_weekly_run_report_markdown(report)
+        self.assertIn("No corrections recorded", md_report)
+        self.assertNotIn("[CORRECTED]", md_report)
+
+        # Dashboard
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md_dash = render_weekly_dashboard_markdown(dashboard)
+        self.assertNotIn("[CORRECTED]", md_dash)
+        # Should show 0 in corrections column
+        self.assertIn("0", md_dash)
+
+
+# ---------------------------------------------------------------------------
+# Tests: CP1251/CP1252-safe output hardening (v2.8 item 4.1)
+# ---------------------------------------------------------------------------
+
+
+FRAGILE_UNICODE_CHARS = [
+    "\u2713",   # ✓ CHECK MARK
+    "\u2714",   # ✔ HEAVY CHECK MARK
+    "\u2717",   # ✗ BALLOT X
+    "\u2718",   # ✘ HEAVY BALLOT X
+    "\u2705",   # ✅ WHITE HEAVY CHECK MARK
+    "\u274c",   # ❌ CROSS MARK
+    "\u2192",   # → RIGHTWARDS ARROW
+    "\u2014",   # — EM DASH
+    "\u2013",   # – EN DASH
+    "\u201c",   # " LEFT DOUBLE QUOTATION MARK
+    "\u201d",   # " RIGHT DOUBLE QUOTATION MARK
+    "\u2018",   # ' LEFT SINGLE QUOTATION MARK
+    "\u2019",   # ' RIGHT SINGLE QUOTATION MARK
+    "\u00a0",   # non-breaking space
+]
+
+
+class TestCP1251SafeReportOutput(unittest.TestCase):
+    """Verify run report markdown is CP1251/CP1252 safe."""
+
+    def _temp_project_root(self) -> Path:
+        tmpdir = tempfile.TemporaryDirectory(prefix="oos_test_cp1251_rr_")
+        self.addCleanup(tmpdir.cleanup)
+        root = Path(tmpdir.name)
+        (root / "artifacts" / "weekly_runs").mkdir(parents=True, exist_ok=True)
+        return root
+
+    def test_run_report_markdown_contains_no_fragile_unicode(self):
+        """Rendered run report Markdown must not contain fragile Unicode."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_cp1251_rr"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        md = render_weekly_run_report_markdown(report)
+
+        for ch in FRAGILE_UNICODE_CHARS:
+            self.assertNotIn(
+                ch, md,
+                f"Run report Markdown contains fragile Unicode character "
+                f"U+{ord(ch):04X} ({ch!r})"
+            )
+
+    def test_dashboard_markdown_contains_no_fragile_unicode(self):
+        """Rendered dashboard Markdown must not contain fragile Unicode."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_cp1251_d1")
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_cp1251_d2")
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+
+        for ch in FRAGILE_UNICODE_CHARS:
+            self.assertNotIn(
+                ch, md,
+                f"Dashboard Markdown contains fragile Unicode character "
+                f"U+{ord(ch):04X} ({ch!r})"
+            )
+
+    def test_dashboard_uses_ascii_ok_fail_markers(self):
+        """Dashboard table must use OK/FAIL instead of checkmark/cross."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_ascii_markers"
+        _build_mock_weekly_run(root, run_id)
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+
+        self.assertIn("OK", md, "Should use 'OK' instead of checkmark")
+        self.assertNotIn("\u2713", md, "Should not contain ✓")
+        self.assertNotIn("\u2717", md, "Should not contain ✗")
+
+    def test_run_report_markdown_all_ascii(self):
+        """Run report Markdown must be all-ASCII."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_ascii_rr"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        md = render_weekly_run_report_markdown(report)
+
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Run report contains non-ASCII character U+{ord(ch):04X} "
+                f"at position {i}: {ch!r}"
+            )
+
+    def test_dashboard_markdown_all_ascii(self):
+        """Dashboard Markdown must be all-ASCII."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_ascii_d1")
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Dashboard contains non-ASCII character U+{ord(ch):04X} "
+                f"at position {i}: {ch!r}"
+            )
+
+    def test_run_report_still_has_all_sections(self):
+        """Unicode hardening must not remove or break any report section."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_sections_rr"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        md = render_weekly_run_report_markdown(report)
+
+        self.assertIn("# Weekly Run Report", md)
+        self.assertIn("Status Summary", md)
+        self.assertIn("Pipeline Counts", md)
+        self.assertIn("Quality Gate Summary", md)
+        self.assertIn("Decision Summary", md)
+        self.assertIn("Action Summary", md)
+        self.assertIn("Founder Inbox", md)
+        self.assertIn("Parking Lot", md)
+        self.assertIn("Traceability", md)
+        self.assertIn("Import History / Audit Trail", md)
+        self.assertIn("Warnings", md)
+        self.assertIn("Errors", md)
+        self.assertIn("Recommended Next Step", md)
+        self.assertIn("Artifact Paths", md)
+        self.assertIn("Safety Flags", md)
+
+    def test_dashboard_still_has_all_sections(self):
+        """Unicode hardening must not remove or break any dashboard section."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_sections_d1")
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+
+        self.assertIn("# Weekly Runs Dashboard", md)
+        self.assertIn("Aggregate Metrics", md)
+        self.assertIn("Run Summary Table", md)
+        self.assertIn("Warnings", md)
+        self.assertIn("Errors", md)
+        self.assertIn("Safety Flags", md)
