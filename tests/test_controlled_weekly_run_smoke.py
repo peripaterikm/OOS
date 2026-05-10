@@ -290,8 +290,13 @@ class TestSmokeScriptHasSourceUrlCheck(unittest.TestCase):
                       "Smoke script missing source URL traceability check")
         self.assertIn("placeholder", text.lower(),
                       "Smoke script missing placeholder check")
-        self.assertIn("zero placeholder", text.lower(),
-                      "Smoke script missing zero placeholder URN assertion")
+        # v2.9: Step 8 uses "placeholder=0, missing=0, validation_passed=True"
+        self.assertIn("placeholder=0", text,
+                      "Smoke script missing placeholder=0 assertion (v2.9)")
+        self.assertIn("missing=0", text,
+                      "Smoke script missing missing=0 assertion (v2.9)")
+        self.assertIn("validation_passed", text.lower(),
+                      "Smoke script missing validation_passed assertion (v2.9)")
 
 
 class TestSmokeScriptHasPassFailReporting(unittest.TestCase):

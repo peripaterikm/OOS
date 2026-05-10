@@ -1,14 +1,14 @@
-# OOS Roadmap v2.9 — Output Modes, Source URL Strictness & Correction Recovery
+﻿# OOS Roadmap v2.9 — Output Modes, Source URL Strictness & Correction Recovery
 
 ## 0. Roadmap Overview
 
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
-- [x] **0.2** Current item: `4.1 Operational validation refresh`
+- [x] **0.2** Current item: `5.1 Final v2.9 validation checkpoint`
 - [x] **0.3** Roadmap state: `active / in progress`
-- [x] **0.4** Completed from this roadmap: **6 / 8**
-- [x] **0.5** Remaining: **2 / 8**
+- [x] **0.4** Completed from this roadmap: **7 / 8**
+- [x] **0.5** Remaining: **1 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md` (complete, `9 / 9`, tag `v2.8` created, merged to main)
 
 ### Core Concept

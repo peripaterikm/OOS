@@ -373,13 +373,28 @@ try {
     Write-Host "  Malformed URLs    : $($TraceData.malformed_count)"
     Write-Host "  Artifacts checked : $($TraceData.artifacts_checked)"
     Write-Host "  Validation passed : $($TraceData.validation_passed)"
-    if ($PlaceholderCount -eq 0) {
-        Record-Pass "source URL traceability, zero placeholder URNs"
-    } else {
+    # v2.9: placeholder_count must be 0 AND missing_count must be 0
+    $MissingCount = $TraceData.missing_count
+    $TracePassed = $TraceData.validation_passed
+
+    $trace_ok = $true
+    if ($PlaceholderCount -ne 0) {
+        $trace_ok = $false
         Record-Fail "source URL traceability" "Found $PlaceholderCount placeholder URN(s)"
         foreach ($issue in $TraceData.issues) {
             Write-Host "    $($issue.artifact_key): $($issue.source_url_value)"
         }
+    }
+    if ($MissingCount -ne 0) {
+        $trace_ok = $false
+        Record-Fail "source URL traceability" "Found $MissingCount missing source URL(s) (v2.9 expects missing_count=0)"
+    }
+    if (-not $TracePassed) {
+        $trace_ok = $false
+        Record-Fail "source URL traceability" "validation_passed=$TracePassed (v2.9 expects True)"
+    }
+    if ($trace_ok) {
+        Record-Pass "source URL traceability (placeholder=0, missing=0, validation_passed=True)"
     }
 } catch {
     Record-Fail "source URL traceability parsing" $_.Exception.Message

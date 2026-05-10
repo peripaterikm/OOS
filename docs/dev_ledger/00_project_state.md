@@ -1,4 +1,4 @@
-# Dev Ledger Project State
+﻿# Dev Ledger Project State
 
 ## Current Roadmap
 
@@ -12,13 +12,13 @@
 ## Current Progress
 
 - Roadmap v2.9 planning created: yes
-- Roadmap v2.9 status: `active / in progress` (`6 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
-- Current item: `4.1 Operational validation refresh`
+- Roadmap v2.9 status: `active / in progress` (`7 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
+- Current item: `5.1 Final v2.9 validation checkpoint`
 - Roadmap state: `active / in progress`
-- Completed: `6 / 8`
-- Remaining: `2 / 8`
-- Latest completed roadmap item: Roadmap v2.9 `3.2` — Replace-all mode policy review
-- Next planned roadmap item: Roadmap v2.9 `4.1` — Operational validation refresh
+- Completed: `7 / 8`
+- Remaining: `1 / 8`
+- Latest completed roadmap item: Roadmap v2.9 `4.1` — Replace-all mode policy review
+- Next planned roadmap item: Roadmap v2.9 `5.1` — Operational validation refresh
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
@@ -164,3 +164,4 @@
 - Roadmap v2.9 item 2.1 mini-epic and run-report docs backfilled (2026-05-10). Item 2.1 was audit-only; findings: `missing_count=1` originates from synthetic `founder_inbox_v2_index` item (`inbox_review_822b4d010950`, `decision_recording_commands`), not quality gate; all 10 fixture cases clean; recommended narrow scanner exemption implemented in 2.2 (commit `13a008c`). Counters unchanged: Completed remains `4 / 8`, Remaining remains `4 / 8`.
 - Roadmap v2.9 item 3.1 completed as policy-only review (2026-05-10). Decision: DEFER correction rollback/undo to v2.10+. Rationale: undo-last is non-trivial (>200 lines, 4 files, new module); v2.9 is deferred-item-closure, not feature expansion. Re-replace workaround is adequate. Policy document at `docs/decisions/correction_rollback_undo_policy.md` defines 12 safety requirements (U-R1 through U-R12), 4 candidate modes (U1–U4), artifact dependency analysis, risk analysis, and v2.10+ implementation plan. No source/test/script/example/artifact changes. Completed: `5 / 8`, Remaining: `3 / 8`.
 - Roadmap v2.9 item 3.2 completed as policy-only review (2026-05-10). Decision: DEFER `--replace-all` to v2.10+. Rationale: no demonstrated real-run need; re-run workaround exists and is safer; replace-all violates R8 by design; implementing safely requires dry-run, confirm-step, and strict-mode machinery (~80 lines). Policy document at `docs/decisions/replace_all_mode_policy.md` defines 13 safety requirements (RA-R1 through RA-R13), artifact impact analysis across 9 artifacts, 7 identified risks with mitigations, and v2.10+ implementation plan. No source/test/script/example/artifact changes. Completed: `6 / 8`, Remaining: `2 / 8`.
+- Roadmap v2.9 item 4.1 completed as operational validation refresh (2026-05-10). Key deliverables: `src/oos/v2_9_operational_validation.py` (10-step validation module), `tests/test_v2_9_operational_validation.py` (28 focused tests), `scripts/run-controlled-smoke.ps1` Step 8 updated for missing_count=0 and validation_passed=True expectations, mini-epic and run report created. Completed: `7 / 8`, Remaining: `1 / 8`. Current item: `5.1 Final v2.9 validation checkpoint`.
