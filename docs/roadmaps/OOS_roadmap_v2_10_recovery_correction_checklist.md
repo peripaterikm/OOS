@@ -5,17 +5,18 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
-- [ ] **0.2** Current item: `0 — Planning checkpoint`
-- [ ] **0.3** Roadmap state: `planning`
+- [ ] **0.2** Current item: `1 — Undo-last contract finalization`
+- [ ] **0.3** Roadmap state: `ready for implementation`
 - [ ] **0.4** Completed from this roadmap: **0 / 9**
 - [ ] **0.5** Remaining: **9 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md` (complete, `8 / 8`, tag `v2.9`, merged to main via PR #49)
 
 ### Branch and Version
 
-- **Branch:** `planning/v2-10-roadmap`
+- **Planning branch:** `planning/v2-10-roadmap` (docs-only)
+- **Implementation branch:** `feat/v2-10-recovery-correction` (future; do not create yet)
 - **Based on:** v2.9 / PR #49 merge commit `35bc991` / tag `v2.9`
-- **Status:** Planning (docs-only)
+- **Status:** Ready for implementation
 
 ### Core Concept
 
@@ -76,7 +77,7 @@ LLM integration belongs later (`v2.11+`) unless present only as disabled/future 
 
 ### Workflow Rules
 
-- One roadmap/block branch. This planning checkpoint is docs-only on `planning/v2-10-roadmap`.
+- Planning branch: `planning/v2-10-roadmap` (docs-only, this file). Implementation branch: `feat/v2-10-recovery-correction` (future; do not use planning branch for implementation).
 - Local commit per roadmap item during implementation.
 - Push/PR/merge/tag only when explicitly requested.
 - Always run `.\scripts\dev-git-check.ps1` after each item completion.
@@ -107,16 +108,16 @@ Create the official Roadmap v2.10 planning checklist. Docs-only. No source code,
 
 ### Definition of Done
 
-- [ ] **0.0.1** Roadmap v2.10 document exists at `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`.
-- [ ] **0.0.2** Roadmap state is `planning`.
-- [ ] **0.0.3** Current item is `0 — Planning checkpoint`.
-- [ ] **0.0.4** Completed: `0 / 9`.
-- [ ] **0.0.5** Remaining: `9 / 9`.
-- [ ] **0.0.6** Branch `planning/v2-10-roadmap` exists and is checked out.
-- [ ] **0.0.7** All sections present: overview, scope summary, non-goals, numbered checklist (0–9), safety gates, validation commands, git discipline.
-- [ ] **0.0.8** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **0.0.9** `git status --short` shows only this file before commit.
-- [ ] **0.0.10** One local commit made with message: `Add Roadmap v2.10 recovery correction checklist`.
+- [x] **0.0.1** Roadmap v2.10 document exists at `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`.
+- [x] **0.0.2** Roadmap state was `planning`; now `ready for implementation`.
+- [x] **0.0.3** Current item was `0 — Planning checkpoint`; now `1 — Undo-last contract finalization`.
+- [x] **0.0.4** Completed: `0 / 9`.
+- [x] **0.0.5** Remaining: `9 / 9`.
+- [x] **0.0.6** Branch `planning/v2-10-roadmap` exists and is checked out.
+- [x] **0.0.7** All sections present: overview, scope summary, non-goals, numbered checklist (0–9), safety gates, validation commands, git discipline.
+- [x] **0.0.8** `.\scripts\dev-git-check.ps1` passes.
+- [x] **0.0.9** `git status --short` shows only this file before commit.
+- [x] **0.0.10** One local commit made with message: `Add Roadmap v2.10 recovery correction checklist`.
 
 ---
 
@@ -140,7 +141,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 **Intent:** Translate the 12 safety requirements (U-R1–U-R12) from [`docs/decisions/correction_rollback_undo_policy.md`](../decisions/correction_rollback_undo_policy.md) into an implementation-ready contract. Define exact artifact write order, the `CorrectionEntry` schema for `correction_mode = "undo"`, manifest fields (`undone_decision_ids`, `undone_at`), and CLI output expectations. Resolve the design pre-work items listed in the policy Section 9.4 (pre-correction snapshot decision, undo entry schema, CLI output format, manifest updates, interaction with replace-all).
 
-**Allowed change type:** Create new contract file in `docs/contracts/`. Update `docs/decisions/correction_rollback_undo_policy.md` to mark as "implemented at v2.10" after implementation (item 2).
+**Allowed change type:** Create new contract file in `docs/contracts/`. No source code changes. (Policy document status updates belong to item 9 final checkpoint, not this item.)
 
 **Validation expectation:** Contract is self-consistent with the 12 safety requirements U-R1–U-R12. No source code changes.
 
@@ -237,7 +238,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 **Intent:** Only if item 4 gate is `PASSED`. Implement the `--replace-all` mode defined in the policy document Section 9.2: strict completeness check (RA-R6), dry-run/plan mode (RA-R4), confirm-step prompt (RA-R5), and all 13 safety requirements RA-R1–RA-R13. Add `replace_all: bool = False` parameter to `import_founder_decisions()` in [`src/oos/founder_decision_import.py`](../../src/oos/founder_decision_import.py). Add `--replace-all` and `--dry-run` flags to `import-founder-decisions-v2` in [`src/oos/cli.py`](../../src/oos/cli.py).
 
-**Allowed change type:** Modify `src/oos/founder_decision_import.py` and `src/oos/cli.py`.
+**Allowed change type:** Modify `src/oos/founder_decision_import.py` and `src/oos/cli.py`. Create or modify `tests/test_replace_all_correction.py` (or equivalent test file for replace-all).
 
 **Validation expectation:** Replace-all with complete file succeeds. Replace-all with incomplete file (missing opportunity IDs) is rejected with list of missing opportunities. Dry-run shows plan without modifying artifacts. Confirm-step prompt requires explicit "yes". All 13 safety requirements RA-R1–RA-R13 satisfied. Undo-last correctly handles a replace-all correction as the last entry.
 
@@ -290,7 +291,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 **Intent:** The output mode contract (v2.9 item 1.1, Section 3.4) requires per-command justification for adding `--utf8`. v2.9 scoped `--utf8` to `weekly-cycle-status-v2`, `weekly-dashboard-v2`, and `build-weekly-run-report-v2`. This item audits the remaining CLI commands to determine if any produce terminal-facing output with visually significant symbols that would benefit from `--utf8`. Produce a documented recommendation. Implementation only if evidence supports it and change is trivial (≤30 lines per command, ≤2 files total).
 
-**Allowed change type:** Create `docs/decisions/utf8_expansion_audit_v2_10.md`. Only if evidence supports expansion and change is trivial: modify `src/oos/cli.py` and the affected renderer module(s).
+**Allowed change type:** Primary deliverable: create `docs/decisions/utf8_expansion_audit_v2_10.md` (audit-first). Source code changes are permitted ONLY if the audit explicitly recommends expansion AND the change is trivial (≤30 lines per command, ≤2 files total). If the audit does not recommend expansion, NO source code changes are permitted; the audit document alone closes this item.
 
 **Validation expectation:** If no commands qualify, audit document records the finding and no code changes are made. If commands qualify and are implemented, each added `--utf8` has tests covering both output modes, and ASCII-safe default remains enforced.
 
@@ -336,14 +337,14 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 **Intent:** Final validation checkpoint. Run full unittest discovery, all validation scripts, and confirm roadmap completion. Update project state. Mark roadmap as `complete / closed`.
 
-**Allowed change type:** Update this roadmap checklist. Update `docs/dev_ledger/00_project_state.md` to reflect v2.10 completion. Create mini-epic and run report for final checkpoint.
+**Allowed change type:** Update this roadmap checklist. Update `docs/decisions/correction_rollback_undo_policy.md` to mark as "implemented at v2.10". Update `docs/dev_ledger/00_project_state.md` to reflect v2.10 completion. Create mini-epic and run report for final checkpoint.
 
 **Validation expectation:** All items 1–8 have `[x]` status (excluding items 4–5 if gate was `BLOCKED`). Full unittest discovery passes. All validation scripts pass. Working tree clean.
 
 **Definition of done:**
 - [ ] **9.1.1** All applicable implementation items have `[x] Done` status.
 - [ ] **9.1.2** Roadmap state is `complete / closed`.
-- [ ] **9.1.3** Completed count matches expected (8 if replace-all gated in, 6 if replace-all blocked).
+- [ ] **9.1.3** Completed count matches expected: 9 / 9 if replace-all was implemented; 8 / 9 if replace-all gate was BLOCKED and item 5 was skipped.
 - [ ] **9.1.4** Remaining: `0`.
 - [ ] **9.1.5** Full unittest discovery: all tests pass, 0 failures.
 - [ ] **9.1.6** `.\scripts\dev-validate-final.ps1` passes (all gates green).
@@ -407,7 +408,7 @@ Use only wrapper scripts. Do not use chained shell commands.
 
 ## Git Discipline
 
-- **One roadmap/block branch:** `planning/v2-10-roadmap`
+- **Planning branch:** `planning/v2-10-roadmap` (docs-only). **Implementation branch:** `feat/v2-10-recovery-correction` (future; do not use planning branch for implementation).
 - **One local commit per roadmap item.** Commit after each item's definition of done is satisfied.
 - **Push/PR/merge/tag only when explicitly requested.** Do not push. Do not create PR. Do not merge. Do not tag.
 - **Always run `.\scripts\dev-git-check.ps1` after each item completion.**
