@@ -6,19 +6,20 @@
 - Roadmap v2.6 status: complete (`9 / 9`, merged to main, tag `v2.6` created).
 - Roadmap v2.7 status: complete (`8 / 8`, merged to main, tag `v2.7` created).
 - Roadmap v2.8 status: complete (`9 / 9`, merged to main, tag `v2.8` created).
+- Roadmap v2.9 status: complete (`8 / 8`, branch `feat/v2-9-output-source-recovery-block-1`, local-only)
 - Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
 - Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
 - Roadmap v2.9 planning created: yes
-- Roadmap v2.9 status: `active / in progress` (`7 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
-- Current item: `5.1 Final v2.9 validation checkpoint`
-- Roadmap state: `active / in progress`
-- Completed: `7 / 8`
-- Remaining: `1 / 8`
-- Latest completed roadmap item: Roadmap v2.9 `4.1` — Replace-all mode policy review
-- Next planned roadmap item: Roadmap v2.9 `5.1` — Operational validation refresh
+- Roadmap v2.9 status: `complete / closed` (`8 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
+- Current item: `none / roadmap complete`
+- Roadmap state: `complete / closed`
+- Completed: `8 / 8`
+- Remaining: `0 / 8`
+- Latest completed roadmap item: Roadmap v2.9 `5.1` — Final v2.9 validation checkpoint
+- Next planned roadmap item: `none (v2.9 is complete; v2.10+ to be planned)`
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
@@ -165,3 +166,4 @@
 - Roadmap v2.9 item 3.1 completed as policy-only review (2026-05-10). Decision: DEFER correction rollback/undo to v2.10+. Rationale: undo-last is non-trivial (>200 lines, 4 files, new module); v2.9 is deferred-item-closure, not feature expansion. Re-replace workaround is adequate. Policy document at `docs/decisions/correction_rollback_undo_policy.md` defines 12 safety requirements (U-R1 through U-R12), 4 candidate modes (U1–U4), artifact dependency analysis, risk analysis, and v2.10+ implementation plan. No source/test/script/example/artifact changes. Completed: `5 / 8`, Remaining: `3 / 8`.
 - Roadmap v2.9 item 3.2 completed as policy-only review (2026-05-10). Decision: DEFER `--replace-all` to v2.10+. Rationale: no demonstrated real-run need; re-run workaround exists and is safer; replace-all violates R8 by design; implementing safely requires dry-run, confirm-step, and strict-mode machinery (~80 lines). Policy document at `docs/decisions/replace_all_mode_policy.md` defines 13 safety requirements (RA-R1 through RA-R13), artifact impact analysis across 9 artifacts, 7 identified risks with mitigations, and v2.10+ implementation plan. No source/test/script/example/artifact changes. Completed: `6 / 8`, Remaining: `2 / 8`.
 - Roadmap v2.9 item 4.1 completed as operational validation refresh (2026-05-10). Key deliverables: `src/oos/v2_9_operational_validation.py` (10-step validation module), `tests/test_v2_9_operational_validation.py` (28 focused tests), `scripts/run-controlled-smoke.ps1` Step 8 updated for missing_count=0 and validation_passed=True expectations, mini-epic and run report created. Completed: `7 / 8`, Remaining: `1 / 8`. Current item: `5.1 Final v2.9 validation checkpoint`.
+- Roadmap v2.9 item 5.1 closed the roadmap with a final validation checkpoint (2026-05-10): 1739 tests, 0 failures; `dev-test.ps1 -Full -Verbose` pass; `run-controlled-smoke.ps1` pass (14/14 steps, placeholder=0, missing=0, missing_count=0); `dev-validate-final.ps1` pass (all gates green); `dev-git-check.ps1` pass (6/6); `git diff --check` clean; `git status` clean; roadmap state `complete / closed` at `8 / 8`. Deferred to v2.10+: `undo-last` implementation (`docs/decisions/correction_rollback_undo_policy.md`), `replace-all` implementation (`docs/decisions/replace_all_mode_policy.md`), terminal encoding auto-detection. No push, PR, merge, or tag was performed. Roadmap v2.9 is complete and closed.

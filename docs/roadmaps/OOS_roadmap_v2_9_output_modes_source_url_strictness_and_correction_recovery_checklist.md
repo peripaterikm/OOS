@@ -5,11 +5,11 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
-- [x] **0.2** Current item: `5.1 Final v2.9 validation checkpoint`
-- [x] **0.3** Roadmap state: `active / in progress`
-- [x] **0.4** Completed from this roadmap: **7 / 8**
-- [x] **0.5** Remaining: **1 / 8**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md` (complete, `9 / 9`, tag `v2.8` created, merged to main)
+- [x] **0.2** Current item: `none / roadmap complete`
+- [x] **0.3** Roadmap state: `complete / closed`
+- [x] **0.4** Completed from this roadmap: **8 / 8**
+- [x] **0.5** Remaining: **0 / 8**
+- [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md` (complete, `9 / 9`, tag `v2.8` created, merged to main)
 
 ### Core Concept
 
@@ -507,18 +507,18 @@ Update the smoke/E2E validation suite to cover all new v2.9 capabilities: ASCII-
 
 ### Acceptance criteria
 
-- [ ] **4.1.1** ASCII-safe default output is verified for `weekly-cycle-status-v2`.
-- [ ] **4.1.2** ASCII-safe default output is verified for `weekly-dashboard-v2`.
-- [ ] **4.1.3** `--utf8` output is verified for `weekly-cycle-status-v2` (if `--utf8` implemented).
-- [ ] **4.1.4** `--utf8` output is verified for `weekly-dashboard-v2` (if `--utf8` implemented).
-- [ ] **4.1.5** Source URL traceability `missing_count = 0` is verified for fixture E2E runs.
-- [ ] **4.1.6** Source URL traceability `placeholder_count = 0` is verified (no regression).
-- [ ] **4.1.7** All existing v2.6 E2E validation steps pass.
-- [ ] **4.1.8** All existing v2.8 correction E2E validation steps (C1–C14) pass.
-- [ ] **4.1.9** Undo workflow validation passes (if undo implemented in item 3.1).
-- [ ] **4.1.10** Controlled weekly run smoke test runbook is updated for v2.9.
-- [ ] **4.1.11** Focused tests (≥10) cover: ASCII-safe status, ASCII-safe dashboard, UTF-8 status, UTF-8 dashboard, traceability missing_count=0, traceability placeholder_count=0, v2.6 E2E still passes, v2.8 correction E2E still passes, smoke test updates, and undo validation (if implemented).
-- [ ] **4.1.12** No live APIs/LLMs; advisory-only preserved.
+- [x] **4.1.1** ASCII-safe default output is verified for `weekly-cycle-status-v2`.
+- [x] **4.1.2** ASCII-safe default output is verified for `weekly-dashboard-v2`.
+- [x] **4.1.3** `--utf8` output is verified for `weekly-cycle-status-v2` (if `--utf8` implemented).
+- [x] **4.1.4** `--utf8` output is verified for `weekly-dashboard-v2` (if `--utf8` implemented).
+- [x] **4.1.5** Source URL traceability `missing_count = 0` is verified for fixture E2E runs.
+- [x] **4.1.6** Source URL traceability `placeholder_count = 0` is verified (no regression).
+- [x] **4.1.7** All existing v2.6 E2E validation steps pass.
+- [x] **4.1.8** All existing v2.8 correction E2E validation steps (C1–C14) pass.
+- [x] **4.1.9** Undo workflow: not applicable — implementation deferred to v2.10+ (item 3.1).
+- [x] **4.1.10** Controlled weekly run smoke test runbook is updated for v2.9.
+- [x] **4.1.11** Focused tests (28) cover all required scenarios: ASCII-safe status/dashboard, UTF-8 status/dashboard, traceability missing_count=0, traceability placeholder_count=0, v2.6 E2E still passes, v2.8 correction E2E still passes, smoke test step 8 updated.
+- [x] **4.1.12** No live APIs/LLMs; advisory-only preserved.
 
 ---
 
@@ -558,23 +558,23 @@ Close the roadmap: verify all items complete, all tests pass, all validation gat
 
 ### Acceptance criteria
 
-- [ ] **5.1.1** All 8 implementation items have `[x] Done` status.
-- [ ] **5.1.2** Roadmap state is `complete / closed`.
-- [ ] **5.1.3** Completed: `8 / 8`.
-- [ ] **5.1.4** Remaining: `0 / 8`.
-- [ ] **5.1.5** Full unittest discovery: all tests pass, 0 failures.
-- [ ] **5.1.6** `scripts/oos-validate.ps1` passes.
-- [ ] **5.1.7** `scripts/dev-validate-final.ps1` passes (all gates green).
-- [ ] **5.1.8** `scripts/run-controlled-smoke.ps1` passes.
-- [ ] **5.1.9** `scripts/dev-git-check.ps1` passes.
-- [ ] **5.1.10** `git diff --check` clean.
-- [ ] **5.1.11** Source URL traceability: `placeholder_count = 0`, `missing_count = 0` for fixture E2E runs.
-- [ ] **5.1.12** ASCII-safe default output confirmed on all CLI commands.
-- [ ] **5.1.13** `--utf8` flag works correctly (if implemented).
-- [ ] **5.1.14** Correction workflow E2E validation passes (replace + amend + traceability).
-- [ ] **5.1.15** Undo workflow validation passes (if implemented).
-- [ ] **5.1.16** Dev Ledger updated with final state.
-- [ ] **5.1.17** No push, PR, merge, tag, or release. (local commit only)
+- [x] **5.1.1** All 8 implementation items have `[x] Done` status.
+- [x] **5.1.2** Roadmap state is `complete / closed`.
+- [x] **5.1.3** Completed: `8 / 8`.
+- [x] **5.1.4** Remaining: `0 / 8`.
+- [x] **5.1.5** Full unittest discovery: 1739 tests pass, 0 failures.
+- [x] **5.1.6** `scripts/oos-validate.ps1` passes. *(validated via dev-validate-final.ps1)*
+- [x] **5.1.7** `scripts/dev-validate-final.ps1` passes (all gates green).
+- [x] **5.1.8** `scripts/run-controlled-smoke.ps1` passes (14/14 steps).
+- [x] **5.1.9** `scripts/dev-git-check.ps1` passes (6/6).
+- [x] **5.1.10** `git diff --check` clean.
+- [x] **5.1.11** Source URL traceability: `placeholder_count = 0`, `missing_count = 0` for fixture E2E runs.
+- [x] **5.1.12** ASCII-safe default output confirmed on all CLI commands.
+- [x] **5.1.13** `--utf8` flag works correctly.
+- [x] **5.1.14** Correction workflow E2E validation passes (replace + amend + traceability).
+- [x] **5.1.15** Undo workflow: policy deferred to v2.10+; no validation artifact required.
+- [x] **5.1.16** Dev Ledger updated with final state.
+- [x] **5.1.17** No push, PR, merge, tag, or release. (local commit only)
 
 ---
 
