@@ -287,15 +287,17 @@ This item creates the precise correction plan before any code or fixture changes
 
 ### Acceptance criteria
 
-- [ ] **2.1.1** Source URL traceability scanner is re-run against v2.8 E2E validation artifacts; `missing_count` and affected items are captured.
-- [ ] **2.1.2** Exact fixture/test scenario producing `missing_count != 0` is identified.
-- [ ] **2.1.3** Each affected scenario is classified as fixture gap, synthetic item, or insufficient-evidence.
-- [ ] **2.1.4** Exact changes are defined: file paths, line ranges, change descriptions.
-- [ ] **2.1.5** Change size estimate is documented: lines, files, test impact.
-- [ ] **2.1.6** If ≤100 lines across ≤3 files, the fix is approved for item 2.2. If larger, explicit rationale for still-in-scope is documented.
-- [ ] **2.1.7** Deferral document updated with correction plan section.
-- [ ] **2.1.8** Source URL traceability contract updated if exemption policy changes.
-- [ ] **2.1.9** No source code changes. No fixture changes (audit/plan only). No live APIs/LLMs.
+- [x] **2.1.1** Source URL traceability scanner is re-run against v2.8 E2E validation artifacts; `missing_count` and affected items are captured.
+- [x] **2.1.2** Exact fixture/test scenario producing `missing_count != 0` is identified: `founder_inbox_v2_index`, item `inbox_review_822b4d010950`, section `decision_recording_commands`.
+- [x] **2.1.3** Each affected scenario is classified: **synthetic item** (all five lineage fields empty, no evidence lineage).
+- [x] **2.1.4** Exact changes are defined: narrow scanner exemption in `source_url_traceability.py` (file paths, line ranges, change descriptions in mini-epic).
+- [x] **2.1.5** Change size estimate is documented: ~35 source lines, ~155 total lines, 7 files.
+- [x] **2.1.6** Exceeds ≤100 lines across ≤3 files threshold; qualified as "small and safe" — 35 source lines in 1 file with no semantic pipeline changes. Approved for item 2.2.
+- [x] **2.1.7** Deferral document updated with correction plan section (Section 10, added by item 2.2).
+- [x] **2.1.8** Source URL traceability contract updated with synthetic inbox exemption (Section 7a, added by item 2.2).
+- [x] **2.1.9** No source code changes. No fixture changes (audit/plan only). No live APIs/LLMs.
+
+> **Note (2026-05-10):** 2.1 mini-epic and run-report docs backfilled. Item was completed as audit-only; counters unchanged.
 
 ---
 
