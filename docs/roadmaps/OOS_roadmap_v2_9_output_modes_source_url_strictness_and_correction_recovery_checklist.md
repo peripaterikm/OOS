@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
-- [x] **0.2** Current item: `3.1 Correction rollback / undo policy review`
+- [x] **0.2** Current item: `3.2 Replace-all mode policy review`
 - [x] **0.3** Roadmap state: `active / in progress`
-- [x] **0.4** Completed from this roadmap: **4 / 8**
-- [x] **0.5** Remaining: **4 / 8**
+- [x] **0.4** Completed from this roadmap: **5 / 8**
+- [x] **0.5** Remaining: **3 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md` (complete, `9 / 9`, tag `v2.8` created, merged to main)
 
 ### Core Concept
@@ -403,16 +403,16 @@ The v2.8 correction artifact contract (Section 13.8) lists undo/rollback as a "v
 
 ### Acceptance criteria
 
-- [ ] **3.1.1** Existing correction infrastructure (`import_history.json`, `replaced_decisions/`, `decision_correction_rebuild.py`) is reviewed.
-- [ ] **3.1.2** Minimum safe undo semantics are defined: undo last correction, restore archived decision, rebuild derived artifacts, append audit history, update manifest.
-- [ ] **3.1.3** Feasibility is assessed and classified as trivial, small, or non-trivial.
-- [ ] **3.1.4** Decision is explicit: implement (if trivial/small) or defer (if non-trivial).
-- [ ] **3.1.5** If implemented: `--undo-last` flag works correctly; tests cover undo + rebuild + audit + manifest.
-- [ ] **3.1.6** If deferred: policy document records the specification with rationale.
-- [ ] **3.1.7** Undo must be advisory-only: no autonomous decisions, no portfolio mutations.
-- [ ] **3.1.8** Undo must be fail-closed: any inconsistency → no artifacts written.
-- [ ] **3.1.9** Source URL traceability must survive undo (no placeholder URNs introduced).
-- [ ] **3.1.10** No live APIs/LLMs.
+- [x] **3.1.1** Existing correction infrastructure (`import_history.json`, `replaced_decisions/`, `decision_correction_rebuild.py`) is reviewed.
+- [x] **3.1.2** Minimum safe undo semantics are defined: undo last correction, restore archived decision, rebuild derived artifacts, append audit history, update manifest.
+- [x] **3.1.3** Feasibility is assessed and classified as non-trivial (>200 lines, 4 files).
+- [x] **3.1.4** Decision: DEFER to v2.10+.
+- [x] **3.1.5** Not applicable — implementation deferred to v2.10+.
+- [x] **3.1.6** Policy document (`docs/decisions/correction_rollback_undo_policy.md`) records the specification with rationale and v2.10+ implementation plan.
+- [x] **3.1.7** Undo is advisory-only: no autonomous decisions, no portfolio mutations (U-R6).
+- [x] **3.1.8** Undo is fail-closed: any inconsistency → no artifacts written (U-R2, U-R3).
+- [x] **3.1.9** Source URL traceability must survive undo (U-R8: zero placeholder URNs).
+- [x] **3.1.10** No live APIs/LLMs.
 
 ---
 

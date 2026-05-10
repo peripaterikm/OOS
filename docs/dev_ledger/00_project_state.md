@@ -12,13 +12,13 @@
 ## Current Progress
 
 - Roadmap v2.9 planning created: yes
-- Roadmap v2.9 status: `active / in progress` (`4 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
-- Current item: `3.1 Correction rollback / undo policy review`
+- Roadmap v2.9 status: `active / in progress` (`5 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
+- Current item: `3.2 Replace-all mode policy review`
 - Roadmap state: `active / in progress`
-- Completed: `4 / 8`
-- Remaining: `4 / 8`
-- Latest completed roadmap item: Roadmap v2.9 `2.2` — Quality gate source URL strictness / synthetic inbox exemption
-- Next planned roadmap item: Roadmap v2.9 `3.1` — Correction rollback / undo policy review
+- Completed: `5 / 8`
+- Remaining: `3 / 8`
+- Latest completed roadmap item: Roadmap v2.9 `3.1` — Correction rollback / undo policy review
+- Next planned roadmap item: Roadmap v2.9 `3.2` — Replace-all mode policy review
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
@@ -162,3 +162,4 @@
 - Roadmap v2.8 item 7.1 closed the roadmap with a final validation checkpoint: 1665 tests, 0 failures; `dev-validate-final.ps1` pass (all gates green); `run-controlled-smoke.ps1` pass (14/14, zero placeholder URNs); `dev-git-check.ps1` pass (6/6); `git diff --check` clean; `git status` clean; roadmap state `complete / closed` at `9 / 9`. Deferred items: `--utf8` opt-in flag (noted as acceptance criterion gap in 4.1), `--replace-all` mode, quality gate source URL fixture gap, optional rollback/undo. No push, PR, merge, or tag was performed. Roadmap v2.8 is complete.
 - Roadmap v2.9 planning created the Output Modes, Source URL Strictness & Correction Recovery checklist with 8 implementation items: output mode contract and CLI policy, `--utf8` opt-in flag implementation, quality gate source URL fixture audit and correction plan, quality gate source URL fixture cleanup, correction rollback/undo policy review, replace-all mode policy review, operational validation refresh, and final v2.9 validation checkpoint. Planning on `planning/v2-9-roadmap`. Docs-only; no source code, tests, or live API/LLM calls were performed by this planning checkpoint.
 - Roadmap v2.9 item 2.1 mini-epic and run-report docs backfilled (2026-05-10). Item 2.1 was audit-only; findings: `missing_count=1` originates from synthetic `founder_inbox_v2_index` item (`inbox_review_822b4d010950`, `decision_recording_commands`), not quality gate; all 10 fixture cases clean; recommended narrow scanner exemption implemented in 2.2 (commit `13a008c`). Counters unchanged: Completed remains `4 / 8`, Remaining remains `4 / 8`.
+- Roadmap v2.9 item 3.1 completed as policy-only review (2026-05-10). Decision: DEFER correction rollback/undo to v2.10+. Rationale: undo-last is non-trivial (>200 lines, 4 files, new module); v2.9 is deferred-item-closure, not feature expansion. Re-replace workaround is adequate. Policy document at `docs/decisions/correction_rollback_undo_policy.md` defines 12 safety requirements (U-R1 through U-R12), 4 candidate modes (U1–U4), artifact dependency analysis, risk analysis, and v2.10+ implementation plan. No source/test/script/example/artifact changes. Completed: `5 / 8`, Remaining: `3 / 8`.
