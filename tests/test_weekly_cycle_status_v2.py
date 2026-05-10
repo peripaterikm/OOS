@@ -312,7 +312,7 @@ class WeeklyCycleStatusModelTests(unittest.TestCase):
         self.assertIn("## 7. Feedback / Profile / Parking Lot Status", md)
         self.assertIn("## 8. Warnings / Errors", md)
         self.assertIn("## 9. Recommended Next Step", md)
-        self.assertIn("## 11. Artifact Paths", md)
+        self.assertIn("## 12. Artifact Paths", md)
         self.assertIn("## Safety", md)
         self.assertIn("All is well.", md)
 
@@ -1082,3 +1082,249 @@ class TestImportHistoryStatusVisibility(unittest.TestCase):
         status = build_weekly_cycle_status(root, run_id=run_id)
         self.assertFalse(status.import_history_present)
         self.assertEqual(status.import_history_entry_count, 0)
+
+
+# ---------------------------------------------------------------------------
+# Tests: Decision Corrections Section (v2.8 item 3.1)
+# ---------------------------------------------------------------------------
+
+
+class TestDecisionCorrectionsStatusVisibility(unittest.TestCase):
+    """Decision Corrections section and aliases in weekly-cycle-status-v2."""
+
+    def test_status_exposes_corrected_decision_count(self):
+        """Status exposes corrected_decision_count from import history."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_corr01"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_abc",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_001"],
+                    "old_decision_ids": ["fd_old"],
+                    "new_decision_ids": ["fd_new"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        self.assertEqual(status.corrected_decision_count, 1)
+
+    def test_status_exposes_replaced_decision_ids(self):
+        """Status exposes replaced_decision_ids alias."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_corr02"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_r1",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_x"],
+                    "old_decision_ids": ["fd_replaced_1", "fd_replaced_2"],
+                    "new_decision_ids": ["fd_new_1"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        self.assertIn("fd_replaced_1", status.replaced_decision_ids)
+        self.assertIn("fd_replaced_2", status.replaced_decision_ids)
+        self.assertEqual(len(status.replaced_decision_ids), 2)
+
+    def test_status_exposes_amended_decision_ids(self):
+        """Status exposes amended_decision_ids alias."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_corr03"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_a1",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": ["ri_y"],
+                    "old_decision_ids": ["fd_amended"],
+                    "new_decision_ids": ["fd_amended"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        self.assertIn("fd_amended", status.amended_decision_ids)
+        self.assertEqual(len(status.amended_decision_ids), 1)
+
+    def test_status_markdown_includes_decision_corrections_section(self):
+        """Status Markdown includes Decision Corrections section when history exists."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_corr04"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_md1",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_a"],
+                    "old_decision_ids": ["fd_a"],
+                    "new_decision_ids": ["fd_b"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status)
+        self.assertIn("## 11. Decision Corrections", md)
+        self.assertIn("Corrected decision count", md)
+        self.assertIn("Per-Correction Details", md)
+        self.assertIn("corr_md1", md)
+        self.assertIn("replace", md)
+
+    def test_status_markdown_includes_corrected_indicator(self):
+        """Status Markdown includes [CORRECTED] indicator when history exists."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_corr05"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_ind1",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": ["ri_z"],
+                    "old_decision_ids": ["fd_z"],
+                    "new_decision_ids": ["fd_z"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status)
+        self.assertIn("**[CORRECTED]**", md)
+        self.assertIn(run_id, md)
+
+    def test_status_markdown_shows_none_state_when_no_history(self):
+        """Status Markdown shows clear NONE state when import_history.json absent."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_corr06"
+        _build_mock_weekly_run(root, run_id)
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status)
+        self.assertIn("## 11. Decision Corrections", md)
+        self.assertIn("Corrected decision count**: 0", md)
+        self.assertIn("NONE (no corrections have been applied", md)
+        # [CORRECTED] indicator should NOT appear
+        self.assertNotIn("**[CORRECTED]**", md)
+
+    def test_status_remains_valid_when_corrections_only_exist(self):
+        """Status remains valid/exit-code-compatible when corrections alone exist."""
+        root = _temp_project_root(self)
+        run_id = "weekly_run_2026_05_10_corr07"
+        run_dir = _build_mock_weekly_run(root, run_id)
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_val1",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_v"],
+                    "old_decision_ids": ["fd_v1"],
+                    "new_decision_ids": ["fd_v2"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        # The run should still be valid — corrections alone do not break validation
+        self.assertTrue(status.manifest_valid)
+        self.assertTrue(status.validation_passed)
+        self.assertEqual(status.corrected_decision_count, 1)
+
+        # Verify JSON serialization still works
+        json_str = weekly_cycle_status_to_json(status)
+        data = json.loads(json_str)
+        self.assertEqual(data["corrected_decision_count"], 1)
+        self.assertIn("fd_v1", data["replaced_decision_ids"])

@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
-- [x] **0.2** Current item: `2.1 Import history / audit trail` (complete)
+- [x] **0.2** Current item: `3.1 CLI and status/report integration for correction state` (complete)
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **4 / 9**
-- [ ] **0.5** Remaining: **5 / 9**
+- [ ] **0.4** Completed from this roadmap: **5 / 9**
+- [ ] **0.5** Remaining: **4 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md` (complete, `8 / 8`, tag `v2.7` created, merged to main)
 
 ### Core Concept
@@ -399,16 +399,16 @@ The current `weekly-cycle-status-v2` shows decision counts by value (PROMOTE, PA
 
 ### Acceptance criteria
 
-- [ ] **3.1.1** `WeeklyCycleStatus` includes `corrected_decision_count`, `replaced_decision_ids`, `amended_decision_ids`.
-- [ ] **3.1.2** Status Markdown shows "Decision Corrections" section with per-correction details.
-- [ ] **3.1.3** Status shows `[CORRECTED]` indicator on corrected run directories.
-- [ ] **3.1.4** `WeeklyRunReport` includes correction summary with replaced/amended counts.
-- [ ] **3.1.5** `WeeklyDashboardRunSummary` includes `correction_count`.
-- [ ] **3.1.6** Dashboard Markdown renders correction indicators.
-- [ ] **3.1.7** CLI exit codes: 0 for valid corrected state, 1 for inconsistencies, 2 for invalid.
-- [ ] **3.1.8** Corrections alone do not trigger non-zero exit codes.
-- [ ] **3.1.9** Focused tests (≥10) cover: status with corrections, status without corrections, report with corrections, dashboard with corrections, exit codes, empty correction lists, malformed correction state.
-- [ ] **3.1.10** No live APIs/LLMs; advisory-only preserved.
+- [x] **3.1.1** `WeeklyCycleStatus` includes `corrected_decision_count`, `replaced_decision_ids`, `amended_decision_ids`.
+- [x] **3.1.2** Status Markdown shows "Decision Corrections" section with per-correction details.
+- [x] **3.1.3** Status shows `[CORRECTED]` indicator on corrected run directories.
+- [x] **3.1.4** `WeeklyRunReport` includes correction summary with replaced/amended counts.
+- [x] **3.1.5** `WeeklyDashboardRunSummary` includes `correction_count`.
+- [x] **3.1.6** Dashboard Markdown renders correction indicators.
+- [x] **3.1.7** CLI exit codes: 0 for valid corrected state, 1 for inconsistencies, 2 for invalid.
+- [x] **3.1.8** Corrections alone do not trigger non-zero exit codes.
+- [x] **3.1.9** Focused tests (≥10) cover: status with corrections, status without corrections, report with corrections, dashboard with corrections, exit codes, empty correction lists, malformed correction state.
+- [x] **3.1.10** No live APIs/LLMs; advisory-only preserved.
 
 ---
 

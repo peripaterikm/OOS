@@ -563,6 +563,14 @@ def render_weekly_run_report_markdown(report: WeeklyRunReport) -> str:
         amended = ihs.get("amended_decision_ids", [])
         if amended:
             lines.append(f"- **Amended decision IDs**: {', '.join(f'`{did}`' for did in amended)}")
+        # Per-correction details (v2.8 item 3.1)
+        if ihs.get("entry_count", 0) > 0:
+            lines.append("")
+            lines.append("### Per-Correction Details")
+            lines.append("")
+            for i in range(ihs.get("entry_count", 0)):
+                lines.append(f"**Correction {i+1}**: see `weekly_cycle_status` / `import_history.json` for full details.")
+            lines.append("")
     else:
         lines.append("- No corrections recorded.")
     lines.append("")
@@ -782,18 +790,19 @@ def render_weekly_dashboard_markdown(dashboard: WeeklyDashboardIndex) -> str:
         lines.append("## Run Summary Table")
         lines.append("")
         lines.append(
-            "| Run ID | Manifest | Valid | Artifacts | Inbox Items | Decisions | Actions | Warnings | Errors | Recommended Next Step |"
+            "| Run ID | Manifest | Valid | Artifacts | Inbox Items | Decisions | Corrections | Actions | Warnings | Errors | Recommended Next Step |"
         )
         lines.append(
-            "|--------|----------|-------|-----------|-------------|-----------|---------|----------|--------|------------------------|"
+            "|--------|----------|-------|-----------|-------------|-----------|-------------|---------|----------|--------|------------------------|"
         )
         for r in dashboard.runs:
             manifest_mark = "✓" if r.manifest_valid else "✗"
             valid_mark = "✓" if r.validation_passed else "✗"
             artifacts_str = f"{r.present_artifact_count}/{r.expected_artifact_count}"
+            corr_str = f"{r.correction_count} [CORRECTED]" if r.correction_count > 0 else "0"
             rec = r.recommended_next_step[:60] + "..." if len(r.recommended_next_step) > 60 else r.recommended_next_step
             lines.append(
-                f"| `{r.run_id}` | {manifest_mark} | {valid_mark} | {artifacts_str} | {r.founder_inbox_review_item_count} | {r.founder_decision_count} | {r.next_best_action_count} | {r.warning_count} | {r.error_count} | {rec} |"
+                f"| `{r.run_id}` | {manifest_mark} | {valid_mark} | {artifacts_str} | {r.founder_inbox_review_item_count} | {r.founder_decision_count} | {corr_str} | {r.next_best_action_count} | {r.warning_count} | {r.error_count} | {rec} |"
             )
         lines.append("")
 
