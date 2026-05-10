@@ -1,4 +1,4 @@
-# Dev Ledger Project State
+﻿# Dev Ledger Project State
 
 ## Current Roadmap
 
@@ -6,25 +6,26 @@
 - Roadmap v2.6 status: complete (`9 / 9`, merged to main, tag `v2.6` created).
 - Roadmap v2.7 status: complete (`8 / 8`, merged to main, tag `v2.7` created).
 - Roadmap v2.8 status: complete (`9 / 9`, merged to main, tag `v2.8` created).
+- Roadmap v2.9 status: complete (`8 / 8`, branch `feat/v2-9-output-source-recovery-block-1`, local-only)
 - Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
 - Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
 - Roadmap v2.9 planning created: yes
-- Roadmap v2.9 status: `active / planned` (`0 / 8`, branch `planning/v2-9-roadmap`)
-- Current item: `1.1 Output mode contract and CLI policy`
-- Roadmap state: `active / planned`
-- Completed: `0 / 8`
-- Remaining: `8 / 8`
-- Latest completed roadmap item: Roadmap v2.8 `7.1` — Final v2.8 validation checkpoint
-- Next planned roadmap item: Roadmap v2.9 `1.1` — Output mode contract and CLI policy
+- Roadmap v2.9 status: `complete / closed` (`8 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
+- Current item: `none / roadmap complete`
+- Roadmap state: `complete / closed`
+- Completed: `8 / 8`
+- Remaining: `0 / 8`
+- Latest completed roadmap item: Roadmap v2.9 `5.1` — Final v2.9 validation checkpoint
+- Next planned roadmap item: `none (v2.9 is complete; v2.10+ to be planned)`
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `planning/v2-9-roadmap`
+- Current branch: `feat/v2-9-output-source-recovery-block-1`
 - Previous branch (v2.8 implementation): `feat/v2-8-decision-correction-block-1`
 - Previous branch (v2.7 implementation): `feat/v2-7-traceability-block-1`
 - Planning branch (v2.8): `planning/v2-8-roadmap` (merged to main)
@@ -161,3 +162,8 @@
 - Roadmap v2.8 item 6.1 added end-to-end correction workflow validation (`src/oos/v2_8_correction_workflow_validation.py`, 1068 lines) with 14 validation steps (C1–C14) exercising the full replace → amend → status → report → dashboard → source URL traceability chain. 15+ focused tests cover full correction pipeline, replace, amend, traceability, parking lot cleanup, rebuild, history, status, report, dashboard, fail-closed, idempotency, and mixed corrections. No live APIs/LLMs; no autonomous portfolio transitions.
 - Roadmap v2.8 item 7.1 closed the roadmap with a final validation checkpoint: 1665 tests, 0 failures; `dev-validate-final.ps1` pass (all gates green); `run-controlled-smoke.ps1` pass (14/14, zero placeholder URNs); `dev-git-check.ps1` pass (6/6); `git diff --check` clean; `git status` clean; roadmap state `complete / closed` at `9 / 9`. Deferred items: `--utf8` opt-in flag (noted as acceptance criterion gap in 4.1), `--replace-all` mode, quality gate source URL fixture gap, optional rollback/undo. No push, PR, merge, or tag was performed. Roadmap v2.8 is complete.
 - Roadmap v2.9 planning created the Output Modes, Source URL Strictness & Correction Recovery checklist with 8 implementation items: output mode contract and CLI policy, `--utf8` opt-in flag implementation, quality gate source URL fixture audit and correction plan, quality gate source URL fixture cleanup, correction rollback/undo policy review, replace-all mode policy review, operational validation refresh, and final v2.9 validation checkpoint. Planning on `planning/v2-9-roadmap`. Docs-only; no source code, tests, or live API/LLM calls were performed by this planning checkpoint.
+- Roadmap v2.9 item 2.1 mini-epic and run-report docs backfilled (2026-05-10). Item 2.1 was audit-only; findings: `missing_count=1` originates from synthetic `founder_inbox_v2_index` item (`inbox_review_822b4d010950`, `decision_recording_commands`), not quality gate; all 10 fixture cases clean; recommended narrow scanner exemption implemented in 2.2 (commit `13a008c`). Counters unchanged: Completed remains `4 / 8`, Remaining remains `4 / 8`.
+- Roadmap v2.9 item 3.1 completed as policy-only review (2026-05-10). Decision: DEFER correction rollback/undo to v2.10+. Rationale: undo-last is non-trivial (>200 lines, 4 files, new module); v2.9 is deferred-item-closure, not feature expansion. Re-replace workaround is adequate. Policy document at `docs/decisions/correction_rollback_undo_policy.md` defines 12 safety requirements (U-R1 through U-R12), 4 candidate modes (U1–U4), artifact dependency analysis, risk analysis, and v2.10+ implementation plan. No source/test/script/example/artifact changes. Completed: `5 / 8`, Remaining: `3 / 8`.
+- Roadmap v2.9 item 3.2 completed as policy-only review (2026-05-10). Decision: DEFER `--replace-all` to v2.10+. Rationale: no demonstrated real-run need; re-run workaround exists and is safer; replace-all violates R8 by design; implementing safely requires dry-run, confirm-step, and strict-mode machinery (~80 lines). Policy document at `docs/decisions/replace_all_mode_policy.md` defines 13 safety requirements (RA-R1 through RA-R13), artifact impact analysis across 9 artifacts, 7 identified risks with mitigations, and v2.10+ implementation plan. No source/test/script/example/artifact changes. Completed: `6 / 8`, Remaining: `2 / 8`.
+- Roadmap v2.9 item 4.1 completed as operational validation refresh (2026-05-10). Key deliverables: `src/oos/v2_9_operational_validation.py` (10-step validation module), `tests/test_v2_9_operational_validation.py` (28 focused tests), `scripts/run-controlled-smoke.ps1` Step 8 updated for missing_count=0 and validation_passed=True expectations, mini-epic and run report created. Completed: `7 / 8`, Remaining: `1 / 8`. Current item: `5.1 Final v2.9 validation checkpoint`.
+- Roadmap v2.9 item 5.1 closed the roadmap with a final validation checkpoint (2026-05-10): 1739 tests, 0 failures; `dev-test.ps1 -Full -Verbose` pass; `run-controlled-smoke.ps1` pass (14/14 steps, placeholder=0, missing=0, missing_count=0); `dev-validate-final.ps1` pass (all gates green); `dev-git-check.ps1` pass (6/6); `git diff --check` clean; `git status` clean; roadmap state `complete / closed` at `8 / 8`. Deferred to v2.10+: `undo-last` implementation (`docs/decisions/correction_rollback_undo_policy.md`), `replace-all` implementation (`docs/decisions/replace_all_mode_policy.md`), terminal encoding auto-detection. No push, PR, merge, or tag was performed. Roadmap v2.9 is complete and closed.

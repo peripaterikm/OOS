@@ -31,6 +31,7 @@ from oos.weekly_run_manifest import (
     read_weekly_run_manifest,
 )
 from oos.founder_decision_import import build_import_history_summary
+from oos.output_modes import get_output_symbols, validate_output_mode
 
 WEEKLY_RUN_REPORT_SCHEMA_VERSION = "weekly_run_report.v1"
 WEEKLY_DASHBOARD_INDEX_SCHEMA_VERSION = "weekly_dashboard_index.v1"
@@ -435,6 +436,7 @@ def build_weekly_run_report(
 def write_weekly_run_report(
     report: WeeklyRunReport,
     run_dir: Path,
+    output_mode: str = "ascii_safe",
 ) -> tuple[Path, Path]:
     """Write run_report.json and run_report.md into *run_dir*.
 
@@ -450,7 +452,7 @@ def write_weekly_run_report(
     )
 
     md_path = run_dir / "run_report.md"
-    md_content = render_weekly_run_report_markdown(report)
+    md_content = render_weekly_run_report_markdown(report, output_mode=output_mode)
     md_path.write_text(md_content, encoding="utf-8")
 
     return json_path, md_path
@@ -461,8 +463,18 @@ def write_weekly_run_report(
 # ============================================================================
 
 
-def render_weekly_run_report_markdown(report: WeeklyRunReport) -> str:
-    """Render a WeeklyRunReport as a human-readable Markdown string."""
+def render_weekly_run_report_markdown(
+    report: WeeklyRunReport,
+    output_mode: str = "ascii_safe",
+) -> str:
+    """Render a WeeklyRunReport as a human-readable Markdown string.
+
+    Args:
+        report: The WeeklyRunReport to render.
+        output_mode: 'ascii_safe' (default) or 'utf8'. Controls symbols used.
+    """
+    sym = get_output_symbols(output_mode)
+
     lines: list[str] = []
     lines.append("# Weekly Run Report")
     lines.append("")
@@ -742,6 +754,7 @@ def build_weekly_dashboard_index(
 def write_weekly_dashboard_index(
     dashboard: WeeklyDashboardIndex,
     weekly_runs_root: Path,
+    output_mode: str = "ascii_safe",
 ) -> tuple[Path, Path]:
     """Write dashboard_index.json and dashboard.md into *weekly_runs_root*.
 
@@ -757,7 +770,7 @@ def write_weekly_dashboard_index(
     )
 
     md_path = weekly_runs_root / "dashboard.md"
-    md_content = render_weekly_dashboard_markdown(dashboard)
+    md_content = render_weekly_dashboard_markdown(dashboard, output_mode=output_mode)
     md_path.write_text(md_content, encoding="utf-8")
 
     return json_path, md_path
@@ -768,8 +781,18 @@ def write_weekly_dashboard_index(
 # ============================================================================
 
 
-def render_weekly_dashboard_markdown(dashboard: WeeklyDashboardIndex) -> str:
-    """Render a WeeklyDashboardIndex as a human-readable Markdown string."""
+def render_weekly_dashboard_markdown(
+    dashboard: WeeklyDashboardIndex,
+    output_mode: str = "ascii_safe",
+) -> str:
+    """Render a WeeklyDashboardIndex as a human-readable Markdown string.
+
+    Args:
+        dashboard: The WeeklyDashboardIndex to render.
+        output_mode: 'ascii_safe' (default) or 'utf8'. Controls symbols used.
+    """
+    sym = get_output_symbols(output_mode)
+
     lines: list[str] = []
     lines.append("# Weekly Runs Dashboard")
     lines.append("")
@@ -796,10 +819,10 @@ def render_weekly_dashboard_markdown(dashboard: WeeklyDashboardIndex) -> str:
             "|--------|----------|-------|-----------|-------------|-----------|-------------|---------|----------|--------|------------------------|"
         )
         for r in dashboard.runs:
-            manifest_mark = "OK" if r.manifest_valid else "FAIL"
-            valid_mark = "OK" if r.validation_passed else "FAIL"
+            manifest_mark = sym["success"] if r.manifest_valid else sym["failure"]
+            valid_mark = sym["success"] if r.validation_passed else sym["failure"]
             artifacts_str = f"{r.present_artifact_count}/{r.expected_artifact_count}"
-            corr_str = f"{r.correction_count} [CORRECTED]" if r.correction_count > 0 else "0"
+            corr_str = f"{r.correction_count} {sym['corrected']}" if r.correction_count > 0 else "0"
             rec = r.recommended_next_step[:60] + "..." if len(r.recommended_next_step) > 60 else r.recommended_next_step
             lines.append(
                 f"| `{r.run_id}` | {manifest_mark} | {valid_mark} | {artifacts_str} | {r.founder_inbox_review_item_count} | {r.founder_decision_count} | {corr_str} | {r.next_best_action_count} | {r.warning_count} | {r.error_count} | {rec} |"

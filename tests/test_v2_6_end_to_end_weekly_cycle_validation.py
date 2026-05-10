@@ -748,11 +748,13 @@ class SourceURLTraceabilityStepTests(unittest.TestCase):
                              f"Expected 0 placeholder URNs, got {report.source_url_placeholder_count}")
 
     def test_full_validation_source_url_traceability_passes(self):
-        """Source URL traceability scan runs and reports zero placeholder URNs.
+        """Source URL traceability scan runs and reports zero placeholder URNs
+        and zero missing source URLs for fixture E2E runs.
 
-        Note: fixture data may have pre-existing missing-source-URL gaps in
-        legacy artifacts (e.g., quality_gate_decisions). The contract is
-        advisory; the critical assertion is zero placeholder URNs.
+        As of v2.9 item 2.2, synthetic founder inbox items (e.g.,
+        decision_recording_commands) with no evidence lineage are exempt
+        from missing-source-url checks, enabling fixture E2E to achieve
+        missing_count=0.
         """
         with TemporaryDirectory(prefix="oos_v2_6_src_url_") as td:
             pr = Path(td)
@@ -761,9 +763,15 @@ class SourceURLTraceabilityStepTests(unittest.TestCase):
             # Assert zero placeholder URNs (critical: urn:oos:* must not survive)
             self.assertEqual(report.source_url_placeholder_count, 0,
                              f"Expected 0 placeholder URNs, got {report.source_url_placeholder_count}")
+            # Assert zero missing source URLs (v2.9 item 2.2)
+            self.assertEqual(report.source_url_missing_count, 0,
+                             f"Expected 0 missing source URLs, got {report.source_url_missing_count}")
             # Source URL traceability fields are populated
             self.assertIsInstance(report.source_url_traceability_issue_count, int)
             self.assertIsInstance(report.source_url_missing_count, int)
+            # Source URL traceability validation should pass (v2.9 item 2.2)
+            self.assertTrue(report.source_url_traceability_validation_passed,
+                            "source_url_traceability_validation_passed should be True")
 
     def test_source_url_chain_checks_have_all_five_links(self):
         with TemporaryDirectory(prefix="oos_v2_6_src_url_") as td:

@@ -1480,3 +1480,102 @@ class TestCP1251SafeStatusOutput(unittest.TestCase):
         self.assertIn("## 11. Decision Corrections", md)
         self.assertIn("## 12. Artifact Paths", md)
         self.assertIn("## Safety", md)
+
+
+class TestWeeklyCycleStatusOutputModes(unittest.TestCase):
+    """Output mode tests for weekly-cycle-status-v2 (Roadmap v2.9 item 1.2)."""
+
+    def _temp_project_root(self) -> Path:
+        return _temp_project_root(self)
+
+    def test_ascii_default_output_is_ascii_only(self):
+        """Default output (ascii_safe) must contain only ASCII characters."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_om_ascii"
+        _build_mock_weekly_run(root, run_id)
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status, output_mode="ascii_safe")
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"ASCII default contains non-ASCII U+{ord(ch):04X} at pos {i}: {ch!r}"
+            )
+
+    def test_utf8_output_contains_unicode_markers(self):
+        """--utf8 output must contain expected Unicode symbols."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_om_utf8"
+        _build_mock_weekly_run(root, run_id)
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status, output_mode="utf8")
+        # Checkmark (U+2713) should appear for existing artifacts
+        self.assertIn("\u2713", md, "UTF-8 output should contain checkmark symbol")
+        # Arrow (U+2192) should appear in artifact paths
+        self.assertIn("\u2192", md, "UTF-8 output should contain arrow symbol")
+
+    def test_utf8_output_uses_unicode_arrow_in_paths(self):
+        """Artifact paths section must use Unicode arrow in utf8 mode."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_om_arrow"
+        _build_mock_weekly_run(root, run_id)
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status, output_mode="utf8")
+        # The arrow should appear (U+2192) and the ASCII '->' should not appear in path lines
+        self.assertIn("\u2192", md)
+        # The old ASCII arrow should NOT appear in artifact paths
+        self.assertNotIn("->", md)
+
+    def test_utf8_mode_does_not_change_status_json(self):
+        """JSON artifact must be identical regardless of output_mode."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_om_json"
+        _build_mock_weekly_run(root, run_id)
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        json_ascii = weekly_cycle_status_to_json(status)
+        json_utf8 = weekly_cycle_status_to_json(status)
+        self.assertEqual(json_ascii, json_utf8,
+                         "Status JSON must be mode-independent")
+
+    def test_output_mode_unknown_raises_valueerror(self):
+        """Unknown output mode must raise ValueError."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_om_bad"
+        _build_mock_weekly_run(root, run_id)
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        with self.assertRaises(ValueError):
+            render_weekly_cycle_status_markdown(status, output_mode="unicode")
+
+    def test_output_mode_default_is_ascii_safe(self):
+        """Omitting output_mode must default to ascii_safe."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_om_def"
+        _build_mock_weekly_run(root, run_id)
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status)
+        # No Unicode symbols beyond ASCII range
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Default output contains non-ASCII U+{ord(ch):04X} at pos {i}"
+            )
+
+    def test_utf8_output_still_has_all_sections(self):
+        """UTF-8 mode must preserve all 12 sections + Safety."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_om_sec"
+        _build_mock_weekly_run(root, run_id)
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status, output_mode="utf8")
+        self.assertIn("## 1. Run Identity", md)
+        self.assertIn("## 2. Manifest Status", md)
+        self.assertIn("## 3. Artifact Completeness", md)
+        self.assertIn("## 4. Pipeline Artifact Counts", md)
+        self.assertIn("## 5. Founder Inbox Status", md)
+        self.assertIn("## 6. Founder Decision Import Status", md)
+        self.assertIn("## 7. Feedback / Profile / Parking Lot Status", md)
+        self.assertIn("## 8. Warnings / Errors", md)
+        self.assertIn("## 9. Recommended Next Step", md)
+        self.assertIn("## 10. Import History / Audit Trail", md)
+        self.assertIn("## 11. Decision Corrections", md)
+        self.assertIn("## 12. Artifact Paths", md)
+        self.assertIn("## Safety", md)

@@ -28,6 +28,7 @@ from oos.source_url_traceability import (
     SourceURLTraceabilityArtifactStatus,
     SourceURLTraceabilityIssue,
     SourceURLTraceabilityReport,
+    _is_synthetic_inbox_item_without_lineage,
     check_source_url_traceability,
     collect_source_urls_from_artifact,
     is_malformed_source_url,
@@ -460,6 +461,204 @@ class TestIsMalformedSourceURL(unittest.TestCase):
     def test_scheme_slash_slash_only_is_malformed(self):
         self.assertTrue(is_malformed_source_url("http://"))
         self.assertTrue(is_malformed_source_url("https://"))
+
+
+class TestSyntheticInboxExemption(unittest.TestCase):
+    """Tests for synthetic founder_inbox_v2_index exemption (Roadmap v2.9 item 2.2)."""
+
+    def setUp(self):
+        self.tmpdir = Path(tempfile.mkdtemp(prefix="oos_test_src_url_synth_"))
+
+    def tearDown(self):
+        import shutil
+        if self.tmpdir.exists():
+            shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _write_artifact(self, filename: str, data: dict | list):
+        path = self.tmpdir / filename
+        path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        return path
+
+    def test_synthetic_inbox_item_all_empty_is_exempt(self):
+        """Synthetic inbox item with all five linked fields empty is exempt
+        from missing_source_url."""
+        inbox_data = {
+            "review_items": [
+                {
+                    "review_item_id": "inbox_review_822b4d010950",
+                    "section_id": "decision_recording_commands",
+                    "title": "Decision Recording Commands",
+                    "linked_opportunity_ids": [],
+                    "linked_evidence_pack_ids": [],
+                    "linked_evidence_ids": [],
+                    "linked_quality_gate_ids": [],
+                    "linked_source_urls": [],
+                }
+            ]
+        }
+        self._write_artifact("founder_inbox_v2_index.json", inbox_data)
+        report = check_source_url_traceability(self.tmpdir)
+
+        inbox_issues = [
+            i for i in report.issues
+            if i.artifact_key == "founder_inbox_v2_index"
+            and i.issue_type == "missing_source_url"
+        ]
+        self.assertEqual(len(inbox_issues), 0,
+                         f"Expected 0 missing_source_url for synthetic item, got {len(inbox_issues)}")
+
+        self.assertGreaterEqual(report.exempt_synthetic_inbox_count, 1)
+
+    def test_inbox_item_with_linked_id_not_exempt(self):
+        """Inbox item with any linked ID present and empty linked_source_urls
+        is NOT exempt from missing_source_url."""
+        inbox_data = {
+            "review_items": [
+                {
+                    "review_item_id": "inbox_review_test1",
+                    "section_id": "top_opportunities_to_review",
+                    "title": "Test Opportunity",
+                    "linked_opportunity_ids": ["opp_001"],
+                    "linked_evidence_pack_ids": [],
+                    "linked_evidence_ids": [],
+                    "linked_quality_gate_ids": [],
+                    "linked_source_urls": [],
+                }
+            ]
+        }
+        self._write_artifact("founder_inbox_v2_index.json", inbox_data)
+        report = check_source_url_traceability(self.tmpdir)
+
+        missing = [
+            i for i in report.issues
+            if i.artifact_key == "founder_inbox_v2_index"
+            and i.issue_type == "missing_source_url"
+        ]
+        self.assertGreaterEqual(len(missing), 1,
+                                "Item with linked_opportunity_id and empty source_urls should NOT be exempt")
+
+    def test_inbox_item_with_placeholder_still_flagged(self):
+        """Inbox item with linked_source_urls containing urn:oos:* is still
+        flagged for placeholder even if other linked IDs are empty."""
+        inbox_data = {
+            "review_items": [
+                {
+                    "review_item_id": "inbox_review_test2",
+                    "section_id": "top_opportunities_to_review",
+                    "title": "Test item with placeholder",
+                    "linked_opportunity_ids": [],
+                    "linked_evidence_pack_ids": [],
+                    "linked_evidence_ids": [],
+                    "linked_quality_gate_ids": [],
+                    "linked_source_urls": ["urn:oos:founder_import:placeholder"],
+                }
+            ]
+        }
+        self._write_artifact("founder_inbox_v2_index.json", inbox_data)
+        report = check_source_url_traceability(self.tmpdir)
+
+        placeholder_issues = [
+            i for i in report.issues
+            if i.artifact_key == "founder_inbox_v2_index"
+            and i.issue_type == "placeholder_source_url"
+        ]
+        self.assertGreaterEqual(len(placeholder_issues), 1,
+                                "Placeholder URN in linked_source_urls must still be detected")
+
+        inbox_status = next(
+            s for s in report.artifact_statuses
+            if s.artifact_key == "founder_inbox_v2_index"
+        )
+        self.assertEqual(inbox_status.items_exempt_synthetic_inbox, 0)
+
+    def test_clean_fixture_run_with_synthetic_inbox_passes(self):
+        """Clean fixture-like run passes with synthetic inbox item exempt."""
+        ep_data = {
+            "items": [
+                {
+                    "evidence_pack_id": "ep1",
+                    "source_urls": ["https://hn.example.com/item?id=1"],
+                    "created_from": "evidence_pack_builder",
+                }
+            ]
+        }
+        opp_data = {
+            "items": [
+                {
+                    "opportunity_id": "opp1",
+                    "source_urls": ["https://hn.example.com/item?id=1"],
+                    "evidence_ids": ["e1"],
+                    "source_signal_ids": ["s1"],
+                    "unsupported_assumptions": [],
+                    "risk_notes": [],
+                    "confidence": 0.8,
+                }
+            ]
+        }
+        dec_data = {
+            "items": [
+                {
+                    "decision_id": "d1",
+                    "opportunity_id": "opp1",
+                    "evidence_pack_id": "ep1",
+                    "decision": "promote",
+                    "linked_evidence_ids": ["e1"],
+                    "linked_source_signal_ids": ["s1"],
+                    "linked_source_urls": ["https://hn.example.com/item?id=1"],
+                    "decided_by": "founder",
+                }
+            ]
+        }
+        fm_data = {
+            "items": [
+                {
+                    "feedback_mapping_id": "fm1",
+                    "opportunity_id": "opp1",
+                    "evidence_pack_id": "ep1",
+                    "decision": "promote",
+                    "source_signal_ids": ["s1"],
+                    "source_urls": ["https://hn.example.com/item?id=1"],
+                    "signal_impact": "positive",
+                    "recommended_future_handling": ["boost_similar_pattern"],
+                }
+            ]
+        }
+        inbox_data = {
+            "review_items": [
+                {
+                    "review_item_id": "ri1",
+                    "linked_opportunity_ids": ["opp1"],
+                    "linked_evidence_pack_ids": ["ep1"],
+                    "linked_evidence_ids": ["e1"],
+                    "linked_quality_gate_ids": [],
+                    "linked_source_urls": ["https://hn.example.com/item?id=1"],
+                },
+                {
+                    "review_item_id": "inbox_review_synthetic",
+                    "section_id": "decision_recording_commands",
+                    "title": "Decision Recording Commands",
+                    "linked_opportunity_ids": [],
+                    "linked_evidence_pack_ids": [],
+                    "linked_evidence_ids": [],
+                    "linked_quality_gate_ids": [],
+                    "linked_source_urls": [],
+                },
+            ]
+        }
+
+        self._write_artifact("evidence_packs.json", ep_data)
+        self._write_artifact("opportunity_candidates.json", opp_data)
+        self._write_artifact("founder_decisions_v2.json", dec_data)
+        self._write_artifact("founder_feedback_mappings.json", fm_data)
+        self._write_artifact("founder_inbox_v2_index.json", inbox_data)
+
+        report = check_source_url_traceability(self.tmpdir)
+        self.assertTrue(report.validation_passed,
+                        f"Expected validation_passed=True, got issues: {report.issues}")
+        self.assertEqual(report.placeholder_url_count, 0)
+        self.assertEqual(report.missing_source_url_count, 0,
+                         f"Expected missing_count=0, got {report.missing_source_url_count}")
+        self.assertGreaterEqual(report.exempt_synthetic_inbox_count, 1)
 
 
 if __name__ == "__main__":

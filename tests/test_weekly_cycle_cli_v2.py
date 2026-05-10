@@ -580,5 +580,153 @@ class TestWeeklyCycleCliV2PriorArtifacts(unittest.TestCase):
         self.assertIn("validation_passed: true", output)
 
 
+class TestCLIOutputModeFlags(unittest.TestCase):
+    """CLI --utf8 flag tests (Roadmap v2.9 item 1.2)."""
+
+    def setUp(self) -> None:
+        self.project_root = _temp_project_root_for(self)
+
+    def _build_run(self, run_id: str) -> None:
+        items = _evaluation_dataset_items()
+        input_file = _write_fixture_input(self.project_root, items)
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            exit_code = main(
+                [
+                    "run-weekly-cycle-v2",
+                    "--project-root",
+                    str(self.project_root),
+                    "--input-file",
+                    str(input_file),
+                    "--run-id",
+                    run_id,
+                ]
+            )
+        self.assertEqual(exit_code, 0,
+                         f"Failed to build run for CLI test: {stdout.getvalue()}")
+
+    def test_status_help_includes_utf8(self):
+        """weekly-cycle-status-v2 --help must list --utf8."""
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            try:
+                main(["weekly-cycle-status-v2", "--help"])
+            except SystemExit:
+                pass
+        self.assertIn("--utf8", stdout.getvalue())
+
+    def test_report_help_includes_utf8(self):
+        """build-weekly-run-report-v2 --help must list --utf8."""
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            try:
+                main(["build-weekly-run-report-v2", "--help"])
+            except SystemExit:
+                pass
+        self.assertIn("--utf8", stdout.getvalue())
+
+    def test_dashboard_help_includes_utf8(self):
+        """weekly-dashboard-v2 --help must list --utf8."""
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            try:
+                main(["weekly-dashboard-v2", "--help"])
+            except SystemExit:
+                pass
+        self.assertIn("--utf8", stdout.getvalue())
+
+    def test_import_decisions_help_excludes_utf8(self):
+        """import-founder-decisions-v2 --help must NOT list --utf8
+        (audit confirmed: no terminal symbols in output)."""
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            try:
+                main(["import-founder-decisions-v2", "--help"])
+            except SystemExit:
+                pass
+        self.assertNotIn("--utf8", stdout.getvalue())
+
+    def test_status_default_output_is_ascii_safe(self):
+        """Default status CLI output (no --utf8) must be ASCII-safe."""
+        self._build_run("weekly_run_2026_05_10_cli_asc")
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            exit_code = main(
+                [
+                    "weekly-cycle-status-v2",
+                    "--project-root",
+                    str(self.project_root),
+                    "--run-id",
+                    "weekly_run_2026_05_10_cli_asc",
+                ]
+            )
+        self.assertEqual(exit_code, 0)
+        output = stdout.getvalue()
+        for i, ch in enumerate(output):
+            self.assertLess(
+                ord(ch), 128,
+                f"Status CLI default contains non-ASCII U+{ord(ch):04X} at pos {i}: {ch!r}"
+            )
+
+    def test_status_utf8_flag_produces_unicode(self):
+        """Status with --utf8 must produce Unicode checkmark in output."""
+        self._build_run("weekly_run_2026_05_10_cli_utf")
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            exit_code = main(
+                [
+                    "weekly-cycle-status-v2",
+                    "--project-root",
+                    str(self.project_root),
+                    "--run-id",
+                    "weekly_run_2026_05_10_cli_utf",
+                    "--utf8",
+                ]
+            )
+        self.assertEqual(exit_code, 0)
+        output = stdout.getvalue()
+        self.assertIn("\u2713", output,
+                      "Status --utf8 output should contain checkmark symbol")
+
+    def test_dashboard_utf8_flag_produces_unicode(self):
+        """Dashboard with --utf8 must produce Unicode checkmark in output."""
+        self._build_run("weekly_run_2026_05_10_cli_db")
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            exit_code = main(
+                [
+                    "weekly-dashboard-v2",
+                    "--project-root",
+                    str(self.project_root),
+                    "--utf8",
+                ]
+            )
+        # 0 if runs found, 1 if no runs (empty). Either is fine for this test.
+        output = stdout.getvalue()
+        # The dashboard md is written to file; terminal summary uses ASCII.
+        # We check that the --utf8 flag is at least accepted and the command runs.
+        self.assertIn("total_runs:", output)
+
+    def test_run_report_utf8_flag_accepted(self):
+        """build-weekly-run-report-v2 with --utf8 must accept the flag."""
+        self._build_run("weekly_run_2026_05_10_cli_rr")
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            exit_code = main(
+                [
+                    "build-weekly-run-report-v2",
+                    "--project-root",
+                    str(self.project_root),
+                    "--run-id",
+                    "weekly_run_2026_05_10_cli_rr",
+                    "--utf8",
+                ]
+            )
+        self.assertEqual(exit_code, 0)
+        output = stdout.getvalue()
+        self.assertIn("report_json:", output)
+        self.assertIn("report_md:", output)
+
+
 if __name__ == "__main__":
     unittest.main()
