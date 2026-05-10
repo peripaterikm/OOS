@@ -462,12 +462,12 @@ The `weekly-cycle-status-v2` command and other CLI outputs may use Unicode chara
 
 - [x] **4.1.1** All Unicode symbols in CLI output are audited (full inventory documented). *(commit `e36a470`)*
 - [x] **4.1.2** Unsafe Unicode symbols are replaced with ASCII-safe alternatives by default. *(commit `e36a470`)*
-- [x] **4.1.3** `--utf8` flag forces Unicode output for UTF-8-capable terminals. *(commit `e36a470`)*
-- [x] **4.1.4** Default output renders correctly on CP1251 terminals (verified by ASCII-only check). *(commit `e36a470`)*
-- [x] **4.1.5** Default output renders correctly on CP1252 terminals (verified by ASCII-only check). *(commit `e36a470`)*
+- [ ] **4.1.3** `--utf8` flag forces Unicode output for UTF-8-capable terminals. **Deferred to v2.9+**: `--utf8` opt-in flag was not implemented. v2.8 completed ASCII-safe default output only.
+- [x] **4.1.4** Default output renders correctly on CP1251 terminals. *(Verified by ASCII-only content check: no Unicode codepoints outside ASCII range in default terminal-facing output.)*
+- [x] **4.1.5** Default output renders correctly on CP1252 terminals. *(Verified by ASCII-only content check: no Unicode codepoints outside ASCII range in default terminal-facing output.)*
 - [x] **4.1.6** No information is lost in ASCII-safe rendering. *(commit `e36a470`)*
-- [x] **4.1.7** Smoke test runbook documents the default behavior and `--utf8` flag. *(commit `e36a470`)*
-- [x] **4.1.8** Focused tests (≥10) cover: ASCII-safe default output, `--utf8` Unicode output, symbol replacement correctness, no mojibake-prone characters in default output, all audited modules. *(commit `e36a470`)*
+- [x] **4.1.7** Smoke test runbook documents the ASCII-safe default behavior. *(commit `e36a470`)* `--utf8` flag deferred to v2.9+.
+- [x] **4.1.8** Focused tests (≥10) cover: ASCII-safe default output, symbol replacement correctness, no mojibake-prone characters in default output, all audited modules. *(commit `e36a470`)* `--utf8` Unicode output tests deferred to v2.9+.
 - [x] **4.1.9** Existing tests pass without modification (ASCII-safe defaults are backward compatible). *(1665 tests, 0 failures)*
 - [x] **4.1.10** No live APIs/LLMs; no feature behavior changes. *(preserved)*
 
