@@ -290,7 +290,7 @@ if (-not $SkipImport -and $DecisionsPath -and (Test-Path $DecisionsPath)) {
 }
 
 # ===========================================================================
-# STEP 5: Weekly Cycle Status (safe: pre-existing issues in temp roots OK)
+# STEP 5: Weekly Cycle Status
 # ===========================================================================
 Write-Section "Step 5: Weekly Cycle Status"
 
@@ -302,7 +302,7 @@ $StatusResult = Invoke-CliSafe -Arguments @(
 if ($StatusResult.ExitCode -eq 0) {
     Record-Pass "weekly-cycle-status-v2"
 } else {
-    Record-Pass "weekly-cycle-status-v2 (non-zero exit, pre-existing issue)"
+    Record-Fail "weekly-cycle-status-v2" "exit code: $($StatusResult.ExitCode)"
 }
 
 # ===========================================================================

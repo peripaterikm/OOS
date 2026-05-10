@@ -796,8 +796,8 @@ def render_weekly_dashboard_markdown(dashboard: WeeklyDashboardIndex) -> str:
             "|--------|----------|-------|-----------|-------------|-----------|-------------|---------|----------|--------|------------------------|"
         )
         for r in dashboard.runs:
-            manifest_mark = "✓" if r.manifest_valid else "✗"
-            valid_mark = "✓" if r.validation_passed else "✗"
+            manifest_mark = "OK" if r.manifest_valid else "FAIL"
+            valid_mark = "OK" if r.validation_passed else "FAIL"
             artifacts_str = f"{r.present_artifact_count}/{r.expected_artifact_count}"
             corr_str = f"{r.correction_count} [CORRECTED]" if r.correction_count > 0 else "0"
             rec = r.recommended_next_step[:60] + "..." if len(r.recommended_next_step) > 60 else r.recommended_next_step

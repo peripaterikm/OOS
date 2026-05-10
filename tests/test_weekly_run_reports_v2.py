@@ -1528,3 +1528,146 @@ class TestDecisionCorrectionsReportIntegration(unittest.TestCase):
         self.assertNotIn("[CORRECTED]", md_dash)
         # Should show 0 in corrections column
         self.assertIn("0", md_dash)
+
+
+# ---------------------------------------------------------------------------
+# Tests: CP1251/CP1252-safe output hardening (v2.8 item 4.1)
+# ---------------------------------------------------------------------------
+
+
+FRAGILE_UNICODE_CHARS = [
+    "\u2713",   # ✓ CHECK MARK
+    "\u2714",   # ✔ HEAVY CHECK MARK
+    "\u2717",   # ✗ BALLOT X
+    "\u2718",   # ✘ HEAVY BALLOT X
+    "\u2705",   # ✅ WHITE HEAVY CHECK MARK
+    "\u274c",   # ❌ CROSS MARK
+    "\u2192",   # → RIGHTWARDS ARROW
+    "\u2014",   # — EM DASH
+    "\u2013",   # – EN DASH
+    "\u201c",   # " LEFT DOUBLE QUOTATION MARK
+    "\u201d",   # " RIGHT DOUBLE QUOTATION MARK
+    "\u2018",   # ' LEFT SINGLE QUOTATION MARK
+    "\u2019",   # ' RIGHT SINGLE QUOTATION MARK
+    "\u00a0",   # non-breaking space
+]
+
+
+class TestCP1251SafeReportOutput(unittest.TestCase):
+    """Verify run report markdown is CP1251/CP1252 safe."""
+
+    def _temp_project_root(self) -> Path:
+        tmpdir = tempfile.TemporaryDirectory(prefix="oos_test_cp1251_rr_")
+        self.addCleanup(tmpdir.cleanup)
+        root = Path(tmpdir.name)
+        (root / "artifacts" / "weekly_runs").mkdir(parents=True, exist_ok=True)
+        return root
+
+    def test_run_report_markdown_contains_no_fragile_unicode(self):
+        """Rendered run report Markdown must not contain fragile Unicode."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_cp1251_rr"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        md = render_weekly_run_report_markdown(report)
+
+        for ch in FRAGILE_UNICODE_CHARS:
+            self.assertNotIn(
+                ch, md,
+                f"Run report Markdown contains fragile Unicode character "
+                f"U+{ord(ch):04X} ({ch!r})"
+            )
+
+    def test_dashboard_markdown_contains_no_fragile_unicode(self):
+        """Rendered dashboard Markdown must not contain fragile Unicode."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_cp1251_d1")
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_cp1251_d2")
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+
+        for ch in FRAGILE_UNICODE_CHARS:
+            self.assertNotIn(
+                ch, md,
+                f"Dashboard Markdown contains fragile Unicode character "
+                f"U+{ord(ch):04X} ({ch!r})"
+            )
+
+    def test_dashboard_uses_ascii_ok_fail_markers(self):
+        """Dashboard table must use OK/FAIL instead of checkmark/cross."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_ascii_markers"
+        _build_mock_weekly_run(root, run_id)
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+
+        self.assertIn("OK", md, "Should use 'OK' instead of checkmark")
+        self.assertNotIn("\u2713", md, "Should not contain ✓")
+        self.assertNotIn("\u2717", md, "Should not contain ✗")
+
+    def test_run_report_markdown_all_ascii(self):
+        """Run report Markdown must be all-ASCII."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_ascii_rr"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        md = render_weekly_run_report_markdown(report)
+
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Run report contains non-ASCII character U+{ord(ch):04X} "
+                f"at position {i}: {ch!r}"
+            )
+
+    def test_dashboard_markdown_all_ascii(self):
+        """Dashboard Markdown must be all-ASCII."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_ascii_d1")
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Dashboard contains non-ASCII character U+{ord(ch):04X} "
+                f"at position {i}: {ch!r}"
+            )
+
+    def test_run_report_still_has_all_sections(self):
+        """Unicode hardening must not remove or break any report section."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_sections_rr"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        md = render_weekly_run_report_markdown(report)
+
+        self.assertIn("# Weekly Run Report", md)
+        self.assertIn("Status Summary", md)
+        self.assertIn("Pipeline Counts", md)
+        self.assertIn("Quality Gate Summary", md)
+        self.assertIn("Decision Summary", md)
+        self.assertIn("Action Summary", md)
+        self.assertIn("Founder Inbox", md)
+        self.assertIn("Parking Lot", md)
+        self.assertIn("Traceability", md)
+        self.assertIn("Import History / Audit Trail", md)
+        self.assertIn("Warnings", md)
+        self.assertIn("Errors", md)
+        self.assertIn("Recommended Next Step", md)
+        self.assertIn("Artifact Paths", md)
+        self.assertIn("Safety Flags", md)
+
+    def test_dashboard_still_has_all_sections(self):
+        """Unicode hardening must not remove or break any dashboard section."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_sections_d1")
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+
+        self.assertIn("# Weekly Runs Dashboard", md)
+        self.assertIn("Aggregate Metrics", md)
+        self.assertIn("Run Summary Table", md)
+        self.assertIn("Warnings", md)
+        self.assertIn("Errors", md)
+        self.assertIn("Safety Flags", md)

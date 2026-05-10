@@ -649,9 +649,9 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     lines.append("## 4. Pipeline Artifact Counts")
     lines.append("")
     for art in status.artifact_statuses:
-        present_mark = "✓" if art.exists else "✗"
+        present_mark = "OK" if art.exists else "FAIL"
         empty_note = " (empty)" if art.is_empty_state and art.exists else ""
-        count_info = f" — {art.item_count} items" if art.exists else " — missing"
+        count_info = f" -- {art.item_count} items" if art.exists else " -- missing"
         lines.append(f"- {present_mark} **{art.artifact_key}**{count_info}{empty_note}")
     lines.append("")
 
@@ -767,7 +767,7 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     lines.append("")
     for art in status.artifact_statuses:
         abs_path = Path(status.run_dir) / art.relative_path
-        lines.append(f"- `{art.relative_path}` → `{abs_path}`")
+        lines.append(f"- `{art.relative_path}` -> `{abs_path}`")
     lines.append("")
 
     # ── Safety flags ─────────────────────────────────────

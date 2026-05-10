@@ -1328,3 +1328,155 @@ class TestDecisionCorrectionsStatusVisibility(unittest.TestCase):
         data = json.loads(json_str)
         self.assertEqual(data["corrected_decision_count"], 1)
         self.assertIn("fd_v1", data["replaced_decision_ids"])
+
+
+# ---------------------------------------------------------------------------
+# Tests: CP1251/CP1252-safe output hardening (v2.8 item 4.1)
+# ---------------------------------------------------------------------------
+
+
+FRAGILE_UNICODE_CHARS = [
+    "\u2713",   # ✓ CHECK MARK
+    "\u2714",   # ✔ HEAVY CHECK MARK
+    "\u2717",   # ✗ BALLOT X
+    "\u2718",   # ✘ HEAVY BALLOT X
+    "\u2705",   # ✅ WHITE HEAVY CHECK MARK
+    "\u274c",   # ❌ CROSS MARK
+    "\u2192",   # → RIGHTWARDS ARROW
+    "\u2014",   # — EM DASH
+    "\u2013",   # – EN DASH
+    "\u201c",   # " LEFT DOUBLE QUOTATION MARK
+    "\u201d",   # " RIGHT DOUBLE QUOTATION MARK
+    "\u2018",   # ' LEFT SINGLE QUOTATION MARK
+    "\u2019",   # ' RIGHT SINGLE QUOTATION MARK
+    "\u00a0",   # non-breaking space (can cause encoding issues)
+]
+
+
+class TestCP1251SafeStatusOutput(unittest.TestCase):
+    """Verify weekly-cycle-status-v2 output is CP1251/CP1252 safe."""
+
+    def _temp_project_root(self) -> Path:
+        tmpdir = tempfile.TemporaryDirectory(prefix="oos_test_cp1251_")
+        self.addCleanup(tmpdir.cleanup)
+        root = Path(tmpdir.name)
+        (root / "artifacts" / "weekly_runs").mkdir(parents=True, exist_ok=True)
+        return root
+
+    def test_status_markdown_contains_no_fragile_unicode(self):
+        """Rendered Markdown must not contain checkmarks, arrows, em dashes,
+        or smart quotes that would cause CP1251/CP1252 encoding errors."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_cp1251"
+        # Build a mock run so markdown has real artifact entries
+        run_dir = _build_mock_weekly_run(root, run_id)
+
+        # Also write import_history with corrections to exercise all sections
+        import json
+        hist_data = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [
+                {
+                    "correction_id": "corr_cp1251_1",
+                    "corrected_at": "2026-05-10T12:00:00+00:00",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": ["ri_x"],
+                    "old_decision_ids": ["fd_old"],
+                    "new_decision_ids": ["fd_new"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }
+            ],
+        }
+        (run_dir / "import_history.json").write_text(
+            json.dumps(hist_data, sort_keys=True, indent=2), encoding="utf-8"
+        )
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status)
+
+        for ch in FRAGILE_UNICODE_CHARS:
+            self.assertNotIn(
+                ch, md,
+                f"Markdown contains fragile Unicode character U+{ord(ch):04X} "
+                f"({ch!r}) which will break CP1251/CP1252 terminals."
+            )
+
+    def test_status_markdown_uses_ascii_safe_markers(self):
+        """Markdown must use ASCII-safe markers like OK/FAIL instead of ✓/✗."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_ascii_markers"
+        _build_mock_weekly_run(root, run_id)
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status)
+
+        # Verify ASCII-safe markers are used
+        self.assertIn("OK", md, "Should use 'OK' instead of checkmark")
+        # Should NOT contain old unicode markers
+        self.assertNotIn("\u2713", md, "Should not contain ✓")
+        self.assertNotIn("\u2717", md, "Should not contain ✗")
+        self.assertNotIn("\u2192", md, "Should not contain →")
+        # Should use '->' instead of right arrow
+        self.assertIn("->", md, "Should use '->' instead of arrow character")
+
+    def test_status_json_is_still_valid(self):
+        """JSON output must remain valid (ensure_ascii=False is ok for JSON)."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_json_valid"
+        _build_mock_weekly_run(root, run_id)
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        json_str = weekly_cycle_status_to_json(status)
+        data = json.loads(json_str)
+        self.assertEqual(data["run_id"], run_id)
+        self.assertTrue(data["manifest_valid"])
+        # JSON artifact keys / paths should still be present
+        self.assertIn("artifact_statuses", data)
+
+    def test_status_markdown_encodes_cp1252_safe(self):
+        """The rendered Markdown must not error when encoding to common
+        Windows codec (ascii). The renderer uses only ASCII-safe markers."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_encode"
+        _build_mock_weekly_run(root, run_id)
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status)
+
+        # All characters in the markdown must be ASCII (0-127)
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Markdown contains non-ASCII character U+{ord(ch):04X} "
+                f"at position {i}: {ch!r}"
+            )
+
+    def test_status_markdown_still_contains_all_sections(self):
+        """Unicode hardening must not remove or break any section."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_sections"
+        _build_mock_weekly_run(root, run_id)
+
+        status = build_weekly_cycle_status(root, run_id=run_id)
+        md = render_weekly_cycle_status_markdown(status)
+
+        self.assertIn("## 1. Run Identity", md)
+        self.assertIn("## 2. Manifest Status", md)
+        self.assertIn("## 3. Artifact Completeness", md)
+        self.assertIn("## 4. Pipeline Artifact Counts", md)
+        self.assertIn("## 5. Founder Inbox Status", md)
+        self.assertIn("## 6. Founder Decision Import Status", md)
+        self.assertIn("## 7. Feedback / Profile / Parking Lot Status", md)
+        self.assertIn("## 8. Warnings / Errors", md)
+        self.assertIn("## 9. Recommended Next Step", md)
+        self.assertIn("## 10. Import History / Audit Trail", md)
+        self.assertIn("## 11. Decision Corrections", md)
+        self.assertIn("## 12. Artifact Paths", md)
+        self.assertIn("## Safety", md)
