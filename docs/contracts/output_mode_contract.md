@@ -60,33 +60,27 @@ All status markers in Markdown tables, section headers, and inline indicators mu
 
 **Activation:** `--utf8` flag passed to CLI subcommand.
 
-**Behavior:** Terminal-facing output may contain Unicode characters, including symbols beyond the ASCII range. The Unicode symbols below are canonical for this mode.
+**Behavior:** Terminal-facing output may contain Unicode characters, including symbols beyond the ASCII range. The canonical symbol set is defined in Section 4 and implemented in [`src/oos/output_modes.py`](../../src/oos/output_modes.py) `get_output_symbols("utf8")`.
 
 **Symbols used:**
 | Semantic | Symbol | Code Point |
 |----------|--------|------------|
-| Success / pass | `[PASS]` | ASCII (unchanged) |
-| Failure / fail | `[FAIL]` | ASCII (unchanged) |
-| Warning | `[WARN]` | ASCII (unchanged) |
+| Success / pass | `✓` | U+2713 |
+| Failure / fail | `✗` | U+2717 |
+| Warning | `⚠` | U+26A0 |
+| None / empty / not present | `NONE` | ASCII (unchanged) |
 | Arrow / direction | `→` | U+2192 |
 | Separator / dash (em dash) | `—` | U+2014 |
 | Corrected indicator | `[CORRECTED]` | ASCII (unchanged) |
 
 **Rationale for symbol choices:**
-- `[PASS]` / `[FAIL]` / `[WARN]`: Already ASCII-safe in v2.8 item 4.1. These brackets provide visual structure that is more scannable than bare `OK`/`FAIL`/`WARN`. The UTF-8 mode upgrades to the more visually distinct Unicode set where `✓`/`✗`/`⚠` are the actual symbols intended.
-- `[CORRECTED]`: This is a semantic label, not a decorative symbol. It remains unchanged in both modes because its purpose is to communicate correction state unambiguously, not to provide visual ornament.
-- The symbol set `✓` (U+2713), `✗` (U+2717), `⚠` (U+26A0) is the canonical utf8 set for pass/fail/warn markers. These are the most widely recognized Unicode symbols for these states and are already the symbols that v2.8 item 4.1 replaced with ASCII-safe alternatives.
+- `✓` (U+2713), `✗` (U+2717), `⚠` (U+26A0): These are the most widely recognized Unicode symbols for pass/fail/warn states and are the original symbols that v2.8 item 4.1 (commit `e36a470`) replaced with ASCII-safe alternatives. The utf8 mode restores the visually richer Unicode forms for UTF-8-capable terminals.
+- `→` (U+2192): Unicode rightwards arrow, more visually distinct than the ASCII `->` digraph.
+- `—` (U+2014): Em dash used for section dividers and horizontal rules, replacing the ASCII hyphen `-`.
+- `[CORRECTED]`: This is a semantic label, not a decorative symbol. It remains unchanged in both modes because its purpose is to communicate correction state unambiguously.
+- `NONE`: A semantic placeholder for missing/empty data. Remains ASCII because it is a data label, not a visual ornament.
 
-**Updated UTF-8 symbol mapping (canonical for implementation):**
-| Semantic | ASCII Default | UTF-8 Opt-In |
-|----------|--------------|--------------|
-| Success | `[PASS]` | `[PASS]` with `✓` marker where applicable |
-| Failure | `[FAIL]` | `[FAIL]` with `✗` marker where applicable |
-| Warning | `[WARN]` | `[WARN]` with `⚠` marker where applicable |
-| None / empty | `NONE` | `NONE` (unchanged) |
-| Arrow | `->` | `→` |
-| Separator / dash | `-` | `—` |
-| Corrected | `[CORRECTED]` | `[CORRECTED]` (unchanged) |
+**Note on renderer-level prefixes:** Some caller modules (e.g., [`weekly_cycle_status.py`](../../src/oos/weekly_cycle_status.py), [`weekly_run_reports.py`](../../src/oos/weekly_run_reports.py)) may wrap canonical symbols in Markdown formatting or prefix them with labels like `[PASS]` / `[FAIL]` / `[WARN]` for scannability within rendered tables and section headers. Those prefixes are renderer-level conventions, not part of the canonical output mode symbol set defined in [`output_modes.py`](../../src/oos/output_modes.py). The canonical symbol values are always `✓`/`✗`/`⚠` for utf8 mode and `OK`/`FAIL`/`WARN` for ascii_safe mode.
 
 ### 2.3 Unknown Mode Behavior
 
@@ -162,48 +156,43 @@ Adding `--utf8` to an excluded command in a future roadmap requires:
 
 ---
 
-## 4. Symbol Mapping Table
+## 4. Canonical Symbol Mapping Table
 
-### 4.1 Canonical ASCII Default Mappings
+This section is the single source of truth for output mode symbols. The canonical symbols are defined in [`src/oos/output_modes.py`](../../src/oos/output_modes.py) `get_output_symbols()` and reproduced here for documentation.
 
-| Semantic | Symbol | ord() Range | Used In |
-|----------|--------|-------------|---------|
-| Success / pass | `OK` | 79, 75 | Artifact completeness, manifest status, table cells |
-| Failure / fail | `FAIL` | 70, 65, 73, 76 | Artifact completeness, manifest status, table cells |
-| Warning | `WARN` | 87, 65, 82, 78 | Warnings section markers (future use; currently bare `-` list) |
-| None / empty | `NONE` | 78, 79, 78, 69 | Correction entries, missing data placeholders |
-| Arrow | `->` | 45, 62 | Path references, direction indicators |
-| Separator / dash | `-` | 45 | Section dividers, Markdown list bullets |
-| Corrected indicator | `[CORRECTED]` | All < 128 | Run identity, correction summary rows |
+### 4.1 Symbol Mapping Table
 
-### 4.2 Canonical UTF-8 Opt-In Mappings
+| Semantic Key | `ascii_safe` | `utf8` | Code Point (utf8) | Used In |
+|-------------|-------------|--------|-------------------|---------|
+| `success` | `OK` | `✓` | U+2713 | Artifact completeness, manifest status, table cells |
+| `failure` | `FAIL` | `✗` | U+2717 | Artifact completeness, manifest status, table cells |
+| `warning` | `WARN` | `⚠` | U+26A0 | Warnings section markers |
+| `none` | `NONE` | `NONE` | — | Correction entries, missing data placeholders |
+| `arrow` | `->` | `→` | U+2192 | Path references, direction indicators |
+| `dash` | `-` | `—` | U+2014 | Section dividers, horizontal rules |
+| `corrected` | `[CORRECTED]` | `[CORRECTED]` | — | Run identity, correction summary rows |
 
-Where the ASCII default mapping is a bare word (`OK`, `FAIL`, `WARN`, `NONE`), the UTF-8 mode may add a leading Unicode symbol for visual recognition:
+### 4.2 Renderer-Level Prefixes vs Canonical Symbols
 
-| Semantic | UTF-8 Symbol | Code Point(s) | Example Usage |
-|----------|-------------|---------------|---------------|
-| Success | `[PASS]` or `✓ [PASS]` | U+2713 + ASCII | `✓ [PASS] **evidence_packs** -- 10 items` |
-| Failure | `[FAIL]` or `✗ [FAIL]` | U+2717 + ASCII | `✗ [FAIL] **founder_decisions_v2** -- missing` |
-| Warning | `[WARN]` or `⚠ [WARN]` | U+26A0 + ASCII | `⚠ [WARN] quality_gate_decisions` |
-| None / empty | `NONE` | ASCII only | `NONE` (semantic label, no decoration) |
-| Arrow | `→` | U+2192 | `` `artifacts/weekly_runs/...` → `C:\...` `` |
-| Em dash separator | `—` | U+2014 | Section dividers, horizontal rules |
-| Corrected | `[CORRECTED]` | ASCII only | `` `weekly_run_2026-01-01_abc123` **[CORRECTED]** `` |
+The **canonical symbol values** are defined by [`output_modes.py`](../../src/oos/output_modes.py) `get_output_symbols()` and are the values in the table above.
 
-### 4.3 Symbols NOT Mapped (No Unicode Source in Current Codebase)
+Caller modules (e.g., [`weekly_cycle_status.py`](../../src/oos/weekly_cycle_status.py), [`weekly_run_reports.py`](../../src/oos/weekly_run_reports.py)) may wrap these canonical symbols in additional Markdown formatting for scannability — for example, embedding the success/failure/warning symbol inside a `[PASS]` / `[FAIL]` / `[WARN]` label for table cells. These `[PASS]` / `[FAIL]` / `[WARN]` prefixes are **renderer-level conventions**, not part of the canonical output mode symbol set. The canonical symbol for ascii_safe success is always `OK`; the canonical symbol for utf8 success is always `✓`.
 
-A full audit of [`src/oos/weekly_cycle_status.py`](../../src/oos/weekly_cycle_status.py) and [`src/oos/weekly_run_reports.py`](../../src/oos/weekly_run_reports.py) at the time of this contract (v2.9 item 1.1) confirms that after v2.8 item 4.1 (commit `e36a470`), no Unicode symbols beyond ASCII range 32–126 exist in terminal-facing output. The following previously-used Unicode symbols are confirmed absent and do NOT need mapping in this contract:
+When writing output mode tests, assert against the canonical symbol from `get_output_symbols()`, not against renderer-level markup that may embed the symbol in a larger string.
 
-- `✅` (U+2705) — previously used for pass/OK; replaced with `OK`/`[PASS]`
-- `❌` (U+274C) — previously used for fail; replaced with `FAIL`/`[FAIL]`
-- `⚠` (U+26A0) — previously used for warning; replaced with `WARN`/`[WARN]`
+### 4.3 Symbols NOT in the Canonical Set
+
+The following Unicode symbols were previously used in OOS CLI output (before v2.8 item 4.1, commit `e36a470`) and are **NOT part of the canonical symbol set** defined in Section 4.1. They are documented here for completeness only:
+
+- `✅` (U+2705) — previously used for pass/OK; replaced with `OK` for ascii_safe
+- `❌` (U+274C) — previously used for fail; replaced with `FAIL` for ascii_safe
 - `◉` (U+25C9) — previously used for bullet emphasis; replaced with `[*]` or removed
-- `─` (U+2500) — box-drawing horizontal; replaced with `-`
+- `─` (U+2500) — box-drawing horizontal; replaced with `-` for ascii_safe
 - `├` (U+251C) — box-drawing branch; replaced with `+` or removed
 - `└` (U+2514) — box-drawing corner; replaced with `+` or removed
 - `│` (U+2502) — box-drawing vertical; replaced with `|` or removed
 
-These symbols are documented here as the restoration target set for `--utf8` mode should any be re-introduced in future output formatting.
+**Note on `⚠` (U+26A0):** `⚠` IS mapped in the canonical set as the utf8 warning symbol (see Section 4.1). It was present in earlier versions of this contract in the "NOT mapped" list in error; that error is corrected here. The utf8 mode intentionally uses `⚠` for warning output.
 
 ---
 
@@ -217,7 +206,7 @@ These symbols are documented here as the restoration target set for `--utf8` mod
 
 ### 5.2 UTF-8 Mode May Contain Unicode
 
-When `--utf8` is passed, output may contain Unicode characters including those beyond ASCII range 32–126. The canonical symbol set is defined in Section 4.2.
+When `--utf8` is passed, output may contain Unicode characters including those beyond ASCII range 32–126. The canonical symbol set is defined in Section 4.1.
 
 ### 5.3 JSON Artifacts Are Output-Mode Independent
 
@@ -324,7 +313,7 @@ This section defines what item 1.2 must satisfy when it references this contract
 | 1.2.2 | `--utf8` flag on `weekly-dashboard-v2` | 3.1 |
 | 1.2.3 | `--utf8` flag on `build-weekly-run-report-v2` | 3.1 |
 | 1.2.4 | Default output is ASCII-safe (no Unicode > ord 126, except `\n`/`\t`) | 2.1, 5.1, 6.1 |
-| 1.2.5 | `--utf8` output restores Unicode symbols | 2.2, 4.2, 6.2 |
+| 1.2.5 | `--utf8` output restores Unicode symbols | 2.2, 4.1, 6.2 |
 | 1.2.6 | No information loss between modes | 5.3, 5.5 |
 | 1.2.7 | CP1251/CP1252 terminals render default output correctly | 5.6, 6.3 |
 | 1.2.8 | Symbol selection centralized in a single helper per module | 2.2 (implied: `_status_symbols(utf8: bool) -> dict`) |
