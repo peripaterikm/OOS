@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
-- [x] **0.2** Current item: `3.2 Replace-all mode policy review`
+- [x] **0.2** Current item: `4.1 Operational validation refresh`
 - [x] **0.3** Roadmap state: `active / in progress`
-- [x] **0.4** Completed from this roadmap: **5 / 8**
-- [x] **0.5** Remaining: **3 / 8**
+- [x] **0.4** Completed from this roadmap: **6 / 8**
+- [x] **0.5** Remaining: **2 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md` (complete, `9 / 9`, tag `v2.8` created, merged to main)
 
 ### Core Concept
@@ -454,15 +454,15 @@ The v2.8 correction artifact contract (Section 4.4) documents `--replace-all` as
 
 ### Acceptance criteria
 
-- [ ] **3.2.1** `--replace-all` semantics from the correction artifact contract Section 4.4 are reviewed.
-- [ ] **3.2.2** Real-run need is assessed: either a concrete use case is identified, or absence is documented.
-- [ ] **3.2.3** Safety constraints are defined if implementing: confirm-step, pre-replacement snapshot, full rebuild.
-- [ ] **3.2.4** Decision is explicit: implement (if need exists AND ≤50 lines) or defer.
-- [ ] **3.2.5** If implemented: `--replace-all` flag works correctly with safety constraints; tests cover all-or-nothing, confirm-step, rebuild, and traceability.
-- [ ] **3.2.6** If deferred: policy document records rationale and keeps contract Section 4.4 as authoritative.
-- [ ] **3.2.7** `--replace-all` must not silently delete unrelated decisions without founder awareness.
-- [ ] **3.2.8** Advisory-only preserved; no autonomous decisions.
-- [ ] **3.2.9** No live APIs/LLMs.
+- [x] **3.2.1** `--replace-all` semantics from the correction artifact contract Section 4.4 are reviewed.
+- [x] **3.2.2** Real-run need is assessed: zero demonstrated scenarios; re-run workaround documented as sufficient.
+- [x] **3.2.3** Safety constraints are defined: dry-run/plan mode first, confirm-step prompt, strict completeness check, full rebuild (RA-R4 through RA-R6).
+- [x] **3.2.4** Decision: DEFER to v2.10+. Replace-all is not needed for v2.9; re-run workaround exists and is safer.
+- [x] **3.2.5** Not applicable — implementation deferred to v2.10+.
+- [x] **3.2.6** Policy document (`docs/decisions/replace_all_mode_policy.md`) records rationale; v2.8 contract Section 4.4 kept as authoritative.
+- [x] **3.2.7** `--replace-all` safety: strict completeness check (RA-R6) rejects incomplete replacement files, preventing silent deletion.
+- [x] **3.2.8** Advisory-only preserved; no autonomous decisions (RA-R9, RA-R10).
+- [x] **3.2.9** No live APIs/LLMs.
 
 ---
 
