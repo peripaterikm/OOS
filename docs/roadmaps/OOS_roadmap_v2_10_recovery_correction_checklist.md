@@ -4,17 +4,17 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
-- [ ] **0.2** Current item: `1 — Undo-last contract finalization`
-- [ ] **0.3** Roadmap state: `ready for implementation`
-- [ ] **0.4** Completed from this roadmap: **0 / 9**
-- [ ] **0.5** Remaining: **9 / 9**
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
+- [ ] **0.2** Current item: `2 — Undo-last implementation`
+- [x] **0.3** Roadmap state: `ready for implementation`
+- [ ] **0.4** Completed from this roadmap: **1 / 9**
+- [ ] **0.5** Remaining: **8 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md` (complete, `8 / 8`, tag `v2.9`, merged to main via PR #49)
 
 ### Branch and Version
 
-- **Planning branch:** `planning/v2-10-roadmap` (docs-only)
-- **Implementation branch:** `feat/v2-10-recovery-correction` (future; do not create yet)
+- **Planning branch:** `planning/v2-10-roadmap` (docs-only; merged to main)
+- **Implementation branch:** `feat/v2-10-recovery-correction` (active)
 - **Based on:** v2.9 / PR #49 merge commit `35bc991` / tag `v2.9`
 - **Status:** Ready for implementation
 
@@ -137,7 +137,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 ### 1. Undo-Last Contract Finalization
 
-- [ ] **1.1** Finalize the undo-last contract from the v2.9 policy document.
+- [x] **1.1** Finalize the undo-last contract from the v2.9 policy document.
 
 **Intent:** Translate the 12 safety requirements (U-R1–U-R12) from [`docs/decisions/correction_rollback_undo_policy.md`](../decisions/correction_rollback_undo_policy.md) into an implementation-ready contract. Define exact artifact write order, the `CorrectionEntry` schema for `correction_mode = "undo"`, manifest fields (`undone_decision_ids`, `undone_at`), and CLI output expectations. Resolve the design pre-work items listed in the policy Section 9.4 (pre-correction snapshot decision, undo entry schema, CLI output format, manifest updates, interaction with replace-all).
 
@@ -146,13 +146,13 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 **Validation expectation:** Contract is self-consistent with the 12 safety requirements U-R1–U-R12. No source code changes.
 
 **Definition of done:**
-- [ ] **1.1.1** Contract document created at `docs/contracts/undo_last_contract.md` (or equivalent path).
-- [ ] **1.1.2** Contract defines artifact write order matching the dependency chain in policy Section 4.3.
-- [ ] **1.1.3** Contract defines `CorrectionEntry` schema for `correction_mode = "undo"`.
-- [ ] **1.1.4** Contract defines manifest fields: `undone_decision_ids` and `undone_at`.
-- [ ] **1.1.5** Contract defines CLI output format for undo result.
-- [ ] **1.1.6** Design pre-work items from policy Section 9.4 are resolved.
-- [ ] **1.1.7** No source code changes. No live APIs/LLMs.
+- [x] **1.1.1** Contract document created at `docs/contracts/undo_last_contract.md` (or equivalent path).
+- [x] **1.1.2** Contract defines artifact write order matching the dependency chain in policy Section 4.3.
+- [x] **1.1.3** Contract defines `CorrectionEntry` schema for `correction_mode = "undo"`.
+- [x] **1.1.4** Contract defines manifest fields: `undone_decision_ids` and `undone_at`.
+- [x] **1.1.5** Contract defines CLI output format for undo result.
+- [x] **1.1.6** Design pre-work items from policy Section 9.4 are resolved.
+- [x] **1.1.7** No source code changes. No live APIs/LLMs.
 
 ---
 
