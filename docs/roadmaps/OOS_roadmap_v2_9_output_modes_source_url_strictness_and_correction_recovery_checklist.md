@@ -4,11 +4,11 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
-- [ ] **0.2** Current item: `1.1 Output mode contract and CLI policy`
-- [ ] **0.3** Roadmap state: `active / planned`
-- [ ] **0.4** Completed from this roadmap: **0 / 8**
-- [ ] **0.5** Remaining: **8 / 8**
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
+- [ ] **0.2** Current item: `1.2 Implement --utf8 opt-in flag`
+- [ ] **0.3** Roadmap state: `active / in progress`
+- [ ] **0.4** Completed from this roadmap: **1 / 8**
+- [ ] **0.5** Remaining: **7 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md` (complete, `9 / 9`, tag `v2.8` created, merged to main)
 
 ### Core Concept
@@ -171,15 +171,15 @@ v2.8 item 4.1 (commit `e36a470`) replaced Unicode symbols with ASCII-safe altern
 
 ### Acceptance criteria
 
-- [ ] **1.1.1** Contract document exists at `docs/contracts/output_mode_contract.md`.
-- [ ] **1.1.2** Contract defines ASCII-safe default as the mandatory behavior.
-- [ ] **1.1.3** Contract defines `--utf8` opt-in semantics: single boolean flag, all-or-nothing Unicode restore.
-- [ ] **1.1.4** Contract lists exactly which CLI commands accept `--utf8` and which are excluded.
-- [ ] **1.1.5** Symbol mapping table is exhaustive: covers all Unicode symbols currently used in CLI output.
-- [ ] **1.1.6** CP1251/CP1252 non-regression guarantee is explicit.
-- [ ] **1.1.7** Test requirements are specified: ASCII-safety check, `--utf8` restore check, no information loss.
-- [ ] **1.1.8** Contract references the v2.8 item 4.1 implementation gap as the motivation.
-- [ ] **1.1.9** No source code changes. No live APIs/LLMs.
+- [x] **1.1.1** Contract document exists at `docs/contracts/output_mode_contract.md`.
+- [x] **1.1.2** Contract defines ASCII-safe default as the mandatory behavior.
+- [x] **1.1.3** Contract defines `--utf8` opt-in semantics: single boolean flag, all-or-nothing Unicode restore.
+- [x] **1.1.4** Contract lists exactly which CLI commands accept `--utf8` and which are excluded.
+- [x] **1.1.5** Symbol mapping table is exhaustive: covers all Unicode symbols currently used in CLI output.
+- [x] **1.1.6** CP1251/CP1252 non-regression guarantee is explicit.
+- [x] **1.1.7** Test requirements are specified: ASCII-safety check, `--utf8` restore check, no information loss.
+- [x] **1.1.8** Contract references the v2.8 item 4.1 implementation gap as the motivation.
+- [x] **1.1.9** No source code changes. No live APIs/LLMs.
 
 ---
 

@@ -12,19 +12,19 @@
 ## Current Progress
 
 - Roadmap v2.9 planning created: yes
-- Roadmap v2.9 status: `active / planned` (`0 / 8`, branch `planning/v2-9-roadmap`)
-- Current item: `1.1 Output mode contract and CLI policy`
-- Roadmap state: `active / planned`
-- Completed: `0 / 8`
-- Remaining: `8 / 8`
-- Latest completed roadmap item: Roadmap v2.8 `7.1` — Final v2.8 validation checkpoint
-- Next planned roadmap item: Roadmap v2.9 `1.1` — Output mode contract and CLI policy
+- Roadmap v2.9 status: `active / in progress` (`1 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
+- Current item: `1.2 Implement --utf8 opt-in flag`
+- Roadmap state: `active / in progress`
+- Completed: `1 / 8`
+- Remaining: `7 / 8`
+- Latest completed roadmap item: Roadmap v2.9 `1.1` — Output mode contract and CLI policy
+- Next planned roadmap item: Roadmap v2.9 `1.2` — Implement `--utf8` opt-in flag
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `planning/v2-9-roadmap`
+- Current branch: `feat/v2-9-output-source-recovery-block-1`
 - Previous branch (v2.8 implementation): `feat/v2-8-decision-correction-block-1`
 - Previous branch (v2.7 implementation): `feat/v2-7-traceability-block-1`
 - Planning branch (v2.8): `planning/v2-8-roadmap` (merged to main)
