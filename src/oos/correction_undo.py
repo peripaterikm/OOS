@@ -637,12 +637,22 @@ def _undo_replace(
     # ------------------------------------------------------------------
     # PHASE 4 — Regenerate reports and dashboard
     # ------------------------------------------------------------------
-    _regenerate_reports_and_dashboard(
+    regen_ok, regen_errors = _regenerate_reports_and_dashboard(
         project_root=project_root,
         run_dir=run_dir,
         run_id=run_id,
         output_mode=output_mode,
     )
+    if not regen_ok:
+        return _fail(
+            run_dir=run_dir,
+            corrected_at=corrected_at,
+            message=(
+                f"Report/dashboard regeneration failed: "
+                f"{'; '.join(regen_errors)}. "
+                f"Undo aborted — no undo CorrectionEntry appended."
+            ),
+        )
 
     # ------------------------------------------------------------------
     # PHASE 5 — Append undo entry to import_history.json
@@ -858,12 +868,22 @@ def _undo_amend(
     # ------------------------------------------------------------------
     # PHASE 3 — Regenerate reports and dashboard
     # ------------------------------------------------------------------
-    _regenerate_reports_and_dashboard(
+    regen_ok, regen_errors = _regenerate_reports_and_dashboard(
         project_root=project_root,
         run_dir=run_dir,
         run_id=run_id,
         output_mode=output_mode,
     )
+    if not regen_ok:
+        return _fail(
+            run_dir=run_dir,
+            corrected_at=corrected_at,
+            message=(
+                f"Report/dashboard regeneration failed: "
+                f"{'; '.join(regen_errors)}. "
+                f"Undo aborted — no undo CorrectionEntry appended."
+            ),
+        )
 
     # Append undo entry to import_history.json
     _append_undo_history_entry(
@@ -1118,36 +1138,45 @@ def _regenerate_reports_and_dashboard(
     run_dir: Path,
     run_id: str,
     output_mode: str = "ascii_safe",
-) -> None:
+) -> tuple[bool, list[str]]:
     """Regenerate per-run report and cross-run dashboard after undo.
 
     Calls the existing deterministic builder + writer APIs from
     weekly_run_reports.py. These are read-only builders that inspect the
     on-disk artifacts — which are now in the post-undo state.
 
-    Regeneration is best-effort: failures are logged as warnings but do
-    not cause the undo to be rejected (the primary artifacts are already
-    correct). This matches the contract requirement that reports are
-    derived and non-blocking for undo correctness.
+    Regeneration is required by contract (docs/contracts/undo_last_contract.md
+    Sections 5.2 and 5.3). Failures propagate upward so undo can fail-closed
+    before appending the undo CorrectionEntry.
+
+    Returns:
+        (True, []) on success, (False, [error_messages]) on failure.
 
     No live API/LLM calls. No new decisions. Deterministic.
     """
+    errors: list[str] = []
+
+    # Regenerate per-run report
     try:
         report = build_weekly_run_report(
             project_root=project_root,
             run_id=run_id,
         )
         write_weekly_run_report(report, run_dir, output_mode=output_mode)
-    except Exception:
-        # Best-effort: report regeneration failure does not invalidate undo
-        pass
+    except Exception as exc:
+        errors.append(f"run_report regeneration failed: {exc}")
 
+    # Regenerate cross-run dashboard
     try:
         weekly_runs_root = run_dir.parent  # <pr>/artifacts/weekly_runs/
         dashboard = build_weekly_dashboard_index(project_root=project_root)
         write_weekly_dashboard_index(dashboard, weekly_runs_root, output_mode=output_mode)
-    except Exception:
-        pass
+    except Exception as exc:
+        errors.append(f"dashboard_index regeneration failed: {exc}")
+
+    if errors:
+        return (False, errors)
+    return (True, [])
 
 
 # ---------------------------------------------------------------------------
