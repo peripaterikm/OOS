@@ -29,6 +29,33 @@ def _read_script_text(script_name: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _assert_no_forbidden(script_name: str, text: str) -> None:
+    lines = text.splitlines()
+    for i, line in enumerate(lines, start=1):
+        # Skip comment lines and the synopsis/help text that mentions
+        # forbidden commands for documentation purposes.
+        stripped = line.strip()
+        if stripped.startswith("#") or stripped.startswith("<#") or stripped.startswith("#>"):
+            continue
+        if stripped.startswith("Write-Host") or stripped.startswith("REMINDER"):
+            continue
+        for cmd in FORBIDDEN_COMMANDS:
+            # Only flag actual command invocations, not mentions in
+            # documentation strings or Write-Host messages.
+            if cmd in stripped and (
+                stripped.startswith("&") or
+                stripped.startswith("git ") or
+                stripped.startswith("gh ") or
+                stripped.startswith("Remove-Item") or
+                stripped.startswith("rm ") or
+                stripped.startswith("del ")
+            ):
+                raise AssertionError(
+                    f"{script_name}:{i} contains forbidden command "
+                    f"'{cmd}': {stripped}"
+                )
+
+
 class TestDevWorkflowScriptsExist(unittest.TestCase):
     """Verify all four developer workflow scripts exist."""
 
@@ -47,55 +74,36 @@ class TestDevWorkflowScriptsExist(unittest.TestCase):
     def test_dev_git_check_exists(self) -> None:
         self.assertTrue((SCRIPTS_DIR / "dev-git-check.ps1").is_file())
 
+    def test_dev_test_exists(self) -> None:
+        self.assertTrue((SCRIPTS_DIR / "dev-test.ps1").is_file())
+
 
 class TestDevWorkflowScriptsNoForbiddenCommands(unittest.TestCase):
     """Verify no script contains forbidden git or destructive commands."""
 
-    def _assert_no_forbidden(self, script_name: str, text: str) -> None:
-        lines = text.splitlines()
-        for i, line in enumerate(lines, start=1):
-            # Skip comment lines and the synopsis/help text that mentions
-            # forbidden commands for documentation purposes.
-            stripped = line.strip()
-            if stripped.startswith("#") or stripped.startswith("<#") or stripped.startswith("#>"):
-                continue
-            if stripped.startswith("Write-Host") or stripped.startswith("REMINDER"):
-                continue
-            for cmd in FORBIDDEN_COMMANDS:
-                # Only flag actual command invocations, not mentions in
-                # documentation strings or Write-Host messages.
-                if cmd in stripped and (
-                    stripped.startswith("&") or
-                    stripped.startswith("git ") or
-                    stripped.startswith("gh ") or
-                    stripped.startswith("Remove-Item") or
-                    stripped.startswith("rm ") or
-                    stripped.startswith("del ")
-                ):
-                    self.fail(
-                        f"{script_name}:{i} contains forbidden command "
-                        f"'{cmd}': {stripped}"
-                    )
-
     def test_dev_snapshot_no_forbidden(self) -> None:
-        self._assert_no_forbidden("dev-snapshot.ps1",
-                                   _read_script_text("dev-snapshot.ps1"))
+        _assert_no_forbidden("dev-snapshot.ps1",
+                              _read_script_text("dev-snapshot.ps1"))
 
     def test_dev_validate_final_no_forbidden(self) -> None:
-        self._assert_no_forbidden("dev-validate-final.ps1",
-                                   _read_script_text("dev-validate-final.ps1"))
+        _assert_no_forbidden("dev-validate-final.ps1",
+                              _read_script_text("dev-validate-final.ps1"))
 
     def test_dev_pr_readiness_no_forbidden(self) -> None:
-        self._assert_no_forbidden("dev-pr-readiness.ps1",
-                                   _read_script_text("dev-pr-readiness.ps1"))
+        _assert_no_forbidden("dev-pr-readiness.ps1",
+                              _read_script_text("dev-pr-readiness.ps1"))
 
     def test_dev_post_merge_sync_no_forbidden(self) -> None:
-        self._assert_no_forbidden("dev-post-merge-sync.ps1",
-                                   _read_script_text("dev-post-merge-sync.ps1"))
+        _assert_no_forbidden("dev-post-merge-sync.ps1",
+                              _read_script_text("dev-post-merge-sync.ps1"))
 
     def test_dev_git_check_no_forbidden(self) -> None:
-        self._assert_no_forbidden("dev-git-check.ps1",
-                                   _read_script_text("dev-git-check.ps1"))
+        _assert_no_forbidden("dev-git-check.ps1",
+                              _read_script_text("dev-git-check.ps1"))
+
+    def test_dev_test_no_forbidden(self) -> None:
+        _assert_no_forbidden("dev-test.ps1",
+                              _read_script_text("dev-test.ps1"))
 
 
 class TestDevWorkflowScriptsStrictMode(unittest.TestCase):
@@ -126,6 +134,10 @@ class TestDevWorkflowScriptsStrictMode(unittest.TestCase):
     def test_dev_git_check_has_strict_mode(self) -> None:
         self._assert_has_strict_mode("dev-git-check.ps1",
                                       _read_script_text("dev-git-check.ps1"))
+
+    def test_dev_test_has_strict_mode(self) -> None:
+        self._assert_has_strict_mode("dev-test.ps1",
+                                      _read_script_text("dev-test.ps1"))
 
 
 class TestDevWorkflowScriptsCommentBasedHelp(unittest.TestCase):
@@ -158,6 +170,10 @@ class TestDevWorkflowScriptsCommentBasedHelp(unittest.TestCase):
     def test_dev_git_check_has_help(self) -> None:
         self._assert_has_help("dev-git-check.ps1",
                                _read_script_text("dev-git-check.ps1"))
+
+    def test_dev_test_has_help(self) -> None:
+        self._assert_has_help("dev-test.ps1",
+                               _read_script_text("dev-test.ps1"))
 
 
 class TestDevValidateFinalHasDiffCheck(unittest.TestCase):
@@ -254,6 +270,10 @@ class TestDevWorkflowScriptsNoLiveApi(unittest.TestCase):
     def test_dev_git_check_no_live_calls(self) -> None:
         self._assert_no_live_calls("dev-git-check.ps1",
                                     _read_script_text("dev-git-check.ps1"))
+
+    def test_dev_test_no_live_calls(self) -> None:
+        self._assert_no_live_calls("dev-test.ps1",
+                                    _read_script_text("dev-test.ps1"))
 
 
 class TestDevSnapshotWritesOnlyToLocalHold(unittest.TestCase):
@@ -470,6 +490,9 @@ class TestDevWorkflowScriptsWindowsNative(unittest.TestCase):
         self._assert_no_unix_constructs("dev-git-check.ps1",
                                          _read_script_text("dev-git-check.ps1"))
 
+    def test_dev_test_no_unix(self) -> None:
+        self._assert_no_unix_constructs("dev-test.ps1",
+                                         _read_script_text("dev-test.ps1"))
 
 class TestDevGitCheckReadOnly(unittest.TestCase):
     """dev-git-check.ps1 must be read-only with expected Git commands."""
@@ -504,11 +527,11 @@ class TestDevGitCheckReadOnly(unittest.TestCase):
                              f"dev-git-check.ps1 contains mutating command: {cmd}")
 
     def test_no_file_deletion(self) -> None:
-        text = _read_script_text("dev-git-check.ps1")
-        destructive = ["Remove-Item", "rm ", "del "]
-        for cmd in destructive:
-            self.assertNotIn(cmd, text,
-                             f"dev-git-check.ps1 contains destructive command: {cmd}")
+        """Use the same _assert_no_forbidden logic that skips comments
+        and Write-Host lines, so instructional messages about del are
+        not flagged."""
+        _assert_no_forbidden("dev-git-check.ps1",
+                              _read_script_text("dev-git-check.ps1"))
 
 
 class TestDevGitCheckExecution(unittest.TestCase):
@@ -645,6 +668,67 @@ class TestDevGitCheckExecution(unittest.TestCase):
 
             output = result.stdout
             self.assertIn("OVERALL: FAIL", output)
+
+
+class TestDevTestScript(unittest.TestCase):
+    """Tests specific to dev-test.ps1."""
+
+    def test_contains_pythonpath_set(self) -> None:
+        text = _read_script_text("dev-test.ps1")
+        self.assertIn("PYTHONPATH", text,
+                       "dev-test.ps1 must set PYTHONPATH=src")
+        self.assertIn('Join-Path $ProjectRoot "src"', text)
+
+    def test_contains_venv_python(self) -> None:
+        text = _read_script_text("dev-test.ps1")
+        self.assertIn('.venv\\Scripts\\python.exe', text,
+                       "dev-test.ps1 must use .venv\\Scripts\\python.exe")
+
+    def test_supports_suite_parameter(self) -> None:
+        text = _read_script_text("dev-test.ps1")
+        self.assertIn("[string[]]$Suite", text,
+                       "dev-test.ps1 must declare -Suite parameter")
+
+    def test_supports_full_parameter(self) -> None:
+        text = _read_script_text("dev-test.ps1")
+        self.assertIn("[switch]$Full", text,
+                       "dev-test.ps1 must declare -Full parameter")
+
+    def test_enforces_suite_or_full(self) -> None:
+        """dev-test.ps1 must fail if neither -Suite nor -Full is passed."""
+        text = _read_script_text("dev-test.ps1")
+        self.assertIn("-Suite or -Full", text,
+                       "dev-test.ps1 must require -Suite or -Full")
+
+    def test_enforces_not_both_suite_and_full(self) -> None:
+        """dev-test.ps1 must fail if both -Suite and -Full are passed."""
+        text = _read_script_text("dev-test.ps1")
+        self.assertIn("both -Suite and -Full", text,
+                       "dev-test.ps1 must reject both -Suite and -Full")
+
+    def test_lightweight_execution(self) -> None:
+        """Run dev-test.ps1 -Suite tests.test_dev_git_check_null_guard -Verbose
+        and verify it passes. Uses a non-recursive test module
+        (test_dev_git_check_null_guard) to avoid infinite recursion."""
+        script = SCRIPTS_DIR / "dev-test.ps1"
+
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+             "-File", str(script),
+             "-Suite", "tests.test_dev_git_check_null_guard",
+             "-Verbose"],
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_ROOT),
+        )
+
+        self.assertEqual(result.returncode, 0,
+                          f"dev-test.ps1 failed on test_dev_git_check_null_guard: "
+                          f"stdout={result.stdout} stderr={result.stderr}")
+
+        output = result.stdout
+        self.assertIn("OVERALL: PASS", output)
+        self.assertIn("test_dev_git_check_null_guard", output)
 
 
 if __name__ == "__main__":
