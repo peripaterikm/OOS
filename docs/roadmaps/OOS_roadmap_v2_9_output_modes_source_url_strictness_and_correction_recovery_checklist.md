@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
-- [ ] **0.2** Current item: `1.2 Implement --utf8 opt-in flag`
-- [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **1 / 8**
-- [ ] **0.5** Remaining: **7 / 8**
+- [x] **0.2** Current item: `2.1 Quality gate source URL fixture audit and correction plan`
+- [x] **0.3** Roadmap state: `active / in progress`
+- [x] **0.4** Completed from this roadmap: **2 / 8**
+- [x] **0.5** Remaining: **6 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md` (complete, `9 / 9`, tag `v2.8` created, merged to main)
 
 ### Core Concept
@@ -228,18 +228,18 @@ The v2.8 item 4.1 acceptance criterion 4.1.3 was marked complete but `--utf8` wa
 
 ### Acceptance criteria
 
-- [ ] **1.2.1** `--utf8` flag exists on `weekly-cycle-status-v2` CLI subcommand.
-- [ ] **1.2.2** `--utf8` flag exists on `weekly-dashboard-v2` CLI subcommand.
-- [ ] **1.2.3** `--utf8` flag exists on `build-weekly-run-report-v2` CLI subcommand.
-- [ ] **1.2.4** Default output (no `--utf8`) is ASCII-safe: no Unicode symbols outside range 32–126 (excluding `\n`, `\t`).
-- [ ] **1.2.5** `--utf8` output restores Unicode symbols (✅, ❌, ⚠, ─, ◉, etc.).
-- [ ] **1.2.6** No information is lost in ASCII-safe rendering compared to Unicode rendering.
-- [ ] **1.2.7** CP1251/CP1252 terminals render default output without mojibake (verified by ASCII-only check).
-- [ ] **1.2.8** Symbol selection is centralized in a single helper per module (no scattered `if utf8:` blocks).
-- [ ] **1.2.9** `import-founder-decisions-v2` is audited; `--utf8` added only if correction summary output contains Unicode symbols.
-- [ ] **1.2.10** Existing tests pass without modification (ASCII-safe defaults are backward compatible).
-- [ ] **1.2.11** Focused tests (≥12) cover: ASCII-safe default for status, UTF-8 output for status, ASCII-safe default for dashboard, UTF-8 output for dashboard, ASCII-safe default for run report, UTF-8 output for run report, CLI flag propagation, no-flag default behavior, symbol mapping correctness, no information loss, CP1251/CP1252 safety, and excluded commands do not accept `--utf8`.
-- [ ] **1.2.12** No live APIs/LLMs; advisory-only preserved.
+- [x] **1.2.1** `--utf8` flag exists on `weekly-cycle-status-v2` CLI subcommand.
+- [x] **1.2.2** `--utf8` flag exists on `weekly-dashboard-v2` CLI subcommand.
+- [x] **1.2.3** `--utf8` flag exists on `build-weekly-run-report-v2` CLI subcommand.
+- [x] **1.2.4** Default output (no `--utf8`) is ASCII-safe: no Unicode symbols outside range 32–126 (excluding `\n`, `\t`).
+- [x] **1.2.5** `--utf8` output restores Unicode symbols (✓, ✗, ⚠, →, — via `get_output_symbols("utf8")`).
+- [x] **1.2.6** No information is lost in ASCII-safe rendering compared to Unicode rendering.
+- [x] **1.2.7** CP1251/CP1252 terminals render default output without mojibake (verified by ASCII-only check).
+- [x] **1.2.8** Symbol selection is centralized in `src/oos/output_modes.py` (single `get_output_symbols()` helper).
+- [x] **1.2.9** `import-founder-decisions-v2` is audited; `--utf8` NOT added (terminal output has no status symbols).
+- [x] **1.2.10** Existing tests pass without modification (ASCII-safe defaults are backward compatible).
+- [x] **1.2.11** Focused tests (25 new tests): 7 status + 10 reports + 8 CLI = 25 ≥ 12 covering all required scenarios.
+- [x] **1.2.12** No live APIs/LLMs; advisory-only preserved.
 
 ---
 

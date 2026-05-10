@@ -43,6 +43,7 @@ from oos.weekly_run_manifest import (
     read_weekly_run_manifest,
 )
 from oos.founder_decision_import import build_import_history_summary, read_import_history
+from oos.output_modes import get_output_symbols, validate_output_mode
 
 WEEKLY_CYCLE_STATUS_SCHEMA_VERSION = "weekly_cycle_status.v1"
 
@@ -609,8 +610,17 @@ def _compute_recommended_next_step(
 # ---------------------------------------------------------------------------
 
 
-def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
-    """Render a WeeklyCycleStatus as a human-readable Markdown string."""
+def render_weekly_cycle_status_markdown(
+    status: WeeklyCycleStatus,
+    output_mode: str = "ascii_safe",
+) -> str:
+    """Render a WeeklyCycleStatus as a human-readable Markdown string.
+
+    Args:
+        status: The WeeklyCycleStatus to render.
+        output_mode: 'ascii_safe' (default) or 'utf8'. Controls symbols used.
+    """
+    sym = get_output_symbols(output_mode)
 
     lines: list[str] = []
     lines.append("# Weekly Cycle Status")
@@ -621,7 +631,7 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     lines.append("")
     run_id_label = f"`{status.run_id}`"
     if status.corrected_decision_count > 0:
-        run_id_label += " **[CORRECTED]**"
+        run_id_label += f" **{sym['corrected']}**"
     lines.append(f"- **Run ID**: {run_id_label}")
     lines.append(f"- **Run Directory**: `{status.run_dir}`")
     lines.append(f"- **Manifest Path**: `{status.manifest_path}`")
@@ -649,7 +659,7 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     lines.append("## 4. Pipeline Artifact Counts")
     lines.append("")
     for art in status.artifact_statuses:
-        present_mark = "OK" if art.exists else "FAIL"
+        present_mark = sym["success"] if art.exists else sym["failure"]
         empty_note = " (empty)" if art.is_empty_state and art.exists else ""
         count_info = f" -- {art.item_count} items" if art.exists else " -- missing"
         lines.append(f"- {present_mark} **{art.artifact_key}**{count_info}{empty_note}")
@@ -734,8 +744,8 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     lines.append("")
     if status.corrected_decision_count > 0:
         lines.append(f"- **Corrected decision count**: {status.corrected_decision_count}")
-        lines.append(f"- **Replaced decision IDs**: {', '.join(f'`{did}`' for did in status.replaced_decision_ids) if status.replaced_decision_ids else 'NONE'}")
-        lines.append(f"- **Amended decision IDs**: {', '.join(f'`{did}`' for did in status.amended_decision_ids) if status.amended_decision_ids else 'NONE'}")
+        lines.append(f"- **Replaced decision IDs**: {', '.join(f'`{did}`' for did in status.replaced_decision_ids) if status.replaced_decision_ids else sym['none']}")
+        lines.append(f"- **Amended decision IDs**: {', '.join(f'`{did}`' for did in status.amended_decision_ids) if status.amended_decision_ids else sym['none']}")
         lines.append("")
         lines.append("### Per-Correction Details")
         lines.append("")
@@ -758,7 +768,7 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
             lines.append("")
     else:
         lines.append("- **Corrected decision count**: 0")
-        lines.append("- **Correction entries**: NONE (no corrections have been applied to this run)")
+        lines.append(f"- **Correction entries**: {sym['none']} (no corrections have been applied to this run)")
         lines.append("")
     lines.append("")
 
@@ -767,7 +777,7 @@ def render_weekly_cycle_status_markdown(status: WeeklyCycleStatus) -> str:
     lines.append("")
     for art in status.artifact_statuses:
         abs_path = Path(status.run_dir) / art.relative_path
-        lines.append(f"- `{art.relative_path}` -> `{abs_path}`")
+        lines.append(f"- `{art.relative_path}` {sym['arrow']} `{abs_path}`")
     lines.append("")
 
     # ── Safety flags ─────────────────────────────────────

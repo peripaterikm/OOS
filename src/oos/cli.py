@@ -977,6 +977,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         dest="output_json",
         help="Output status as JSON instead of Markdown.",
     )
+    v2_status_parser.add_argument(
+        "--utf8",
+        action="store_true",
+        default=False,
+        help="Use UTF-8 Unicode symbols in terminal output (opt-in; default is ASCII-safe).",
+    )
 
     report_parser = subparsers.add_parser(
         "build-weekly-run-report-v2",
@@ -992,6 +998,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--run-id",
         required=True,
         help="The weekly run ID to report on.",
+    )
+    report_parser.add_argument(
+        "--utf8",
+        action="store_true",
+        default=False,
+        help="Use UTF-8 Unicode symbols in Markdown output (opt-in; default is ASCII-safe).",
     )
 
     dashboard_parser = subparsers.add_parser(
@@ -1009,6 +1021,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         dest="output_json",
         help="Output dashboard as JSON instead of Markdown.",
+    )
+    dashboard_parser.add_argument(
+        "--utf8",
+        action="store_true",
+        default=False,
+        help="Use UTF-8 Unicode symbols in Markdown output (opt-in; default is ASCII-safe).",
     )
 
     return parser
@@ -1356,11 +1374,13 @@ def main(argv: list[str] | None = None) -> int:
             project_root=args.project_root,
             run_id=args.run_id,
         )
+        utf8 = bool(getattr(args, "utf8", False))
+        output_mode = "utf8" if utf8 else "ascii_safe"
 
         if getattr(args, "output_json", False):
             print(weekly_cycle_status_to_json(status), end="")
         else:
-            print(render_weekly_cycle_status_markdown(status))
+            print(render_weekly_cycle_status_markdown(status, output_mode=output_mode))
 
         if status.validation_passed:
             return 0
@@ -1455,8 +1475,10 @@ def main(argv: list[str] | None = None) -> int:
                 project_root=args.project_root,
                 run_id=args.run_id,
             )
+            utf8 = bool(getattr(args, "utf8", False))
+            output_mode = "utf8" if utf8 else "ascii_safe"
             run_dir = args.project_root / "artifacts" / "weekly_runs" / args.run_id
-            json_path, md_path = write_weekly_run_report(report, run_dir)
+            json_path, md_path = write_weekly_run_report(report, run_dir, output_mode=output_mode)
         except ValueError as exc:
             print(f"build-weekly-run-report-v2 failed: {exc}")
             return 2
@@ -1489,8 +1511,10 @@ def main(argv: list[str] | None = None) -> int:
             dashboard = build_weekly_dashboard_index(
                 project_root=args.project_root,
             )
+            utf8 = bool(getattr(args, "utf8", False))
+            output_mode = "utf8" if utf8 else "ascii_safe"
             weekly_runs_root = args.project_root / "artifacts" / "weekly_runs"
-            json_path, md_path = write_weekly_dashboard_index(dashboard, weekly_runs_root)
+            json_path, md_path = write_weekly_dashboard_index(dashboard, weekly_runs_root, output_mode=output_mode)
         except ValueError as exc:
             print(f"weekly-dashboard-v2 failed: {exc}")
             return 2

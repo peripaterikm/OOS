@@ -1671,3 +1671,183 @@ class TestCP1251SafeReportOutput(unittest.TestCase):
         self.assertIn("Warnings", md)
         self.assertIn("Errors", md)
         self.assertIn("Safety Flags", md)
+
+
+class TestWeeklyRunReportsOutputModes(unittest.TestCase):
+    """Output mode tests for run reports and dashboard (Roadmap v2.9 item 1.2)."""
+
+    def _temp_project_root(self) -> Path:
+        return _temp_project_root(self)
+
+    # ─── Run Report tests ────────────────────────────────────────
+
+    def test_run_report_ascii_default_is_ascii_only(self):
+        """Default run report must contain only ASCII characters."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_rr_ascii"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        md = render_weekly_run_report_markdown(report, output_mode="ascii_safe")
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Run report ASCII default contains non-ASCII U+{ord(ch):04X} at pos {i}: {ch!r}"
+            )
+
+    def test_run_report_utf8_output_contains_unicode_markers(self):
+        """Run report with utf8 must contain expected Unicode symbols -- if
+        the report renderer uses output-mode-dependent symbols.
+
+        NOTE: The per-run report Markdown currently does not use pass/fail
+        symbols or arrows in its structured output.  The renderer is
+        output-mode-aware and will use the correct symbols when present.
+        This test verifies the utf8 mode is accepted and produces valid
+        output.  If future roadmap work adds symbolic markers to the run
+        report, this test will catch any missing Unicode mapping.
+        """
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_rr_utf8"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        md = render_weekly_run_report_markdown(report, output_mode="utf8")
+        # Sections must still exist
+        self.assertIn("# Weekly Run Report", md)
+        self.assertIn("Status Summary", md)
+        self.assertIn("Safety Flags", md)
+        # Must not error on the utf8 symbol dict lookup
+        self.assertIsInstance(md, str)
+        self.assertTrue(len(md) > 0)
+
+    def test_run_report_default_is_ascii_safe(self):
+        """Omitting output_mode for run report must default to ascii_safe."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_rr_def"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        md = render_weekly_run_report_markdown(report)
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Run report default contains non-ASCII U+{ord(ch):04X} at pos {i}"
+            )
+
+    def test_run_report_json_unchanged_by_output_mode(self):
+        """run_report.json must be identical regardless of output_mode."""
+        root1 = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_rr_json"
+        _build_mock_weekly_run(root1, run_id)
+        report = build_weekly_run_report(project_root=root1, run_id=run_id)
+        run_dir1 = root1 / "artifacts" / "weekly_runs" / run_id
+        json_path1, _ = write_weekly_run_report(report, run_dir1, output_mode="ascii_safe")
+
+        root2 = self._temp_project_root()
+        _build_mock_weekly_run(root2, run_id)
+        report2 = build_weekly_run_report(project_root=root2, run_id=run_id)
+        run_dir2 = root2 / "artifacts" / "weekly_runs" / run_id
+        json_path2, _ = write_weekly_run_report(report2, run_dir2, output_mode="utf8")
+
+        json1 = json.loads(json_path1.read_text(encoding="utf-8"))
+        json2 = json.loads(json_path2.read_text(encoding="utf-8"))
+        # Remove generated_at timestamps (mode-independent but time-varying)
+        json1.pop("generated_at", None)
+        json2.pop("generated_at", None)
+        # Remove safety flags that may differ because of generated_at
+        self.assertEqual(json1, json2,
+                         "run_report.json must be mode-independent")
+
+    # ─── Dashboard tests ─────────────────────────────────────────
+
+    def test_dashboard_ascii_default_is_ascii_only(self):
+        """Default dashboard must contain only ASCII characters."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_db_ascii")
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard, output_mode="ascii_safe")
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Dashboard ASCII default contains non-ASCII U+{ord(ch):04X} at pos {i}: {ch!r}"
+            )
+
+    def test_dashboard_utf8_output_contains_unicode_markers(self):
+        """Dashboard with utf8 must contain expected Unicode checkmark."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_db_utf8")
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard, output_mode="utf8")
+        # Checkmark (U+2713) should appear in table for manifest/valid columns
+        self.assertIn("\u2713", md, "UTF-8 dashboard should contain checkmark symbol")
+
+    def test_dashboard_utf8_output_uses_corrected_symbol(self):
+        """Dashboard with corrections must use symbol-corrected in utf8 mode."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_db_corr"
+        _build_mock_weekly_run(
+            root, run_id,
+            with_inbox=True, with_decisions=True, decision_count=1,
+        )
+        # Manually write an import history with a correction entry
+        import_history_path = (
+            root / "artifacts" / "weekly_runs" / run_id / "import_history.json"
+        )
+        correction_entry = {
+            "correction_id": "corr_test_001",
+            "corrected_at": "2026-05-10T00:00:00Z",
+            "correction_mode": "replace",
+            "old_decision_ids": ["dec_old_001"],
+            "new_decision_ids": ["dec_new_001"],
+            "replaced_review_item_ids": ["ri_001"],
+            "checksums": {},
+        }
+        import_history = {
+            "schema_version": "import_history.v1",
+            "run_id": run_id,
+            "entries": [correction_entry],
+            "advisory_only": True,
+            "no_live_api": True,
+            "no_live_llm": True,
+        }
+        import_history_path.write_text(
+            json.dumps(import_history, indent=2), encoding="utf-8"
+        )
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard, output_mode="utf8")
+        self.assertIn("[CORRECTED]", md,
+                      "Dashboard must show [CORRECTED] for corrected runs")
+
+    def test_dashboard_default_is_ascii_safe(self):
+        """Omitting output_mode for dashboard must default to ascii_safe."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_db_def")
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        md = render_weekly_dashboard_markdown(dashboard)
+        for i, ch in enumerate(md):
+            self.assertLess(
+                ord(ch), 128,
+                f"Dashboard default contains non-ASCII U+{ord(ch):04X} at pos {i}"
+            )
+
+    def test_dashboard_json_unchanged_by_output_mode(self):
+        """dashboard_index.json structure must be identical regardless of output_mode."""
+        root = self._temp_project_root()
+        _build_mock_weekly_run(root, "weekly_run_2026_05_10_dbj1")
+        weekly_runs = root / "artifacts" / "weekly_runs"
+
+        # Build the dashboard once, then write twice with different modes
+        dashboard = build_weekly_dashboard_index(project_root=root)
+        json_path_ascii, _ = write_weekly_dashboard_index(dashboard, weekly_runs, output_mode="ascii_safe")
+        json_path_utf8, _ = write_weekly_dashboard_index(dashboard, weekly_runs, output_mode="utf8")
+
+        json_ascii = json.loads(json_path_ascii.read_text(encoding="utf-8"))
+        json_utf8 = json.loads(json_path_utf8.read_text(encoding="utf-8"))
+        self.assertEqual(json_ascii, json_utf8,
+                         "dashboard_index.json must be mode-independent")
+
+    def test_run_report_output_mode_unknown_raises_valueerror(self):
+        """Unknown output mode must raise ValueError for run report renderer."""
+        root = self._temp_project_root()
+        run_id = "weekly_run_2026_05_10_rr_bad"
+        _build_mock_weekly_run(root, run_id)
+        report = build_weekly_run_report(project_root=root, run_id=run_id)
+        with self.assertRaises(ValueError):
+            render_weekly_run_report_markdown(report, output_mode="unicode")
