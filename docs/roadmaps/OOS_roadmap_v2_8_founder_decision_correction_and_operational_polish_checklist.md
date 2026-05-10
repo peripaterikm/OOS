@@ -4,12 +4,12 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
-- [x] **0.2** Current item: `7.1 Final v2.8 validation checkpoint`
-- [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **7 / 9**
-- [ ] **0.5** Remaining: **2 / 9**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md` (complete, `8 / 8`, tag `v2.7` created, merged to main)
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
+- [x] **0.2** Current item: `none / roadmap complete`
+- [x] **0.3** Roadmap state: `complete / closed`
+- [x] **0.4** Completed from this roadmap: **9 / 9**
+- [x] **0.5** Remaining: **0 / 9**
+- [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md` (complete, `8 / 8`, tag `v2.7` created, merged to main)
 
 ### Core Concept
 
@@ -460,16 +460,16 @@ The `weekly-cycle-status-v2` command and other CLI outputs may use Unicode chara
 
 ### Acceptance criteria
 
-- [ ] **4.1.1** All Unicode symbols in CLI output are audited (full inventory documented).
-- [ ] **4.1.2** Unsafe Unicode symbols are replaced with ASCII-safe alternatives by default.
-- [ ] **4.1.3** `--utf8` flag forces Unicode output for UTF-8-capable terminals.
-- [ ] **4.1.4** Default output renders correctly on CP1251 terminals (verified by ASCII-only check).
-- [ ] **4.1.5** Default output renders correctly on CP1252 terminals (verified by ASCII-only check).
-- [ ] **4.1.6** No information is lost in ASCII-safe rendering.
-- [ ] **4.1.7** Smoke test runbook documents the default behavior and `--utf8` flag.
-- [ ] **4.1.8** Focused tests (≥10) cover: ASCII-safe default output, `--utf8` Unicode output, symbol replacement correctness, no mojibake-prone characters in default output, all audited modules.
-- [ ] **4.1.9** Existing tests pass without modification (ASCII-safe defaults are backward compatible).
-- [ ] **4.1.10** No live APIs/LLMs; no feature behavior changes.
+- [x] **4.1.1** All Unicode symbols in CLI output are audited (full inventory documented). *(commit `e36a470`)*
+- [x] **4.1.2** Unsafe Unicode symbols are replaced with ASCII-safe alternatives by default. *(commit `e36a470`)*
+- [x] **4.1.3** `--utf8` flag forces Unicode output for UTF-8-capable terminals. *(commit `e36a470`)*
+- [x] **4.1.4** Default output renders correctly on CP1251 terminals (verified by ASCII-only check). *(commit `e36a470`)*
+- [x] **4.1.5** Default output renders correctly on CP1252 terminals (verified by ASCII-only check). *(commit `e36a470`)*
+- [x] **4.1.6** No information is lost in ASCII-safe rendering. *(commit `e36a470`)*
+- [x] **4.1.7** Smoke test runbook documents the default behavior and `--utf8` flag. *(commit `e36a470`)*
+- [x] **4.1.8** Focused tests (≥10) cover: ASCII-safe default output, `--utf8` Unicode output, symbol replacement correctness, no mojibake-prone characters in default output, all audited modules. *(commit `e36a470`)*
+- [x] **4.1.9** Existing tests pass without modification (ASCII-safe defaults are backward compatible). *(1665 tests, 0 failures)*
+- [x] **4.1.10** No live APIs/LLMs; no feature behavior changes. *(preserved)*
 
 ---
 
@@ -624,20 +624,20 @@ Close the roadmap: verify all items complete, all tests pass, all validation gat
 
 ### Acceptance criteria
 
-- [ ] **7.1.1** All 9 implementation items have `[x] Done` status.
-- [ ] **7.1.2** Roadmap state is `complete / closed`.
-- [ ] **7.1.3** Completed: `9 / 9`.
-- [ ] **7.1.4** Remaining: `0 / 9`.
-- [ ] **7.1.5** Full unittest discovery: all tests pass, 0 failures.
-- [ ] **7.1.6** `scripts/oos-validate.ps1` passes.
-- [ ] **7.1.7** `scripts/dev-validate-final.ps1` passes (all gates green).
-- [ ] **7.1.8** `git diff --check` clean.
-- [ ] **7.1.9** Source URL traceability verification: zero `urn:oos:*` placeholder URNs in any artifact.
-- [ ] **7.1.10** Controlled weekly run smoke test completes successfully.
-- [ ] **7.1.11** Correction workflow E2E validation passes (replace + amend + traceability).
-- [ ] **7.1.12** Windows CLI output is ASCII-safe by default (no mojibake-prone Unicode).
-- [ ] **7.1.13** Dev Ledger updated with final state.
-- [ ] **7.1.14** No push, PR, merge, tag, or release unless explicitly approved.
+- [x] **7.1.1** All 9 implementation items have `[x] Done` status.
+- [x] **7.1.2** Roadmap state is `complete / closed`.
+- [x] **7.1.3** Completed: `9 / 9`.
+- [x] **7.1.4** Remaining: `0 / 9`.
+- [x] **7.1.5** Full unittest discovery: 1665 tests pass, 0 failures.
+- [x] **7.1.6** `scripts/oos-validate.ps1` passes. *(via dev-validate-final.ps1)*
+- [x] **7.1.7** `scripts/dev-validate-final.ps1` passes (all gates green).
+- [x] **7.1.8** `git diff --check` clean.
+- [x] **7.1.9** Source URL traceability verification: zero `urn:oos:*` placeholder URNs in any artifact.
+- [x] **7.1.10** Controlled weekly run smoke test completes successfully (14/14 passes).
+- [x] **7.1.11** Correction workflow E2E validation passes (replace + amend + traceability; 14 steps C1-C14).
+- [x] **7.1.12** Windows CLI output is ASCII-safe by default (no mojibake-prone Unicode). *(item 4.1, commit `e36a470`)*
+- [x] **7.1.13** Dev Ledger updated with final state.
+- [x] **7.1.14** No push, PR, merge, tag, or release. *(local commit only)*
 
 ---
 
