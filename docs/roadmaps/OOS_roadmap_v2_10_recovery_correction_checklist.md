@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
-- [ ] **0.2** Current item: `2 — Undo-last implementation`
+- [ ] **0.2** Current item: `3 — Undo-last validation and smoke coverage`
 - [x] **0.3** Roadmap state: `ready for implementation`
-- [ ] **0.4** Completed from this roadmap: **1 / 9**
-- [ ] **0.5** Remaining: **8 / 9**
+- [ ] **0.4** Completed from this roadmap: **2 / 9**
+- [ ] **0.5** Remaining: **7 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md` (complete, `8 / 8`, tag `v2.9`, merged to main via PR #49)
 
 ### Branch and Version
@@ -158,7 +158,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 ### 2. Undo-Last Implementation
 
-- [ ] **2.1** Implement `--undo-last` on `import-founder-decisions-v2`.
+- [x] **2.1** Implement `--undo-last` on `import-founder-decisions-v2`.
 
 **Intent:** Implement the narrow U1 mode defined in the policy document Section 5.1 and the finalized contract (item 1). Create `src/oos/correction_undo.py` with `UndoResult` model and `undo_last_correction()` function. Add `--undo-last` flag to `import-founder-decisions-v2` in [`src/oos/cli.py`](../../src/oos/cli.py). Integrate with [`src/oos/founder_decision_import.py`](../../src/oos/founder_decision_import.py) for history reading and audit append. Satisfy all 12 safety requirements U-R1–U-R12.
 
@@ -167,16 +167,16 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 **Validation expectation:** All undo-last tests pass. Correction workflow E2E (v2.8 C1–C14) still passes. Fail-closed behavior verified: empty history rejected, missing archive rejected, partial writes impossible. Source URL traceability survives undo (U-R8: zero placeholder URNs after undo).
 
 **Definition of done:**
-- [ ] **2.1.1** `src/oos/correction_undo.py` created with `UndoResult` model and `undo_last_correction()` function.
-- [ ] **2.1.2** `--undo-last` flag added to `import-founder-decisions-v2` in `src/oos/cli.py`.
-- [ ] **2.1.3** Integration with `src/oos/founder_decision_import.py` for history/audit operations.
-- [ ] **2.1.4** Undo-replace path works: old decisions restored from `replaced_decisions/`, new decisions removed, derived artifacts rebuilt.
-- [ ] **2.1.5** Undo-amend path works: old notes restored from `amended_decisions/`, no derived artifact rebuild.
-- [ ] **2.1.6** Audit trail preserved: new `CorrectionEntry` appended with `correction_mode = "undo"`.
-- [ ] **2.1.7** Manifest updated with `undone_decision_ids` and `undone_at`.
-- [ ] **2.1.8** All 12 safety requirements U-R1–U-R12 satisfied.
-- [ ] **2.1.9** Existing v2.8 correction E2E validation (C1–C14) still passes.
-- [ ] **2.1.10** No live APIs/LLMs; advisory-only preserved.
+- [x] **2.1.1** `src/oos/correction_undo.py` created with `UndoResult` model and `undo_last_correction()` function.
+- [x] **2.1.2** `--undo-last` flag added to `import-founder-decisions-v2` in `src/oos/cli.py`.
+- [x] **2.1.3** Integration with `src/oos/founder_decision_import.py` for history/audit operations (CorrectionEntry extended with undo-specific fields, ImportHistoryLog.from_dict handles undo entries).
+- [x] **2.1.4** Undo-replace path works: old decisions restored from `replaced_decisions/`, new decisions removed, derived artifacts rebuilt.
+- [x] **2.1.5** Undo-amend path works: old notes restored from `amended_decisions/`, no derived artifact rebuild.
+- [x] **2.1.6** Audit trail preserved: new `CorrectionEntry` appended with `correction_mode = "undo"`.
+- [x] **2.1.7** Manifest updated with `undone_decision_ids` and `undone_at`.
+- [x] **2.1.8** All 12 safety requirements U-R1–U-R12 satisfied.
+- [x] **2.1.9** Existing v2.8 correction E2E validation (C1–C14) still passes (1739 tests pass).
+- [x] **2.1.10** No live APIs/LLMs; advisory-only preserved.
 
 ---
 
