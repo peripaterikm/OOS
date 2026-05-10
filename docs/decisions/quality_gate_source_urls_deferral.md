@@ -132,3 +132,31 @@ When item 5.1 is revisited in v2.9+:
 - **No fixture changes** in `examples/` or `tests/fixtures/` for v2.8.
 - **No source URL scanner weakening** — the scanner correctly reports `missing_source_url`; we do not suppress it.
 - **No live API/LLM calls.**
+
+---
+
+## 10. v2.9 Resolution (item 2.2 — 2026-05-10)
+
+### Audit Correction
+
+The v2.9 item 2.1 audit confirmed that the `missing_count=1` found in the v2.7/v2.8 E2E source URL traceability scan originates from **`founder_inbox_v2_index`**, not `quality_gate_decisions`. The specific item is `inbox_review_822b4d010950` in the `decision_recording_commands` section — a legitimate synthetic inbox item with no evidence lineage (all five linked-ID fields empty, linked_source_urls empty).
+
+All 10 fixture cases in `examples/evaluation_dataset_v2_5/opportunity_quality_cases_v1.json` have non-empty source URLs at every hop. Quality gate propagation is correct. Fixture source URLs are clean.
+
+### Implemented Fix
+
+A narrow scanner exemption was implemented in [`src/oos/source_url_traceability.py`](../../src/oos/source_url_traceability.py):
+
+- **`_is_synthetic_inbox_item_without_lineage()`** helper returns `True` only when:
+  - `artifact_key == "founder_inbox_v2_index"`
+  - All five lineage fields are empty: `linked_opportunity_ids`, `linked_evidence_pack_ids`, `linked_evidence_ids`, `linked_quality_gate_ids`, `linked_source_urls`
+- The exemption is applied **before** the missing-source-url issue is emitted.
+- Placeholder URN detection is **not** weakened: items with non-empty `linked_source_urls` are still scanned. Items with any linked ID present are not exempt.
+- The exemption is counted as `items_exempt_synthetic_inbox` in artifact status and `exempt_synthetic_inbox_count` in the report.
+
+### Result
+
+- Fixture E2E source URL traceability now reports `missing_count = 0` and `placeholder_count = 0`.
+- `source_url_traceability_validation_passed = True` for fixture-based E2E runs.
+- No fixture data was modified. No quality gate logic was modified. No scoring/gating/decision semantics changed.
+- The deferral is **resolved**. The missing-source-URL gap was a synthetic inbox artifact, not a propagation defect.

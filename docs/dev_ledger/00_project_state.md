@@ -12,13 +12,13 @@
 ## Current Progress
 
 - Roadmap v2.9 planning created: yes
-- Roadmap v2.9 status: `active / in progress` (`2 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
-- Current item: `2.1 Quality gate source URL fixture audit and correction plan`
+- Roadmap v2.9 status: `active / in progress` (`4 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
+- Current item: `3.1 Correction rollback / undo policy review`
 - Roadmap state: `active / in progress`
-- Completed: `2 / 8`
-- Remaining: `6 / 8`
-- Latest completed roadmap item: Roadmap v2.9 `1.2` — Implement `--utf8` opt-in flag
-- Next planned roadmap item: Roadmap v2.9 `2.1` — Quality gate source URL fixture audit and correction plan
+- Completed: `4 / 8`
+- Remaining: `4 / 8`
+- Latest completed roadmap item: Roadmap v2.9 `2.2` — Quality gate source URL strictness / synthetic inbox exemption
+- Next planned roadmap item: Roadmap v2.9 `3.1` — Correction rollback / undo policy review
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy

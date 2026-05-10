@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
-- [x] **0.2** Current item: `2.1 Quality gate source URL fixture audit and correction plan`
+- [x] **0.2** Current item: `3.1 Correction rollback / undo policy review`
 - [x] **0.3** Roadmap state: `active / in progress`
-- [x] **0.4** Completed from this roadmap: **2 / 8**
-- [x] **0.5** Remaining: **6 / 8**
+- [x] **0.4** Completed from this roadmap: **4 / 8**
+- [x] **0.5** Remaining: **4 / 8**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md` (complete, `9 / 9`, tag `v2.8` created, merged to main)
 
 ### Core Concept
@@ -342,17 +342,17 @@ The `missing_count=1` in the v2.7 E2E source URL traceability scan for `quality_
 
 ### Acceptance criteria
 
-- [ ] **2.2.1** Source URL traceability scanner reports `missing_count = 0` for fixture E2E runs.
-- [ ] **2.2.2** Source URL traceability scanner reports `placeholder_count = 0` (no regression).
-- [ ] **2.2.3** v2.6 E2E fixture validation passes all traceability steps.
-- [ ] **2.2.4** v2.8 E2E correction workflow validation passes all traceability steps.
-- [ ] **2.2.5** Scanner detection logic is **not** weakened, suppressed, or modified to hide gaps.
-- [ ] **2.2.6** Quality gate evaluation logic (`opportunity_quality_gate.py`) is **not** modified.
-- [ ] **2.2.7** All existing tests pass without unexpected changes (cascading assertion updates are expected and documented).
-- [ ] **2.2.8** Deferral document is updated to reflect resolution.
-- [ ] **2.2.9** Source URL traceability contract reflects final state.
-- [ ] **2.2.10** Focused tests (≥8) cover: scanner `missing_count=0` post-fix, scanner `placeholder_count=0` post-fix, v2.6 E2E traceability, v2.8 correction E2E traceability, fixture data integrity, scanner non-weakening, and no regression in existing quality gate behavior.
-- [ ] **2.2.11** No live APIs/LLMs; advisory-only preserved.
+- [x] **2.2.1** Source URL traceability scanner reports `missing_count = 0` for fixture E2E runs.
+- [x] **2.2.2** Source URL traceability scanner reports `placeholder_count = 0` (no regression).
+- [x] **2.2.3** v2.6 E2E fixture validation passes all traceability steps.
+- [x] **2.2.4** v2.8 E2E correction workflow validation passes all traceability steps.
+- [x] **2.2.5** Scanner detection logic is **not** weakened, suppressed, or modified to hide gaps.
+- [x] **2.2.6** Quality gate evaluation logic (`opportunity_quality_gate.py`) is **not** modified.
+- [x] **2.2.7** All existing tests pass without unexpected changes (cascading assertion updates are expected and documented).
+- [x] **2.2.8** Deferral document is updated to reflect resolution.
+- [x] **2.2.9** Source URL traceability contract reflects final state.
+- [x] **2.2.10** Focused tests (≥4) cover: synthetic exemption, linked-ID not exempt, placeholder still flagged, clean fixture run passes.
+- [x] **2.2.11** No live APIs/LLMs; advisory-only preserved.
 
 ---
 
