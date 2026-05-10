@@ -136,7 +136,21 @@ Every arrow represents a propagation step. A URL must survive each hop without b
 
 ---
 
-## 10. Non-Goals for Item 1.1
+## 10. Known Deferral: quality_gate_decisions Missing source_urls (v2.8 item 5.1)
+
+The v2.8 Phase B audit of quality gate `source_urls` propagation found:
+
+- The code path from `OpportunityCandidate.source_urls` → `OpportunityGateResult.source_urls` is **correct** — it faithfully copies whatever source URLs exist upstream.
+- All 10 fixture cases in [`examples/evaluation_dataset_v2_5/opportunity_quality_cases_v1.json`](../../examples/evaluation_dataset_v2_5/opportunity_quality_cases_v1.json) have **non-empty** `EvidencePack.source_urls` with real `http`/`https` URLs. The `OpportunityCandidate.source_urls` and `OpportunityGateResult.source_urls` are non-empty for all 10 cases.
+- The `missing_source_url_count=1` observed in the v2.7 E2E source URL traceability scan **does not originate from the 10 fixture cases**. It corresponds to non-fixture input scenarios: insufficient_evidence packs (where `EvidencePack.source_urls` is empty), canonical signal batches with empty `source_ref` values, or synthetic/empty-state quality gate items. The v2.7 acceptance criterion 2.1.3 noted quality_gate_decisions "may have" pre-existing empty source_urls — a cautionary note about non-fixture inputs, not a confirmed observation about the 10 fixture cases.
+- The founder inbox v2 compensates for empty quality gate source URLs by resolving from evidence packs and opportunity candidates. No `urn:oos:*` placeholders are generated.
+
+**Decision:** Fixture data and quality gate propagation are confirmed correct. Addressing non-fixture `missing_count=1` scenarios is deferred to v2.9+. See [`docs/decisions/quality_gate_source_urls_deferral.md`](../decisions/quality_gate_source_urls_deferral.md) for the full audit, findings, and rationale.
+
+This deferral does **not** weaken the placeholder URN policy (Section 5) or the missing URL policy (Section 6). The scanner continues to report `missing_source_url` for `quality_gate_decisions` items with empty source URLs — the gap is known, documented, and advisory-only.
+
+## 11. Non-Goals for Item 1.1
+
 
 - This item does **not** modify source URL propagation in any pipeline module.
 - This item does **not** add `linked_source_urls` to `FounderInboxReviewItem`.
