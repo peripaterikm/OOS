@@ -55,6 +55,12 @@ from oos.weekly_run_manifest import (
     canonical_artifact_paths,
     canonical_artifact_schema_versions,
 )
+from oos.weekly_run_reports import (
+    build_weekly_dashboard_index,
+    build_weekly_run_report,
+    write_weekly_dashboard_index,
+    write_weekly_run_report,
+)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -150,6 +156,8 @@ def undo_last_correction(
     """
     run_dir = run_dir.resolve()
     corrected_at = datetime.now(timezone.utc).isoformat()
+    project_root = run_dir.parent.parent.parent  # run_dir is <pr>/artifacts/weekly_runs/<run_id>
+    output_mode = "utf8" if use_utf8 else "ascii_safe"
 
     # ------------------------------------------------------------------
     # PHASE 0 — Pre-write validation (no writes)
@@ -311,6 +319,7 @@ def undo_last_correction(
     if correction_mode == "replace":
         return _undo_replace(
             run_dir=run_dir,
+            project_root=project_root,
             run_id=run_id,
             corrected_at=corrected_at,
             target_entry=target_entry,
@@ -323,11 +332,12 @@ def undo_last_correction(
             manifest_data=manifest_data,
             history_data=history_data,
             entries_list=entries_list,
-            use_utf8=use_utf8,
+            output_mode=output_mode,
         )
     elif correction_mode == "amend":
         return _undo_amend(
             run_dir=run_dir,
+            project_root=project_root,
             run_id=run_id,
             corrected_at=corrected_at,
             target_entry=target_entry,
@@ -339,7 +349,7 @@ def undo_last_correction(
             manifest_data=manifest_data,
             history_data=history_data,
             entries_list=entries_list,
-            use_utf8=use_utf8,
+            output_mode=output_mode,
         )
     else:
         # Should not reach here due to validation above
@@ -358,6 +368,7 @@ def undo_last_correction(
 def _undo_replace(
     *,
     run_dir: Path,
+    project_root: Path,
     run_id: str,
     corrected_at: str,
     target_entry: dict[str, Any],
@@ -370,7 +381,7 @@ def _undo_replace(
     manifest_data: dict[str, Any],
     history_data: dict[str, Any],
     entries_list: list[dict[str, Any]],
-    use_utf8: bool = False,
+    output_mode: str = "ascii_safe",
 ) -> UndoResult:
     """Undo a replace correction."""
     warnings: list[str] = []
@@ -624,6 +635,16 @@ def _undo_replace(
         )
 
     # ------------------------------------------------------------------
+    # PHASE 4 — Regenerate reports and dashboard
+    # ------------------------------------------------------------------
+    _regenerate_reports_and_dashboard(
+        project_root=project_root,
+        run_dir=run_dir,
+        run_id=run_id,
+        output_mode=output_mode,
+    )
+
+    # ------------------------------------------------------------------
     # PHASE 5 — Append undo entry to import_history.json
     # ------------------------------------------------------------------
     _append_undo_history_entry(
@@ -690,6 +711,7 @@ def _undo_replace(
 def _undo_amend(
     *,
     run_dir: Path,
+    project_root: Path,
     run_id: str,
     corrected_at: str,
     target_entry: dict[str, Any],
@@ -701,7 +723,7 @@ def _undo_amend(
     manifest_data: dict[str, Any],
     history_data: dict[str, Any],
     entries_list: list[dict[str, Any]],
-    use_utf8: bool = False,
+    output_mode: str = "ascii_safe",
 ) -> UndoResult:
     """Undo an amend correction."""
     warnings: list[str] = []
@@ -832,6 +854,16 @@ def _undo_amend(
             corrected_at=corrected_at,
             message=f"Artifact write failed: {exc}.",
         )
+
+    # ------------------------------------------------------------------
+    # PHASE 3 — Regenerate reports and dashboard
+    # ------------------------------------------------------------------
+    _regenerate_reports_and_dashboard(
+        project_root=project_root,
+        run_dir=run_dir,
+        run_id=run_id,
+        output_mode=output_mode,
+    )
 
     # Append undo entry to import_history.json
     _append_undo_history_entry(
@@ -1073,6 +1105,49 @@ def _find_amend_archive(
         )
 
     return {"amended_decisions": archive_rel_path}
+
+
+# ---------------------------------------------------------------------------
+# Report/dashboard regeneration
+# ---------------------------------------------------------------------------
+
+
+def _regenerate_reports_and_dashboard(
+    *,
+    project_root: Path,
+    run_dir: Path,
+    run_id: str,
+    output_mode: str = "ascii_safe",
+) -> None:
+    """Regenerate per-run report and cross-run dashboard after undo.
+
+    Calls the existing deterministic builder + writer APIs from
+    weekly_run_reports.py. These are read-only builders that inspect the
+    on-disk artifacts — which are now in the post-undo state.
+
+    Regeneration is best-effort: failures are logged as warnings but do
+    not cause the undo to be rejected (the primary artifacts are already
+    correct). This matches the contract requirement that reports are
+    derived and non-blocking for undo correctness.
+
+    No live API/LLM calls. No new decisions. Deterministic.
+    """
+    try:
+        report = build_weekly_run_report(
+            project_root=project_root,
+            run_id=run_id,
+        )
+        write_weekly_run_report(report, run_dir, output_mode=output_mode)
+    except Exception:
+        # Best-effort: report regeneration failure does not invalidate undo
+        pass
+
+    try:
+        weekly_runs_root = run_dir.parent  # <pr>/artifacts/weekly_runs/
+        dashboard = build_weekly_dashboard_index(project_root=project_root)
+        write_weekly_dashboard_index(dashboard, weekly_runs_root, output_mode=output_mode)
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------------------
