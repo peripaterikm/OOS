@@ -4,30 +4,30 @@
 
 - Roadmap v2.5 status: complete (`24 / 24`, tag `v2.5`).
 - Roadmap v2.6 status: complete (`9 / 9`, merged to main, tag `v2.6` created).
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
-- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
+- Roadmap v2.7 status: complete (`8 / 8`, merged to main, tag `v2.7` created).
+- Roadmap v2.8 status: complete (`9 / 9`, merged to main, tag `v2.8` created).
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
+- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
-- Roadmap v2.7 planning created: yes
-- Roadmap v2.7 status: `complete / closed` (`8 / 8`, branch `feat/v2-7-traceability-block-1`, tag `v2.7`, merged to main).
-- Roadmap v2.8 planning created: yes
-- Roadmap v2.8 status: `complete / closed` (`9 / 9`, branch `feat/v2-8-decision-correction-block-1`)
-- Current item: `none / roadmap complete`
-- Roadmap state: `complete / closed`
-- Completed: `9 / 9`
-- Remaining: `0 / 9`
+- Roadmap v2.9 planning created: yes
+- Roadmap v2.9 status: `active / planned` (`0 / 8`, branch `planning/v2-9-roadmap`)
+- Current item: `1.1 Output mode contract and CLI policy`
+- Roadmap state: `active / planned`
+- Completed: `0 / 8`
+- Remaining: `8 / 8`
 - Latest completed roadmap item: Roadmap v2.8 `7.1` — Final v2.8 validation checkpoint
-- Next planned roadmap item: `none` (roadmap complete; v2.9+ planning deferred)
+- Next planned roadmap item: Roadmap v2.9 `1.1` — Output mode contract and CLI policy
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-8-decision-correction-block-1`
+- Current branch: `planning/v2-9-roadmap`
+- Previous branch (v2.8 implementation): `feat/v2-8-decision-correction-block-1`
 - Previous branch (v2.7 implementation): `feat/v2-7-traceability-block-1`
-- Planning branch (v2.8): `planning/v2-8-roadmap` (active, not merged)
-- Previous planning branch (v2.7): `planning/v2-7-roadmap` (merged to main)
+- Planning branch (v2.8): `planning/v2-8-roadmap` (merged to main)
 - MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
 - Roadmap v2.5 implementation branch was merged through PR `#40` and released with tag `v2.5`.
@@ -156,7 +156,8 @@
 - Roadmap v2.8 item 1.3 implemented the `--replace-review-items` and `--amend-notes-only` CLI flags in `import-founder-decisions-v2`, with full safety contract (fail-closed, all-or-nothing, idempotent), parking lot orphan cleanup integration, derived artifact rebuild, weekly run manifest `replaced_decision_ids`/`amended_decision_ids` fields, and source URL traceability enforcement. 69 tests (20 new + 49 existing) cover replace, amend, default reject, deterministic output, no partial artifacts, source URL preservation, import history, parking lot cleanup, and feedback/preference rebuild. No live APIs/LLMs.
 - Roadmap v2.8 item 2.1 added the import history/audit trail module (`src/oos/import_history.py`) with `CorrectionEntry` and `ImportHistoryLog` models recording correction mode, old/new decision IDs, artifact checksums, and safety flags. Integrated into replace/amend flow. Status command shows "Import History" section; run report and dashboard include correction summary. 20 focused tests cover CorrectionEntry deterministic JSON, ImportHistoryLog roundtrip, replace/amend mode appends, multiple corrections, failed correction no append, advisory/no-live flags, helper methods, status visibility, report visibility, and missing/malformed history handling. No live APIs/LLMs.
 - Roadmap v2.8 item 3.1 integrated correction state into CLI status and reports: `WeeklyCycleStatus` includes `corrected_decision_count`, `replaced_decision_ids`, `amended_decision_ids`; status Markdown shows "Decision Corrections" section with `[CORRECTED]` indicators; `WeeklyRunReport` and `WeeklyDashboardRunSummary` include correction summaries. 10+ focused tests cover status with/without corrections, report/dashboard with corrections, exit codes, empty correction lists, and malformed correction state. No live APIs/LLMs.
-- Roadmap v2.8 item 4.1 hardened Windows CLI output: audited all CLI output modules for Unicode symbols, replaced unsafe symbols with ASCII-safe alternatives by default, added `--utf8` flag for UTF-8-capable terminals, and updated smoke test runbook. Committed as `e36a470` (`fix(v2.8): harden Windows CLI output`). Mini-epic and run report were not created during implementation (documentation gap noted in 7.1 final validation). No live APIs/LLMs; no feature behavior changes.
+- Roadmap v2.8 item 4.1 hardened Windows CLI output: audited all CLI output modules for Unicode symbols and replaced unsafe symbols with ASCII-safe alternatives by default. Committed as `e36a470` (`fix(v2.8): harden Windows CLI output`). **Note:** The `--utf8` opt-in flag was listed as acceptance criterion 4.1.3 and marked complete but was **not implemented** — confirmed by zero `utf8` references in `src/oos/`. This is a deferred gap carried forward to v2.9 items 1.1–1.2. Mini-epic and run report were not created during implementation (documentation gap noted in 7.1 final validation). No live APIs/LLMs; no feature behavior changes.
 - Roadmap v2.8 item 5.1 audited the quality gate `source_urls` code path from `OpportunityCandidate.source_urls` through `OpportunityGateResult.source_urls`. Root cause identified: fixture data gap in non-fixture input scenarios, not a code defect. Decision: defer to v2.9+. Deferral document created at `docs/decisions/quality_gate_source_urls_deferral.md`. Source URL traceability contract Section 10 updated. No code changes; no regression.
 - Roadmap v2.8 item 6.1 added end-to-end correction workflow validation (`src/oos/v2_8_correction_workflow_validation.py`, 1068 lines) with 14 validation steps (C1–C14) exercising the full replace → amend → status → report → dashboard → source URL traceability chain. 15+ focused tests cover full correction pipeline, replace, amend, traceability, parking lot cleanup, rebuild, history, status, report, dashboard, fail-closed, idempotency, and mixed corrections. No live APIs/LLMs; no autonomous portfolio transitions.
-- Roadmap v2.8 item 7.1 closed the roadmap with a final validation checkpoint: 1665 tests, 0 failures; `dev-validate-final.ps1` pass (all gates green); `run-controlled-smoke.ps1` pass (14/14, zero placeholder URNs); `dev-git-check.ps1` pass (6/6); `git diff --check` clean; `git status` clean; roadmap state `complete / closed` at `9 / 9`. Deferred items: `--replace-all` mode, quality gate source URL fixture gap, optional rollback/undo. No push, PR, merge, or tag was performed. Roadmap v2.8 is complete.
+- Roadmap v2.8 item 7.1 closed the roadmap with a final validation checkpoint: 1665 tests, 0 failures; `dev-validate-final.ps1` pass (all gates green); `run-controlled-smoke.ps1` pass (14/14, zero placeholder URNs); `dev-git-check.ps1` pass (6/6); `git diff --check` clean; `git status` clean; roadmap state `complete / closed` at `9 / 9`. Deferred items: `--utf8` opt-in flag (noted as acceptance criterion gap in 4.1), `--replace-all` mode, quality gate source URL fixture gap, optional rollback/undo. No push, PR, merge, or tag was performed. Roadmap v2.8 is complete.
+- Roadmap v2.9 planning created the Output Modes, Source URL Strictness & Correction Recovery checklist with 8 implementation items: output mode contract and CLI policy, `--utf8` opt-in flag implementation, quality gate source URL fixture audit and correction plan, quality gate source URL fixture cleanup, correction rollback/undo policy review, replace-all mode policy review, operational validation refresh, and final v2.9 validation checkpoint. Planning on `planning/v2-9-roadmap`. Docs-only; no source code, tests, or live API/LLM calls were performed by this planning checkpoint.
