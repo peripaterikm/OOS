@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`
-- [x] **0.2** Current item: `6.1 End-to-end correction workflow validation`
+- [x] **0.2** Current item: `7.1 Final v2.8 validation checkpoint`
 - [ ] **0.3** Roadmap state: `active / in progress`
-- [ ] **0.4** Completed from this roadmap: **6 / 9**
-- [ ] **0.5** Remaining: **3 / 9**
+- [ ] **0.4** Completed from this roadmap: **7 / 9**
+- [ ] **0.5** Remaining: **2 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md` (complete, `8 / 8`, tag `v2.7` created, merged to main)
 
 ### Core Concept
@@ -572,21 +572,21 @@ Add a dedicated correction workflow stage to the existing v2.6 end-to-end fixtur
 
 ### Acceptance criteria
 
-- [ ] **6.1.1** Correction workflow validation stage exists with all 14 steps (C1–C14).
-- [ ] **6.1.2** Full pipeline with replace produces zero placeholder URNs.
-- [ ] **6.1.3** Full pipeline with amend produces zero placeholder URNs.
-- [ ] **6.1.4** Old decisions are archived correctly after replace.
-- [ ] **6.1.5** New decisions are in `founder_decisions_v2.json` after replace.
-- [ ] **6.1.6** Orphaned parking lot records are cleaned up after replace.
-- [ ] **6.1.7** Feedback mappings and preference profile are consistent after replace.
-- [ ] **6.1.8** Import history correctly records all actions.
-- [ ] **6.1.9** Status, run report, and dashboard all reflect corrections.
-- [ ] **6.1.10** Amend updates notes only; decision value and downstream artifacts are unchanged.
-- [ ] **6.1.11** Fail-closed: replace without flag is rejected.
-- [ ] **6.1.12** Idempotent: same replace twice = same state.
-- [ ] **6.1.13** All existing E2E validation steps continue to pass (advisory-only, deterministic, artifact existence).
-- [ ] **6.1.14** Focused tests (≥15) cover: full correction pipeline, replace, amend, traceability, parking lot cleanup, rebuild, history, status, report, dashboard, fail-closed, idempotency, mixed corrections.
-- [ ] **6.1.15** No live APIs/LLMs; no autonomous portfolio transitions.
+- [x] **6.1.1** Correction workflow validation stage exists with all 14 steps (C1–C14).
+- [x] **6.1.2** Full pipeline with replace produces zero placeholder URNs.
+- [x] **6.1.3** Full pipeline with amend produces zero placeholder URNs.
+- [x] **6.1.4** Old decisions are archived correctly after replace.
+- [x] **6.1.5** New decisions are in `founder_decisions_v2.json` after replace.
+- [x] **6.1.6** Orphaned parking lot records are cleaned up after replace.
+- [x] **6.1.7** Feedback mappings and preference profile are consistent after replace.
+- [x] **6.1.8** Import history correctly records all actions.
+- [x] **6.1.9** Status, run report, and dashboard all reflect corrections.
+- [x] **6.1.10** Amend updates notes only; decision value and downstream artifacts are unchanged.
+- [x] **6.1.11** Fail-closed: replace without flag is rejected.
+- [x] **6.1.12** Idempotent: same replace twice = same state.
+- [x] **6.1.13** All existing E2E validation steps continue to pass (advisory-only, deterministic, artifact existence).
+- [x] **6.1.14** Focused tests (≥15) cover: full correction pipeline, replace, amend, traceability, parking lot cleanup, rebuild, history, status, report, dashboard, fail-closed, idempotency, mixed corrections.
+- [x] **6.1.15** No live APIs/LLMs; no autonomous portfolio transitions.
 
 ---
 

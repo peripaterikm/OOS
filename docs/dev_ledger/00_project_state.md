@@ -12,13 +12,13 @@
 - Roadmap v2.7 planning created: yes
 - Roadmap v2.7 status: `complete / closed` (`8 / 8`, branch `feat/v2-7-traceability-block-1`, tag `v2.7`, merged to main).
 - Roadmap v2.8 planning created: yes
-- Roadmap v2.8 status: `active / in progress` (`6 / 9`, branch `feat/v2-8-decision-correction-block-1`)
-- Current item: `6.1 End-to-end correction workflow validation`
+- Roadmap v2.8 status: `active / in progress` (`7 / 9`, branch `feat/v2-8-decision-correction-block-1`)
+- Current item: `7.1 Final v2.8 validation checkpoint`
 - Roadmap state: `active / in progress`
-- Completed: `6 / 9`
-- Remaining: `3 / 9`
-- Latest completed roadmap item: Roadmap v2.8 `5.1` — Quality gate source_urls review (deferred to v2.9+; docs-only deferral)
-- Next planned roadmap item: Roadmap v2.8 `6.1` — End-to-end correction workflow validation
+- Completed: `7 / 9`
+- Remaining: `2 / 9`
+- Latest completed roadmap item: Roadmap v2.8 `6.1` — End-to-end correction workflow validation
+- Next planned roadmap item: Roadmap v2.8 `7.1` — Final v2.8 validation checkpoint
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
