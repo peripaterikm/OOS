@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
-- [ ] **0.2** Current item: `6.1 — Encoding Auto-Detection Audit/Policy`
+- [ ] **0.2** Current item: `7.1 — Optional --utf8 Expansion Audit`
 - [x] **0.3** Roadmap state: `ready for implementation`
-- [ ] **0.4** Completed from this roadmap: **4 / 9**
-- [ ] **0.5** Remaining: **5 / 9**
+- [ ] **0.4** Completed from this roadmap: **5 / 9**
+- [ ] **0.5** Remaining: **4 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md` (complete, `8 / 8`, tag `v2.9`, merged to main via PR #49)
 
 ### Branch and Version
@@ -261,7 +261,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 ### 6. Encoding Auto-Detection Audit/Policy
 
-- [ ] **6.1** Audit terminal encoding auto-detection feasibility and define policy.
+- [x] **6.1** Audit terminal encoding auto-detection feasibility and define policy.
 
 **Intent:** The output mode contract (v2.9 item 1.1, Section 1.3) explicitly deferred automatic terminal encoding detection to v2.10+. This item audits the feasibility on Windows (CP1251/CP1252 detection, `sys.stdout.encoding`, `chcp`, `GetConsoleOutputCP()`) and defines a policy document. The audit must answer: is reliable detection possible without platform-specific hacks? Can it be deterministic? What are the false-positive/false-negative risks? The policy must state whether auto-detection is recommended, and if so, under what constraints it could be implemented in a future roadmap (v2.11+). **This item does NOT implement auto-detection.** It produces an audit/policy document only.
 
@@ -270,15 +270,15 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 **Validation expectation:** Policy document exists with clear recommendation (recommend / do not recommend / recommend with constraints). ASCII-safe default remains unchanged. No `sys.stdout.encoding` probes, no `chcp` checks, no `GetConsoleOutputCP()` calls introduced.
 
 **Definition of done:**
-- [ ] **6.1.1** Audit document created at `docs/decisions/terminal_encoding_auto_detection_policy.md`.
-- [ ] **6.1.2** Windows terminal encoding landscape audited: CP1251, CP1252, CP65001 (UTF-8), Windows Terminal, VS Code terminal, legacy `cmd.exe`.
-- [ ] **6.1.3** Detection methods evaluated: `sys.stdout.encoding`, `chcp`, `GetConsoleOutputCP()`, environment variables, terminal capability probing.
-- [ ] **6.1.4** Determinism assessed: can detection be deterministic on all supported Windows configurations?
-- [ ] **6.1.5** False-positive/false-negative risks documented.
-- [ ] **6.1.6** Explicit recommendation made: recommend / do not recommend / recommend with constraints.
-- [ ] **6.1.7** If recommended: constraints defined (e.g., opt-out flag `--ascii`, detection override, fail-closed to ASCII-safe on uncertainty).
-- [ ] **6.1.8** ASCII-safe default is confirmed unchanged. No runtime behavior modified.
-- [ ] **6.1.9** No source code changes. No live APIs/LLMs.
+- [x] **6.1.1** Audit document created at `docs/decisions/terminal_encoding_auto_detection_policy.md`.
+- [x] **6.1.2** Windows terminal encoding landscape audited: CP1251, CP1252, CP65001 (UTF-8), Windows Terminal, VS Code terminal, legacy `cmd.exe`.
+- [x] **6.1.3** Detection methods evaluated: `sys.stdout.encoding`, `chcp`, `GetConsoleOutputCP()`, environment variables, terminal capability probing.
+- [x] **6.1.4** Determinism assessed: can detection be deterministic on all supported Windows configurations?
+- [x] **6.1.5** False-positive/false-negative risks documented.
+- [x] **6.1.6** Explicit recommendation made: recommend / do not recommend / recommend with constraints.
+- [x] **6.1.7** If recommended: constraints defined (e.g., opt-out flag `--ascii`, detection override, fail-closed to ASCII-safe on uncertainty).
+- [x] **6.1.8** ASCII-safe default is confirmed unchanged. No runtime behavior modified.
+- [x] **6.1.9** No source code changes. No live APIs/LLMs.
 
 ---
 
