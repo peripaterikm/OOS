@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [x] **0.2** Current item: `5 — GitHub Issues Connector Hardening Plan`
+- [x] **0.2** Current item: `6 — Product Hunt Feasibility and Connector Plan`
 - [ ] **0.3** Roadmap state: `implementation`
-- [ ] **0.4** Completed from this roadmap: **4 / 10**
-- [ ] **0.5** Remaining: **6 / 10**
+- [ ] **0.4** Completed from this roadmap: **5 / 10**
+- [ ] **0.5** Remaining: **5 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
 
 ### Branch and Version
@@ -317,9 +317,9 @@ Assess the current GitHub Issues collector adapter (v2.3 item 4.2) and produce a
 
 ### Definition of Done
 
-- [ ] **5.1** GitHub Issues connector hardening plan exists at `docs/decisions/github_issues_connector_hardening_plan.md`.
-- [ ] **5.2** Plan covers: current assessment, PR filtering, repo allowlist, keyword search, label/comment/state capture, timestamps, `source_url` audit, rate-limit/auth, fixture quality, recommended changes.
-- [ ] **5.3** Plan is implementation-ready (each recommendation has clear scope, expected files, and acceptance criteria).
+- [x] **5.1** GitHub Issues connector hardening plan exists at `docs/decisions/github_issues_connector_hardening_plan.md`.
+- [x] **5.2** Plan covers: current assessment, PR filtering, repo allowlist, keyword search, label/comment/state capture, timestamps, `source_url` audit, rate-limit/auth, fixture quality, recommended changes. Also covers: GitHub source categories, access-method options, source registry alignment, raw evidence mapping, evidence_kind classification rules, source_url traceability (including removal of `github://` fallback), deduplication plan, noise/quality filters, repo allowlist and query strategy, rate limit and auth policy, comments policy, validation plan, controlled smoke plan, implementation plan, risks and mitigations, non-goals.
+- [x] **5.3** Plan is implementation-ready (each recommendation has clear scope, expected files, and acceptance criteria).
 - [ ] **5.4** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **5.5** One local commit made.
 
