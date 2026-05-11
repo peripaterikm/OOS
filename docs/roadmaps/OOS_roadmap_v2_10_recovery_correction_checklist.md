@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
-- [ ] **0.2** Current item: `8.1 — Operational Validation Refresh`
+- [x] **0.2** Current item: `9.1 — Final v2.10 Checkpoint`
 - [x] **0.3** Roadmap state: `ready for implementation`
-- [ ] **0.4** Completed from this roadmap: **6 / 9**
-- [ ] **0.5** Remaining: **3 / 9**
+- [x] **0.4** Completed from this roadmap: **7 / 9**
+- [x] **0.5** Remaining: **2 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md` (complete, `8 / 8`, tag `v2.9`, merged to main via PR #49)
 
 ### Branch and Version
@@ -306,7 +306,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 ### 8. Operational Validation Refresh
 
-- [ ] **8.1** Update the validation suite to cover all new v2.10 capabilities.
+- [x] **8.1** Update the validation suite to cover all new v2.10 capabilities.
 
 **Intent:** Refresh the smoke/E2E validation suite to cover undo-last (and replace-all if gated in). Verify all existing v2.8 correction workflow steps (C1–C14) and v2.9 operational steps still pass. Update the controlled weekly run smoke test runbook. Run full validation.
 
@@ -315,16 +315,16 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 **Validation expectation:** `.\scripts\dev-test.ps1` passes all tests. `.\scripts\run-controlled-smoke.ps1` passes all steps. `.\scripts\dev-validate-final.ps1` passes all gates. Correction E2E validation passes all steps including v2.10 additions.
 
 **Definition of done:**
-- [ ] **8.1.1** Undo-last validation steps added to E2E correction workflow validation.
-- [ ] **8.1.2** All v2.8 correction E2E steps (C1–C14) still pass.
-- [ ] **8.1.3** All v2.9 operational validation steps still pass.
-- [ ] **8.1.4** Replace-all validation steps added (only if item 5 was implemented).
-- [ ] **8.1.5** Controlled weekly run smoke test updated for v2.10.
-- [ ] **8.1.6** Smoke test runbook updated with undo-last instructions (and replace-all if implemented).
-- [ ] **8.1.7** ASCII-safe default verified on all CLI commands (no regression).
-- [ ] **8.1.8** Source URL traceability `missing_count = 0` and `placeholder_count = 0` confirmed (no regression).
-- [ ] **8.1.9** `.\scripts\dev-validate-final.ps1` passes all gates.
-- [ ] **8.1.10** No live APIs/LLMs; advisory-only preserved.
+- [x] **8.1.1** Undo-last validation steps added to E2E correction workflow validation.
+- [x] **8.1.2** All v2.8 correction E2E steps (C1–C14) still pass.
+- [x] **8.1.3** All v2.9 operational validation steps still pass.
+- [x] **8.1.4** Replace-all validation steps: N/A (item 5 skipped; gate 4.1 BLOCKED).
+- [x] **8.1.5** Controlled weekly run smoke test updated for v2.10.
+- [x] **8.1.6** Smoke test runbook updated with undo-last instructions.
+- [x] **8.1.7** ASCII-safe default verified on all CLI commands (no regression).
+- [x] **8.1.8** Source URL traceability `missing_count = 0` and `placeholder_count = 0` confirmed (no regression).
+- [x] **8.1.9** `.\scripts\dev-validate-final.ps1` passes all gates.
+- [x] **8.1.10** No live APIs/LLMs; advisory-only preserved.
 
 ---
 
