@@ -4,8 +4,8 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [ ] **0.2** Current item: `0 — Planning checkpoint`
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
+- [ ] **0.2** Current item: `1 — Discovery Source Adapter Contract`
 - [ ] **0.3** Roadmap state: `planning`
 - [ ] **0.4** Completed from this roadmap: **0 / 10**
 - [ ] **0.5** Remaining: **10 / 10**
@@ -37,8 +37,8 @@ v2.11 defines the foundation for connecting additional signal sources safely, de
     undo-last implementation                    Source adapter contract
     replace-all gated                           Raw evidence artifact schema
     Terminal encoding audit                     Source registry + allowlist
-    UTF-8 expansion audit                       HN connector hardening
-    Operational polish                          GitHub Issues connector hardening
+    UTF-8 expansion audit                       HN connector hardening plan
+    Operational polish                          GitHub Issues connector hardening plan
     Final v2.10 checkpoint                      Product Hunt feasibility + connector plan
                                                 pimenov.ai feasibility + connector plan
                                                 Source quality scoring + weekly report
@@ -90,6 +90,13 @@ LLM integration in discovery sources belongs later (`v2.12+`) unless present onl
 - No live LLM/API calls by default.
 - Unit tests must not make live network calls.
 
+### Founder Approval Gate (Planning → Implementation Transition)
+
+- **Planning roadmap merge does not authorize source implementation.** This roadmap is a planning/assessment deliverable only. Merging it to `main` records the plan; it does not grant license to begin implementing connectors, collectors, or any source-layer code.
+- **Implementation branch requires explicit founder approval.** No work on `feat/v2-11-discovery-sources` may begin until the founder explicitly approves the transition from planning to implementation.
+- **No connector/source implementation begins until explicitly approved.** Items 1–9 produce contracts, plans, feasibility assessments, and runbooks. None of these deliverables are implementation. Actual collector/connector code, fixture updates, and integration into the weekly run are gated behind founder sign-off.
+- **Risky sources remain deferred unless separately approved.** Reddit, LinkedIn, Twitter/X, Telegram, review sites, job boards, app marketplaces, Q&A sites, and newsletters are deferred to v2.12+. If any deferred source is considered for early implementation, it requires a separate, explicit founder approval outside this roadmap.
+
 > Roadmap status tracks **10 implementation items** (items 1–10). Item 0 (planning checkpoint) is the current planning item and is not counted in the implementation total. Items 0.1–0.6 are roadmap-state trackers and are not counted in the implementation total.
 
 ---
@@ -112,16 +119,16 @@ Create the official Roadmap v2.11 planning checklist. Docs-only. No source code,
 
 ### Definition of Done
 
-- [ ] **0.0.1** Roadmap v2.11 document exists at `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`.
+- [x] **0.0.1** Roadmap v2.11 document exists at `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`.
 - [ ] **0.0.2** Roadmap state is `planning`; transitions to `ready for implementation` when planning checkpoint closes.
-- [ ] **0.0.3** Current item is `0 — Planning checkpoint`.
+- [ ] **0.0.3** Current item is `1 — Discovery Source Adapter Contract`.
 - [ ] **0.0.4** Completed: `0 / 10`.
 - [ ] **0.0.5** Remaining: `10 / 10`.
-- [ ] **0.0.6** Branch `planning/v2-11-discovery-sources-roadmap` exists and is checked out.
-- [ ] **0.0.7** All sections present: overview, scope summary, current source baseline, non-goals, numbered checklist (0–10), source-specific requirements, risk gates, validation commands, git discipline, recommended implementation order, v2.12+ hooks.
-- [ ] **0.0.8** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **0.0.9** `git status --short` shows only this file before commit.
-- [ ] **0.0.10** One local commit made with message: `[v2.11] Add discovery sources roadmap`.
+- [x] **0.0.6** Branch `planning/v2-11-discovery-sources-roadmap` exists and is checked out.
+- [ ] **0.0.7** All sections present: overview, scope summary, current source baseline, non-goals, numbered checklist (0–10), source-specific requirements, risk gates, validation commands, git discipline, recommended planning order, founder approval gate, v2.12+ hooks.
+- [x] **0.0.8** `.\scripts\dev-git-check.ps1` passes.
+- [x] **0.0.9** `git status --short` shows only this file before commit.
+- [x] **0.0.10** One local commit made with message: `[v2.11] Add discovery sources roadmap`.
 
 ### Current Source Baseline
 
@@ -133,7 +140,7 @@ Before v2.11, OOS external signal discovery is limited to:
 | GitHub Issues | GitHub REST API (`api.github.com`) | Implemented (v2.3 item 4.2) | `GitHubIssuesCollector` |
 | Manual JSON/JSONL import | File-based import | Operational | Not a collector; ingestion gateway only |
 
-Additional collector adapters exist as stubs (Stack Exchange, RSS/regulatory from v2.3 item 4.3) but are not part of the default weekly run.
+Additional collector adapters exist as stubs (Stack Exchange, RSS/regulatory from v2.3 item 4.3). **These stubs are out of scope for v2.11 implementation. They exist as future hooks / planning references only.** They are not part of the default weekly run, and no implementation work on stub collectors is authorized under this v2.11 planning roadmap.
 
 **The gap:** OOS processes signals well, but the discovery surface is too narrow. Two sources cannot provide sufficient signal diversity for robust opportunity formation. v2.11 addresses this by defining the adapter contract, hardening existing sources, and planning the first new-source candidates.
 
@@ -550,18 +557,20 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-## Recommended v2.11 Implementation Order
+## Recommended v2.11 Planning Order
+
+This roadmap is a **planning roadmap**, not an implementation branch. All items 1–9 produce planning/design/assessment deliverables (contracts, plans, feasibility documents, runbooks). No source code, connector implementation, or fixture changes are authorized by this roadmap.
 
 1. **Contract/schema/registry first** (items 1, 2, 3)
    - The adapter contract, raw evidence schema, and source registry are prerequisites for all source work.
-2. **HN/GitHub hardening next** (items 4, 5)
-   - Hardening existing sources before adding new ones ensures the foundation is solid.
+2. **HN/GitHub hardening plans next** (items 4, 5)
+   - Assessing and planning hardening for existing sources before planning new ones ensures the foundation is solid.
 3. **Product Hunt and pimenov.ai as first new-source candidates** (items 6, 7)
-   - Feasibility and connector plans for the first new sources. Implementation follows in v2.11 or early v2.12 depending on scope.
+   - Feasibility and connector plans for the first new sources. Implementation follows in a future implementation branch (v2.11 or early v2.12) depending on scope.
 4. **Source quality reporting** (item 8)
-   - Quality scoring and weekly reports provide visibility into source health.
+   - Quality scoring and weekly report contracts provide visibility into source health once implemented.
 5. **Controlled smoke** (item 9)
-   - Smoke design gates new sources before production inclusion.
+   - Smoke design runbook gates new sources before production inclusion once implemented.
 6. **Defer risky sources** (v2.12+)
    - Reddit, review sites, job boards, LinkedIn/X/Telegram remain deferred.
 
