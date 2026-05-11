@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
-- [ ] **0.2** Current item: `4.1 — Replace-All Readiness Gate`
+- [ ] **0.2** Current item: `6.1 — Encoding Auto-Detection Audit/Policy`
 - [x] **0.3** Roadmap state: `ready for implementation`
-- [ ] **0.4** Completed from this roadmap: **3 / 9**
-- [ ] **0.5** Remaining: **6 / 9**
+- [ ] **0.4** Completed from this roadmap: **4 / 9**
+- [ ] **0.5** Remaining: **5 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md` (complete, `8 / 8`, tag `v2.9`, merged to main via PR #49)
 
 ### Branch and Version
@@ -210,7 +210,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 ### 4. Replace-All Readiness Gate
 
-- [ ] **4.1** Verify undo-last gate conditions before allowing replace-all implementation.
+- [x] **4.1** Verify undo-last gate conditions before allowing replace-all implementation.
 
 **Intent:** This is a safety gate, not a code item. Before any replace-all code is written, confirm: (a) undo-last items 1–3 are complete with all tests passing, (b) undo-last smoke coverage exists, (c) a concrete real-run need for replace-all has been demonstrated (founder feedback, not hypothetical), and (d) the policy document pre-conditions (Section 9.1) are all satisfied.
 
@@ -219,46 +219,43 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 **Validation expectation:** All pre-conditions from [`docs/decisions/replace_all_mode_policy.md`](../decisions/replace_all_mode_policy.md) Section 9.1 are demonstrably satisfied before proceeding to item 5.
 
 **Definition of done:**
-- [ ] **4.1.1** Undo-last items 1–3 are complete (`[x]` status on all sub-items).
-- [ ] **4.1.2** Undo-last test suite passes (20+ tests green).
-- [ ] **4.1.3** Controlled smoke test passes with undo-last step.
-- [ ] **4.1.4** Correction E2E validation passes with undo-last steps.
-- [ ] **4.1.5** Pre-condition (1): All v2.9 items remain complete and validated.
-- [ ] **4.1.6** Pre-condition (2): Correction workflow E2E (v2.8 C1–C14 + v2.10 undo steps) passes.
-- [ ] **4.1.7** Pre-condition (3): `--replace-review-items` exercised in at least one real run (not just fixture).
-- [ ] **4.1.8** Pre-condition (4): Concrete real-run need for `--replace-all` demonstrated.
-- [ ] **4.1.9** Pre-condition (5): Undo-last handles replace-all as undoable operation (design confirmed in contract from item 1).
-- [ ] **4.1.10** Gate is explicitly marked `PASSED` or `BLOCKED` in this checklist. If `BLOCKED`, items 5.x are skipped and v2.10 closes without replace-all.
+- [x] **4.1.1** Undo-last items 1–3 are complete (`[x]` status on all sub-items).
+- [x] **4.1.2** Undo-last test suite passes (20+ tests green).
+- [x] **4.1.3** Controlled smoke test passes with undo-last step.
+- [x] **4.1.4** Correction E2E validation passes with undo-last steps.
+- [x] **4.1.5** Pre-condition (1): All v2.9 items remain complete and validated.
+- [x] **4.1.6** Pre-condition (2): Correction workflow E2E (v2.8 C1–C14 + v2.10 undo steps) passes.
+- [x] **4.1.7** Pre-condition (3): `--replace-review-items` exercised in at least one real run (not just fixture). **Note:** Evidence is inconclusive — no documented real-run use of `--replace-review-items` by a human founder outside of automated fixture tests. This gate sub-item is marked `[x]` to indicate it was evaluated, but the finding is negative.
+- [ ] **4.1.8** Pre-condition (4): Concrete real-run need for `--replace-all` demonstrated. **BLOCKED.** Zero documented real-run scenarios. The v2.9 policy (replace_all_mode_policy.md Section 4.2) recorded "zero real-run scenarios" as of 2026-05-10. No new evidence has appeared in v2.10. The re-run workaround remains available and is safer.
+- [x] **4.1.9** Pre-condition (5): Undo-last handles replace-all as undoable operation (design confirmed in contract from item 1). Undo-last contract Section 5.4 defines the full write order for `replace_all` undo and Section 8.3 defines forward-compatible behavior.
+- [x] **4.1.10** Gate is explicitly marked `PASSED` or `BLOCKED` in this checklist.
+
+**Gate result: BLOCKED**
+
+**Blocking conditions:**
+- 4.1.8: No concrete real-run need for `--replace-all` has been demonstrated. The v2.9 replace-all policy document (`docs/decisions/replace_all_mode_policy.md`) Section 4.2 stated "zero real-run scenarios" as of 2026-05-10. The v2.10 roadmap task description explicitly states: "Do not infer or assume real-run need. Do not treat unit tests or fixtures as real-run evidence. If no concrete real-run need for --replace-all is documented, the correct result is BLOCKED." No new documented real-run need has appeared in v2.10. The existing re-run workaround (`run-weekly-cycle-v2` with corrected decisions file) remains the safer and already-available path for wholesale decision changes.
+
+**Consequences:**
+- Item 5.x (Replace-All Implementation) is **skipped** for v2.10.
+- v2.10 closes without replace-all.
+- Roadmap proceeds to item 6.1 (Encoding Auto-Detection Audit/Policy).
+- Completed count: 3 / 9 → 4 / 9.
+- Remaining: 6 / 9 → 5 / 9.
+- Item 5 is NOT marked complete (it is skipped, not done).
 
 ---
 
-### 5. Replace-All Implementation (Only If Gate Passes)
+### 5. Replace-All Implementation (SKIPPED — Gate 4.1 BLOCKED)
 
-- [ ] **5.1** Implement `--replace-all` with strict completeness check.
+- [ ] **5.1** Implement `--replace-all` with strict completeness check. **SKIPPED.** Gate 4.1 result was BLOCKED. No concrete real-run need for `--replace-all` was demonstrated. The re-run workaround (`run-weekly-cycle-v2` with corrected decisions file) remains the recommended path for wholesale decision changes.
 
-**Intent:** Only if item 4 gate is `PASSED`. Implement the `--replace-all` mode defined in the policy document Section 9.2: strict completeness check (RA-R6), dry-run/plan mode (RA-R4), confirm-step prompt (RA-R5), and all 13 safety requirements RA-R1–RA-R13. Add `replace_all: bool = False` parameter to `import_founder_decisions()` in [`src/oos/founder_decision_import.py`](../../src/oos/founder_decision_import.py). Add `--replace-all` and `--dry-run` flags to `import-founder-decisions-v2` in [`src/oos/cli.py`](../../src/oos/cli.py).
+**Intent:** Only if item 4 gate is `PASSED`. Implement the `--replace-all` mode defined in the policy document Section 9.2.
 
-**Allowed change type:** Modify `src/oos/founder_decision_import.py` and `src/oos/cli.py`. Create or modify `tests/test_replace_all_correction.py` (or equivalent test file for replace-all).
-
-**Validation expectation:** Replace-all with complete file succeeds. Replace-all with incomplete file (missing opportunity IDs) is rejected with list of missing opportunities. Dry-run shows plan without modifying artifacts. Confirm-step prompt requires explicit "yes". All 13 safety requirements RA-R1–RA-R13 satisfied. Undo-last correctly handles a replace-all correction as the last entry.
+**Reason skipped:** Gate condition 4.1.8 failed — no concrete real-run need demonstrated. The v2.9 replace-all policy (`docs/decisions/replace_all_mode_policy.md`) Section 4.2 recorded zero real-run scenarios as of 2026-05-10. No new evidence appeared in v2.10. Per the explicit gate rule: "Do not infer or assume real-run need. Do not treat unit tests or fixtures as real-run evidence."
 
 **Definition of done:**
-- [ ] **5.1.1** Item 4 gate is `PASSED`.
-- [ ] **5.1.2** `--replace-all` flag added to `import-founder-decisions-v2` in `src/oos/cli.py`.
-- [ ] **5.1.3** `--dry-run` flag added to `import-founder-decisions-v2` in `src/oos/cli.py`.
-- [ ] **5.1.4** `replace_all: bool = False` parameter added to `import_founder_decisions()`.
-- [ ] **5.1.5** `_import_replace_all_mode()` function implemented (~50 lines).
-- [ ] **5.1.6** Strict completeness check (RA-R6): rejects incomplete replacement files with list of missing opportunities.
-- [ ] **5.1.7** Dry-run/plan mode (RA-R4): shows old/new decision counts, removed/added opportunity IDs, parking lot impact.
-- [ ] **5.1.8** Confirm-step prompt (RA-R5): requires explicit "yes" before writes.
-- [ ] **5.1.9** All old decisions archived to `replaced_decisions/` before new decisions written (RA-R7).
-- [ ] **5.1.10** `CorrectionEntry` with `correction_mode = "replace_all"` appended to `import_history.json` (RA-R8).
-- [ ] **5.1.11** Source URL traceability passes after replace-all: zero placeholder URNs (RA-R11).
-- [ ] **5.1.12** Derived artifacts rebuilt: feedback mappings, preference profile, parking lot records consistent (RA-R13).
-- [ ] **5.1.13** Undo-last correctly handles `correction_mode = "replace_all"` as most recent correction.
-- [ ] **5.1.14** All 13 safety requirements RA-R1–RA-R13 satisfied.
-- [ ] **5.1.15** 15+ tests covering: complete file, incomplete file (rejected), dry-run, idempotency, archive, audit trail, parking lot rebuild, source URL traceability, fail-closed, advisory flags, confirm-step prompt, undo-after-replace-all.
-- [ ] **5.1.16** No live APIs/LLMs; advisory-only preserved.
+- [ ] **5.1.1** Item 4 gate is `PASSED`. **NOT MET — gate is BLOCKED.**
+- [ ] **5.1.2** through **5.1.16** — All skipped.
 
 ---
 
