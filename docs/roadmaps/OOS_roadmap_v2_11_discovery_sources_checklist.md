@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [x] **0.2** Current item: `3 — Source Registry and Source Allowlist Policy`
+- [x] **0.2** Current item: `4 — Hacker News Connector Hardening Plan`
 - [ ] **0.3** Roadmap state: `implementation`
-- [ ] **0.4** Completed from this roadmap: **2 / 10**
-- [ ] **0.5** Remaining: **8 / 10**
+- [ ] **0.4** Completed from this roadmap: **3 / 10**
+- [ ] **0.5** Remaining: **7 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
 
 ### Branch and Version
@@ -242,12 +242,12 @@ Define the source registry (the canonical list of approved discovery sources) an
 
 ### Definition of Done
 
-- [ ] **3.1** Source registry file exists at `config/source_registry.json`.
-- [ ] **3.2** Source allowlist policy document exists at `docs/contracts/source_allowlist_policy.md`.
-- [ ] **3.3** Registry lists HN and GitHub Issues with correct status and metadata.
-- [ ] **3.4** Allowlist policy defines acceptance, suspension, removal criteria and approval process.
-- [ ] **3.5** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **3.6** One local commit made.
+- [x] **3.1** Source registry file exists at `config/source_registry.json`.
+- [x] **3.2** Source allowlist policy document exists at `docs/contracts/source_allowlist_policy.md`.
+- [x] **3.3** Registry lists HN and GitHub Issues with correct status and metadata.
+- [x] **3.4** Allowlist policy defines acceptance, suspension, removal criteria and approval process.
+- [x] **3.5** `.\scripts\dev-git-check.ps1` passes.
+- [x] **3.6** One local commit made.
 
 ---
 

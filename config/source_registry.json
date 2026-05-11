@@ -1,0 +1,140 @@
+{
+  "registry_version": "1.0.0",
+  "registry_status": "seed",
+  "roadmap": "v2.11",
+  "created_for_item": 3,
+  "implementation_authorized_by_this_file": false,
+  "founder_approval_required_for_implementation": true,
+  "default_policy": {
+    "no_live_api_in_unit_tests": true,
+    "no_default_enabled_sources": true,
+    "stable_source_url_required": true,
+    "no_placeholder_urls": true,
+    "no_broad_scraping": true,
+    "fixture_first": true
+  },
+  "sources": [
+    {
+      "source_id": "hacker_news",
+      "source_type": "discussion",
+      "source_name": "Hacker News",
+      "status": "planned_hardening",
+      "implementation_authorized": false,
+      "default_enabled": false,
+      "live_access_allowed": false,
+      "unit_test_mode": "fixture_only",
+      "likely_access_methods": [
+        "hn_official_api",
+        "hn_algolia_search"
+      ],
+      "stable_source_url_required": true,
+      "source_url_policy": "mandatory_external_url",
+      "risk_level": "medium",
+      "notes": "existing source path should be assessed/hardened before expansion"
+    },
+    {
+      "source_id": "github_issues",
+      "source_type": "issue_tracker",
+      "source_name": "GitHub Issues",
+      "status": "planned_hardening",
+      "implementation_authorized": false,
+      "default_enabled": false,
+      "live_access_allowed": false,
+      "unit_test_mode": "fixture_only",
+      "likely_access_methods": [
+        "github_rest_api",
+        "github_search_api"
+      ],
+      "stable_source_url_required": true,
+      "source_url_policy": "mandatory_external_url",
+      "risk_level": "medium",
+      "notes": "existing source path should filter pull requests out of issues"
+    },
+    {
+      "source_id": "product_hunt",
+      "source_type": "product_launch",
+      "source_name": "Product Hunt",
+      "status": "feasibility_required",
+      "implementation_authorized": false,
+      "default_enabled": false,
+      "live_access_allowed": false,
+      "unit_test_mode": "fixture_only",
+      "likely_access_methods": [
+        "product_hunt_graphql_api"
+      ],
+      "stable_source_url_required": true,
+      "source_url_policy": "mandatory_external_url",
+      "risk_level": "medium",
+      "notes": "solution-signal/product-pattern source, not pure pain source"
+    },
+    {
+      "source_id": "pimenov_ai",
+      "source_type": "curated_context",
+      "source_name": "pimenov.ai",
+      "status": "feasibility_required",
+      "implementation_authorized": false,
+      "default_enabled": false,
+      "live_access_allowed": false,
+      "unit_test_mode": "fixture_only",
+      "likely_access_methods": [
+        "rss_if_available",
+        "sitemap_if_available",
+        "static_allowlist"
+      ],
+      "stable_source_url_required": true,
+      "source_url_policy": "mandatory_external_url",
+      "risk_level": "low_to_medium",
+      "notes": "curated Russian-language AI/use-case/context source"
+    }
+  ],
+  "deferred_sources": [
+    {
+      "source_group": "reddit",
+      "status": "deferred",
+      "implementation_authorized": false,
+      "default_enabled": false,
+      "live_access_allowed": false,
+      "reason": "requires separate technical/legal/access review"
+    },
+    {
+      "source_group": "review_sites",
+      "status": "deferred",
+      "implementation_authorized": false,
+      "default_enabled": false,
+      "live_access_allowed": false,
+      "reason": "requires separate technical/legal/access review"
+    },
+    {
+      "source_group": "job_boards",
+      "status": "deferred",
+      "implementation_authorized": false,
+      "default_enabled": false,
+      "live_access_allowed": false,
+      "reason": "requires separate technical/legal/access review"
+    },
+    {
+      "source_group": "linkedin_x_telegram",
+      "status": "deferred",
+      "implementation_authorized": false,
+      "default_enabled": false,
+      "live_access_allowed": false,
+      "reason": "requires separate technical/legal/access review"
+    },
+    {
+      "source_group": "broad_web_crawl",
+      "status": "deferred",
+      "implementation_authorized": false,
+      "default_enabled": false,
+      "live_access_allowed": false,
+      "reason": "requires separate technical/legal/access review"
+    }
+  ],
+  "notes": [
+    "This file is a static planning/config seed only.",
+    "It must not be wired into runtime behavior in v2.11 item 3.",
+    "No source adapter implementation is authorized by this file.",
+    "All entries default to disabled; no live access allowed.",
+    "Founder approval required before any source transitions to implementation.",
+    "Deferred sources require separate technical/legal/access review before any status change."
+  ]
+}
