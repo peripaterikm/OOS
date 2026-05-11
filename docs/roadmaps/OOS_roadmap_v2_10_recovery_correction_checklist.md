@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
-- [ ] **0.2** Current item: `7.1 — Optional --utf8 Expansion Audit`
+- [ ] **0.2** Current item: `8.1 — Operational Validation Refresh`
 - [x] **0.3** Roadmap state: `ready for implementation`
-- [ ] **0.4** Completed from this roadmap: **5 / 9**
-- [ ] **0.5** Remaining: **4 / 9**
+- [ ] **0.4** Completed from this roadmap: **6 / 9**
+- [ ] **0.5** Remaining: **3 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md` (complete, `8 / 8`, tag `v2.9`, merged to main via PR #49)
 
 ### Branch and Version
@@ -284,7 +284,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 ### 7. Optional `--utf8` Expansion Audit
 
-- [ ] **7.1** Audit which CLI commands would benefit from `--utf8` expansion.
+- [x] **7.1** Audit which CLI commands would benefit from `--utf8` expansion.
 
 **Intent:** The output mode contract (v2.9 item 1.1, Section 3.4) requires per-command justification for adding `--utf8`. v2.9 scoped `--utf8` to `weekly-cycle-status-v2`, `weekly-dashboard-v2`, and `build-weekly-run-report-v2`. This item audits the remaining CLI commands to determine if any produce terminal-facing output with visually significant symbols that would benefit from `--utf8`. Produce a documented recommendation. Implementation only if evidence supports it and change is trivial (≤30 lines per command, ≤2 files total).
 
@@ -293,14 +293,14 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 **Validation expectation:** If no commands qualify, audit document records the finding and no code changes are made. If commands qualify and are implemented, each added `--utf8` has tests covering both output modes, and ASCII-safe default remains enforced.
 
 **Definition of done:**
-- [ ] **7.1.1** Audit document created at `docs/decisions/utf8_expansion_audit_v2_10.md`.
-- [ ] **7.1.2** All CLI commands not currently supporting `--utf8` are reviewed.
-- [ ] **7.1.3** Per-command assessment: does terminal output contain status symbols, arrows, separators, or other visually significant markers?
-- [ ] **7.1.4** Explicit recommendation for each command: add `--utf8` / do not add `--utf8`, with rationale.
-- [ ] **7.1.5** If any command qualifies: implementation is trivial (≤30 lines per command, ≤2 files total).
-- [ ] **7.1.6** If implemented: each added `--utf8` has tests covering ASCII-safe default and UTF-8 mode.
-- [ ] **7.1.7** ASCII-safe default is confirmed unchanged.
-- [ ] **7.1.8** No live APIs/LLMs.
+- [x] **7.1.1** Audit document created at `docs/decisions/utf8_expansion_audit_v2_10.md`.
+- [x] **7.1.2** All CLI commands not currently supporting `--utf8` are reviewed.
+- [x] **7.1.3** Per-command assessment: does terminal output contain status symbols, arrows, separators, or other visually significant markers?
+- [x] **7.1.4** Explicit recommendation for each command: add `--utf8` / do not add `--utf8`, with rationale.
+- [x] **7.1.5** If any command qualifies: implementation is trivial (≤30 lines per command, ≤2 files total). **N/A — no commands qualify for expansion.**
+- [x] **7.1.6** If implemented: each added `--utf8` has tests covering ASCII-safe default and UTF-8 mode. **N/A — no implementation.**
+- [x] **7.1.7** ASCII-safe default is confirmed unchanged.
+- [x] **7.1.8** No live APIs/LLMs.
 
 ---
 
