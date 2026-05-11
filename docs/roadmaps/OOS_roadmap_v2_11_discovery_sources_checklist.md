@@ -5,18 +5,18 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [ ] **0.2** Current item: `1 — Discovery Source Adapter Contract`
-- [ ] **0.3** Roadmap state: `planning`
-- [ ] **0.4** Completed from this roadmap: **0 / 10**
-- [ ] **0.5** Remaining: **10 / 10**
+- [x] **0.2** Current item: `2 — Raw Evidence Artifact Schema`
+- [ ] **0.3** Roadmap state: `implementation`
+- [ ] **0.4** Completed from this roadmap: **1 / 10**
+- [ ] **0.5** Remaining: **9 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
 
 ### Branch and Version
 
 - **Planning branch:** `planning/v2-11-discovery-sources-roadmap` (docs-only)
-- **Implementation branch:** `feat/v2-11-discovery-sources` (future; do not use planning branch for implementation)
+- **Implementation branch:** `feat/v2-11-discovery-sources-foundation` (active)
 - **Based on:** v2.10 / PR #50 / tag `v2.10`
-- **Status:** Planning
+- **Status:** Implementation (item 1 complete)
 
 ### Core Concept
 
@@ -174,9 +174,9 @@ Define a canonical adapter contract that every discovery source must satisfy. Th
 
 ### Definition of Done
 
-- [ ] **1.1** Discovery source adapter contract exists at `docs/contracts/discovery_source_adapter_contract.md`.
-- [ ] **1.2** Contract defines required interface, fixture policy, rate-limit policy, auth policy, error handling, `source_url` requirements, `RawEvidence` mapping, and noise floor.
-- [ ] **1.3** Contract references `source_url_traceability_contract.md`.
+- [x] **1.1** Discovery source adapter contract exists at `docs/contracts/discovery_source_adapter_contract.md`.
+- [x] **1.2** Contract defines required interface, fixture policy, rate-limit policy, auth policy, error handling, `source_url` requirements, `RawEvidence` mapping, and noise floor.
+- [x] **1.3** Contract references `source_url_traceability_contract.md`.
 - [ ] **1.4** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **1.5** One local commit made.
 
