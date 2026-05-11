@@ -478,16 +478,22 @@ def _undo_replace(
 
     # Convert to FounderDecisionV2 for rebuild
     final_decisions: list[FounderDecisionV2] = []
+    failed_parse_count = 0
     for item in final_items:
         try:
             final_decisions.append(founder_decision_from_dict(item))
         except (ValueError, TypeError):
-            pass
+            failed_parse_count += 1
 
-    if len(final_decisions) != len(final_items):
-        warnings.append(
-            f"Some restored decisions failed to parse as FounderDecisionV2. "
-            f"Restored {len(final_decisions)} of {len(final_items)} items."
+    if failed_parse_count > 0:
+        return _fail(
+            run_dir=run_dir,
+            corrected_at=corrected_at,
+            message=(
+                f"Archive decision parse failure: {failed_parse_count} of "
+                f"{len(final_items)} restored decisions failed to parse as "
+                f"FounderDecisionV2. Undo aborted — no artifacts modified."
+            ),
         )
 
     # Pre-check source URL traceability on projected state (in-memory)

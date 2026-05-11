@@ -290,6 +290,89 @@ if (-not $SkipImport -and $DecisionsPath -and (Test-Path $DecisionsPath)) {
 }
 
 # ===========================================================================
+# STEP 4b: Undo-Last Correction (v2.10 item 3.1-C)
+# ===========================================================================
+Write-Section "Step 4b: Undo-Last Correction"
+
+$ImportHistory = Join-Path $RunDir "import_history.json"
+$SkipUndo = $true
+
+if (Test-Path $ImportHistory) {
+    try {
+        $HistoryContent = Get-Content -Path $ImportHistory -Raw -Encoding UTF8
+        $HistoryData = $HistoryContent | ConvertFrom-Json
+        $Entries = @($HistoryData.entries)
+        if ($Entries.Count -gt 0) {
+            # Check if any entry is non-undo (replace, amend)
+            $HasNonUndo = $false
+            foreach ($entry in $Entries) {
+                if ($entry.correction_mode -ne "undo") {
+                    $HasNonUndo = $true
+                    break
+                }
+            }
+            if ($HasNonUndo) {
+                $SkipUndo = $false
+                Write-Host "  Found $($Entries.Count) import history entries with non-undo corrections"
+            } else {
+                Write-Host "  No non-undo corrections in import history; skipping undo"
+            }
+        } else {
+            Write-Host "  Import history is empty; skipping undo"
+        }
+    } catch {
+        Write-Host "  Could not parse import_history.json; skipping undo"
+    }
+} else {
+    Write-Host "  No import_history.json; skipping undo"
+}
+
+if (-not $SkipUndo) {
+    $UndoResult = Invoke-CliSafe -Arguments @(
+        "-m", "oos.cli", "import-founder-decisions-v2",
+        "--project-root", $TempRoot,
+        "--run-id", $RunId,
+        "--undo-last"
+    )
+    if ($UndoResult.ExitCode -eq 0) {
+        Record-Pass "undo-last correction"
+        # Quick post-undo traceability check
+        Write-Host "  Undo-last succeeded. Verifying post-undo source URL traceability..."
+        $PostTraceLines = @(
+            "import sys, json",
+            "sys.path.insert(0, '$($TempSrc -replace '\\', '/')')",
+            "from oos.source_url_traceability import check_source_url_traceability",
+            "",
+            "report = check_source_url_traceability('$($RunDir -replace '\\', '/')')",
+            "result = {",
+            "    'placeholder_count': report.placeholder_url_count,",
+            "    'missing_count': report.missing_source_url_count,",
+            "    'validation_passed': report.validation_passed,",
+            "}",
+            "print(json.dumps(result, indent=2))"
+        )
+        $PostTraceScript = Join-Path $TempRoot "_post_undo_trace.py"
+        $PostTraceLines -join "`n" | Set-Content -Path $PostTraceScript -Encoding UTF8
+
+        $PostTraceResult = Invoke-CliSafe -Arguments @($PostTraceScript)
+        try {
+            $PostTraceData = ($PostTraceResult.Output | Out-String) | ConvertFrom-Json
+            if ($PostTraceData.placeholder_count -eq 0 -and $PostTraceData.missing_count -eq 0 -and $PostTraceData.validation_passed) {
+                Record-Pass "undo-last post-traceability (placeholder=0, missing=0)"
+            } else {
+                Record-Fail "undo-last post-traceability" "placeholders=$($PostTraceData.placeholder_count), missing=$($PostTraceData.missing_count), passed=$($PostTraceData.validation_passed)"
+            }
+        } catch {
+            Record-Fail "undo-last post-traceability" "Could not parse traceability result"
+        }
+    } else {
+        Record-Fail "undo-last correction" "exit code: $($UndoResult.ExitCode)"
+    }
+} else {
+    Record-Pass "undo-last correction (skipped -- nothing to undo)"
+}
+
+# ===========================================================================
 # STEP 5: Weekly Cycle Status
 # ===========================================================================
 Write-Section "Step 5: Weekly Cycle Status"

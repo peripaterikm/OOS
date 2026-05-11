@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
-- [ ] **0.2** Current item: `3 — Undo-last validation and smoke coverage`
+- [ ] **0.2** Current item: `4.1 — Replace-All Readiness Gate`
 - [x] **0.3** Roadmap state: `ready for implementation`
-- [ ] **0.4** Completed from this roadmap: **2 / 9**
-- [ ] **0.5** Remaining: **7 / 9**
+- [ ] **0.4** Completed from this roadmap: **3 / 9**
+- [ ] **0.5** Remaining: **6 / 9**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md` (complete, `8 / 8`, tag `v2.9`, merged to main via PR #49)
 
 ### Branch and Version
@@ -182,7 +182,7 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 
 ### 3. Undo-Last Validation and Smoke Coverage
 
-- [ ] **3.1** Create tests and smoke coverage for `--undo-last`.
+- [x] **3.1** Create tests and smoke coverage for `--undo-last`.
 
 **Intent:** Deliver the test suite specified in the policy document Section 9.3: 20+ tests covering undo-replace, undo-amend, undo with empty history, undo with missing archive, undo with multiple corrections, undo idempotency, undo source URL traceability, undo parking lot consistency, undo fail-closed, undo advisory flags. Add undo-last to the controlled smoke test. Update the correction workflow E2E validation to include undo-last steps.
 
@@ -191,20 +191,20 @@ Roadmap v2.10 focuses on **safely closing recovery/correction capabilities** aft
 **Validation expectation:** `.\scripts\dev-test.ps1` passes all undo tests. `.\scripts\run-controlled-smoke.ps1` passes including undo-last step. Correction E2E validation passes all steps including undo.
 
 **Definition of done:**
-- [ ] **3.1.1** `tests/test_correction_undo.py` created with 20+ tests.
-- [ ] **3.1.2** Undo-replace test: undo restores replaced decisions, rebuilds derived artifacts.
-- [ ] **3.1.3** Undo-amend test: undo restores old notes, no rebuild.
-- [ ] **3.1.4** Undo with empty history: rejected with clear error.
-- [ ] **3.1.5** Undo with missing archive: rejected (fail-closed).
-- [ ] **3.1.6** Undo with multiple corrections: only last correction undone.
-- [ ] **3.1.7** Undo idempotency: same state, same result.
-- [ ] **3.1.8** Undo source URL traceability: zero placeholder URNs after undo.
-- [ ] **3.1.9** Undo parking lot consistency: orphan records cleaned up.
-- [ ] **3.1.10** Undo fail-closed: no partial writes on any failure.
-- [ ] **3.1.11** Undo advisory flags: `advisory_only=True` throughout.
-- [ ] **3.1.12** Controlled smoke test includes undo-last step.
-- [ ] **3.1.13** Correction E2E validation includes undo-last steps (C21+).
-- [ ] **3.1.14** `.\scripts\dev-git-check.ps1` passes after all test changes.
+- [x] **3.1.1** `tests/test_correction_undo.py` created with 20+ tests.
+- [x] **3.1.2** Undo-replace test: undo restores replaced decisions, rebuilds derived artifacts.
+- [x] **3.1.3** Undo-amend test: undo restores old notes, no rebuild.
+- [x] **3.1.4** Undo with empty history: rejected with clear error.
+- [x] **3.1.5** Undo with missing archive: rejected (fail-closed).
+- [x] **3.1.6** Undo with multiple corrections: only last correction undone.
+- [x] **3.1.7** Undo idempotency: same state, same result.
+- [x] **3.1.8** Undo source URL traceability: zero placeholder URNs after undo.
+- [x] **3.1.9** Undo parking lot consistency: orphan records cleaned up.
+- [x] **3.1.10** Undo fail-closed: no partial writes on any failure.
+- [x] **3.1.11** Undo advisory flags: `advisory_only=True` throughout.
+- [x] **3.1.12** Controlled smoke test includes undo-last step.
+- [x] **3.1.13** Correction E2E validation includes undo-last steps (C21+).
+- [x] **3.1.14** `.\scripts\dev-git-check.ps1` passes after all test changes.
 
 ---
 

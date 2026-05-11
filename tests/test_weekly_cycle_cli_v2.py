@@ -635,16 +635,16 @@ class TestCLIOutputModeFlags(unittest.TestCase):
                 pass
         self.assertIn("--utf8", stdout.getvalue())
 
-    def test_import_decisions_help_excludes_utf8(self):
-        """import-founder-decisions-v2 --help must NOT list --utf8
-        (audit confirmed: no terminal symbols in output)."""
+    def test_import_decisions_help_includes_utf8(self):
+        """import-founder-decisions-v2 --help must list --utf8
+        (v2.10 --undo-last requires --utf8 support per contract Section 9.1)."""
         stdout = io.StringIO()
         with redirect_stdout(stdout):
             try:
                 main(["import-founder-decisions-v2", "--help"])
             except SystemExit:
                 pass
-        self.assertNotIn("--utf8", stdout.getvalue())
+        self.assertIn("--utf8", stdout.getvalue())
 
     def test_status_default_output_is_ascii_safe(self):
         """Default status CLI output (no --utf8) must be ASCII-safe."""

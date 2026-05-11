@@ -935,6 +935,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         dest="undo_last",
         help="Undo the most recent correction (U1 mode). Restores pre-correction state from archive.",
     )
+    import_parser.add_argument(
+        "--utf8",
+        action="store_true",
+        default=False,
+        help="Use UTF-8 Unicode symbols in terminal output (opt-in; default is ASCII-safe).",
+    )
 
     v2_weekly_parser = subparsers.add_parser(
         "run-weekly-cycle-v2",
@@ -1114,11 +1120,8 @@ def main(argv: list[str] | None = None) -> int:
                 conflicting.append("--replace-review-items")
             if amend_notes_only:
                 conflicting.append("--amend-notes-only")
-            # Check if --decisions-file was explicitly provided (not default)
             if getattr(args, "decisions_file", None) is not None:
-                # Since we made --decisions-file optional, check if it was
-                # actually provided on the command line
-                pass  # We'll check the required flag below
+                conflicting.append("--decisions-file")
 
             if conflicting:
                 print(
