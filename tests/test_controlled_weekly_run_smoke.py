@@ -112,6 +112,7 @@ class TestRunbookContainsSections(unittest.TestCase):
         "Weekly Cycle Run",
         "Founder Inbox Review",
         "Decision Import",
+        "Undo-Last Correction",
         "Status Check",
         "Run Report",
         "Dashboard",
@@ -297,6 +298,16 @@ class TestSmokeScriptHasSourceUrlCheck(unittest.TestCase):
                       "Smoke script missing missing=0 assertion (v2.9)")
         self.assertIn("validation_passed", text.lower(),
                       "Smoke script missing validation_passed assertion (v2.9)")
+
+    def test_has_undo_last_step(self) -> None:
+        """v2.10 item 3.1-C: smoke script must include undo-last step."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("--undo-last", text,
+                      "Smoke script missing --undo-last flag (v2.10 item 3.1-C)")
+        self.assertIn("undo-last correction", text.lower(),
+                      "Smoke script missing undo-last step label (v2.10 item 3.1-C)")
+        self.assertIn("undo-last post-traceability", text.lower(),
+                      "Smoke script missing post-undo traceability check (v2.10 item 3.1-C)")
 
 
 class TestSmokeScriptHasPassFailReporting(unittest.TestCase):

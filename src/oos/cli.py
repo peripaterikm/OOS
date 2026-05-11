@@ -10,6 +10,7 @@ from pathlib import Path
 from .ai_ideation_evaluation import evaluate_ai_ideation
 from .artifact_store import ArtifactStore
 from .config import OOSConfig
+from .correction_undo import format_undo_result_output, undo_last_correction
 from .founder_decision_import import import_founder_decisions
 from .weekly_cycle_builder import build_weekly_cycle
 from .weekly_cycle_status import (
@@ -912,8 +913,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     import_parser.add_argument(
         "--decisions-file",
         type=Path,
-        required=True,
-        help="Path to the founder decisions file (JSON array or JSONL).",
+        required=False,
+        help="Path to the founder decisions file (JSON array or JSONL). Not required with --undo-last.",
     )
     import_parser.add_argument(
         "--replace-review-items",
@@ -926,6 +927,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="Amend notes/reason categories only; decision values are preserved.",
+    )
+    import_parser.add_argument(
+        "--undo-last",
+        action="store_true",
+        default=False,
+        dest="undo_last",
+        help="Undo the most recent correction (U1 mode). Restores pre-correction state from archive.",
+    )
+    import_parser.add_argument(
+        "--utf8",
+        action="store_true",
+        default=False,
+        help="Use UTF-8 Unicode symbols in terminal output (opt-in; default is ASCII-safe).",
     )
 
     v2_weekly_parser = subparsers.add_parser(
@@ -1096,7 +1110,34 @@ def main(argv: list[str] | None = None) -> int:
                 if rid.strip()
             ]
         amend_notes_only = bool(getattr(args, "amend_notes_only", False))
+        undo_last = bool(getattr(args, "undo_last", False))
 
+        # ── Undo-last mode (v2.10 item 2.1) ──────────────────────────
+        if undo_last:
+            # Validate no conflicting flags
+            conflicting: list[str] = []
+            if replace_rids:
+                conflicting.append("--replace-review-items")
+            if amend_notes_only:
+                conflicting.append("--amend-notes-only")
+            if getattr(args, "decisions_file", None) is not None:
+                conflicting.append("--decisions-file")
+
+            if conflicting:
+                print(
+                    f"Conflicting flags: --undo-last cannot be combined with "
+                    f"{', '.join(conflicting)}."
+                )
+                return 2
+
+            run_dir = args.project_root / "artifacts" / "weekly_runs" / args.run_id
+            use_utf8 = bool(getattr(args, "utf8", False))
+            undo_result = undo_last_correction(run_dir=run_dir, use_utf8=use_utf8)
+
+            print(format_undo_result_output(undo_result, use_utf8=use_utf8))
+            return 0 if undo_result.validation_passed else 1
+
+        # ── Normal import path (v2.8) ─────────────────────────────────
         try:
             result = import_founder_decisions(
                 project_root=args.project_root,

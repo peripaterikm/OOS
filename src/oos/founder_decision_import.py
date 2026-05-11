@@ -137,6 +137,9 @@ class CorrectionEntry:
     Roadmap v2.8 items 1.3 + 2.1 — every replace or amend operation produces
     one CorrectionEntry appended to {run_dir}/import_history.json.
 
+    Roadmap v2.10 item 2.1 — undo operations also produce CorrectionEntry
+    records with correction_mode = "undo" and undo-specific fields populated.
+
     Append-only contract: entries are never modified or deleted once written.
     Failed correction attempts do NOT create entries.
     correction_id is deterministic: SHA-256(run_id|corrected_at|mode|old_ids|new_ids)[:12].
@@ -145,7 +148,7 @@ class CorrectionEntry:
 
     correction_id: str
     corrected_at: str
-    correction_mode: str  # "replace" | "amend"
+    correction_mode: str  # "replace" | "amend" | "undo" | "replace_all"
     replaced_review_item_ids: list[str] = field(default_factory=list)
     old_decision_ids: list[str] = field(default_factory=list)
     new_decision_ids: list[str] = field(default_factory=list)
@@ -157,8 +160,18 @@ class CorrectionEntry:
     no_live_api: bool = True
     no_live_llm: bool = True
 
+    # Undo-specific fields (v2.10 item 2.1; populated when correction_mode = "undo")
+    undone_correction_id: str | None = None
+    undone_correction_mode: str | None = None
+    undone_decision_ids: list[str] | None = None
+    undone_at: str | None = None
+    source_history_entry_index: int | None = None
+    archive_refs: dict[str, str] | None = None
+    source_url_traceability_result: dict[str, Any] | None = None
+    notes: list[str] | None = None
+
     def to_dict(self) -> dict[str, Any]:
-        return {
+        result: dict[str, Any] = {
             "correction_id": self.correction_id,
             "corrected_at": self.corrected_at,
             "correction_mode": self.correction_mode,
@@ -173,6 +186,24 @@ class CorrectionEntry:
             "no_live_api": self.no_live_api,
             "no_live_llm": self.no_live_llm,
         }
+        # Include undo-specific fields only when populated
+        if self.undone_correction_id is not None:
+            result["undone_correction_id"] = self.undone_correction_id
+        if self.undone_correction_mode is not None:
+            result["undone_correction_mode"] = self.undone_correction_mode
+        if self.undone_decision_ids is not None:
+            result["undone_decision_ids"] = sorted(self.undone_decision_ids)
+        if self.undone_at is not None:
+            result["undone_at"] = self.undone_at
+        if self.source_history_entry_index is not None:
+            result["source_history_entry_index"] = self.source_history_entry_index
+        if self.archive_refs is not None:
+            result["archive_refs"] = dict(sorted(self.archive_refs.items()))
+        if self.source_url_traceability_result is not None:
+            result["source_url_traceability_result"] = self.source_url_traceability_result
+        if self.notes is not None:
+            result["notes"] = list(self.notes)
+        return result
 
 
 @dataclass
@@ -254,6 +285,15 @@ class ImportHistoryLog:
                         advisory_only=bool(entry_data.get("advisory_only", True)),
                         no_live_api=bool(entry_data.get("no_live_api", True)),
                         no_live_llm=bool(entry_data.get("no_live_llm", True)),
+                        # Undo-specific fields (v2.10 item 2.1)
+                        undone_correction_id=_safe_str_or_none(entry_data.get("undone_correction_id")),
+                        undone_correction_mode=_safe_str_or_none(entry_data.get("undone_correction_mode")),
+                        undone_decision_ids=_safe_string_list_or_none(entry_data.get("undone_decision_ids")),
+                        undone_at=_safe_str_or_none(entry_data.get("undone_at")),
+                        source_history_entry_index=_safe_int_or_none(entry_data.get("source_history_entry_index")),
+                        archive_refs=_safe_str_dict_or_none(entry_data.get("archive_refs")),
+                        source_url_traceability_result=_safe_dict_or_none(entry_data.get("source_url_traceability_result")),
+                        notes=_safe_string_list_or_none(entry_data.get("notes")),
                     )
                 )
         return log
@@ -1487,6 +1527,61 @@ def _resolve_import_source_urls(
             seen.add(url_str)
 
     return sorted(urls)
+
+
+def _safe_str_or_none(raw: Any) -> str | None:
+    """Return a non-empty string value or None."""
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    return s if s else None
+
+
+def _safe_string_list_or_none(raw: Any) -> list[str] | None:
+    """Return a list of non-empty strings, or None if raw is None."""
+    if raw is None:
+        return None
+    if not isinstance(raw, list):
+        return None
+    result: list[str] = []
+    for item in raw:
+        if item is None:
+            continue
+        s = str(item).strip()
+        if s and s.lower() != "none":
+            result.append(s)
+    return sorted(dict.fromkeys(result)) if result else None
+
+
+def _safe_int_or_none(raw: Any) -> int | None:
+    """Return an int value or None."""
+    if raw is None:
+        return None
+    try:
+        return int(raw)
+    except (ValueError, TypeError):
+        return None
+
+
+def _safe_str_dict_or_none(raw: Any) -> dict[str, str] | None:
+    """Return a dict of str->str, or None if raw is None."""
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    result: dict[str, str] = {}
+    for k, v in raw.items():
+        result[str(k).strip()] = str(v).strip()
+    return result if result else None
+
+
+def _safe_dict_or_none(raw: Any) -> dict[str, Any] | None:
+    """Return a dict or None if raw is None or not a dict."""
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return dict(raw)
 
 
 def _safe_string_list(raw: Any) -> list[str]:

@@ -1,8 +1,8 @@
 # Controlled Weekly Run Smoke Test — Runbook
 
-**Roadmap:** v2.7 item 5.1
-**Version:** 1.0
-**Last updated:** 2026-05-08
+**Roadmap:** v2.7 item 5.1 / v2.10 item 3.1-C
+**Version:** 1.1
+**Last updated:** 2026-05-11
 
 ## 1. Purpose
 
@@ -151,7 +151,53 @@ $decisions_json = @"
 - Exit code 0
 - Artifacts updated in run directory
 
-## 9. Status Check
+## 9. Undo-Last Correction (v2.10)
+
+```powershell
+# Undo the most recent correction (replace or amend)
+.\\.venv\\Scripts\\python.exe -m oos.cli import-founder-decisions-v2 `
+  --project-root . `
+  --run-id $run_id `
+  --undo-last
+```
+
+**Expected output (if a correction exists to undo):**
+- `Undo-last correction: OK`
+- Lists undone correction details (correction_id, correction_mode, corrected_at)
+- Lists restored decision IDs and removed decision IDs
+- If undoing a replace: `Derived artifacts rebuilt:` lists rebuilt artifacts
+- If undoing an amend: `Derived artifacts: No rebuild needed`
+- `Source URL traceability: OK (placeholder_count=0, missing_count=0)`
+- `Undo complete. A new undo entry has been appended to import_history.json.`
+- Exit code 0
+
+**Expected output (if no correction to undo):**
+- Skips with no error (in the automated smoke script)
+- In manual mode: `Undo-last correction: FAIL` with explanation
+
+**After undo, verify source URL traceability:**
+```powershell
+.\\.venv\\Scripts\\python.exe -c "
+import sys
+sys.path.insert(0, 'src')
+from oos.source_url_traceability import check_source_url_traceability
+report = check_source_url_traceability('artifacts/weekly_runs/$run_id')
+print(f'Placeholder URNs: {report.placeholder_url_count}')
+print(f'Missing source URLs: {report.missing_source_url_count}')
+print(f'Validation passed: {report.validation_passed}')
+assert report.placeholder_url_count == 0, 'FAIL: Placeholder URNs found!'
+assert report.missing_source_url_count == 0, 'FAIL: Missing source URLs!'
+assert report.validation_passed, 'FAIL: Traceability validation failed!'
+print('PASS: Post-undo source URL traceability clean.')
+"
+```
+
+**If the undo fails:**
+- Check that `import_history.json` exists and has at least one non-undo entry
+- Check that `replaced_decisions/` or `amended_decisions/` archive exists and is valid
+- Running `--undo-last` twice consecutively is rejected with "already undone"
+
+## 10. Status Check
 
 ```powershell
 .\.venv\Scripts\python.exe -m oos.cli weekly-cycle-status-v2 `
@@ -165,7 +211,7 @@ $decisions_json = @"
 - Advisory-only and safety flags confirmed
 - Exit code 0
 
-## 10. Run Report
+## 11. Run Report
 
 ```powershell
 .\.venv\Scripts\python.exe -m oos.cli build-weekly-run-report-v2 `
@@ -178,7 +224,7 @@ $decisions_json = @"
 - `run_report.md` created in run directory
 - Exit code 0
 
-## 11. Dashboard
+## 12. Dashboard
 
 ```powershell
 .\.venv\Scripts\python.exe -m oos.cli weekly-dashboard-v2 `
@@ -190,7 +236,7 @@ $decisions_json = @"
 - `artifacts/dashboard.md` created/updated
 - Exit code 0
 
-## 12. Source URL Traceability Verification
+## 13. Source URL Traceability Verification
 
 ```powershell
 .\.venv\Scripts\python.exe -c "
@@ -222,7 +268,7 @@ else:
 - `validation_passed: True`
 - Exit code 0
 
-## 13. Expected Artifacts
+## 14. Expected Artifacts
 
 After a successful smoke test, the following artifacts should exist under `artifacts/weekly_runs/{run_id}/`:
 
@@ -249,7 +295,7 @@ Cross-run artifacts:
 | `artifacts/dashboard_index.json` | JSON | Present after dashboard build |
 | `artifacts/dashboard.md` | Markdown | Present after dashboard build |
 
-## 14. Expected Success Criteria
+## 15. Expected Success Criteria
 
 1. **Pipeline completeness:** All 14 run artifacts and 2 dashboard artifacts exist.
 2. **Founder inbox populated:** `founder_inbox_v2.md` and `founder_inbox_v2_index.json` exist with review items.
@@ -262,7 +308,7 @@ Cross-run artifacts:
 9. **Deterministic:** Re-running with same fixture produces same run_id.
 10. **No live calls:** No API or LLM calls made.
 
-## 15. Expected Failure Modes
+## 16. Expected Failure Modes
 
 | Failure | Likely Cause | Fix |
 |---------|-------------|-----|
@@ -273,7 +319,7 @@ Cross-run artifacts:
 | Dashboard shows zero runs | Run directory under wrong path | Verify `artifacts/weekly_runs/` structure |
 | Permission errors | Temp directory ACL issues | Use a short temp path, avoid deep nesting |
 
-## 16. Cleanup Guidance
+## 17. Cleanup Guidance
 
 **For manual runs using real `artifacts/`:**
 
@@ -296,7 +342,7 @@ Get-ChildItem artifacts\weekly_runs
 - Never delete `.git/`, `src/`, `tests/`, `docs/`, `scripts/`, `config/`, or `examples/`.
 - Never delete `.venv/` or `.gitignore`.
 
-## 17. Troubleshooting
+## 18. Troubleshooting
 
 ### Python module not found
 
@@ -334,7 +380,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-## 18. Explicit Safety Note
+## 19. Explicit Safety Note
 
 **This runbook does NOT perform:**
 

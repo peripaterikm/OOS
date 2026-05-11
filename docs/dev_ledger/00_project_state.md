@@ -7,25 +7,27 @@
 - Roadmap v2.7 status: complete (`8 / 8`, merged to main, tag `v2.7` created).
 - Roadmap v2.8 status: complete (`9 / 9`, merged to main, tag `v2.8` created).
 - Roadmap v2.9 status: complete (`8 / 8`, branch `feat/v2-9-output-source-recovery-block-1`, local-only)
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`
-- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
+- Roadmap v2.10 status: **complete / closed** (`8 / 9`, item 5 skipped; replace-all gate BLOCKED)
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
+- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
-- Roadmap v2.9 planning created: yes
-- Roadmap v2.9 status: `complete / closed` (`8 / 8`, branch `feat/v2-9-output-source-recovery-block-1`)
+- Roadmap v2.10 planning created: yes
+- Roadmap v2.10 status: `complete / closed` (`8 / 9`, branch `feat/v2-10-recovery-correction`)
 - Current item: `none / roadmap complete`
 - Roadmap state: `complete / closed`
-- Completed: `8 / 8`
-- Remaining: `0 / 8`
-- Latest completed roadmap item: Roadmap v2.9 `5.1` — Final v2.9 validation checkpoint
-- Next planned roadmap item: `none (v2.9 is complete; v2.10+ to be planned)`
+- Completed: `8 / 9` (item 5 skipped; replace-all gate was BLOCKED)
+- Remaining: `0 applicable items`
+- Latest completed roadmap item: Roadmap v2.10 `9.1` — Final v2.10 validation checkpoint
+- Next planned roadmap item: `none (v2.10 is complete; v2.11+ to be planned)`
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-9-output-source-recovery-block-1`
+- Current branch: `feat/v2-10-recovery-correction`
+- Previous branch (v2.9 implementation): `feat/v2-9-output-source-recovery-block-1`
 - Previous branch (v2.8 implementation): `feat/v2-8-decision-correction-block-1`
 - Previous branch (v2.7 implementation): `feat/v2-7-traceability-block-1`
 - Planning branch (v2.8): `planning/v2-8-roadmap` (merged to main)
@@ -167,3 +169,36 @@
 - Roadmap v2.9 item 3.2 completed as policy-only review (2026-05-10). Decision: DEFER `--replace-all` to v2.10+. Rationale: no demonstrated real-run need; re-run workaround exists and is safer; replace-all violates R8 by design; implementing safely requires dry-run, confirm-step, and strict-mode machinery (~80 lines). Policy document at `docs/decisions/replace_all_mode_policy.md` defines 13 safety requirements (RA-R1 through RA-R13), artifact impact analysis across 9 artifacts, 7 identified risks with mitigations, and v2.10+ implementation plan. No source/test/script/example/artifact changes. Completed: `6 / 8`, Remaining: `2 / 8`.
 - Roadmap v2.9 item 4.1 completed as operational validation refresh (2026-05-10). Key deliverables: `src/oos/v2_9_operational_validation.py` (10-step validation module), `tests/test_v2_9_operational_validation.py` (28 focused tests), `scripts/run-controlled-smoke.ps1` Step 8 updated for missing_count=0 and validation_passed=True expectations, mini-epic and run report created. Completed: `7 / 8`, Remaining: `1 / 8`. Current item: `5.1 Final v2.9 validation checkpoint`.
 - Roadmap v2.9 item 5.1 closed the roadmap with a final validation checkpoint (2026-05-10): 1739 tests, 0 failures; `dev-test.ps1 -Full -Verbose` pass; `run-controlled-smoke.ps1` pass (14/14 steps, placeholder=0, missing=0, missing_count=0); `dev-validate-final.ps1` pass (all gates green); `dev-git-check.ps1` pass (6/6); `git diff --check` clean; `git status` clean; roadmap state `complete / closed` at `8 / 8`. Deferred to v2.10+: `undo-last` implementation (`docs/decisions/correction_rollback_undo_policy.md`), `replace-all` implementation (`docs/decisions/replace_all_mode_policy.md`), terminal encoding auto-detection. No push, PR, merge, or tag was performed. Roadmap v2.9 is complete and closed.
+
+## Roadmap v2.10 Completion
+
+- Roadmap v2.10 planning created the Recovery Correction Closure checklist with 9 implementation items: undo-last contract finalization, undo-last implementation, undo-last validation and smoke coverage, replace-all readiness gate, replace-all implementation, encoding auto-detection audit/policy, optional --utf8 expansion audit, operational validation refresh, and final v2.10 validation checkpoint. Planning on `planning/v2-10-roadmap`. Docs-only; no source code, tests, or live API/LLM calls were performed by this planning checkpoint.
+- Roadmap v2.10 item 1.1 finalized the undo-last contract (`docs/contracts/undo_last_contract.md`) translating all 12 safety requirements U-R1–U-R12, defining artifact write order, `CorrectionEntry` schema for undo mode, manifest fields (`undone_decision_ids`, `undone_at`), CLI output format, and resolved all design pre-work items from the v2.9 policy Section 9.4. Completed: `1 / 9`.
+- Roadmap v2.10 item 2.1 implemented `--undo-last` on `import-founder-decisions-v2` with `src/oos/correction_undo.py` (`UndoResult` model, `undo_last_correction()`), CLI flag integration, undo-replace and undo-amend paths, audit trail preservation (`CorrectionEntry` append with `correction_mode = "undo"`), manifest updates, and all 12 safety requirements satisfied. Existing v2.8 correction E2E validation (C1–C14) still passed (1739 tests). Completed: `2 / 9`.
+- Roadmap v2.10 item 3.1 created undo-last tests and smoke coverage: `tests/test_correction_undo.py` (20+ tests covering undo-replace, undo-amend, empty history, missing archive, multiple corrections, idempotency, source URL traceability, parking lot consistency, fail-closed, advisory flags), undo-last step in controlled smoke, and undo-last steps (C21+) in correction E2E validation. Completed: `3 / 9`.
+- Roadmap v2.10 item 4.1 verified the replace-all readiness gate. Gate result: **BLOCKED**. Condition 4.1.8 (concrete real-run need for `--replace-all`) not satisfied. Zero documented real-run scenarios as of 2026-05-11. The re-run workaround remains available and is safer. Item 5.x (Replace-All Implementation) explicitly skipped. Completed: `4 / 9` (gate evaluated; item 5 skipped).
+- Roadmap v2.10 item 5.x (Replace-All Implementation) **skipped** — gate 4.1 was BLOCKED. No concrete real-run need for `--replace-all` was demonstrated. The re-run workaround (`run-weekly-cycle-v2` with corrected decisions file) remains the recommended path.
+- Roadmap v2.10 item 6.1 completed the encoding auto-detection audit/policy (`docs/decisions/terminal_encoding_auto_detection_policy.md`). Decision: **do not implement** automatic terminal encoding detection in v2.10. Detection is non-deterministic on Windows (CP1251/CP1252/CP65001, `chcp` races, `sys.stdout.encoding` variability). ASCII-safe default remains unchanged. No source code changes. Completed: `5 / 9`.
+- Roadmap v2.10 item 7.1 completed the `--utf8` expansion audit (`docs/decisions/utf8_expansion_audit_v2_10.md`). All CLI commands reviewed. Finding: **no additional commands qualify** for `--utf8` expansion. All remaining commands either output only structured data (JSON), redirect to files, or have ASCII-safe already. No source code changes. Completed: `6 / 9`.
+- Roadmap v2.10 item 8.1 refreshed operational validation: undo-last validation steps added to E2E correction workflow, all v2.8 C1–C14 steps still pass, all v2.9 operational steps still pass, controlled smoke updated for v2.10 (undo-last step), smoke runbook updated, ASCII-safe default verified, source URL traceability confirmed. Completed: `7 / 9`.
+- Roadmap v2.10 item 9.1 closed the roadmap with a final validation checkpoint (2026-05-11): 1786 tests, 0 failures; `run-controlled-smoke.ps1` pass (15/15, placeholder=0, missing=0); `dev-validate-final.ps1` pass (all gates green); `dev-git-check.ps1` pass (6/6); `git diff --check` clean; `git status` clean; roadmap state `complete / closed` at `8 / 9` (item 5 skipped; replace-all gate BLOCKED).
+
+### v2.10 Key Outcomes
+
+1. **undo-last contract finalized** — `docs/contracts/undo_last_contract.md` with 12 safety requirements resolved.
+2. **undo-last implemented** — `src/oos/correction_undo.py` with undo-replace and undo-amend paths, audit trail and manifest integration.
+3. **undo-last unit/E2E/smoke coverage added** — 20+ unit tests, controlled smoke step, E2E validation steps C21+.
+4. **replace-all gate BLOCKED** — no concrete real-run need demonstrated; item 5 skipped for v2.10.
+5. **replace-all skipped for v2.10** — re-run workaround remains the recommended path.
+6. **terminal encoding auto-detection policy decided**: no auto-detection in v2.10.
+7. **--utf8 expansion audit completed**: no additional expansion recommended.
+8. **operational validation refreshed** — full suite covers all v2.10 capabilities.
+
+### v2.10 Branch and Commit Notes
+
+- Implementation branch: `feat/v2-10-recovery-correction`
+- Based on: v2.9 / tag `v2.9`
+- Latest commit: `c732117` ([v2.10] 8.1 refresh operational validation)
+- Final checkpoint commit: (after 9.1 docs update)
+- No push, PR, merge, tag, or release was performed.
+- v2.10 is complete and closed.

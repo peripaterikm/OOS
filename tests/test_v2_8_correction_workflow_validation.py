@@ -1,4 +1,5 @@
-"""Tests for v2.8 correction workflow end-to-end validation (Roadmap v2.8 item 6.1).
+"""Tests for v2.8 correction workflow end-to-end validation (Roadmap v2.8 item 6.1)
+and v2.10 undo-last coverage within the correction workflow (Roadmap v2.10 item 3.1-C).
 
 All tests use temp directories — no real artifacts/ are written.
 No live APIs, no live LLMs, no portfolio mutations.
@@ -12,6 +13,9 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
+from oos.correction_undo import undo_last_correction, UndoResult
+from oos.founder_decision_import import read_import_history
+from oos.source_url_traceability import check_source_url_traceability
 from oos.v2_8_correction_workflow_validation import (
     VALIDATION_SCHEMA_VERSION,
     V2_8CorrectionWorkflowValidationReport,
@@ -325,6 +329,392 @@ class TestV2_8StepSpecific(unittest.TestCase):
             c13_steps = [s for s in report.steps if s.step_id == "c13"]
             if c13_steps:
                 self.assertEqual(c13_steps[0].status, "passed")
+
+
+# ---------------------------------------------------------------------------
+# 4. Undo-last E2E coverage within correction workflow (v2.10 item 3.1-C)
+# ---------------------------------------------------------------------------
+
+
+class TestV2_8UndoLastInCorrectionWorkflow(unittest.TestCase):
+    """Test undo-last behavior within the full correction workflow context.
+
+    These tests verify that undo-replace and undo-amend work correctly
+    when correction entries exist and source URL traceability remains
+    clean after undo.
+
+    All tests use inline temp fixtures — no real artifacts/ are written.
+    No live APIs, no live LLMs, no portfolio mutations.
+    """
+
+    def test_undo_replace_restores_decisions_and_appends_entry_inline(self):
+        """Inline fixture: undo-replace restores archived decisions, appends undo entry."""
+        with tempfile.TemporaryDirectory(prefix="oos_undo_e2e_") as td:
+            base = Path(td)
+            run_dir = base / "artifacts" / "weekly_runs" / "run_e2e_001"
+            run_dir.mkdir(parents=True)
+
+            old_dec = {
+                "decision_id": "dec_old_1",
+                "opportunity_id": "opp_old_1",
+                "evidence_pack_id": "ep_old_1",
+                "decision": "park",
+                "reasons": [{"category": "weak_evidence", "note": ""}],
+                "notes": "original park notes",
+                "confidence": 0.6,
+                "linked_evidence_ids": ["ev_1"],
+                "linked_source_signal_ids": ["sig_1"],
+                "linked_source_urls": ["https://example.com/opp_old_1"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:00:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            }
+            new_dec = {
+                "decision_id": "dec_new_1",
+                "opportunity_id": "opp_new_1",
+                "evidence_pack_id": "ep_new_1",
+                "decision": "promote",
+                "reasons": [{"category": "strong_pain", "note": ""}],
+                "notes": "replacement promote notes",
+                "confidence": 0.8,
+                "linked_evidence_ids": ["ev_2"],
+                "linked_source_signal_ids": ["sig_2"],
+                "linked_source_urls": ["https://example.com/opp_new_1"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:00:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            }
+
+            (run_dir / "manifest.json").write_text(json.dumps({
+                "run_id": "run_e2e_001",
+                "run_started_at": "2026-05-01T00:00:00Z",
+                "run_completed_at": "2026-05-01T01:00:00Z",
+                "schema_versions": {},
+                "empty_states": {},
+                "advisory_only": True,
+            }, indent=2), encoding="utf-8")
+
+            (run_dir / "import_history.json").write_text(json.dumps({
+                "schema_version": "import_history.v1",
+                "entries": [{
+                    "correction_id": "correction_replace_e2e",
+                    "corrected_at": "2026-05-10T14:30:00Z",
+                    "correction_mode": "replace",
+                    "replaced_review_item_ids": [],
+                    "old_decision_ids": ["dec_old_1"],
+                    "new_decision_ids": ["dec_new_1"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }],
+            }, indent=2), encoding="utf-8")
+
+            (run_dir / "founder_decisions_v2.json").write_text(json.dumps({
+                "items": [new_dec],
+                "schema_version": "founder_decision_v2.v1",
+                "empty": False,
+                "imported": True,
+            }, indent=2), encoding="utf-8")
+
+            archive_dir = run_dir / "replaced_decisions"
+            archive_dir.mkdir(exist_ok=True)
+            (archive_dir / "founder_decisions_v2_replaced_2026-05-10T14_30_00Z.json").write_text(
+                json.dumps({
+                    "decisions": [old_dec],
+                    "replaced_decision_ids": ["dec_old_1"],
+                    "replaced_at": "2026-05-10T14:30:00Z",
+                }, indent=2), encoding="utf-8")
+
+            for fname in [
+                "founder_feedback_mappings.json",
+                "founder_preference_profile.json",
+                "parking_lot_records.json",
+                "evidence_packs.json",
+                "opportunity_candidates.json",
+                "quality_gate_decisions.json",
+                "next_best_actions.json",
+                "weekly_opportunity_review.json",
+                "founder_inbox_v2_index.json",
+            ]:
+                (run_dir / fname).write_text(
+                    json.dumps({"empty": True, "items": [], "schema_version": "test.v1"}),
+                    encoding="utf-8",
+                )
+
+            result = undo_last_correction(run_dir)
+            self.assertTrue(
+                result.validation_passed,
+                f"Undo-replace failed: {result.errors}",
+            )
+            self.assertEqual(result.undone_correction_mode, "replace")
+            self.assertIn("dec_old_1", result.restored_decision_ids)
+            self.assertIn("dec_new_1", result.removed_decision_ids)
+            self.assertTrue(result.derived_artifacts_rebuilt)
+
+            decisions_data = json.loads(
+                (run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8")
+            )
+            restored_ids = {d["decision_id"] for d in decisions_data["items"]}
+            self.assertIn("dec_old_1", restored_ids)
+            self.assertNotIn("dec_new_1", restored_ids)
+
+            history_data = json.loads(
+                (run_dir / "import_history.json").read_text(encoding="utf-8")
+            )
+            entries = history_data["entries"]
+            self.assertEqual(len(entries), 2)
+            self.assertEqual(entries[1]["correction_mode"], "undo")
+            self.assertEqual(entries[1]["undone_correction_id"], "correction_replace_e2e")
+            self.assertEqual(entries[1]["undone_correction_mode"], "replace")
+            self.assertTrue(entries[1]["advisory_only"])
+            self.assertIn("dec_old_1", entries[1]["undone_decision_ids"])
+
+            trace_result = check_source_url_traceability(run_dir)
+            self.assertTrue(trace_result.validation_passed,
+                            f"Traceability failed: placeholders={trace_result.placeholder_url_count}")
+            self.assertEqual(trace_result.placeholder_url_count, 0)
+            self.assertEqual(trace_result.missing_source_url_count, 0)
+
+    def test_undo_amend_after_full_workflow_inline(self):
+        """Inline fixture: undo-amend restores previous notes, no derived rebuild."""
+        with tempfile.TemporaryDirectory(prefix="oos_undo_amend_e2e_") as td:
+            base = Path(td)
+            run_dir = base / "artifacts" / "weekly_runs" / "run_e2e_amend"
+            run_dir.mkdir(parents=True)
+
+            original = {
+                "decision_id": "dec_001",
+                "opportunity_id": "opp_001",
+                "evidence_pack_id": "ep_001",
+                "decision": "promote",
+                "reasons": [{"category": "strong_pain", "note": ""}],
+                "notes": "original notes before amendment",
+                "confidence": 0.8,
+                "linked_evidence_ids": ["ev_1"],
+                "linked_source_signal_ids": ["sig_1"],
+                "linked_source_urls": ["https://example.com/opp_001"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:00:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            }
+            amended = dict(original)
+            amended["notes"] = "amended notes after correction"
+
+            (run_dir / "manifest.json").write_text(json.dumps({
+                "run_id": "run_e2e_amend",
+                "run_started_at": "2026-05-01T00:00:00Z",
+                "run_completed_at": "2026-05-01T01:00:00Z",
+                "schema_versions": {},
+                "empty_states": {},
+                "advisory_only": True,
+            }, indent=2), encoding="utf-8")
+
+            (run_dir / "import_history.json").write_text(json.dumps({
+                "schema_version": "import_history.v1",
+                "entries": [{
+                    "correction_id": "correction_amend_e2e",
+                    "corrected_at": "2026-05-10T15:00:00Z",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": [],
+                    "old_decision_ids": ["dec_001"],
+                    "new_decision_ids": ["dec_001"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }],
+            }, indent=2), encoding="utf-8")
+
+            (run_dir / "founder_decisions_v2.json").write_text(json.dumps({
+                "items": [amended],
+                "schema_version": "founder_decision_v2.v1",
+                "empty": False,
+                "imported": True,
+            }, indent=2), encoding="utf-8")
+
+            archive_dir = run_dir / "amended_decisions"
+            archive_dir.mkdir(exist_ok=True)
+            (archive_dir / "founder_decisions_v2_amended_2026-05-10T15_00_00Z.json").write_text(
+                json.dumps({
+                    "items": [original],
+                    "amended_decision_ids": ["dec_001"],
+                    "amended_at": "2026-05-10T15:00:00Z",
+                }, indent=2), encoding="utf-8")
+
+            for fname in [
+                "founder_feedback_mappings.json",
+                "founder_preference_profile.json",
+                "parking_lot_records.json",
+                "evidence_packs.json",
+                "opportunity_candidates.json",
+                "quality_gate_decisions.json",
+                "next_best_actions.json",
+                "weekly_opportunity_review.json",
+                "founder_inbox_v2_index.json",
+            ]:
+                (run_dir / fname).write_text(
+                    json.dumps({"empty": True, "items": [], "schema_version": "test.v1"}),
+                    encoding="utf-8",
+                )
+
+            result = undo_last_correction(run_dir)
+            self.assertTrue(
+                result.validation_passed,
+                f"Undo-amend failed: {result.errors}",
+            )
+            self.assertEqual(result.undone_correction_mode, "amend")
+            self.assertIn("dec_001", result.restored_decision_ids)
+            self.assertFalse(result.derived_artifacts_rebuilt)
+
+            decisions_data = json.loads(
+                (run_dir / "founder_decisions_v2.json").read_text(encoding="utf-8")
+            )
+            restored_notes = decisions_data["items"][0]["notes"]
+            self.assertEqual(restored_notes, "original notes before amendment")
+
+            history_data = json.loads(
+                (run_dir / "import_history.json").read_text(encoding="utf-8")
+            )
+            entries = history_data["entries"]
+            self.assertEqual(len(entries), 2)
+            self.assertEqual(entries[1]["correction_mode"], "undo")
+            self.assertEqual(entries[1]["undone_correction_mode"], "amend")
+
+            trace_result = check_source_url_traceability(run_dir)
+            self.assertTrue(trace_result.validation_passed)
+            self.assertEqual(trace_result.placeholder_url_count, 0)
+
+    def test_repeat_undo_fails_closed_after_full_workflow_undo(self):
+        """After undo completes, a second undo is rejected (fail-closed)."""
+        with tempfile.TemporaryDirectory(prefix="oos_repeat_undo_") as td:
+            base = Path(td)
+            run_dir = base / "artifacts" / "weekly_runs" / "run_repeat"
+            run_dir.mkdir(parents=True)
+
+            dec = {
+                "decision_id": "dec_001",
+                "opportunity_id": "opp_001",
+                "evidence_pack_id": "ep_001",
+                "decision": "promote",
+                "reasons": [{"category": "strong_pain", "note": ""}],
+                "notes": "amended notes",
+                "confidence": 0.8,
+                "linked_evidence_ids": ["ev_1"],
+                "linked_source_signal_ids": ["sig_1"],
+                "linked_source_urls": ["https://example.com/test"],
+                "decided_by": "founder",
+                "decided_at": "2026-05-01T10:00:00Z",
+                "schema_version": "founder_decision_v2.v1",
+                "auto_promote": False,
+                "founder_decision_authority": "founder_decision_record_only",
+            }
+            original = dict(dec)
+            original["notes"] = "original notes"
+
+            (run_dir / "manifest.json").write_text(json.dumps({
+                "run_id": "run_repeat",
+                "run_started_at": "2026-05-01T00:00:00Z",
+                "run_completed_at": "2026-05-01T01:00:00Z",
+                "schema_versions": {},
+                "empty_states": {},
+                "advisory_only": True,
+            }, indent=2), encoding="utf-8")
+
+            (run_dir / "import_history.json").write_text(json.dumps({
+                "schema_version": "import_history.v1",
+                "entries": [{
+                    "correction_id": "corr_amend_001",
+                    "corrected_at": "2026-05-10T12:00:00Z",
+                    "correction_mode": "amend",
+                    "replaced_review_item_ids": [],
+                    "old_decision_ids": ["dec_001"],
+                    "new_decision_ids": ["dec_001"],
+                    "old_artifact_checksums": {},
+                    "new_artifact_checksums": {},
+                    "warnings": [],
+                    "errors": [],
+                    "advisory_only": True,
+                    "no_live_api": True,
+                    "no_live_llm": True,
+                }],
+            }, indent=2), encoding="utf-8")
+
+            (run_dir / "founder_decisions_v2.json").write_text(json.dumps({
+                "items": [dec],
+                "schema_version": "founder_decision_v2.v1",
+                "empty": False,
+                "imported": True,
+            }, indent=2), encoding="utf-8")
+
+            archive_dir = run_dir / "amended_decisions"
+            archive_dir.mkdir(exist_ok=True)
+            (archive_dir / "founder_decisions_v2_amended_2026-05-10T12_00_00Z.json").write_text(
+                json.dumps({
+                    "items": [original],
+                    "amended_decision_ids": ["dec_001"],
+                    "amended_at": "2026-05-10T12:00:00Z",
+                }, indent=2), encoding="utf-8")
+
+            for fname in [
+                "founder_feedback_mappings.json",
+                "founder_preference_profile.json",
+                "parking_lot_records.json",
+                "evidence_packs.json",
+                "opportunity_candidates.json",
+                "quality_gate_decisions.json",
+                "next_best_actions.json",
+                "weekly_opportunity_review.json",
+                "founder_inbox_v2_index.json",
+            ]:
+                (run_dir / fname).write_text(
+                    json.dumps({"empty": True, "items": [], "schema_version": "test.v1"}),
+                    encoding="utf-8",
+                )
+
+            result1 = undo_last_correction(run_dir)
+            self.assertTrue(result1.validation_passed, f"First undo failed: {result1.errors}")
+
+            result2 = undo_last_correction(run_dir)
+            self.assertFalse(result2.validation_passed)
+            self.assertIn("already undone", result2.errors[0])
+
+            history_data = json.loads(
+                (run_dir / "import_history.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(len(history_data["entries"]), 2,
+                             "Only amend + 1 undo entry; no second undo appended")
+
+    def test_correction_workflow_preserves_all_existing_steps(self):
+        """Full v2.8 workflow validation produces a well-formed report."""
+        report = run_v2_8_correction_workflow_validation()
+        self.assertIsInstance(report, V2_8CorrectionWorkflowValidationReport)
+        self.assertIsInstance(report.steps, list)
+        self.assertGreater(len(report.steps), 0)
+        self.assertTrue(report.advisory_only)
+        self.assertTrue(report.no_live_api)
+        self.assertTrue(report.no_live_llm)
+        if report.validation_passed:
+            expected_step_ids = {
+                "c1", "c2", "c3", "c4", "c5", "c6", "c7",
+                "c8", "c9", "c10", "c11", "c12", "c13", "c14",
+            }
+            found_step_ids = {s.step_id for s in report.steps}
+            for step_id in expected_step_ids:
+                self.assertIn(step_id, found_step_ids,
+                              f"Existing step {step_id} missing from validation report")
 
 
 # ---------------------------------------------------------------------------
