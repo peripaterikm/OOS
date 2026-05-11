@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [x] **0.2** Current item: `2 — Raw Evidence Artifact Schema`
+- [x] **0.2** Current item: `3 — Source Registry and Source Allowlist Policy`
 - [ ] **0.3** Roadmap state: `implementation`
-- [ ] **0.4** Completed from this roadmap: **1 / 10**
-- [ ] **0.5** Remaining: **9 / 10**
+- [ ] **0.4** Completed from this roadmap: **2 / 10**
+- [ ] **0.5** Remaining: **8 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
 
 ### Branch and Version
@@ -208,9 +208,9 @@ Define the canonical `RawEvidence` artifact schema that all source adapters prod
 
 ### Definition of Done
 
-- [ ] **2.1** Raw evidence artifact schema document exists at `docs/contracts/raw_evidence_artifact_schema.md`.
-- [ ] **2.2** Schema defines required fields, optional fields, `source_type` enum, validation rules, `source_url` structure, and metadata bag policy.
-- [ ] **2.3** Schema is compatible with existing `RawEvidence` model (no breaking changes to existing fields).
+- [x] **2.1** Raw evidence artifact schema document exists at `docs/contracts/raw_evidence_artifact_schema.md`.
+- [x] **2.2** Schema defines required fields, optional fields, `source_type` enum, validation rules, `source_url` structure, and metadata bag policy.
+- [x] **2.3** Schema is compatible with existing `RawEvidence` model (no breaking changes to existing fields).
 - [ ] **2.4** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **2.5** One local commit made.
 
