@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [x] **0.2** Current item: `6 — Product Hunt Feasibility and Connector Plan`
+- [x] **0.2** Current item: `7 — pimenov.ai Feasibility and Connector Plan`
 - [ ] **0.3** Roadmap state: `implementation`
-- [ ] **0.4** Completed from this roadmap: **5 / 10**
-- [ ] **0.5** Remaining: **5 / 10**
+- [ ] **0.4** Completed from this roadmap: **6 / 10**
+- [ ] **0.5** Remaining: **4 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
 
 ### Branch and Version
@@ -353,9 +353,9 @@ Assess Product Hunt as a new discovery source candidate and produce a connector 
 
 ### Definition of Done
 
-- [ ] **6.1** Product Hunt feasibility document exists at `docs/decisions/product_hunt_feasibility_and_connector_plan.md`.
-- [ ] **6.2** Document covers: API assessment, data model mapping, `source_url` traceability, anti-hype scoring, fixture strategy, access method, known limitations, implementation scope.
-- [ ] **6.3** Document explicitly states: no implementation until API feasibility and auth requirements are documented and approved.
+- [x] **6.1** Product Hunt feasibility document exists at `docs/decisions/product_hunt_feasibility_connector_plan.md`.
+- [x] **6.2** Document covers: API assessment (Section 5), data model mapping (Section 7), `source_url` traceability (Section 10), anti-hype scoring (Section 12), fixture strategy (Section 4.2), access method (Section 4), known limitations (Section 17), implementation scope (Section 16). Also covers: context (Section 1), feasibility summary (Section 2), current-state assessment (Section 3), source registry alignment (Section 6), evidence kind classification (Section 8), comments policy (Section 9), deduplication plan (Section 11), query/collection strategy (Section 13), validation plan (Section 14), controlled smoke plan (Section 15), recommendation (Section 19), non-goals (Section 18), decision (Section 20).
+- [x] **6.3** Document explicitly states: no implementation until API feasibility and auth requirements are documented and approved (Sections 19, 20). Implementation requires explicit founder approval.
 - [ ] **6.4** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **6.5** One local commit made.
 
