@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [x] **0.2** Current item: `4 — Hacker News Connector Hardening Plan`
+- [x] **0.2** Current item: `5 — GitHub Issues Connector Hardening Plan`
 - [ ] **0.3** Roadmap state: `implementation`
-- [ ] **0.4** Completed from this roadmap: **3 / 10**
-- [ ] **0.5** Remaining: **7 / 10**
+- [ ] **0.4** Completed from this roadmap: **4 / 10**
+- [ ] **0.5** Remaining: **6 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
 
 ### Branch and Version
@@ -279,9 +279,9 @@ Assess the current Hacker News collector adapter (v2.3 item 4.1) and produce a h
 
 ### Definition of Done
 
-- [ ] **4.1** HN connector hardening plan exists at `docs/decisions/hn_connector_hardening_plan.md`.
-- [ ] **4.2** Plan covers: current assessment, preferred API method, coverage gaps, `source_url` audit, noise filters, rate-limit compliance, fixture quality, recommended changes.
-- [ ] **4.3** Plan is implementation-ready (each recommendation has clear scope, expected files, and acceptance criteria).
+- [x] **4.1** HN connector hardening plan exists at `docs/decisions/hacker_news_connector_hardening_plan.md`.
+- [x] **4.2** Plan covers: current assessment, preferred API method, coverage gaps, `source_url` audit, noise filters, rate-limit compliance, fixture quality, recommended changes. Also covers: HN source categories, access-method options, source registry alignment, raw evidence mapping, evidence_kind classification rules, source_url traceability, deduplication plan, noise/quality filters, query/collection strategy, validation plan, controlled smoke plan, implementation plan, risks and mitigations, non-goals.
+- [x] **4.3** Plan is implementation-ready (each recommendation has clear scope, expected files, and acceptance criteria).
 - [ ] **4.4** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **4.5** One local commit made.
 
