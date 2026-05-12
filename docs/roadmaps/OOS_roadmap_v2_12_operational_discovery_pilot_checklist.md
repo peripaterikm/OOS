@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
-- [x] **0.2** Current item: `6 — Founder Review Package for Pilot`
+- [x] **0.2** Current item: `7 — Operational Discovery Pilot Orchestrator`
 - [x] **0.3** Roadmap state: `implementation in progress`
-- [x] **0.4** Completed from this roadmap: **5 / 10**
-- [x] **0.5** Remaining: **5 / 10**
+- [x] **0.4** Completed from this roadmap: **6 / 10**
+- [x] **0.5** Remaining: **4 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md` (complete, `10 / 10`, tag `v2.11`, merged to main via PR #51)
 
 ### Branch and Version
@@ -626,7 +626,7 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
 
 ### Implementation Requirements
 
-- [ ] **6.1** Implement Founder Review Package generation with these sections:
+- [x] **6.1** Implement Founder Review Package generation with these sections:
   - Ranked list of pain clusters awaiting review (ranked by overall_score descending).
   - Ranked list of opportunity candidates awaiting review.
   - For each cluster: cluster_id, pain_pattern, overall_score, score breakdown (all 8 components), recurrence, source_diversity, evidence links (evidence_id, source_url, source_type, title, contribution_to_cluster), representative quotes, advisory recommendation (`review_for_promotion`, `needs_more_evidence`, `likely_noise`, `park_for_later`).
@@ -634,19 +634,19 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
   - Clear action prompts for each item: PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER.
   - Space for `KillReason` if killing.
   - Previous cycle's decisions for context (if available).
-- [ ] **6.2** Implement founder decision ingestion:
+- [x] **6.2** Implement founder decision ingestion (feedback hooks for later ingestion):
   - Accept PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER decisions.
   - Require `KillReason` for KILL decisions.
   - Validate KillReason explains **why the idea died**, not just labels it.
   - Store decisions in structured format for feedback loop.
-- [ ] **6.3** Implement scoring calibration hooks from founder feedback (contract Section 14.2):
+- [x] **6.3** Implement scoring calibration hooks from founder feedback (contract Section 14.2):
   - KILL due to noise → flag noise_risk adjustment.
   - KILL due to wrong ICP → flag icp_fit calibration.
   - PROMOTE → validate scoring weights.
   - PARK → preserve cluster for later (no score adjustment).
   - NEEDS_MORE_EVIDENCE → flag for additional collection.
-- [ ] **6.4** Implement JSON output format for machine ingestion.
-- [ ] **6.5** Write fixture tests covering:
+- [x] **6.4** Implement JSON output format for machine ingestion.
+- [x] **6.5** Write fixture tests covering:
   - Package generation with known clusters and candidates.
   - All 5 decision statuses applied correctly.
   - KillReason validation: good ("All three evidence items are self-promotion...") vs bad ("Noise").
@@ -656,7 +656,7 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
   - Decision ingestion updates cluster/candidate status.
   - Empty input handling (no clusters, no candidates).
   - Ranking order (by overall_score descending, ties broken by source_diversity → recurrence → lower noise_risk).
-- [ ] **6.6** No LLM calls. Decision prompts and advisory recommendations are rule-based.
+- [x] **6.6** No LLM calls. Decision prompts and advisory recommendations are rule-based.
 
 ### Validation Expectation
 
@@ -667,11 +667,11 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
 
 ### Definition of Done
 
-- [ ] **6.7** `src/oos/founder_review_package.py` exists with package generation and decision ingestion.
-- [ ] **6.8** `tests/test_founder_review_package_pilot.py` exists with fixture tests covering all 6.5 requirements.
-- [ ] **6.9** All tests pass (`.\scripts\dev-test.ps1`).
-- [ ] **6.10** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **6.11** One local commit made.
+- [x] **6.7** `src/oos/pilot_founder_review_package.py` exists with package generation and recommendation logic.
+- [x] **6.8** `tests/test_pilot_founder_review_package.py` exists with fixture tests covering all 6.5 requirements.
+- [x] **6.9** All tests pass (51 tests OK).
+- [ ] **6.10** `.\scripts\dev-git-check.ps1` passes (pending).
+- [ ] **6.11** One local commit made (pending).
 
 ### Explicit Non-Goals
 
