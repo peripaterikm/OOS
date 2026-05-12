@@ -608,6 +608,65 @@ class TestFounderReviewEvidenceLink(unittest.TestCase):
         self.assertEqual(original.source_url, restored.source_url)
         self.assertEqual(original.quality_flags, restored.quality_flags)
 
+    def test_from_dict_rejects_quality_flags_string(self):
+        """FounderReviewEvidenceLink.from_dict rejects quality_flags as string."""
+        d = {
+            "evidence_id": "ev_001",
+            "source_id": "hacker_news",
+            "source_type": "discussion",
+            "source_url": "https://news.ycombinator.com/item?id=1",
+            "title": "Test",
+            "excerpt": "Test excerpt",
+            "evidence_kind": "pain_signal_candidate",
+            "quality_flags": "flag",
+        }
+        with self.assertRaises(ValueError):
+            FounderReviewEvidenceLink.from_dict(d)
+
+    def test_from_dict_rejects_quality_flags_dict(self):
+        """FounderReviewEvidenceLink.from_dict rejects quality_flags as dict."""
+        d = {
+            "evidence_id": "ev_001",
+            "source_id": "hacker_news",
+            "source_type": "discussion",
+            "source_url": "https://news.ycombinator.com/item?id=1",
+            "title": "Test",
+            "excerpt": "Test excerpt",
+            "evidence_kind": "pain_signal_candidate",
+            "quality_flags": {"x": 1},
+        }
+        with self.assertRaises(ValueError):
+            FounderReviewEvidenceLink.from_dict(d)
+
+    def test_from_dict_accepts_missing_quality_flags_as_empty(self):
+        """FounderReviewEvidenceLink.from_dict accepts missing quality_flags as []."""
+        d = {
+            "evidence_id": "ev_001",
+            "source_id": "hacker_news",
+            "source_type": "discussion",
+            "source_url": "https://news.ycombinator.com/item?id=1",
+            "title": "Test",
+            "excerpt": "Test excerpt",
+            "evidence_kind": "pain_signal_candidate",
+        }
+        link = FounderReviewEvidenceLink.from_dict(d)
+        self.assertEqual(link.quality_flags, [])
+
+    def test_from_dict_accepts_quality_flags_list(self):
+        """FounderReviewEvidenceLink.from_dict accepts quality_flags=["low_text_context"]."""
+        d = {
+            "evidence_id": "ev_001",
+            "source_id": "hacker_news",
+            "source_type": "discussion",
+            "source_url": "https://news.ycombinator.com/item?id=1",
+            "title": "Test",
+            "excerpt": "Test excerpt",
+            "evidence_kind": "pain_signal_candidate",
+            "quality_flags": ["low_text_context"],
+        }
+        link = FounderReviewEvidenceLink.from_dict(d)
+        self.assertEqual(link.quality_flags, ["low_text_context"])
+
 
 class TestFounderReviewQueueItem(unittest.TestCase):
     """Test review queue item model."""

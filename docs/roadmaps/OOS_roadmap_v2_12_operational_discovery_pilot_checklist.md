@@ -609,7 +609,7 @@ Implement the Source Quality Report as specified in [`docs/contracts/operational
 
 Implement the Founder Review Package as specified in [`docs/contracts/operational_discovery_pilot_run_contract.md`](../contracts/operational_discovery_pilot_run_contract.md) Sections 14–15. The package bundles top pain clusters and opportunity candidates with evidence links, score explanations, source quality context, package-level traceability summary, and recommended founder decisions (PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER).
 
-The Founder Review Package is **advisory-only**. It does NOT ingest founder decisions, does NOT create KillReason records, and does NOT mutate portfolio, opportunity, or cluster state. It provides stable feedback hooks (package-level `founder_final_decision` field and `notes`) for later ingestion by downstream modules. Actual feedback ingestion belongs to later roadmap items unless already explicitly implemented elsewhere.
+The Founder Review Package is **advisory-only**. It does NOT ingest founder decisions, does NOT create KillReason records, and does NOT mutate portfolio, opportunity, or cluster state. Each `FounderReviewQueueItem` includes a `founder_final_decision` field (per-review-item feedback hook) and a `notes` field for later ingestion by downstream modules. The package itself does NOT record a package-level founder_final_decision. Actual feedback ingestion belongs to later roadmap items unless already explicitly implemented elsewhere.
 
 ### Allowed Change Type
 

@@ -141,6 +141,16 @@ class FounderReviewEvidenceLink:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> FounderReviewEvidenceLink:
+        raw_qf = data.get("quality_flags")
+        if raw_qf is None:
+            quality_flags: list[str] = []
+        elif isinstance(raw_qf, list):
+            quality_flags = list(raw_qf)
+        else:
+            raise ValueError(
+                f"FounderReviewEvidenceLink.quality_flags must be a list, "
+                f"got {type(raw_qf).__name__}"
+            )
         link = cls(
             evidence_id=str(data.get("evidence_id", "")),
             source_id=str(data.get("source_id", "")),
@@ -149,7 +159,7 @@ class FounderReviewEvidenceLink:
             title=str(data.get("title", "")),
             excerpt=str(data.get("excerpt", "")),
             evidence_kind=str(data.get("evidence_kind", "")),
-            quality_flags=list(data.get("quality_flags", [])),
+            quality_flags=quality_flags,
         )
         link.validate()
         return link
@@ -635,6 +645,13 @@ def _build_evidence_links(
     """Build evidence links, keeping all entries including those with missing fields."""
     links: list[FounderReviewEvidenceLink] = []
     for ev in evidence_list:
+        raw_qf = ev.get("quality_flags")
+        if raw_qf is None:
+            quality_flags: list[str] = []
+        elif isinstance(raw_qf, list):
+            quality_flags = list(raw_qf)
+        else:
+            quality_flags = list(str(raw_qf))
         link = FounderReviewEvidenceLink(
             evidence_id=str(ev.get("evidence_id", "")),
             source_id=str(ev.get("source_id", "")),
@@ -643,7 +660,7 @@ def _build_evidence_links(
             title=str(ev.get("title", "")),
             excerpt=str(ev.get("excerpt", ""))[:500],
             evidence_kind=str(ev.get("evidence_kind", "")),
-            quality_flags=list(ev.get("quality_flags", [])),
+            quality_flags=quality_flags,
         )
         links.append(link)
     return links
