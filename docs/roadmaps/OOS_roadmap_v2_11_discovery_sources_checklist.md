@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [x] **0.2** Current item: `8 — PainCluster Contract and Scoring Formula`
+- [x] **0.2** Current item: `9 — Pilot Run Design and Source Quality Report Contract`
 - [ ] **0.3** Roadmap state: `operational_pilot`
-- [x] **0.4** Completed from this roadmap: **7 / 10**
-- [ ] **0.5** Remaining: **3 / 10**
+- [x] **0.4** Completed from this roadmap: **8 / 10**
+- [ ] **0.5** Remaining: **2 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
 
 ### Branch and Version
@@ -411,10 +411,10 @@ Define the PainCluster artifact contract and the explicit pain-first scoring for
 
 ### Definition of Done
 
-- [ ] **8.1** PainCluster contract exists at `docs/contracts/pain_cluster_contract.md`.
-- [ ] **8.2** Scoring contract exists at `docs/contracts/pain_first_scoring_contract.md`.
-- [ ] **8.3** PainCluster contract defines all minimum fields and cross-source consolidation rule.
-- [ ] **8.4** Scoring contract defines formula, component definitions, and deterministic computation.
+- [x] **8.1** PainCluster contract exists at `docs/contracts/pain_cluster_contract.md`.
+- [x] **8.2** Scoring formula integrated into `docs/contracts/pain_cluster_contract.md` (single combined contract; separate `pain_first_scoring_contract.md` not needed — formula, component definitions, and deterministic computation are all in the PainCluster contract).
+- [x] **8.3** PainCluster contract defines all minimum fields (19 fields: cluster_id through notes) and cross-source consolidation rule.
+- [x] **8.4** Scoring contract defines formula (`overall = 0.25*pain_explicitness + 0.20*recurrence + 0.15*business_cost + 0.15*icp_fit + 0.10*source_reliability + 0.10*freshness + 0.05*actionability - 0.20*noise_risk`), all 8 component definitions with 0.0/0.5/1.0 scoring guidance, and deterministic computation.
 - [ ] **8.5** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **8.6** One local commit made.
 
@@ -543,9 +543,9 @@ This roadmap is a **pilot planning roadmap**, not an implementation branch. Item
    - Adapter contract, raw evidence schema, source registry, HN hardening plan, GitHub Issues hardening plan, Product Hunt feasibility plan are all complete and remain useful references.
 2. **Reorientation decision** (item 7, COMPLETE)
    - Docs-only decision to re-scope v2.11 from source expansion to operational pilot.
-3. **PainCluster contract and scoring** (item 8, CURRENT)
+3. **PainCluster contract and scoring** (item 8, COMPLETE)
    - Define PainCluster artifact, cross-source consolidation, and explicit pain-first scoring formula.
-4. **Pilot run design and source quality report** (item 9)
+4. **Pilot run design and source quality report** (item 9, CURRENT)
    - Define operational pilot run schedule, pipeline, founder review loop, and source quality report contract.
 5. **Final pilot planning checkpoint** (item 10)
    - Close pilot planning phase; verify all artifacts; produce closure run report.
