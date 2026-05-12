@@ -231,7 +231,7 @@ class TestLiveCollectionMode(unittest.TestCase):
         self._run_hn_live("hn_signal")
         raw_index = self._json("hn_signal", "raw_evidence_index.json")
         signals = self._json("hn_signal", "candidate_signals.json")
-        self.assertEqual(raw_index[0]["source_type"], "hacker_news_algolia")
+        self.assertEqual(raw_index[0]["source_type"], "discussion")
         self.assertEqual(raw_index[0]["source_url"], "https://news.ycombinator.com/item?id=401")
         self.assertTrue(signals)
 

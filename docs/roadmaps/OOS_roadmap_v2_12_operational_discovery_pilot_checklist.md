@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
-- [ ] **0.2** Current item: `2 — Hacker News RawEvidence Hardening`
+- [x] **0.2** Current item: `3 — GitHub Issues RawEvidence Hardening`
 - [ ] **0.3** Roadmap state: `implementation in progress`
-- [ ] **0.4** Completed from this roadmap: **1 / 10**
-- [ ] **0.5** Remaining: **9 / 10**
+- [ ] **0.4** Completed from this roadmap: **2 / 10**
+- [ ] **0.5** Remaining: **8 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md` (complete, `10 / 10`, tag `v2.11`, merged to main via PR #51)
 
 ### Branch and Version
@@ -285,28 +285,33 @@ Harden the existing Hacker News collector adapter to meet the operational pilot 
 
 ### Implementation Requirements
 
-- [ ] **2.1** Align `source_id` to `hacker_news` (canonical source_id from `config/source_registry.json`). The `hacker_news_algolia` access method is a legacy implementation detail, not the canonical source_id.
-- [ ] **2.2** Align `source_type` to `discussion`. Existing code references using `source_type == "hacker_news_algolia"` must be updated or compatibility-mapped during this item (targeted mechanical migration within item 2 scope).
-- [ ] **2.3** Add `evidence_kind` field per the hardening plan's classification rules:
-  - `ask_hn` — Ask HN posts (pain expression or problem-seeking).
-  - `show_hn` — Show HN posts (solution announcements; may imply pain).
-  - `launch_hn` — Launch HN posts.
-  - `comment_pain` — Comment that independently expresses pain.
-  - `general_discussion` — General HN discussion not fitting above categories.
-- [ ] **2.4** Add noise/quality flags:
-  - `flamewar` — heated argument without constructive pain.
-  - `self_promotion` — promoting own product/service.
-  - `launch_hype` — product launch announcement without pain.
-  - `vague_complaint` — complaint without specific actor/workflow/object.
-  - `meta_discussion` — discussion about HN itself.
-  - `shallow_comment` — comment <50 chars with no substance.
-- [ ] **2.5** Add source quality summary per collected batch: `total_collected`, `with_url`, `missing_url`, `noise_flagged`, `signal_candidate`.
-- [ ] **2.6** Preserve stable `source_url` in `https://news.ycombinator.com/item?id=<id>` format.
-- [ ] **2.7** Every emitted `RawEvidence` record must have a real, resolvable `source_url`. Zero placeholder URLs.
-- [ ] **2.8** Prioritize Ask HN, Show HN, and comment content in collection queries.
-- [ ] **2.9** Update fixture files with representative examples covering all `evidence_kind` values.
-- [ ] **2.10** No live API calls in unit tests. Fixture-first.
-- [ ] **2.11** Do not enable HN collection in default weekly run without controlled smoke (item 8).
+- [x] **2.1** Align `source_id` to `hacker_news` (canonical source_id from `config/source_registry.json`). The `hacker_news_algolia` access method is a legacy implementation detail, not the canonical source_id.
+- [x] **2.2** Align `source_type` to `discussion`. Existing code references using `source_type == "hacker_news_algolia"` must be updated or compatibility-mapped during this item (targeted mechanical migration within item 2 scope).
+- [x] **2.3** Add `evidence_kind` field per the hardening plan's classification rules:
+  - `pain_signal_candidate` — pain/frustration expression.
+  - `workaround` — description of a workaround/hack.
+  - `complaint` — complaint about existing tool/service.
+  - `feature_request` — request for specific feature/capability.
+  - `product_launch` — new product/service announcement.
+  - `solution_pattern` — describes an existing solution approach.
+  - `market_trend` — indicator of market direction/adoption.
+  - `unknown` — cannot be classified; requires downstream review.
+- [x] **2.4** Add noise/quality flags:
+  - `low_text_context` — body <100 chars.
+  - `suspected_self_promo` — promoting own product/service.
+  - `launch_hype` — promotional launch language.
+  - `flamewar_or_meta_discussion` — meta-HN discussion.
+  - `low_confidence_source` — points <3.
+  - `requires_manual_review` — set when any other flag is present.
+  - `missing_date` — no created_at timestamp.
+  - `high_noise_source` — reserved, not active.
+- [x] **2.5** Add source quality summary per collected batch: `records_seen`, `records_emitted`, `records_rejected`, `duplicate_count`, `warning_count`, `error_count`, `missing_url_count`, `placeholder_url_count`, `quality_flag_counts`, `rejection_reasons`.
+- [x] **2.6** Preserve stable `source_url` in `https://news.ycombinator.com/item?id=<id>` format.
+- [x] **2.7** Every emitted `RawEvidence` record must have a real, resolvable `source_url`. Zero placeholder URLs.
+- [x] **2.8** Prioritize Ask HN, Show HN, and comment content in evidence_kind classification heuristics.
+- [x] **2.9** Update fixture files with representative examples covering all `evidence_kind` values.
+- [x] **2.10** No live API calls in unit tests. Fixture-first.
+- [x] **2.11** Do not enable HN collection in default weekly run without controlled smoke (item 8).
 
 ### Validation Expectation
 
@@ -317,13 +322,13 @@ Harden the existing Hacker News collector adapter to meet the operational pilot 
 
 ### Definition of Done
 
-- [ ] **2.12** HN collector emits `source_id=hacker_news`, `source_type=discussion`.
-- [ ] **2.13** HN collector emits `evidence_kind` for all records.
-- [ ] **2.14** HN collector emits noise/quality flags.
-- [ ] **2.15** HN collector emits source quality summary.
-- [ ] **2.16** All HN collector tests pass with fixtures.
-- [ ] **2.17** Zero placeholder or missing URLs in test output.
-- [ ] **2.18** `.\scripts\dev-git-check.ps1` passes.
+- [x] **2.12** HN collector emits `source_id=hacker_news`, `source_type=discussion`.
+- [x] **2.13** HN collector emits `evidence_kind` for all records.
+- [x] **2.14** HN collector emits noise/quality flags.
+- [x] **2.15** HN collector emits source quality summary.
+- [x] **2.16** All HN collector tests pass with fixtures.
+- [x] **2.17** Zero placeholder or missing URLs in test output.
+- [ ] **2.18** `.\scripts\dev-git-check.ps1` passes (pre-commit working tree is clean after commit).
 - [ ] **2.19** One local commit made.
 
 ### Explicit Non-Goals
