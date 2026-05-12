@@ -1,14 +1,14 @@
-# OOS Roadmap v2.11 — Discovery Sources and Market Scout Foundation
+# OOS Roadmap v2.11 — Operational Discovery Pilot
 
 ## 0. Roadmap Overview
 
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [x] **0.2** Current item: `7 — pimenov.ai Feasibility and Connector Plan`
-- [ ] **0.3** Roadmap state: `implementation`
-- [ ] **0.4** Completed from this roadmap: **6 / 10**
-- [ ] **0.5** Remaining: **4 / 10**
+- [x] **0.2** Current item: `8 — PainCluster Contract and Scoring Formula`
+- [ ] **0.3** Roadmap state: `operational_pilot`
+- [x] **0.4** Completed from this roadmap: **7 / 10**
+- [ ] **0.5** Remaining: **3 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
 
 ### Branch and Version
@@ -20,46 +20,51 @@
 
 ### Core Concept
 
-Roadmap v2.10 closed recovery/correction capabilities. Roadmap v2.11 shifts focus upstream: expanding and hardening the external signal discovery layer.
+Roadmap v2.10 closed recovery/correction capabilities. Roadmap v2.11 was originally scoped as *Discovery Sources and Market Scout Foundation* — expanding and hardening the external signal discovery layer.
 
-OOS already has a deterministic processing pipeline (signal → evidence → cluster → opportunity → founder decision). The pipeline works well, but the external discovery layer is too narrow. Current automated/semi-automated external sources are effectively:
+**Strategic reorientation (2026-05-12):** v2.11 is re-scoped into an **Operational Discovery Pilot**. See [`docs/decisions/operational_discovery_pilot_reorientation_v2_11.md`](docs/decisions/operational_discovery_pilot_reorientation_v2_11.md) for the full decision.
 
-- **Hacker News** (via Algolia API)
-- **GitHub Issues** (via GitHub REST API)
+Items 1–6 (adapter contract, raw evidence schema, source registry, HN hardening plan, GitHub Issues hardening plan, Product Hunt feasibility plan) are complete and remain useful references.
 
-Plus manual JSON/JSONL import as an ingestion gateway, not a true source.
+The remaining items (7–10) focus on running a pilot on **HN + GitHub Issues** (with Stack Exchange as optional stretch) to prove the system finds useful business pains before expanding sources further.
 
-v2.11 defines the foundation for connecting additional signal sources safely, deterministically, and with [`source_url`](docs/contracts/source_url_traceability_contract.md) traceability. It does not build new product layers. It expands the top of the funnel.
+Source expansion (Product Hunt, pimenov.ai, Reddit, etc.) is deferred to v2.14+ pending a Go decision in v2.13.
 
 ```
-    v2.10 delivered                              v2.11 delivers
-    ─────────────                               ─────────────
-    undo-last implementation                    Source adapter contract
-    replace-all gated                           Raw evidence artifact schema
-    Terminal encoding audit                     Source registry + allowlist
-    UTF-8 expansion audit                       HN connector hardening plan
-    Operational polish                          GitHub Issues connector hardening plan
-    Final v2.10 checkpoint                      Product Hunt feasibility + connector plan
-                                                pimenov.ai feasibility + connector plan
-                                                Source quality scoring + weekly report
-                                                Controlled discovery smoke design
-                                                Final v2.11 planning checkpoint
+    v2.10 delivered                              v2.11 delivers (reoriented)
+    ─────────────                               ─────────────────────────
+    undo-last implementation                    Source adapter contract (done)
+    replace-all gated                           Raw evidence artifact schema (done)
+    Terminal encoding audit                     Source registry + allowlist (done)
+    UTF-8 expansion audit                       HN connector hardening plan (done)
+    Operational polish                          GitHub Issues hardening plan (done)
+    Final v2.10 checkpoint                      Product Hunt feasibility plan (done)
+                                                --- reorientation ---
+                                                Operational Discovery Pilot decision
+                                                PainCluster contract + scoring formula
+                                                Pilot run design + source quality report
+                                                Final v2.11 pilot planning checkpoint
 ```
 
-### Strategic Principles
+### Strategic Principles (Updated for Reorientation)
 
+- **Pilot first, expand later.** Run an operational pilot on HN + GitHub Issues before adding any new sources. Prove the system finds useful business pains.
 - **Safe adapters first.** No source without a defined adapter contract and deterministic fixture tests.
 - **Traceability always.** Every raw evidence item must carry a stable `source_url`. No source without stable source URL provenance.
 - **Deterministic-first preserved.** All logic must produce deterministic output. No live API calls in unit tests. No LLM calls in validation.
 - **Advisory-only preserved.** No autonomous portfolio transitions. All decisions remain founder-initiated.
-- **No new product layers.** This is source expansion and hardening, not pipeline expansion.
+- **No new product layers.** This is pilot validation, not pipeline expansion.
 - **No broad scraping.** Each source must have a defined access method (API, RSS, sitemap, static allowlist) that respects ToS/robots.
 - **No live API calls in unit tests.** Tests must use deterministic fixtures.
 
 ### Explicit Non-Goals (Across All v2.11 Items)
 
-- Reddit implementation (deferred to v2.12+ pending feasibility review)
-- LinkedIn/X/Telegram scraping (deferred to v2.12+ pending legal/access review)
+- Adding ANY new sources beyond HN + GitHub Issues + optional Stack Exchange during the pilot
+- Implementing Product Hunt now (feasibility plan preserved as reference)
+- Implementing pimenov.ai now (deferred to context/intelligence layer)
+- Reddit, Discord, Slack, X/Twitter (deferred to v2.14+)
+- AlternativeTo, YC, Crunchbase, blogs/newsletters (deferred to v2.14+)
+- App marketplaces, job boards (deferred to v2.14+)
 - Broad web crawling
 - Paywalled source ingestion
 - Live API calls in unit tests
@@ -69,11 +74,7 @@ v2.11 defines the foundation for connecting additional signal sources safely, de
 - Replacing existing signal scoring
 - New opportunity/portfolio product layers
 - Autonomous founder decisions
-- G2/Capterra/review sites (deferred to v2.12+)
-- Job boards (deferred to v2.12+)
-- Stack Overflow / Q&A sites (deferred to v2.12+)
-- App marketplaces (deferred to v2.12+)
-- Newsletters/media bundle (deferred to v2.12+)
+- Replacing founder review
 
 ### LLM Role Statement
 
@@ -95,9 +96,9 @@ LLM integration in discovery sources belongs later (`v2.12+`) unless present onl
 - **Planning roadmap merge does not authorize source implementation.** This roadmap is a planning/assessment deliverable only. Merging it to `main` records the plan; it does not grant license to begin implementing connectors, collectors, or any source-layer code.
 - **Implementation branch requires explicit founder approval.** No work on `feat/v2-11-discovery-sources` may begin until the founder explicitly approves the transition from planning to implementation.
 - **No connector/source implementation begins until explicitly approved.** Items 1–9 produce contracts, plans, feasibility assessments, and runbooks. None of these deliverables are implementation. Actual collector/connector code, fixture updates, and integration into the weekly run are gated behind founder sign-off.
-- **Risky sources remain deferred unless separately approved.** Reddit, LinkedIn, Twitter/X, Telegram, review sites, job boards, app marketplaces, Q&A sites, and newsletters are deferred to v2.12+. If any deferred source is considered for early implementation, it requires a separate, explicit founder approval outside this roadmap.
+- **Risky sources remain deferred unless separately approved.** Reddit, LinkedIn, Twitter/X, Telegram, review sites, job boards, app marketplaces, Q&A sites, and newsletters are deferred to v2.14+. If any deferred source is considered for early implementation, it requires a separate, explicit founder approval outside this roadmap.
 
-> Roadmap status tracks **10 implementation items** (items 1–10). Item 0 (planning checkpoint) is the current planning item and is not counted in the implementation total. Items 0.1–0.6 are roadmap-state trackers and are not counted in the implementation total.
+> Roadmap status tracks **10 implementation items** (items 1–10). Item 7 (reorientation decision) is a docs-only decision item. Items 0.1–0.6 are roadmap-state trackers and are not counted in the implementation total.
 
 ---
 
@@ -361,139 +362,116 @@ Assess Product Hunt as a new discovery source candidate and produce a connector 
 
 ---
 
-## 7. pimenov.ai Feasibility and Connector Plan
+## 7. Operational Discovery Pilot Reorientation
 
 ### Intent
 
-Assess [pimenov.ai](https://pimenov.ai) as a new discovery source candidate and produce a connector implementation plan. pimenov.ai is a curated Russian-language resource covering AI use-cases, implementations, and industry context. It is treated as a **curated AI/use-case/context source**, not a raw pain-signal source. Its value is in trend awareness, idea expansion, and context enrichment for AI-adjacent opportunities.
+Re-scope v2.11 from source expansion into an Operational Discovery Pilot. Stop adding new sources. Run a pilot on HN + GitHub Issues (primary) with Stack Exchange as optional stretch. See [`docs/decisions/operational_discovery_pilot_reorientation_v2_11.md`](docs/decisions/operational_discovery_pilot_reorientation_v2_11.md) for the full decision document.
 
 ### Allowed Change Type
 
-- Create: `docs/decisions/pimenov_ai_feasibility_and_connector_plan.md` (or equivalent decision document)
-- Do NOT implement the connector. Do NOT scrape the site.
+- Create: `docs/decisions/operational_discovery_pilot_reorientation_v2_11.md`
+- Update: this roadmap file.
 - Do NOT modify source code, tests, scripts, or artifacts.
-
-### Validation Expectation
-
-- Feasibility document exists and covers:
-  - Site structure analysis (blog, knowledge base, cases sections — from publicly visible structure only)
-  - Access method recommendation: RSS feed availability, sitemap presence, static page allowlist
-  - Data model mapping: title, URL, section, tags/categories (if available), publication/update date (if available), summary, extracted AI-use-case pattern → `RawEvidence` fields
-  - `source_url` traceability (page URL pattern)
-  - Signal type decision: should this source produce raw signals, trend/context notes, or idea-expansion evidence? Recommended default.
-  - Access policy: safe/static/RSS/sitemap-based only; no broad crawling; no scraping of pages not in allowlist
-  - Language handling (Russian-language content; UTF-8 guarantee; optional translation note)
-  - Fixture strategy (how to create deterministic test fixtures from RSS/sitemap/content)
-  - Known limitations (language barrier, curation bias, update frequency)
-  - Implementation scope estimate (files, lines, test surface)
-- No implementation. No scraping. No live HTTP requests.
-- `.\scripts\dev-git-check.ps1` passes.
 
 ### Definition of Done
 
-- [ ] **7.1** pimenov.ai feasibility document exists at `docs/decisions/pimenov_ai_feasibility_and_connector_plan.md`.
-- [ ] **7.2** Document covers: site structure, access method (RSS/sitemap/static), data model mapping, `source_url` traceability, signal type decision, access policy, language handling, fixture strategy, known limitations, implementation scope.
-- [ ] **7.3** Document explicitly states: no broad scraping; only safe/static/RSS/sitemap-based access.
+- [x] **7.1** Reorientation decision document exists at `docs/decisions/operational_discovery_pilot_reorientation_v2_11.md`.
+- [x] **7.2** Document covers: context, core decision, why this change, pilot objectives, source scope, deferred sources, PainCluster definition, scoring formula, source quality report, founder review loop, success/failure criteria, updated dev order, non-goals, decision.
+- [x] **7.3** Roadmap file updated with reoriented title, trackers, and remaining items 8–10.
 - [ ] **7.4** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **7.5** One local commit made.
 
 ---
 
-## 8. Source Quality Scoring and Weekly Source Report
+## 8. PainCluster Contract and Scoring Formula
 
 ### Intent
 
-Define a source quality scoring framework that evaluates each discovery source on signal relevance, noise rate, traceability compliance, and yield consistency. Produce a weekly source report artifact that the founder can review to decide whether to keep, suspend, or adjust source configuration.
+Define the PainCluster artifact contract and the explicit pain-first scoring formula for the operational pilot. PainCluster is the first-class artifact for cross-source pain consolidation. The scoring formula provides a deterministic, explainable ranking of candidate signals.
 
 ### Allowed Change Type
 
-- Create: `docs/contracts/source_quality_scoring_contract.md` (or equivalent)
-- Create: `docs/contracts/weekly_source_report_contract.md` (or equivalent)
+- Create: `docs/contracts/pain_cluster_contract.md` (or equivalent contract document)
+- Create: `docs/contracts/pain_first_scoring_contract.md` (or equivalent contract document)
 - Do NOT modify source code, tests, scripts, or artifacts.
 
 ### Validation Expectation
 
-- Source quality scoring contract defines:
-  - Quality dimensions: `signal_relevance_score`, `noise_rate`, `traceability_compliance` (no placeholder URNs), `yield_consistency` (week-over-week variance), `distinct_signal_count`
-  - Scoring formula (deterministic, no LLM)
-  - Thresholds: `healthy`, `warning`, `unhealthy`
-  - Per-source scoring, not aggregate-only
-- Weekly source report contract defines:
-  - Report artifact format (JSON + Markdown)
-  - Fields: `run_id`, `run_timestamp`, per-source scores, aggregate summary, source health trends, recommendations (keep/suspend/adjust)
-  - CLI command to generate the report (e.g., `--source-report`)
-  - No live API/LLM calls during report generation
+- PainCluster contract defines:
+  - Minimum fields: `cluster_id`, `actor`, `workflow`, `object`, `pain_verb`/`pain_pattern`, `source_evidence_list`, `source_diversity`, `recurrence`, `business_relevance`, `noise_risk`, `representative_quotes`, `linked_candidate_signals`, `linked_opportunity_candidates`
+  - Cross-source consolidation rule: same pain across HN + GitHub Issues + Stack Exchange must become one PainCluster
+  - Relationship to existing cluster/signal artifacts
+- Scoring contract defines:
+  - Formula: `overall = 0.25*pain_explicitness + 0.20*recurrence + 0.15*business_cost + 0.15*icp_fit + 0.10*source_reliability + 0.10*freshness + 0.05*actionability - 0.20*noise_risk`
+  - Each component: range (0.0–1.0), definition, how to compute deterministically
+  - Weight policy: pilot defaults, tunable in v2.12
+  - No LLM required for scoring
 - `.\scripts\dev-git-check.ps1` passes.
 
 ### Definition of Done
 
-- [ ] **8.1** Source quality scoring contract exists at `docs/contracts/source_quality_scoring_contract.md`.
-- [ ] **8.2** Weekly source report contract exists at `docs/contracts/weekly_source_report_contract.md`.
-- [ ] **8.3** Scoring contract defines quality dimensions, formula, and thresholds.
-- [ ] **8.4** Report contract defines artifact format, fields, CLI command, and no-live-calls policy.
+- [ ] **8.1** PainCluster contract exists at `docs/contracts/pain_cluster_contract.md`.
+- [ ] **8.2** Scoring contract exists at `docs/contracts/pain_first_scoring_contract.md`.
+- [ ] **8.3** PainCluster contract defines all minimum fields and cross-source consolidation rule.
+- [ ] **8.4** Scoring contract defines formula, component definitions, and deterministic computation.
 - [ ] **8.5** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **8.6** One local commit made.
 
 ---
 
-## 9. Controlled Discovery Smoke Design
+## 9. Pilot Run Design and Source Quality Report Contract
 
 ### Intent
 
-Design the controlled smoke test that validates new discovery sources before they are promoted to the default weekly run. The smoke test must run deterministically (fixture-based), verify `source_url` traceability, measure noise rate, and produce a pass/fail report. Every new source must pass controlled smoke before its status changes from `inactive` to `active` in the source registry.
+Design the operational pilot run: collection schedule, processing pipeline, weekly report artifact, and founder review loop. Define the Source Quality Report contract that gates each pilot run.
 
 ### Allowed Change Type
 
-- Create: `docs/runbooks/controlled_discovery_smoke_test.md` (or equivalent runbook)
-- Do NOT create test files, scripts, or artifacts in this item.
-- Do NOT modify source code.
+- Create: `docs/runbooks/operational_pilot_run_design.md` (or equivalent runbook)
+- Create: `docs/contracts/source_quality_report_contract.md` (or equivalent contract)
+- Do NOT modify source code, tests, scripts, or artifacts.
 
 ### Validation Expectation
 
-- Smoke test runbook defines:
-  - Purpose: gate new sources before default weekly run inclusion
-  - Prerequisites: source adapter implemented, fixtures available, source in registry with `status: inactive`
-  - Test phases:
-    1. Fixture load and validate (fixtures must be valid `RawEvidence`)
-    2. Adapter dry-run (run collector with fixtures, no live API)
-    3. `source_url` traceability check (no placeholder URNs, all URLs stable)
-    4. Noise rate measurement (deterministic classifier, threshold check)
-    5. Output artifact validation (valid JSON, required fields present)
-    6. Pass/fail determination
-  - Pass criteria:
-    - All fixtures load without error
-    - 100% `source_url` traceability (no `urn:oos:` placeholders)
-    - Noise rate below configured threshold (per source type)
-    - Output artifacts are valid and complete
-  - Fail criteria and required actions
-  - Integration with existing `.\scripts\run-controlled-smoke.ps1` or new script if needed
+- Pilot run design defines:
+  - Collection schedule (frequency, sources, query strategy)
+  - Processing pipeline: raw evidence → classify → signal extraction → dedup → clustering → scoring → opportunity framing → founder review package
+  - Founder review loop: PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER with feedback into scoring
+  - Weekly cadence and artifact delivery
+  - No live API calls in unit tests; fixtures for deterministic validation
+- Source quality report contract defines:
+  - Report sections: raw evidence collected, accepted/weak/noise signals, top pain clusters, opportunity candidates, source quality by source, main noise categories, founder decisions needed, next validation actions
+  - Artifact format (JSON + Markdown)
+  - Per-source breakdown mandatory
 - `.\scripts\dev-git-check.ps1` passes.
 
 ### Definition of Done
 
-- [ ] **9.1** Controlled discovery smoke runbook exists at `docs/runbooks/controlled_discovery_smoke_test.md`.
-- [ ] **9.2** Runbook defines: purpose, prerequisites, test phases (fixture, dry-run, traceability, noise, output, pass/fail), pass/fail criteria, required actions on failure.
-- [ ] **9.3** Runbook references existing smoke infrastructure where applicable.
-- [ ] **9.4** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **9.5** One local commit made.
+- [ ] **9.1** Pilot run design exists at `docs/runbooks/operational_pilot_run_design.md`.
+- [ ] **9.2** Source quality report contract exists at `docs/contracts/source_quality_report_contract.md`.
+- [ ] **9.3** Pilot run design covers: schedule, pipeline, founder review loop, weekly cadence, fixture policy.
+- [ ] **9.4** Report contract defines all required sections, artifact format, and per-source breakdown.
+- [ ] **9.5** `.\scripts\dev-git-check.ps1` passes.
+- [ ] **9.6** One local commit made.
 
 ---
 
-## 10. Final v2.11 Planning Checkpoint
+## 10. Final v2.11 Pilot Planning Checkpoint
 
 ### Intent
 
-Close the v2.11 planning phase. Verify all planning artifacts are complete, all documents are internally consistent, and the roadmap is ready to hand off to implementation. Produce a planning closure summary.
+Close the v2.11 pilot planning phase. Verify all planning artifacts are complete, all documents are internally consistent, and the roadmap is ready to hand off to pilot implementation. Produce a planning closure summary.
 
 ### Allowed Change Type
 
 - Update: roadmap overview trackers (0.1–0.6) in this file.
-- Create: `docs/dev_ledger/03_run_reports/10.0-roadmap-v2-11-planning.md` (planning closure run report)
+- Create: `docs/dev_ledger/03_run_reports/10.0-roadmap-v2-11-pilot-planning.md` (planning closure run report)
 - Do NOT modify source code, tests, scripts, existing artifacts, or any file outside allowed scope.
 
 ### Validation Expectation
 
-- All 9 planning items (items 1–9) have their contract/plan/design documents created.
+- All pilot planning items (items 7–9) have their contract/plan/design documents created.
 - All documents are internally consistent (no contradictory requirements).
 - Cross-references between documents are valid (no broken links).
 - `.\scripts\dev-validate-final.ps1` passes.
@@ -503,10 +481,10 @@ Close the v2.11 planning phase. Verify all planning artifacts are complete, all 
 
 ### Definition of Done
 
-- [ ] **10.1** All planning items (1–9) are complete and committed.
+- [ ] **10.1** All pilot planning items (7–9) are complete and committed.
 - [ ] **10.2** Cross-document consistency review complete (no conflicts).
-- [ ] **10.3** Roadmap overview trackers (0.1–0.6) updated: state → `ready for implementation`, current item → `none / planning complete`, completed → `10 / 10`, remaining → `0 / 10`.
-- [ ] **10.4** Planning closure run report exists at `docs/dev_ledger/03_run_reports/10.0-roadmap-v2-11-planning.md`.
+- [ ] **10.3** Roadmap overview trackers (0.1–0.6) updated: state → `ready for pilot implementation`, current item → `none / planning complete`, completed → `10 / 10`, remaining → `0 / 10`.
+- [ ] **10.4** Planning closure run report exists at `docs/dev_ledger/03_run_reports/10.0-roadmap-v2-11-pilot-planning.md`.
 - [ ] **10.5** `.\scripts\dev-validate-final.ps1` passes.
 - [ ] **10.6** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **10.7** One local commit made.
@@ -557,41 +535,46 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-## Recommended v2.11 Planning Order
+## Recommended v2.11 Planning Order (Reoriented)
 
-This roadmap is a **planning roadmap**, not an implementation branch. All items 1–9 produce planning/design/assessment deliverables (contracts, plans, feasibility documents, runbooks). No source code, connector implementation, or fixture changes are authorized by this roadmap.
+This roadmap is a **pilot planning roadmap**, not an implementation branch. Items 1–6 (completed) produced source contracts and feasibility plans. Items 7–10 (remaining) focus on operational pilot design. No source code, connector implementation, or fixture changes are authorized by this roadmap.
 
-1. **Contract/schema/registry first** (items 1, 2, 3)
-   - The adapter contract, raw evidence schema, and source registry are prerequisites for all source work.
-2. **HN/GitHub hardening plans next** (items 4, 5)
-   - Assessing and planning hardening for existing sources before planning new ones ensures the foundation is solid.
-3. **Product Hunt and pimenov.ai as first new-source candidates** (items 6, 7)
-   - Feasibility and connector plans for the first new sources. Implementation follows in a future implementation branch (v2.11 or early v2.12) depending on scope.
-4. **Source quality reporting** (item 8)
-   - Quality scoring and weekly report contracts provide visibility into source health once implemented.
-5. **Controlled smoke** (item 9)
-   - Smoke design runbook gates new sources before production inclusion once implemented.
-6. **Defer risky sources** (v2.12+)
-   - Reddit, review sites, job boards, LinkedIn/X/Telegram remain deferred.
+1. **Source contracts and hardening plans** (items 1–6, COMPLETE)
+   - Adapter contract, raw evidence schema, source registry, HN hardening plan, GitHub Issues hardening plan, Product Hunt feasibility plan are all complete and remain useful references.
+2. **Reorientation decision** (item 7, COMPLETE)
+   - Docs-only decision to re-scope v2.11 from source expansion to operational pilot.
+3. **PainCluster contract and scoring** (item 8, CURRENT)
+   - Define PainCluster artifact, cross-source consolidation, and explicit pain-first scoring formula.
+4. **Pilot run design and source quality report** (item 9)
+   - Define operational pilot run schedule, pipeline, founder review loop, and source quality report contract.
+5. **Final pilot planning checkpoint** (item 10)
+   - Close pilot planning phase; verify all artifacts; produce closure run report.
+6. **Defer all new sources** (v2.14+ conditional on Go decision in v2.13)
+   - Product Hunt, pimenov.ai, Reddit, review sites, job boards, LinkedIn/X/Telegram, app marketplaces, Q&A sites, newsletters, Discord, Slack remain deferred.
 
 ---
 
-## v2.12+ Hooks
+## Deferred Sources (v2.14+ Only If Pilot Passes Go Decision)
 
-The following source candidates are explicitly deferred to v2.12 or later. They are noted here to prevent scope creep during v2.11:
+The following source candidates are explicitly deferred to v2.14+ and are conditional on a Go decision in v2.13 after the operational pilot completes. They are noted here to prevent scope creep:
 
 | Source | Reason for Deferral | Earliest Roadmap |
 |--------|-------------------|-----------------|
-| Reddit | Requires feasibility review (API changes, ToS, noise management) | v2.12+ |
-| G2/Capterra/review sites | Requires ToS review; scraping risk; paywall/authentication barriers | v2.12+ |
-| Job boards (LinkedIn, Indeed, etc.) | Scraping risk; ToS barriers; structured data access unclear | v2.12+ |
-| Stack Overflow / Q&A sites | API available but signal type fit needs analysis | v2.12+ |
-| App marketplaces (Google Play, App Store, etc.) | Review-based signals; scraping risk | v2.12+ |
-| Newsletters/media bundle | Ingest pipeline complexity; copyright considerations | v2.12+ |
-| Telegram | API access model; scraping risk; language/region considerations | v2.12+ |
-| Twitter/X | API access cost and restrictions changed significantly; legal review required | v2.12+ |
-| LinkedIn | Scraping prohibited by ToS; API access restricted; legal review required | v2.12+ |
+| Reddit | API volatility, high noise, moderation complexity | v2.14+ (conditional) |
+| Discord | No stable public API; scraping risk | v2.14+ (conditional) |
+| Slack | No public API for community content; workspace access barriers | v2.14+ (conditional) |
+| X/Twitter | API cost/restrictions; legal review required | v2.14+ (conditional) |
+| Product Hunt | Solution-pattern source; feasibility plan preserved as reference | v2.14+ (conditional) |
+| AlternativeTo | Review-based; signal-type fit unclear | v2.14+ (conditional) |
+| YC RFS / YC companies | Curated lists; not a structured pain feed | v2.14+ (conditional) |
+| Crunchbase | Company data, not pain signals | v2.14+ (conditional) |
+| Blogs / newsletters | Ingest pipeline complexity; copyright considerations | v2.14+ (conditional) |
+| pimenov.ai | Expert/context source, not direct pain source; deferred to context/intelligence layer | v2.14+ (conditional) |
+| G2/Capterra/review sites | ToS review required; scraping risk; paywall barriers | v2.14+ (conditional) |
+| Job boards (LinkedIn, Indeed, etc.) | Scraping risk; ToS barriers | v2.14+ (conditional) |
+| App marketplaces (Google Play, App Store) | Review-based signals; scraping risk | v2.14+ (conditional) |
+| Stack Exchange / Stack Overflow | Optional stretch source for pilot; reassess inclusion after 1–2 weekly cycles | v2.12 (if pilot allows) |
 
 ---
 
-*Roadmap v2.11 — Discovery Sources and Market Scout Foundation. Planning phase. Do not implement.*
+*Roadmap v2.11 — Operational Discovery Pilot. Planning phase. Do not implement sources beyond pilot scope.*
