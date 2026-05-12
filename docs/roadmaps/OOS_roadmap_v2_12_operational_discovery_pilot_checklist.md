@@ -4,11 +4,11 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
-- [ ] **0.2** Current item: `0 — Planning checkpoint`
-- [ ] **0.3** Roadmap state: `planning`
-- [ ] **0.4** Completed from this roadmap: **0 / 10**
-- [ ] **0.5** Remaining: **10 / 10**
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
+- [ ] **0.2** Current item: `2 — Hacker News RawEvidence Hardening`
+- [ ] **0.3** Roadmap state: `implementation in progress`
+- [ ] **0.4** Completed from this roadmap: **1 / 10**
+- [ ] **0.5** Remaining: **9 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md` (complete, `10 / 10`, tag `v2.11`, merged to main via PR #51)
 
 ### Branch and Version
@@ -185,10 +185,10 @@ Implement the PainCluster artifact/model, the deterministic scoring formula, and
 
 ### Implementation Requirements
 
-- [ ] **1.1** Implement `PainCluster` dataclass/model with all 19 minimum fields from contract Section 3.1.
-- [ ] **1.2** Implement deterministic `cluster_id` generation: `pc_` + SHA-256 of normalized `actor|workflow|object|pain_pattern` truncated to 16 hex chars.
-- [ ] **1.3** Implement `source_evidence_list` with all 12 evidence entry fields from contract Section 6.1.
-- [ ] **1.4** Implement the explicit scoring formula (contract Section 11):
+- [x] **1.1** Implement `PainCluster` dataclass/model with all 19 minimum fields from contract Section 3.1.
+- [x] **1.2** Implement deterministic `cluster_id` generation: `pc_` + SHA-256 of normalized `actor|workflow|object|pain_pattern` truncated to 16 hex chars.
+- [x] **1.3** Implement `source_evidence_list` with all 12 evidence entry fields from contract Section 6.1.
+- [x] **1.4** Implement the explicit scoring formula (contract Section 11):
 
 ```
 overall = clamp(0.0, 1.0,
@@ -203,18 +203,18 @@ overall = clamp(0.0, 1.0,
 )
 ```
 
-- [ ] **1.5** Implement all 8 scoring component computations with 0.0–1.0 normalization (contract Sections 12.1–12.8).
-- [ ] **1.6** Implement `recurrence` normalization: `min(1.0, raw_recurrence_count / 5.0)` with cross-source bonus of 1.15× when `source_diversity >= 2`.
-- [ ] **1.7** Implement `freshness` decay formula using newest evidence `created_at` (contract Section 12.6).
-- [ ] **1.8** Implement multi-source `source_reliability` as weighted average by evidence count (contract Section 13.3).
-- [ ] **1.9** Implement promotion thresholds (contract Section 15):
+- [x] **1.5** Implement all 8 scoring component computations with 0.0–1.0 normalization (contract Sections 12.1–12.8).
+- [x] **1.6** Implement `recurrence` normalization: `min(1.0, raw_recurrence_count / 5.0)` with cross-source bonus of 1.15× when `source_diversity >= 2`.
+- [x] **1.7** Implement `freshness` decay formula using newest evidence `created_at` (contract Section 12.6).
+- [x] **1.8** Implement multi-source `source_reliability` as weighted average by evidence count (contract Section 13.3).
+- [x] **1.9** Implement promotion thresholds (contract Section 15):
   - `>= 0.70` → candidate
   - `0.50–0.69` → needs_more_evidence / weak
   - `< 0.50` → noise / park
   - Any score with `noise_risk >= 0.80` → noise regardless of overall.
-- [ ] **1.10** Implement automatic status assignment (contract Section 14.3).
-- [ ] **1.11** Implement validation: 16 fail rules and 8 warn rules from contract Section 19.
-- [ ] **1.12** Write fixture tests covering:
+- [x] **1.10** Implement automatic status assignment (contract Section 14.3).
+- [x] **1.11** Implement validation: 16 fail rules and 8 warn rules from contract Section 19.
+- [x] **1.12** Write fixture tests covering:
   - Model construction and field validation for all 19 fields.
   - `cluster_id` determinism (same inputs → same ID).
   - Scoring formula correctness with known inputs and expected outputs.
@@ -225,8 +225,8 @@ overall = clamp(0.0, 1.0,
   - Validation: fail rules block, warn rules warn.
   - Status transitions: new → accepted, new → noise (auto), new → weak (auto).
   - Serialization roundtrip (dict → PainCluster → dict).
-- [ ] **1.13** No LLM calls in scoring. Entirely deterministic.
-- [ ] **1.14** No live APIs. Fixture-only tests.
+- [x] **1.13** No LLM calls in scoring. Entirely deterministic.
+- [x] **1.14** No live APIs. Fixture-only tests.
 
 ### Validation Expectation
 
@@ -236,9 +236,9 @@ overall = clamp(0.0, 1.0,
 
 ### Definition of Done
 
-- [ ] **1.15** `src/oos/pain_cluster.py` exists with PainCluster model, scoring, and validation.
-- [ ] **1.16** `tests/test_pain_cluster.py` exists with fixture tests covering all 1.12 requirements.
-- [ ] **1.17** All tests pass (`.\scripts\dev-test.ps1`).
+- [x] **1.15** `src/oos/pain_cluster.py` exists with PainCluster model, scoring, and validation.
+- [x] **1.16** `tests/test_pain_cluster.py` exists with fixture tests covering all 1.12 requirements.
+- [x] **1.17** All tests pass (`.\scripts\dev-test.ps1`).
 - [ ] **1.18** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **1.19** One local commit made.
 
