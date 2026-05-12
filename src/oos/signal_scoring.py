@@ -39,8 +39,14 @@ SIGNAL_TYPE_MULTIPLIERS: Dict[str, float] = {
 }
 
 SOURCE_QUALITY_WEIGHTS: Dict[str, float] = {
+    # canonical source_type values
+    "issue_tracker": 0.78,
+    "discussion": 0.72,
+    "qa": 0.62,
+    # legacy source_type values (compatibility — normalized by dedupe layer)
     "github_issues": 0.78,
     "hacker_news_algolia": 0.72,
+    "hacker_news": 0.72,
     "stack_exchange": 0.62,
     "rss_feed": 0.45,
 }
