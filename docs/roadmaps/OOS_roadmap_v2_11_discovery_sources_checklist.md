@@ -5,11 +5,12 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [x] **0.2** Current item: `10 — Final v2.11 Pilot Planning Checkpoint`
-- [ ] **0.3** Roadmap state: `operational_pilot`
-- [x] **0.4** Completed from this roadmap: **9 / 10**
-- [ ] **0.5** Remaining: **1 / 10**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
+- [x] **0.2** Current item: `none / complete`
+- [x] **0.3** Roadmap state: `complete`
+- [x] **0.4** Completed from this roadmap: **10 / 10**
+- [x] **0.5** Remaining: **0 / 10**
+- [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
+- [x] **0.7** Final note: v2.11 completed as planning/design block for Operational Discovery Pilot. Runtime implementation requires a new explicit implementation roadmap/branch and founder approval.
 
 ### Branch and Version
 
@@ -480,9 +481,9 @@ Close the v2.11 pilot planning phase. Verify all planning artifacts are complete
 
 ### Definition of Done
 
-- [ ] **10.1** All pilot planning items (7–9) are complete and committed.
-- [ ] **10.2** Cross-document consistency review complete (no conflicts).
-- [ ] **10.3** Roadmap overview trackers (0.1–0.6) updated: state → `ready for pilot implementation`, current item → `none / planning complete`, completed → `10 / 10`, remaining → `0 / 10`.
+- [x] **10.1** All pilot planning items (7–9) are complete and committed.
+- [x] **10.2** Cross-document consistency review complete (no conflicts).
+- [x] **10.3** Roadmap overview trackers (0.1–0.6) updated: state → `complete`, current item → `none / complete`, completed → `10 / 10`, remaining → `0 / 10`.
 - [ ] **10.4** Planning closure run report exists at `docs/dev_ledger/03_run_reports/10.0-roadmap-v2-11-pilot-planning.md`.
 - [ ] **10.5** `.\scripts\dev-validate-final.ps1` passes.
 - [ ] **10.6** `.\scripts\dev-git-check.ps1` passes.

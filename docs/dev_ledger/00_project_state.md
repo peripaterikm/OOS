@@ -8,28 +8,33 @@
 - Roadmap v2.8 status: complete (`9 / 9`, merged to main, tag `v2.8` created).
 - Roadmap v2.9 status: complete (`8 / 8`, branch `feat/v2-9-output-source-recovery-block-1`, local-only)
 - Roadmap v2.10 status: **complete / closed** (`8 / 9`, item 5 skipped; replace-all gate BLOCKED)
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`
-- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
+- Roadmap v2.11 status: **complete / closed** (`10 / 10`, branch `feat/v2-11-discovery-sources-foundation`, local-only)
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
+- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
 - Roadmap v2.10 planning created: yes
 - Roadmap v2.10 status: `complete / closed` (`8 / 9`, branch `feat/v2-10-recovery-correction`)
-- Current item: `none / roadmap complete`
+- Roadmap v2.11 planning created: yes
+- Roadmap v2.11 status: `complete / closed` (`10 / 10`, branch `feat/v2-11-discovery-sources-foundation`)
+- Current item: `none / complete`
 - Roadmap state: `complete / closed`
-- Completed: `8 / 9` (item 5 skipped; replace-all gate was BLOCKED)
+- Completed: `10 / 10`
 - Remaining: `0 applicable items`
-- Latest completed roadmap item: Roadmap v2.10 `9.1` — Final v2.10 validation checkpoint
-- Next planned roadmap item: `none (v2.10 is complete; v2.11+ to be planned)`
+- Latest completed roadmap item: Roadmap v2.11 `10-B` — Dev ledger update and final mini-epic/run report
+- Next planned roadmap item: `none (v2.11 is complete; v2.12+ to be planned)`
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-10-recovery-correction`
+- Current branch: `feat/v2-11-discovery-sources-foundation`
+- Previous branch (v2.10 implementation): `feat/v2-10-recovery-correction`
 - Previous branch (v2.9 implementation): `feat/v2-9-output-source-recovery-block-1`
 - Previous branch (v2.8 implementation): `feat/v2-8-decision-correction-block-1`
 - Previous branch (v2.7 implementation): `feat/v2-7-traceability-block-1`
+- Planning branch (v2.11): `planning/v2-11-discovery-sources-roadmap` (docs-only)
 - Planning branch (v2.8): `planning/v2-8-roadmap` (merged to main)
 - MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
 - Commit locally after each green, accepted mini-epic.
@@ -202,3 +207,33 @@
 - Final checkpoint commit: (after 9.1 docs update)
 - No push, PR, merge, tag, or release was performed.
 - v2.10 is complete and closed.
+
+## Roadmap v2.11 Completion
+
+- Roadmap v2.11 planning created as `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`. Originally scoped as *Discovery Sources and Market Scout Foundation*, reoriented into an **Operational Discovery Pilot** (2026-05-12).
+- Roadmap v2.11 implementation completed on `feat/v2-11-discovery-sources-foundation` as a planning/design block. Items 1–6 (adapter contract, raw evidence schema, source registry, HN hardening plan, GitHub Issues hardening plan, Product Hunt feasibility plan) are complete and remain useful references. Items 7–10 (reorientation, PainCluster contract + scoring, pilot run design + source quality report, final checkpoint) complete the pilot design.
+- Roadmap v2.11 status: `complete / closed` at `10 / 10`.
+
+### v2.11 Key Outcomes
+
+1. **Discovery Source Adapter Contract created** — `docs/contracts/discovery_source_adapter_contract.md` defining required interface, fixture policy, rate-limit policy, auth policy, error handling, source_url requirements, RawEvidence mapping, and noise floor.
+2. **Raw Evidence Artifact Schema created** — `docs/contracts/raw_evidence_artifact_schema.md` defining required/optional fields, source_type enum, validation rules, source_url structure, and metadata bag policy.
+3. **Source Registry and Allowlist Policy created** — `config/source_registry.json` listing HN and GitHub Issues with status/metadata; `docs/contracts/source_allowlist_policy.md` defining acceptance, suspension, and removal criteria.
+4. **HN Connector Hardening Plan created** — `docs/decisions/hacker_news_connector_hardening_plan.md` with current assessment, preferred API method, coverage gaps, source_url audit, noise filters, rate-limit compliance, fixture quality, and recommended changes.
+5. **GitHub Issues Connector Hardening Plan created** — `docs/decisions/github_issues_connector_hardening_plan.md` with current assessment, PR filtering, repo allowlist, keyword search, label/comment/state capture, source_url audit, rate-limit/auth policy, fixture quality, and recommended changes.
+6. **Product Hunt Feasibility Plan created** — `docs/decisions/product_hunt_feasibility_connector_plan.md` as future reference; implementation deferred to v2.14+ conditional on Go decision.
+7. **v2.11 reoriented to Operational Discovery Pilot** — `docs/decisions/operational_discovery_pilot_reorientation_v2_11.md`; broad source expansion deferred to v2.14+ pending pilot Go/No-Go.
+8. **PainCluster Contract and Scoring Formula created** — `docs/contracts/pain_cluster_contract.md` defining 19 fields, cross-source consolidation rule, and explicit pain-first scoring formula with 8 weighted components.
+9. **Operational Discovery Pilot Run and Source Quality Report Contract created** — `docs/contracts/operational_discovery_pilot_run_contract.md` defining 14-phase pilot run lifecycle, 8-section source quality report, 18 source quality metrics, founder review loop, Go/No-Go criteria, and pilot retrospective.
+10. **Broad source expansion deferred to v2.14+** — Product Hunt, pimenov.ai, Reddit, Discord, Slack, X/Twitter, AlternativeTo, YC, Crunchbase, blogs/newsletters, review sites, job boards, app marketplaces, Q&A sites remain deferred conditional on pilot Go decision in v2.13.
+
+### v2.11 Branch and Commit Notes
+
+- Planning branch: `planning/v2-11-discovery-sources-roadmap` (docs-only)
+- Implementation branch: `feat/v2-11-discovery-sources-foundation`
+- Based on: v2.10 / tag `v2.10`
+- Latest local commit before final checkpoint: `3e613b5` ([v2.11] 9 define operational discovery pilot contract)
+- Final checkpoint commit: pending
+- No push, PR, merge, tag, or release was performed.
+- v2.11 is complete and closed.
+- **Next action:** Prepare PR/merge only when explicitly requested. Do not start pilot implementation without explicit founder approval.
