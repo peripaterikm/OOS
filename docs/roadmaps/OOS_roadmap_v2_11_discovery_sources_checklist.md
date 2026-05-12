@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
-- [x] **0.2** Current item: `9 — Pilot Run Design and Source Quality Report Contract`
+- [x] **0.2** Current item: `10 — Final v2.11 Pilot Planning Checkpoint`
 - [ ] **0.3** Roadmap state: `operational_pilot`
-- [x] **0.4** Completed from this roadmap: **8 / 10**
-- [ ] **0.5** Remaining: **2 / 10**
+- [x] **0.4** Completed from this roadmap: **9 / 10**
+- [ ] **0.5** Remaining: **1 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md` (complete, `8 / 9`, item 5 skipped; tag `v2.10`, merged to main via PR #50)
 
 ### Branch and Version
@@ -428,30 +428,29 @@ Design the operational pilot run: collection schedule, processing pipeline, week
 
 ### Allowed Change Type
 
-- Create: `docs/runbooks/operational_pilot_run_design.md` (or equivalent runbook)
-- Create: `docs/contracts/source_quality_report_contract.md` (or equivalent contract)
+- Create: `docs/contracts/operational_discovery_pilot_run_contract.md` (combined contract: pilot run design + source quality report contract)
 - Do NOT modify source code, tests, scripts, or artifacts.
 
 ### Validation Expectation
 
-- Pilot run design defines:
-  - Collection schedule (frequency, sources, query strategy)
-  - Processing pipeline: raw evidence → classify → signal extraction → dedup → clustering → scoring → opportunity framing → founder review package
+- Combined contract defines:
+  - Pilot run lifecycle (14 phases): preflight → collection → validation → extraction → classification → dedup → clustering → scoring → opportunity framing → source quality reporting → founder review package → weekly report → feedback ingestion → retrospective
+  - Source quality report structure (8 sections): raw evidence collected, accepted/weak/noise signals, top pain clusters, opportunity candidates, source quality by source, main noise categories, founder decisions needed, next validation actions
+  - Source quality metrics (18 metrics): records_seen through founder_needs_more_evidence_count
+  - PainCluster reporting fields, opportunity candidate reporting fields
   - Founder review loop: PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER with feedback into scoring
-  - Weekly cadence and artifact delivery
-  - No live API calls in unit tests; fixtures for deterministic validation
-- Source quality report contract defines:
-  - Report sections: raw evidence collected, accepted/weak/noise signals, top pain clusters, opportunity candidates, source quality by source, main noise categories, founder decisions needed, next validation actions
-  - Artifact format (JSON + Markdown)
-  - Per-source breakdown mandatory
+  - Weekly pilot report structure (10 sections)
+  - Pilot success criteria, failure criteria, Go/No-Go criteria
+  - Validation policy, source-specific rules, traceability requirements, operational constraints
+  - Pilot retrospective questions
 - `.\scripts\dev-git-check.ps1` passes.
 
 ### Definition of Done
 
-- [ ] **9.1** Pilot run design exists at `docs/runbooks/operational_pilot_run_design.md`.
-- [ ] **9.2** Source quality report contract exists at `docs/contracts/source_quality_report_contract.md`.
-- [ ] **9.3** Pilot run design covers: schedule, pipeline, founder review loop, weekly cadence, fixture policy.
-- [ ] **9.4** Report contract defines all required sections, artifact format, and per-source breakdown.
+- [x] **9.1** Combined pilot run design and source quality report contract exists at `docs/contracts/operational_discovery_pilot_run_contract.md`.
+- [x] **9.2** Contract defines pilot run lifecycle (14 phases), source quality report structure (8 sections), and source quality metrics (18 metrics).
+- [x] **9.3** Contract defines founder review loop with PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER and feedback into scoring.
+- [x] **9.4** Contract defines all required sections: success/failure criteria, Go/No-Go criteria, validation policy, source-specific rules, traceability, operational constraints, retrospective.
 - [ ] **9.5** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **9.6** One local commit made.
 
@@ -545,9 +544,9 @@ This roadmap is a **pilot planning roadmap**, not an implementation branch. Item
    - Docs-only decision to re-scope v2.11 from source expansion to operational pilot.
 3. **PainCluster contract and scoring** (item 8, COMPLETE)
    - Define PainCluster artifact, cross-source consolidation, and explicit pain-first scoring formula.
-4. **Pilot run design and source quality report** (item 9, CURRENT)
-   - Define operational pilot run schedule, pipeline, founder review loop, and source quality report contract.
-5. **Final pilot planning checkpoint** (item 10)
+4. **Pilot run design and source quality report** (item 9, COMPLETE)
+   - Define operational pilot run lifecycle, source quality report, founder review loop, Go/No-Go criteria. Combined contract at `docs/contracts/operational_discovery_pilot_run_contract.md`.
+5. **Final pilot planning checkpoint** (item 10, CURRENT)
    - Close pilot planning phase; verify all artifacts; produce closure run report.
 6. **Defer all new sources** (v2.14+ conditional on Go decision in v2.13)
    - Product Hunt, pimenov.ai, Reddit, review sites, job boards, LinkedIn/X/Telegram, app marketplaces, Q&A sites, newsletters, Discord, Slack remain deferred.
