@@ -155,7 +155,9 @@ def _extract_actor(evidence: dict[str, Any], text: str) -> str:
 
     # Developer indicators
     developer_terms = ("developer", "dev ", "engineer", "programmer", "coder",
-                       "api", "code", "coding", "repo", "repository")
+                       "api", "code", "coding", "repo", "repository",
+                       "debug", "debugging", "trace", "tracing",
+                       "agent", "deploy", "deployment", "pull request")
     founder_terms = ("founder", "startup", "saas", "smb owner", "small business")
     finance_terms = ("accountant", "bookkeeper", "cfo", "finance", "controller",
                      "payroll", "invoice", "invoicing")
@@ -166,6 +168,11 @@ def _extract_actor(evidence: dict[str, Any], text: str) -> str:
 
     if source_type == "issue_tracker":
         return "developer"
+    # Founder / finance take priority over developer when explicitly signalled
+    if founder_count >= 1:
+        return "founder"
+    if finance_count >= 2:
+        return "finance professional"
     if dev_count >= 2:
         return "developer"
     if founder_count >= 2:
@@ -196,6 +203,26 @@ def _extract_workflow(evidence: dict[str, Any], text: str) -> str:
 
     # Heuristics from title
     title = str(evidence.get("title", "") or "").strip().lower()
+    body = str(evidence.get("body", "") or "").strip().lower()
+
+    # Body-based workflow extraction: if body mentions a specific
+    # workflow keyword not already captured by the title, prefer it.
+    _BODY_WORKFLOW_KEYWORDS: tuple[tuple[str, str], ...] = (
+        ("deploy", "software deployment"),
+        ("debug", "software debugging"),
+        ("test", "software testing"),
+        ("build", "software build and CI"),
+        ("integrate", "system integration"),
+        ("monitor", "system monitoring"),
+        ("migrate", "data migration"),
+        ("scale", "system scaling"),
+        ("forecast", "financial forecasting"),
+    )
+    if body:
+        for keyword, workflow_label in _BODY_WORKFLOW_KEYWORDS:
+            if keyword in body and (not title or keyword not in title):
+                return workflow_label
+
     if title:
         # Clean common prefixes
         title = title.replace("ask hn:", "").replace("show hn:", "").strip()
@@ -229,7 +256,9 @@ def _extract_object(evidence: dict[str, Any], text: str) -> str:
         if obj_hint and obj_hint not in ("unknown", "none", ""):
             return str(obj_hint).strip().lower()
 
-    # Heuristics: look for tool/system mentions
+    # Heuristics: look for tool/system mentions.
+    # Search body-only to avoid title pollution (titles often generic labels).
+    body = str(evidence.get("body", "") or "").strip().lower()
     tool_indicators = (
         "kubernetes", "docker", "aws", "azure", "gcp",
         "github", "gitlab", "bitbucket",
@@ -243,6 +272,11 @@ def _extract_object(evidence: dict[str, Any], text: str) -> str:
         "database", "postgres", "mysql", "mongodb",
         "llm", "ai model", "agent", "ai agent",
     )
+    for tool in tool_indicators:
+        if tool in body:
+            return tool
+
+    # Fallback: search full text (title + body) for broader signal
     for tool in tool_indicators:
         if tool in text:
             return tool
@@ -563,7 +597,7 @@ def assemble_pain_clusters(
         ev["_pain_verb"] = pattern["pain_verb"]
         ev["_pain_pattern"] = pattern["pain_pattern"]
 
-        group_key = f"{pattern['actor']}|{pattern['workflow']}|{pattern['object']}"
+        group_key = f"{pattern['actor']}|{pattern['object']}"
         if group_key not in pattern_groups:
             pattern_groups[group_key] = []
         pattern_groups[group_key].append(ev)

@@ -91,7 +91,7 @@ class SourceEvidenceEntry:
         _require_non_empty(self.evidence_id, "SourceEvidenceEntry.evidence_id")
         _require_non_empty(self.source_id, "SourceEvidenceEntry.source_id")
         _require_non_empty(self.source_type, "SourceEvidenceEntry.source_type")
-        _require_non_empty(self.source_url, "SourceEvidenceEntry.source_url")
+        # source_url may be empty at construction; VF7 fail rule at cluster level
         _require_non_empty(self.evidence_kind, "SourceEvidenceEntry.evidence_kind")
         _require_non_empty(self.title, "SourceEvidenceEntry.title")
         _require_non_empty(self.excerpt, "SourceEvidenceEntry.excerpt")

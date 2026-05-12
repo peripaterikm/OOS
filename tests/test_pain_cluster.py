@@ -146,9 +146,14 @@ class TestSourceEvidenceEntry(unittest.TestCase):
         self.assertEqual(entry.signal_id, None)
         self.assertEqual(entry.quality_flags, [])
 
-    def test_rejects_missing_source_url(self) -> None:
-        with self.assertRaises(ValueError):
-            _make_evidence_entry(source_url="").validate()
+    def test_accepts_empty_source_url_at_entry_level(self) -> None:
+        # VF7 fail rule for missing source_url is enforced at cluster level
+        # (validate_pain_cluster / validate_cluster_traceability), not at
+        # SourceEvidenceEntry.validate() time. This allows clusters to be
+        # built with incomplete URLs and errors surfaced at validation time.
+        entry = _make_evidence_entry(source_url="")
+        entry.validate()  # does NOT raise at entry level
+        self.assertEqual(entry.source_url, "")
 
     def test_rejects_non_http_source_url(self) -> None:
         # Entry-level validate accepts any non-empty string; scheme validation

@@ -526,7 +526,10 @@ class TestAssemblyScoring(unittest.TestCase):
 
 class TestTraceabilityValidation(unittest.TestCase):
     def test_evidence_without_source_url_fails(self) -> None:
-        evs = [_hn_ev("ev_001", source_url="")]
+        # Use a truthy-but-empty source_url to bypass fixture's or-fallback
+        ev = _hn_ev("ev_001")
+        ev["source_url"] = ""
+        evs = [ev]
         clusters, _, _ = assemble_pain_clusters(evs)
         errors, warnings = validate_cluster_traceability(clusters[0])
         self.assertTrue(any("missing source_url" in e.lower() for e in errors))
