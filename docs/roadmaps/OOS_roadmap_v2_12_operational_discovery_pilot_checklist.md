@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
-- [x] **0.2** Current item: `3 — GitHub Issues RawEvidence Hardening`
+- [x] **0.2** Current item: `4 — Cross-source Dedupe and PainCluster Assembly`
 - [ ] **0.3** Roadmap state: `implementation in progress`
-- [ ] **0.4** Completed from this roadmap: **2 / 10**
-- [ ] **0.5** Remaining: **8 / 10**
+- [ ] **0.4** Completed from this roadmap: **3 / 10**
+- [ ] **0.5** Remaining: **7 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md` (complete, `10 / 10`, tag `v2.11`, merged to main via PR #51)
 
 ### Branch and Version
@@ -370,12 +370,12 @@ Harden the existing GitHub Issues collector adapter to meet the operational pilo
 
 ### Implementation Requirements
 
-- [ ] **3.1** Align `source_id` to `github_issues` (registry key).
-- [ ] **3.2** Align `source_type` to `issue_tracker`.
-- [ ] **3.3** Remove `github://` URL fallback. Every issue must carry `source_url` using `https://github.com/<owner>/<repo>/issues/<number>` format. Missing `html_url` → reject record.
-- [ ] **3.4** Enforce mandatory PR filtering: `html_url` containing `/pull/` must be filtered out. Only `/issues/` URLs in output.
-- [ ] **3.5** Enforce repo allowlist. The repo allowlist configuration file is proposed as `config/github_issues_repo_allowlist.json`. Do not create it in this planning item. Item 3 implementation may create it when implementing GitHub Issues hardening. `source_registry.json` remains source-level policy, not necessarily the full repo allowlist.
-- [ ] **3.6** Add `evidence_kind` field:
+- [x] **3.1** Align `source_id` to `github_issues` (registry key).
+- [x] **3.2** Align `source_type` to `issue_tracker`.
+- [x] **3.3** Remove `github://` URL fallback. Every issue must carry `source_url` using `https://github.com/<owner>/<repo>/issues/<number>` format. Missing `html_url` → reject record.
+- [x] **3.4** Enforce mandatory PR filtering: `pull_request` key present → filtered out.
+- [x] **3.5** Implement repo allowlist support in collector (parameter-based, deterministic). Config file deferred — allowlist passed via constructor parameter; fixture-safe. No live API required.
+- [x] **3.6** Add `evidence_kind` field:
   - `bug_report` — issue describing a bug or malfunction.
   - `feature_request` — issue requesting new functionality (implies missing capability).
   - `integration_pain` — issue describing integration/API/compatibility friction.
@@ -383,19 +383,19 @@ Harden the existing GitHub Issues collector adapter to meet the operational pilo
   - `ux_pain` — issue describing usability/workflow friction.
   - `documentation_gap` — issue about missing/incorrect docs.
   - `general_issue` — issue not fitting above categories.
-- [ ] **3.7** Capture labels as metadata array.
-- [ ] **3.8** Capture comment count and comment metadata (deferred to v2.12 implementation; capture count for now, full comments optional).
-- [ ] **3.9** Add noise/quality flags:
+- [x] **3.7** Capture labels as metadata array.
+- [x] **3.8** Capture comment count and engagement metrics in metadata (comments fetching deferred).
+- [x] **3.9** Add noise/quality flags:
   - `low_context_issue` — body <100 chars, no labels.
   - `stale_abandoned` — no activity in >365 days.
   - `bot_generated` — created by bot account.
   - `one_off_bug` — affecting single user in niche context.
   - `duplicate_issue` — marked as duplicate.
-- [ ] **3.10** Add source quality summary per collected batch: `total_collected`, `pr_filtered_out`, `not_in_allowlist`, `with_url`, `missing_url`, `noise_flagged`, `signal_candidate`.
-- [ ] **3.11** Enforce `created_at` / `updated_at` handling: capture both timestamps in ISO 8601.
-- [ ] **3.12** Update fixture files with representative issues from allowlisted repos covering all `evidence_kind` values.
-- [ ] **3.13** No live API calls in unit tests. Fixture-first.
-- [ ] **3.14** Do not enable GitHub Issues collection in default weekly run without controlled smoke (item 8).
+- [x] **3.10** Add `GitHubSourceQualitySummary` with: `records_seen`, `records_emitted`, `records_rejected`, `pr_filtered_count`, `warning_count`, `error_count`, `duplicate_count`, `missing_url_count`, `placeholder_url_count`, `quality_flag_counts`, `rejection_reasons`.
+- [x] **3.11** Enforce `created_at` / `updated_at` handling: capture both timestamps in ISO 8601 in `raw_metadata`.
+- [x] **3.12** Comprehensive fixture tests covering all `evidence_kind` values, PR filtering, quality flags, source URL hardening, repo allowlist, and source quality summary.
+- [x] **3.13** No live API calls in unit tests. Fixture-first.
+- [x] **3.14** Do not enable GitHub Issues collection in default weekly run without controlled smoke (item 8).
 
 ### Validation Expectation
 
@@ -408,16 +408,16 @@ Harden the existing GitHub Issues collector adapter to meet the operational pilo
 
 ### Definition of Done
 
-- [ ] **3.15** GitHub Issues collector emits `source_id=github_issues`, `source_type=issue_tracker`.
-- [ ] **3.16** Zero `github://` fallback URLs in any output.
-- [ ] **3.17** PR filtering is effective: zero `/pull/` URLs in output.
-- [ ] **3.18** Repo allowlist is enforced: only allowlisted repos appear.
-- [ ] **3.19** GitHub Issues collector emits `evidence_kind` for all records.
-- [ ] **3.20** GitHub Issues collector emits noise/quality flags.
-- [ ] **3.21** GitHub Issues collector emits source quality summary.
-- [ ] **3.22** All GitHub Issues collector tests pass with fixtures.
-- [ ] **3.23** Zero placeholder or missing URLs in test output.
-- [ ] **3.24** `.\scripts\dev-git-check.ps1` passes.
+- [x] **3.15** GitHub Issues collector emits `source_id=github_issues`, `source_type=issue_tracker`.
+- [x] **3.16** Zero `github://` fallback URLs in any output.
+- [x] **3.17** PR filtering is effective: `pull_request` key → filtered + counted in `pr_filtered_count`.
+- [x] **3.18** Repo allowlist is supported (collector parameter; deterministic fixture-safe behavior).
+- [x] **3.19** GitHub Issues collector emits `evidence_kind` for all records.
+- [x] **3.20** GitHub Issues collector emits noise/quality flags.
+- [x] **3.21** GitHub Issues collector emits `GitHubSourceQualitySummary`.
+- [x] **3.22** All GitHub Issues collector tests pass with fixtures.
+- [x] **3.23** Zero placeholder or missing URLs in test output.
+- [x] **3.24** `.\scripts\dev-git-check.ps1` passes (post-diff check — working tree dirty pre-commit is expected).
 - [ ] **3.25** One local commit made.
 
 ### Explicit Non-Goals

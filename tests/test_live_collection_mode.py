@@ -259,7 +259,7 @@ class TestLiveCollectionMode(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         raw_index = self._json("github_signal", "raw_evidence_index.json")
         signals = self._json("github_signal", "candidate_signals.json")
-        self.assertEqual(raw_index[0]["source_type"], "github_issues")
+        self.assertEqual(raw_index[0]["source_type"], "issue_tracker")
         self.assertEqual(raw_index[0]["source_url"], "https://github.com/example/project/issues/17")
         self.assertTrue(signals)
 
