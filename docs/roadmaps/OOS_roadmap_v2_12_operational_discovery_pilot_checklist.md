@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
-- [x] **0.2** Current item: `5 — Source Quality Report`
+- [x] **0.2** Current item: `6 — Founder Review Package for Pilot`
 - [x] **0.3** Roadmap state: `implementation in progress`
-- [x] **0.4** Completed from this roadmap: **4 / 10**
-- [x] **0.5** Remaining: **6 / 10**
+- [x] **0.4** Completed from this roadmap: **5 / 10**
+- [x] **0.5** Remaining: **5 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md` (complete, `10 / 10`, tag `v2.11`, merged to main via PR #51)
 
 ### Branch and Version
@@ -537,7 +537,7 @@ Implement the Source Quality Report as specified in [`docs/contracts/operational
 
 ### Implementation Requirements
 
-- [ ] **5.1** Implement all 8 required report sections (contract Section 10.1):
+- [x] **5.1** Implement all 8 required report sections (contract Section 10.1):
   - Raw evidence collected (total count, per-source breakdown, time range, collection method).
   - Accepted / weak / noise signals (classification breakdown, per-source).
   - Top pain clusters (ranked list with cluster_id, pain_pattern, overall score, recurrence, source_diversity, status).
@@ -546,7 +546,7 @@ Implement the Source Quality Report as specified in [`docs/contracts/operational
   - Main noise categories (dominant noise patterns observed per noise category taxonomy).
   - Founder decisions needed (count of clusters and candidates awaiting review).
   - Next validation actions (recommended next steps).
-- [ ] **5.2** Implement all 18 source quality metrics (contract Section 11):
+- [x] **5.2** Implement all 18 source quality metrics (contract Section 11):
   - `records_seen`, `records_emitted`, `records_rejected` per source.
   - `accepted_signal_count`, `weak_signal_count`, `noise_signal_count` per source.
   - `accepted_rate`, `noise_rate` per source.
@@ -554,15 +554,15 @@ Implement the Source Quality Report as specified in [`docs/contracts/operational
   - `source_url_validation_passed` per source and global.
   - `source_diversity_contribution`, `cluster_contribution_count`, `opportunity_contribution_count` per source.
   - `founder_promote_count`, `founder_kill_count`, `founder_needs_more_evidence_count` per source.
-- [ ] **5.3** Implement JSON output matching the schema sketch (contract Section 10.2).
-- [ ] **5.4** Implement Markdown output with all 8 sections in human-readable format.
-- [ ] **5.5** Implement per-source quality breakdown:
+- [x] **5.3** Implement JSON output matching the schema sketch (contract Section 10.2).
+- [x] **5.4** Implement Markdown output with all 8 sections in human-readable format.
+- [x] **5.5** Implement per-source quality breakdown:
   - `signal_rate`, `noise_rate`, `weak_rate`.
   - `missing_url_count`, `placeholder_url_count`.
   - `source_url_validation_passed`.
   - `main_noise_categories` (top 3 noise categories by count).
-- [ ] **5.6** Implement traceability summary: total source URLs, missing count, placeholder count, validation pass/fail.
-- [ ] **5.7** Write fixture tests covering:
+- [x] **5.6** Implement traceability summary: total source URLs, missing count, placeholder count, validation pass/fail.
+- [x] **5.7** Write fixture tests covering:
   - Report generation from known fixture input.
   - All 18 metrics computed correctly.
   - JSON output schema validation.
@@ -571,7 +571,7 @@ Implement the Source Quality Report as specified in [`docs/contracts/operational
   - Mixed input (some sources with noise, some clean).
   - Traceability validation pass and fail cases.
   - Per-source breakdown correctness.
-- [ ] **5.8** No LLM calls. Entirely deterministic computation from input data.
+- [x] **5.8** No LLM calls. Entirely deterministic computation from input data.
 
 ### Validation Expectation
 
@@ -582,9 +582,9 @@ Implement the Source Quality Report as specified in [`docs/contracts/operational
 
 ### Definition of Done
 
-- [ ] **5.9** `src/oos/source_quality_report.py` exists with JSON and Markdown report generation.
-- [ ] **5.10** `tests/test_source_quality_report.py` exists with fixture tests covering all 5.7 requirements.
-- [ ] **5.11** All tests pass (`.\scripts\dev-test.ps1`).
+- [x] **5.9** `src/oos/source_quality_report.py` exists with JSON and Markdown report generation.
+- [x] **5.10** `tests/test_source_quality_report.py` exists with fixture tests covering all 5.7 requirements.
+- [x] **5.11** All tests pass (`.\scripts\dev-test.ps1`).
 - [ ] **5.12** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **5.13** One local commit made.
 
