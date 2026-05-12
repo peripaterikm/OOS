@@ -607,12 +607,14 @@ Implement the Source Quality Report as specified in [`docs/contracts/operational
 
 ### Intent
 
-Implement the Founder Review Package as specified in [`docs/contracts/operational_discovery_pilot_run_contract.md`](../contracts/operational_discovery_pilot_run_contract.md) Sections 14–15. The package bundles top pain clusters and opportunity candidates with evidence links, score explanations, and recommended founder decisions. Founder decisions must be ingestible as feedback.
+Implement the Founder Review Package as specified in [`docs/contracts/operational_discovery_pilot_run_contract.md`](../contracts/operational_discovery_pilot_run_contract.md) Sections 14–15. The package bundles top pain clusters and opportunity candidates with evidence links, score explanations, source quality context, package-level traceability summary, and recommended founder decisions (PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER).
+
+The Founder Review Package is **advisory-only**. It does NOT ingest founder decisions, does NOT create KillReason records, and does NOT mutate portfolio, opportunity, or cluster state. It provides stable feedback hooks (package-level `founder_final_decision` field and `notes`) for later ingestion by downstream modules. Actual feedback ingestion belongs to later roadmap items unless already explicitly implemented elsewhere.
 
 ### Allowed Change Type
 
-- Create: `src/oos/founder_review_package.py` (new module)
-- Create: `tests/test_founder_review_package_pilot.py` (fixture tests)
+- Create: `src/oos/pilot_founder_review_package.py` (new module)
+- Create: `tests/test_pilot_founder_review_package.py` (fixture tests)
 - May read (do not modify): `docs/contracts/operational_discovery_pilot_run_contract.md`, `docs/contracts/pain_cluster_contract.md`, `src/oos/models.py`, `src/oos/pain_cluster.py` (from item 1)
 - Do NOT modify existing source code outside the new module.
 - Do NOT modify tests, scripts, or artifacts.
@@ -621,71 +623,74 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
 
 | File | Action | Scope |
 |------|--------|-------|
-| `src/oos/founder_review_package.py` | Create | Review package generation: clusters, candidates, decision prompts, feedback ingestion |
-| `tests/test_founder_review_package_pilot.py` | Create | Fixture tests: package structure, decision ingestion, KillReason validation |
+| `src/oos/pilot_founder_review_package.py` | Create | Review package generation: clusters, candidates, deterministic recommendations, traceability summary, advisory feedback hooks |
+| `tests/test_pilot_founder_review_package.py` | Create | Fixture tests: package structure, recommendation logic, traceability validation, builder error handling |
 
 ### Implementation Requirements
 
 - [x] **6.1** Implement Founder Review Package generation with these sections:
   - Ranked list of pain clusters awaiting review (ranked by overall_score descending).
   - Ranked list of opportunity candidates awaiting review.
-  - For each cluster: cluster_id, pain_pattern, overall_score, score breakdown (all 8 components), recurrence, source_diversity, evidence links (evidence_id, source_url, source_type, title, contribution_to_cluster), representative quotes, advisory recommendation (`review_for_promotion`, `needs_more_evidence`, `likely_noise`, `park_for_later`).
+  - For each cluster: cluster_id, pain_pattern, overall_score, score breakdown (all 8 components), recurrence, source_diversity, evidence links (evidence_id, source_url, source_type, title, excerpt, evidence_kind), representative quotes, advisory recommendation.
   - For each candidate: opportunity_id, source_pain_cluster_id, problem_statement, evidence_summary, source_evidence_links, score, uncertainty, suggested_validation_action.
   - Clear action prompts for each item: PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER.
-  - Space for `KillReason` if killing.
-  - Previous cycle's decisions for context (if available).
-- [x] **6.2** Implement founder decision ingestion (feedback hooks for later ingestion):
-  - Accept PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER decisions.
-  - Require `KillReason` for KILL decisions.
-  - Validate KillReason explains **why the idea died**, not just labels it.
-  - Store decisions in structured format for feedback loop.
-- [x] **6.3** Implement scoring calibration hooks from founder feedback (contract Section 14.2):
-  - KILL due to noise → flag noise_risk adjustment.
-  - KILL due to wrong ICP → flag icp_fit calibration.
-  - PROMOTE → validate scoring weights.
-  - PARK → preserve cluster for later (no score adjustment).
-  - NEEDS_MORE_EVIDENCE → flag for additional collection.
-- [x] **6.4** Implement JSON output format for machine ingestion.
+  - Package-level traceability summary (traceability_status, total_evidence_links, invalid_evidence_link_count, missing_source_url_count, placeholder_url_count, non_http_url_count).
+  - Stable feedback hooks: `founder_final_decision` and `notes` fields on each review item for later founder decision ingestion.
+- [x] **6.2** Implement advisory-only feedback hooks:
+  - Each `FounderReviewQueueItem` includes `founder_final_decision` (string, default empty) and `notes` (string, default empty).
+  - The package does NOT ingest, validate, or apply founder decisions.
+  - It does NOT create KillReason records.
+  - It does NOT mutate portfolio/opportunity/cluster state.
+  - Actual feedback ingestion belongs to later roadmap unless already explicitly implemented elsewhere.
+- [x] **6.3** Implement deterministic recommendation logic:
+  - PROMOTE requires: score >= 0.70, noise_risk < 0.50, traceability clean, credible evidence, business_relevance >= 0.40, AND (source_diversity >= 2 OR recurrence >= 2).
+  - KILL for: noise_risk >= 0.80, broken traceability, score < 0.30, or low business relevance without credible evidence.
+  - NEEDS_MORE_EVIDENCE for: moderate scores, single-source, low recurrence, high uncertainty, or high score with single-source+low-recurrence.
+  - REVISIT_LATER for: moderate scores with low recurrence.
+  - PARK as fallback.
+- [x] **6.4** Implement JSON output format for machine ingestion via `to_dict()` / `from_dict()` roundtrip.
 - [x] **6.5** Write fixture tests covering:
   - Package generation with known clusters and candidates.
   - All 5 decision statuses applied correctly.
-  - KillReason validation: good ("All three evidence items are self-promotion...") vs bad ("Noise").
-  - Score breakdown completeness (all 8 components present).
-  - Evidence links completeness (source_url present for all linked evidence).
-  - Advisory recommendations match score tiers.
-  - Decision ingestion updates cluster/candidate status.
-  - Empty input handling (no clusters, no candidates).
-  - Ranking order (by overall_score descending, ties broken by source_diversity → recurrence → lower noise_risk).
+  - PROMOTE safety: high score + single-source + recurrence 1 => NEEDS_MORE_EVIDENCE (not PROMOTE).
+  - PROMOTE with source_diversity >= 2 or recurrence >= 2 succeeds.
+  - Broken traceability => KILL regardless of score.
+  - Evidence link identity field validation (evidence_id, source_id, source_type, source_url, title, excerpt, evidence_kind).
+  - Non-http(s) source_url fails validation (ftp://, github://, urn:oos:*).
+  - Package-level traceability_status (clean / failed) and summary counts.
+  - Builder error handling (malformed clusters/opps produce package.errors, not silent drops).
+  - Suggested validation actions (check_competitors, search_more_sources, manual_research mappings).
+  - Markdown rendering includes package-level traceability summary.
+  - to_dict/from_dict roundtrip preserves traceability fields.
 - [x] **6.6** No LLM calls. Decision prompts and advisory recommendations are rule-based.
 
 ### Validation Expectation
 
 - `.\scripts\dev-test.ps1` passes for review package tests.
 - Package includes all required fields for clusters and candidates.
-- Decision ingestion correctly updates statuses.
-- KillReason validation rejects label-only reasons.
+- Package-level traceability status is computed correctly.
+- Non-http(s) URLs, placeholder URLs, and missing URLs all fail validation.
+- Builder records errors instead of silently dropping malformed items.
+- PROMOTE requires source_diversity >= 2 OR recurrence >= 2.
 
 ### Definition of Done
 
 - [x] **6.7** `src/oos/pilot_founder_review_package.py` exists with package generation and recommendation logic.
 - [x] **6.8** `tests/test_pilot_founder_review_package.py` exists with fixture tests covering all 6.5 requirements.
-- [x] **6.9** All tests pass (51 tests OK).
+- [x] **6.9** All tests pass.
 - [ ] **6.10** `.\scripts\dev-git-check.ps1` passes (pending).
 - [ ] **6.11** One local commit made (pending).
 
 ### Explicit Non-Goals
 
+- Founder decision ingestion (advisory-only package; feedback hooks provided for later ingestion).
+- KillReason creation or validation (KillReason belongs to later roadmap unless already implemented elsewhere).
+- Portfolio/opportunity/cluster state mutation.
 - UI for founder review (file-based package only).
 - Email or notification delivery.
 - Real-time founder interaction.
 - Autonomous promotion decisions.
 - Replacing existing founder review artifacts (this is additive for pilot).
-
-### Escalation Triggers
-
-- If existing founder review code (`src/oos/founder_review_package_v2.py` or similar) must be modified to support pilot review package, escalate.
-- If KillReason format conflicts with existing KillReason conventions in the codebase, escalate.
-- If decision ingestion requires a persistence layer beyond file-based artifacts, escalate.
 
 ---
 

@@ -10,6 +10,11 @@ candidates with evidence links, score explanations, source quality context,
 and recommended founder decisions (PROMOTE / PARK / KILL /
 NEEDS_MORE_EVIDENCE / REVISIT_LATER).
 
+All recommendations are advisory-only. This module does NOT ingest founder
+decisions, does NOT create KillReason records, and does NOT mutate portfolio,
+opportunity, or cluster state. It provides stable feedback hooks for later
+ingestion by downstream modules.
+
 No live APIs. No LLM calls. No filesystem writes. Deterministic only.
 """
 
@@ -25,7 +30,7 @@ from .source_quality_report import SourceQualityReport
 # Constants
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 ARTIFACT_TYPE = "founder_review_package"
 
 ALLOWED_RECOMMENDED_DECISIONS: frozenset[str] = frozenset({
@@ -319,6 +324,13 @@ class FounderReviewPackage:
     review_items: list[FounderReviewQueueItem] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    # Package-level traceability summary (v1.1.0)
+    traceability_status: str = "clean"
+    total_evidence_links: int = 0
+    invalid_evidence_link_count: int = 0
+    missing_source_url_count: int = 0
+    placeholder_url_count: int = 0
+    non_http_url_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -338,6 +350,12 @@ class FounderReviewPackage:
             "review_items": [ri.to_dict() for ri in self.review_items],
             "warnings": list(self.warnings),
             "errors": list(self.errors),
+            "traceability_status": self.traceability_status,
+            "total_evidence_links": self.total_evidence_links,
+            "invalid_evidence_link_count": self.invalid_evidence_link_count,
+            "missing_source_url_count": self.missing_source_url_count,
+            "placeholder_url_count": self.placeholder_url_count,
+            "non_http_url_count": self.non_http_url_count,
         }
 
     @classmethod
@@ -360,6 +378,12 @@ class FounderReviewPackage:
             ],
             warnings=list(data.get("warnings", [])),
             errors=list(data.get("errors", [])),
+            traceability_status=str(data.get("traceability_status", "clean")),
+            total_evidence_links=int(data.get("total_evidence_links", 0)),
+            invalid_evidence_link_count=int(data.get("invalid_evidence_link_count", 0)),
+            missing_source_url_count=int(data.get("missing_source_url_count", 0)),
+            placeholder_url_count=int(data.get("placeholder_url_count", 0)),
+            non_http_url_count=int(data.get("non_http_url_count", 0)),
         )
 
 
@@ -377,6 +401,83 @@ class FounderReviewPackageValidationResult:
             "errors": list(self.errors),
             "warnings": list(self.warnings),
         }
+
+
+# ---------------------------------------------------------------------------
+# Traceability helpers
+# ---------------------------------------------------------------------------
+
+
+def _is_http_url(url: str) -> bool:
+    """Return True if url starts with http:// or https://."""
+    return url.startswith(("http://", "https://"))
+
+
+def _is_placeholder_url(url: str) -> bool:
+    """Return True if url is a placeholder (urn:*, or starts with urn:)."""
+    if not url:
+        return False
+    return url.lower().startswith("urn:")
+
+
+def _assess_link_traceability(
+    el: FounderReviewEvidenceLink,
+) -> tuple[bool, str, list[str]]:
+    """Assess a single evidence link for traceability.
+
+    Returns (clean, status, issues_list).
+    """
+    issues: list[str] = []
+    url = el.source_url
+
+    if not url:
+        issues.append("missing_source_url")
+    elif _is_placeholder_url(url):
+        issues.append("placeholder_url")
+    elif not _is_http_url(url):
+        issues.append("non_http_url")
+
+    if not issues:
+        return (True, "clean", [])
+    return (False, "failed", issues)
+
+
+def _compute_package_traceability(
+    review_items: list[FounderReviewQueueItem],
+) -> dict[str, Any]:
+    """Compute package-level traceability summary from all review items."""
+    total_links = 0
+    invalid_count = 0
+    missing_url = 0
+    placeholder_url = 0
+    non_http_url = 0
+
+    all_clean = True
+    for ri in review_items:
+        for el in ri.evidence_links:
+            total_links += 1
+            url = el.source_url
+            if not url:
+                missing_url += 1
+                invalid_count += 1
+                all_clean = False
+            elif _is_placeholder_url(url):
+                placeholder_url += 1
+                invalid_count += 1
+                all_clean = False
+            elif not _is_http_url(url):
+                non_http_url += 1
+                invalid_count += 1
+                all_clean = False
+
+    return {
+        "traceability_status": "clean" if all_clean else "failed",
+        "total_evidence_links": total_links,
+        "invalid_evidence_link_count": invalid_count,
+        "missing_source_url_count": missing_url,
+        "placeholder_url_count": placeholder_url,
+        "non_http_url_count": non_http_url,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -410,14 +511,31 @@ def recommend_decision(
         return ("KILL", "Low business relevance and no credible evidence.")
 
     # ---- PROMOTE ----
+    # PROMOTE requires source_diversity >= 2 OR recurrence >= 2
+    # to prevent single-source / single-signal promotion.
     if (
         score >= 0.70
         and noise_risk < 0.50
         and source_url_traceability_clean
         and has_credible_evidence
         and business_relevance >= 0.40
+        and (source_diversity >= 2 or recurrence >= 2)
     ):
         return ("PROMOTE", f"Strong score ({score:.2f}), clean traceability, and credible evidence.")
+
+    # High score but single-source and low recurrence: needs more evidence.
+    if (
+        score >= 0.70
+        and noise_risk < 0.50
+        and source_url_traceability_clean
+        and has_credible_evidence
+        and business_relevance >= 0.40
+        and source_diversity == 1
+        and recurrence < 2
+    ):
+        return ("NEEDS_MORE_EVIDENCE",
+                f"High score ({score:.2f}) but single-source and low recurrence; "
+                f"collect evidence from more sources.")
 
     # ---- NEEDS_MORE_EVIDENCE ----
     if 0.50 <= score < 0.70:
@@ -800,6 +918,8 @@ def build_founder_review_package(
             sqr_dict = dict(source_quality_report)
 
     review_items: list[FounderReviewQueueItem] = []
+    build_errors: list[str] = []
+
     for i, cluster in enumerate(clusters):
         try:
             item = _build_review_item_for_cluster(
@@ -809,8 +929,11 @@ def build_founder_review_package(
                 idx=i,
             )
             review_items.append(item)
-        except Exception:
-            continue
+        except Exception as e:
+            cluster_id = str(cluster.get("cluster_id", "?"))
+            build_errors.append(
+                f"cluster[{i}] (id={cluster_id}) build error: {type(e).__name__}: {e}"
+            )
 
     for i, oc in enumerate(opps):
         try:
@@ -822,8 +945,11 @@ def build_founder_review_package(
             )
             if item is not None:
                 review_items.append(item)
-        except Exception:
-            continue
+        except Exception as e:
+            opportunity_id = str(oc.get("opportunity_id", "?"))
+            build_errors.append(
+                f"opportunity[{i}] (id={opportunity_id}) build error: {type(e).__name__}: {e}"
+            )
 
     review_items.sort(key=lambda ri: (
         DECISION_PRIORITY.get(ri.recommended_decision, 99),
@@ -846,6 +972,9 @@ def build_founder_review_package(
         all_source_ids.update(ri.source_ids)
     source_ids = sorted(all_source_ids)
 
+    # Compute package-level traceability summary
+    traceability = _compute_package_traceability(review_items)
+
     warnings: list[str] = []
     if promote_count == 0 and review_items:
         warnings.append("No PROMOTE items in the review package.")
@@ -858,6 +987,9 @@ def build_founder_review_package(
     all_single_source = all(ri.source_diversity == 1 for ri in review_items)
     if all_single_source and review_items:
         warnings.append("All review items are single-source; cross-source validation missing.")
+
+    if build_errors:
+        warnings.append(f"Build errors encountered ({len(build_errors)} item(s) failed to build).")
 
     top_clusters: list[dict[str, Any]] = []
     for ri in review_items:
@@ -889,7 +1021,13 @@ def build_founder_review_package(
         top_clusters=top_clusters,
         review_items=review_items,
         warnings=warnings,
-        errors=[],
+        errors=build_errors,
+        traceability_status=traceability["traceability_status"],
+        total_evidence_links=traceability["total_evidence_links"],
+        invalid_evidence_link_count=traceability["invalid_evidence_link_count"],
+        missing_source_url_count=traceability["missing_source_url_count"],
+        placeholder_url_count=traceability["placeholder_url_count"],
+        non_http_url_count=traceability["non_http_url_count"],
     )
 
 
@@ -929,12 +1067,32 @@ def validate_founder_review_package(
 
         for j, el in enumerate(ri.evidence_links):
             el_prefix = f"{prefix}.evidence_links[{j}]"
+
+            # Required identity fields
+            if not el.evidence_id:
+                errors.append(f"{el_prefix} missing evidence_id")
+            if not el.source_id:
+                errors.append(f"{el_prefix} missing source_id")
+            if not el.source_type:
+                errors.append(f"{el_prefix} missing source_type")
+            if not el.title:
+                errors.append(f"{el_prefix} missing title")
+            if not el.excerpt:
+                errors.append(f"{el_prefix} missing excerpt")
+            if not el.evidence_kind:
+                errors.append(f"{el_prefix} missing evidence_kind")
+
+            # quality_flags must be list
+            if not isinstance(el.quality_flags, list):
+                errors.append(f"{el_prefix} quality_flags must be a list")
+
+            # Source URL validation
             if not el.source_url:
                 errors.append(f"{el_prefix} missing source_url")
             elif el.source_url.lower().startswith("urn:"):
                 errors.append(f"{el_prefix} placeholder URL: {el.source_url}")
             elif not el.source_url.startswith(("http://", "https://")):
-                warnings.append(f"{el_prefix} non-http(s) URL: {el.source_url}")
+                errors.append(f"{el_prefix} non-http(s) URL: {el.source_url}")
 
     promote_count = sum(1 for ri in package.review_items if ri.recommended_decision == "PROMOTE")
     if promote_count == 0:
@@ -1000,6 +1158,17 @@ def render_founder_review_package_markdown(
     if package.source_ids:
         lines.append(f"**Sources**: {', '.join(f'`{sid}`' for sid in package.source_ids)}")
         lines.append("")
+
+    # Package-level traceability
+    lines.append("### Traceability Summary")
+    lines.append("")
+    lines.append(f"- **Status**: {package.traceability_status}")
+    lines.append(f"- **Total evidence links**: {package.total_evidence_links}")
+    lines.append(f"- **Invalid evidence links**: {package.invalid_evidence_link_count}")
+    lines.append(f"- **Missing source URLs**: {package.missing_source_url_count}")
+    lines.append(f"- **Placeholder URLs**: {package.placeholder_url_count}")
+    lines.append(f"- **Non-HTTP URLs**: {package.non_http_url_count}")
+    lines.append("")
 
     lines.append("## Review Counts")
     lines.append("")
