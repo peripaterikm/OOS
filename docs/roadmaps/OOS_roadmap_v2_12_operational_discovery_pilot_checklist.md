@@ -33,8 +33,8 @@ Roadmap v2.12 implements the minimal controlled discovery pilot — the end-to-e
     Source registry + allowlist policy            GitHub Issues RawEvidence hardening
     HN connector hardening plan                   Cross-source dedupe + cluster assembly
     GitHub Issues hardening plan                  Source Quality Report
-    Product Hunt feasibility plan                 Operational Discovery Pilot orchestrator
-    Operational Discovery Pilot reorientation     Founder Review Package
+    Product Hunt feasibility plan                 Founder Review Package
+    Operational Discovery Pilot reorientation     Operational Discovery Pilot orchestrator
     PainCluster contract + scoring formula        Controlled pilot smoke
     Pilot run design + source quality report      Final v2.12 checkpoint
     Final v2.11 pilot planning checkpoint
@@ -157,7 +157,7 @@ v2.12 implements the minimal controlled discovery pilot specified by the v2.11 c
 | Cross-source deduplication | Not implemented | Near-duplicate pain patterns across HN + GitHub Issues must become one cluster |
 | Founder Review Package | Not implemented | PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER with feedback loop |
 | Controlled smoke | Partial | Existing [`tests/test_controlled_weekly_run_smoke.py`](../../tests/test_controlled_weekly_run_smoke.py) covers base weekly cycle but not discovery pilot path |
-| Source registry | Exists | [`config/source_registry.json`](../../config/source_registry.json) — lists HN and GitHub Issues with status and metadata |
+| Source registry | Exists | [`config/source_registry.json`](../../config/source_registry.json) — lists HN (`source_id: hacker_news`, `source_type: discussion`) and GitHub Issues (`source_id: github_issues`, `source_type: issue_tracker`) with status and metadata |
 
 ---
 
@@ -244,10 +244,10 @@ overall = clamp(0.0, 1.0,
 
 ### Explicit Non-Goals
 
-- Integrating PainCluster into the weekly run (item 6).
-- Creating PainCluster artifacts on disk (item 6).
+- Integrating PainCluster into the weekly run (item 7).
+- Creating PainCluster artifacts on disk (item 7).
 - Cross-source deduplication and cluster assembly (item 4).
-- Founder review UI or package generation (item 7).
+- Founder review UI or package generation (item 6).
 - Modifying existing `SemanticCluster`, `ClusterSynthesis`, or `WeakPatternCandidate` code.
 
 ### Escalation Triggers
@@ -262,7 +262,11 @@ overall = clamp(0.0, 1.0,
 
 ### Intent
 
-Harden the existing Hacker News collector adapter to meet the operational pilot requirements specified in [`docs/decisions/hacker_news_connector_hardening_plan.md`](../decisions/hacker_news_connector_hardening_plan.md) and the discovery source adapter contract. Align `source_id` to `hacker_news`, `source_type` to `discussion`, add `evidence_kind`, noise/quality flags, and source quality summary. Preserve stable `source_url`.
+Harden the existing Hacker News collector adapter to meet the operational pilot requirements specified in [`docs/decisions/hacker_news_connector_hardening_plan.md`](../decisions/hacker_news_connector_hardening_plan.md) and the discovery source adapter contract. Align `source_id` to `hacker_news` (the canonical source_id from [`config/source_registry.json`](../../config/source_registry.json)), `source_type` to `discussion`, add `evidence_kind`, noise/quality flags, and source quality summary. Preserve stable `source_url`.
+
+**Source ID clarification:** `hacker_news` is the canonical `source_id` from `config/source_registry.json`. `hacker_news_algolia` is an access method / legacy collector implementation detail, not the canonical `source_id`. This item must align existing HN code/tests from `hacker_news_algolia` toward `hacker_news` where required. If backwards compatibility is needed, it must be explicit and temporary.
+
+**Source type migration:** Existing code references using `source_type == "hacker_news_algolia"` must be updated or compatibility-mapped during this item. This is allowed within item 2 as a targeted mechanical migration. Item 2 may modify directly affected source/test references necessary to complete the migration. No unrelated source code changes are allowed.
 
 ### Allowed Change Type
 
@@ -275,14 +279,14 @@ Harden the existing Hacker News collector adapter to meet the operational pilot 
 
 | File | Action | Scope |
 |------|--------|-------|
-| `src/oos/hn_algolia_collector.py` | Modify | Hardening: evidence_kind, quality_flags, source quality summary |
-| `tests/test_hn_algolia_collector.py` | Modify | Update fixture tests for hardened output |
+| `src/oos/hn_algolia_collector.py` | Modify | Hardening: evidence_kind, quality_flags, source quality summary; align source_id to `hacker_news` |
+| `tests/test_hn_algolia_collector.py` | Modify | Update fixture tests for hardened output; align source_id references |
 | HN fixture files | Create/Update | Representative Ask HN, Show HN, comment fixtures |
 
 ### Implementation Requirements
 
-- [ ] **2.1** Align `source_id` to `hacker_news_algolia` (registry key).
-- [ ] **2.2** Align `source_type` to `discussion`.
+- [ ] **2.1** Align `source_id` to `hacker_news` (canonical source_id from `config/source_registry.json`). The `hacker_news_algolia` access method is a legacy implementation detail, not the canonical source_id.
+- [ ] **2.2** Align `source_type` to `discussion`. Existing code references using `source_type == "hacker_news_algolia"` must be updated or compatibility-mapped during this item (targeted mechanical migration within item 2 scope).
 - [ ] **2.3** Add `evidence_kind` field per the hardening plan's classification rules:
   - `ask_hn` — Ask HN posts (pain expression or problem-seeking).
   - `show_hn` — Show HN posts (solution announcements; may imply pain).
@@ -313,7 +317,7 @@ Harden the existing Hacker News collector adapter to meet the operational pilot 
 
 ### Definition of Done
 
-- [ ] **2.12** HN collector emits `source_id=hacker_news_algolia`, `source_type=discussion`.
+- [ ] **2.12** HN collector emits `source_id=hacker_news`, `source_type=discussion`.
 - [ ] **2.13** HN collector emits `evidence_kind` for all records.
 - [ ] **2.14** HN collector emits noise/quality flags.
 - [ ] **2.15** HN collector emits source quality summary.
@@ -365,7 +369,7 @@ Harden the existing GitHub Issues collector adapter to meet the operational pilo
 - [ ] **3.2** Align `source_type` to `issue_tracker`.
 - [ ] **3.3** Remove `github://` URL fallback. Every issue must carry `source_url` using `https://github.com/<owner>/<repo>/issues/<number>` format. Missing `html_url` → reject record.
 - [ ] **3.4** Enforce mandatory PR filtering: `html_url` containing `/pull/` must be filtered out. Only `/issues/` URLs in output.
-- [ ] **3.5** Enforce repo allowlist from `config/source_registry.json`. Only issues from allowlisted repos are collected.
+- [ ] **3.5** Enforce repo allowlist. The repo allowlist configuration file is proposed as `config/github_issues_repo_allowlist.json`. Do not create it in this planning item. Item 3 implementation may create it when implementing GitHub Issues hardening. `source_registry.json` remains source-level policy, not necessarily the full repo allowlist.
 - [ ] **3.6** Add `evidence_kind` field:
   - `bug_report` — issue describing a bug or malfunction.
   - `feature_request` — issue requesting new functionality (implies missing capability).
@@ -596,119 +600,7 @@ Implement the Source Quality Report as specified in [`docs/contracts/operational
 
 ---
 
-## 6. Operational Discovery Pilot Orchestrator
-
-### Intent
-
-Implement the Operational Discovery Pilot orchestrator — the single entrypoint that runs the full pilot pipeline: RawEvidence → CandidateSignals → PainClusters → OpportunityCandidates → SourceQualityReport. Uses fixture/bounded input by default. Writes outputs to `artifacts/discovery/pilot_runs/<run_id>/`. No live APIs in unit tests. Live mode not default.
-
-### Allowed Change Type
-
-- Create: `src/oos/discovery_pilot.py` (new module: orchestrator)
-- Create: `tests/test_discovery_pilot.py` (fixture tests)
-- May create: CLI entrypoint in `src/oos/cli.py` (if pilot command is added)
-- May read (do not modify): `docs/contracts/operational_discovery_pilot_run_contract.md`, `src/oos/models.py`, `src/oos/pain_cluster.py` (from item 1), `src/oos/pain_cluster_assembly.py` (from item 4), `src/oos/source_quality_report.py` (from item 5)
-- Do NOT modify existing source code outside the new module (except possibly adding a CLI command).
-- Do NOT modify tests, scripts, or artifacts outside new test files.
-
-### Main Files Likely Affected
-
-| File | Action | Scope |
-|------|--------|-------|
-| `src/oos/discovery_pilot.py` | Create | Orchestrator: 14-phase lifecycle, artifact writing, preflight validation |
-| `src/oos/cli.py` | May modify | Add `discovery-pilot` CLI command |
-| `tests/test_discovery_pilot.py` | Create | Fixture tests: end-to-end pipeline, artifact output, traceability verification |
-
-### Implementation Requirements
-
-- [ ] **6.1** Implement one CLI command or script entrypoint (e.g., `oos discovery-pilot run` or `.\scripts\run-discovery-pilot.ps1`).
-- [ ] **6.2** Implement fixture/bounded input mode as default (contract Section 6 — fixture mode).
-- [ ] **6.3** Implement the 14-phase pilot run lifecycle (contract Section 9):
-  - Phase 1: Preflight (validate config, fixtures, allowlists).
-  - Phase 2: Source collection / fixture loading (HN + GitHub Issues).
-  - Phase 3: Raw evidence validation (validate every RawEvidence record).
-  - Phase 4: Candidate signal extraction (extract CandidateSignals).
-  - Phase 5: Weak/noise classification (apply noise categories).
-  - Phase 6: Cross-source deduplication (merge near-duplicates).
-  - Phase 7: PainCluster generation (form clusters from accepted signals).
-  - Phase 8: PainCluster scoring (apply deterministic scoring formula).
-  - Phase 9: Opportunity candidate framing (for clusters scoring >= 0.70).
-  - Phase 10: Source quality reporting (compute metrics, generate report).
-  - Phase 11: Founder review package generation (bundle clusters and candidates).
-  - Phase 12: Weekly pilot report generation (human-readable Markdown).
-  - Phase 13: Founder feedback ingestion (after review; stub/hook for now).
-  - Phase 14: Pilot retrospective (after 1–2 cycles; stub/hook for now).
-- [ ] **6.4** Implement preflight validation (Phase 1):
-  - Source registry configuration is valid.
-  - Required fixture files exist.
-  - Repo allowlist is non-empty for GitHub Issues.
-  - Scoring configuration is valid.
-  - No deferred sources are enabled.
-  - Preflight failure blocks the run.
-- [ ] **6.5** Write outputs to `artifacts/discovery/pilot_runs/<run_id>/` with the structure from contract Section 8:
-  - `raw_evidence/hacker_news_algolia.json`
-  - `raw_evidence/github_issues.json`
-  - `candidate_signals.json`
-  - `weak_noise_buckets.json`
-  - `pain_clusters.json`
-  - `opportunity_candidates.json`
-  - `source_quality_report.json`
-  - `source_quality_report.md`
-  - `founder_review_package.json`
-  - `weekly_pilot_report.md`
-  - `traceability_index.json`
-  - `validation_summary.json`
-- [ ] **6.6** Generate run ID in format `pilot_run_YYYY-MM-DD_<8char_hex>`.
-- [ ] **6.7** Implement source URL traceability validation: every artifact must have complete traceability chain; produce traceability index.
-- [ ] **6.8** No live APIs in unit tests. Fixture-first. Live mode opt-in behind explicit flag.
-- [ ] **6.9** Live mode not default. Requires explicit `--live` flag (or equivalent) and founder approval.
-- [ ] **6.10** Write fixture tests covering:
-  - Full pipeline execution with deterministic fixtures.
-  - All 10 required output artifacts exist after run.
-  - Preflight validation catches missing fixtures, invalid config.
-  - Preflight validation catches deferred sources being enabled.
-  - Run ID uniqueness and format.
-  - Traceability index completeness (every candidate → source_url).
-  - Source URL validation in output artifacts.
-  - Empty input handling (no evidence).
-  - Single-source run (HN-only, GitHub-only).
-  - Cross-source run (HN + GitHub).
-  - Pipeline fails gracefully on invalid input.
-- [ ] **6.11** Do not wire into default weekly run. Pilot orchestrator is a separate entrypoint.
-
-### Validation Expectation
-
-- `.\scripts\dev-test.ps1` passes for pilot orchestrator tests.
-- Fixture run produces all 10 required output artifacts.
-- Every artifact has valid source URLs.
-- Traceability index is complete and correct.
-
-### Definition of Done
-
-- [ ] **6.12** `src/oos/discovery_pilot.py` exists with full pipeline orchestrator.
-- [ ] **6.13** CLI entrypoint exists (`oos discovery-pilot run` or script).
-- [ ] **6.14** `tests/test_discovery_pilot.py` exists with fixture tests covering all 6.10 requirements.
-- [ ] **6.15** All tests pass (`.\scripts\dev-test.ps1`).
-- [ ] **6.16** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **6.17** One local commit made.
-
-### Explicit Non-Goals
-
-- Integrating into default weekly run (separate entrypoint).
-- Live mode implementation beyond the flag (live mode requires separate controlled smoke and founder approval).
-- Phase 13 (feedback ingestion) and Phase 14 (retrospective) full implementation — stubs/hooks only.
-- Database or persistent storage for pilot runs.
-- UI or dashboard for pilot run monitoring.
-
-### Escalation Triggers
-
-- If Phase 9 (opportunity candidate framing) requires LLM calls that cannot be stubbed or deferred, escalate.
-- If any required output artifact cannot be produced from available pipeline data, escalate.
-- If the orchestrator needs to modify existing weekly run code to function, escalate.
-
----
-
-## 7. Founder Review Package for Pilot
+## 6. Founder Review Package for Pilot
 
 ### Intent
 
@@ -731,7 +623,7 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
 
 ### Implementation Requirements
 
-- [ ] **7.1** Implement Founder Review Package generation with these sections:
+- [ ] **6.1** Implement Founder Review Package generation with these sections:
   - Ranked list of pain clusters awaiting review (ranked by overall_score descending).
   - Ranked list of opportunity candidates awaiting review.
   - For each cluster: cluster_id, pain_pattern, overall_score, score breakdown (all 8 components), recurrence, source_diversity, evidence links (evidence_id, source_url, source_type, title, contribution_to_cluster), representative quotes, advisory recommendation (`review_for_promotion`, `needs_more_evidence`, `likely_noise`, `park_for_later`).
@@ -739,19 +631,19 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
   - Clear action prompts for each item: PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER.
   - Space for `KillReason` if killing.
   - Previous cycle's decisions for context (if available).
-- [ ] **7.2** Implement founder decision ingestion:
+- [ ] **6.2** Implement founder decision ingestion:
   - Accept PROMOTE / PARK / KILL / NEEDS_MORE_EVIDENCE / REVISIT_LATER decisions.
   - Require `KillReason` for KILL decisions.
   - Validate KillReason explains **why the idea died**, not just labels it.
   - Store decisions in structured format for feedback loop.
-- [ ] **7.3** Implement scoring calibration hooks from founder feedback (contract Section 14.2):
+- [ ] **6.3** Implement scoring calibration hooks from founder feedback (contract Section 14.2):
   - KILL due to noise → flag noise_risk adjustment.
   - KILL due to wrong ICP → flag icp_fit calibration.
   - PROMOTE → validate scoring weights.
   - PARK → preserve cluster for later (no score adjustment).
   - NEEDS_MORE_EVIDENCE → flag for additional collection.
-- [ ] **7.4** Implement JSON output format for machine ingestion.
-- [ ] **7.5** Write fixture tests covering:
+- [ ] **6.4** Implement JSON output format for machine ingestion.
+- [ ] **6.5** Write fixture tests covering:
   - Package generation with known clusters and candidates.
   - All 5 decision statuses applied correctly.
   - KillReason validation: good ("All three evidence items are self-promotion...") vs bad ("Noise").
@@ -761,7 +653,7 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
   - Decision ingestion updates cluster/candidate status.
   - Empty input handling (no clusters, no candidates).
   - Ranking order (by overall_score descending, ties broken by source_diversity → recurrence → lower noise_risk).
-- [ ] **7.6** No LLM calls. Decision prompts and advisory recommendations are rule-based.
+- [ ] **6.6** No LLM calls. Decision prompts and advisory recommendations are rule-based.
 
 ### Validation Expectation
 
@@ -772,11 +664,11 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
 
 ### Definition of Done
 
-- [ ] **7.7** `src/oos/founder_review_package.py` exists with package generation and decision ingestion.
-- [ ] **7.8** `tests/test_founder_review_package_pilot.py` exists with fixture tests covering all 7.5 requirements.
-- [ ] **7.9** All tests pass (`.\scripts\dev-test.ps1`).
-- [ ] **7.10** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **7.11** One local commit made.
+- [ ] **6.7** `src/oos/founder_review_package.py` exists with package generation and decision ingestion.
+- [ ] **6.8** `tests/test_founder_review_package_pilot.py` exists with fixture tests covering all 6.5 requirements.
+- [ ] **6.9** All tests pass (`.\scripts\dev-test.ps1`).
+- [ ] **6.10** `.\scripts\dev-git-check.ps1` passes.
+- [ ] **6.11** One local commit made.
 
 ### Explicit Non-Goals
 
@@ -794,6 +686,118 @@ Implement the Founder Review Package as specified in [`docs/contracts/operationa
 
 ---
 
+## 7. Operational Discovery Pilot Orchestrator
+
+### Intent
+
+Implement the Operational Discovery Pilot orchestrator — the single entrypoint that runs the full pilot pipeline: RawEvidence → CandidateSignals → PainClusters → OpportunityCandidates → SourceQualityReport → FounderReviewPackage. Uses fixture/bounded input by default. Writes outputs to `artifacts/discovery/pilot_runs/<run_id>/`. No live APIs in unit tests. Live mode not default.
+
+### Allowed Change Type
+
+- Create: `src/oos/discovery_pilot.py` (new module: orchestrator)
+- Create: `tests/test_discovery_pilot.py` (fixture tests)
+- May create: CLI entrypoint in `src/oos/cli.py` (if pilot command is added)
+- May read (do not modify): `docs/contracts/operational_discovery_pilot_run_contract.md`, `src/oos/models.py`, `src/oos/pain_cluster.py` (from item 1), `src/oos/pain_cluster_assembly.py` (from item 4), `src/oos/source_quality_report.py` (from item 5), `src/oos/founder_review_package.py` (from item 6)
+- Do NOT modify existing source code outside the new module (except possibly adding a CLI command).
+- Do NOT modify tests, scripts, or artifacts outside new test files.
+
+### Main Files Likely Affected
+
+| File | Action | Scope |
+|------|--------|-------|
+| `src/oos/discovery_pilot.py` | Create | Orchestrator: 14-phase lifecycle, artifact writing, preflight validation |
+| `src/oos/cli.py` | May modify | Add `discovery-pilot` CLI command |
+| `tests/test_discovery_pilot.py` | Create | Fixture tests: end-to-end pipeline, artifact output, traceability verification |
+
+### Implementation Requirements
+
+- [ ] **7.1** Implement one CLI command or script entrypoint (e.g., `oos discovery-pilot run` or `.\scripts\run-discovery-pilot.ps1`).
+- [ ] **7.2** Implement fixture/bounded input mode as default (contract Section 6 — fixture mode).
+- [ ] **7.3** Implement the 14-phase pilot run lifecycle (contract Section 9):
+  - Phase 1: Preflight (validate config, fixtures, allowlists).
+  - Phase 2: Source collection / fixture loading (HN + GitHub Issues).
+  - Phase 3: Raw evidence validation (validate every RawEvidence record).
+  - Phase 4: Candidate signal extraction (extract CandidateSignals).
+  - Phase 5: Weak/noise classification (apply noise categories).
+  - Phase 6: Cross-source deduplication (merge near-duplicates).
+  - Phase 7: PainCluster generation (form clusters from accepted signals).
+  - Phase 8: PainCluster scoring (apply deterministic scoring formula).
+  - Phase 9: Opportunity candidate framing (for clusters scoring >= 0.70).
+  - Phase 10: Source quality reporting (compute metrics, generate report).
+  - Phase 11: Founder review package generation (bundle clusters and candidates; uses item 6 module).
+  - Phase 12: Weekly pilot report generation (human-readable Markdown).
+  - Phase 13: Founder feedback ingestion (stub/report hook only in v2.12; full feedback automation belongs to later roadmap unless already supported by existing founder review infrastructure — this phase must not expand scope beyond a stub/hook).
+  - Phase 14: Pilot retrospective (stub/report hook only in v2.12; must not expand scope — full retrospective automation belongs to later roadmap unless separately implemented).
+- [ ] **7.4** Implement preflight validation (Phase 1):
+  - Source registry configuration is valid.
+  - Required fixture files exist.
+  - Repo allowlist is non-empty for GitHub Issues.
+  - Scoring configuration is valid.
+  - No deferred sources are enabled.
+  - Preflight failure blocks the run.
+- [ ] **7.5** Write outputs to `artifacts/discovery/pilot_runs/<run_id>/` with the structure from contract Section 8:
+  - `raw_evidence/hacker_news.json`
+  - `raw_evidence/github_issues.json`
+  - `candidate_signals.json`
+  - `weak_noise_buckets.json`
+  - `pain_clusters.json`
+  - `opportunity_candidates.json`
+  - `source_quality_report.json`
+  - `source_quality_report.md`
+  - `founder_review_package.json`
+  - `weekly_pilot_report.md`
+  - `traceability_index.json`
+  - `validation_summary.json`
+- [ ] **7.6** Generate run ID in format `pilot_run_YYYY-MM-DD_<8char_hex>`.
+- [ ] **7.7** Implement source URL traceability validation: every artifact must have complete traceability chain; produce traceability index.
+- [ ] **7.8** No live APIs in unit tests. Fixture-first. Live mode opt-in behind explicit flag.
+- [ ] **7.9** Live mode not default. Requires explicit `--live` flag (or equivalent) and founder approval.
+- [ ] **7.10** Write fixture tests covering:
+  - Full pipeline execution with deterministic fixtures.
+  - All 12 required output artifacts exist after run.
+  - Preflight validation catches missing fixtures, invalid config.
+  - Preflight validation catches deferred sources being enabled.
+  - Run ID uniqueness and format.
+  - Traceability index completeness (every candidate → source_url).
+  - Source URL validation in output artifacts.
+  - Empty input handling (no evidence).
+  - Single-source run (HN-only, GitHub-only).
+  - Cross-source run (HN + GitHub).
+  - Pipeline fails gracefully on invalid input.
+- [ ] **7.11** Do not wire into default weekly run. Pilot orchestrator is a separate entrypoint.
+
+### Validation Expectation
+
+- `.\scripts\dev-test.ps1` passes for pilot orchestrator tests.
+- Fixture run produces all 12 required output artifacts.
+- Every artifact has valid source URLs.
+- Traceability index is complete and correct.
+
+### Definition of Done
+
+- [ ] **7.12** `src/oos/discovery_pilot.py` exists with full pipeline orchestrator.
+- [ ] **7.13** CLI entrypoint exists (`oos discovery-pilot run` or script).
+- [ ] **7.14** `tests/test_discovery_pilot.py` exists with fixture tests covering all 7.10 requirements.
+- [ ] **7.15** All tests pass (`.\scripts\dev-test.ps1`).
+- [ ] **7.16** `.\scripts\dev-git-check.ps1` passes.
+- [ ] **7.17** One local commit made.
+
+### Explicit Non-Goals
+
+- Integrating into default weekly run (separate entrypoint).
+- Live mode implementation beyond the flag (live mode requires separate controlled smoke and founder approval).
+- Phase 13 (feedback ingestion) and Phase 14 (retrospective) full implementation — stubs/report hooks only in v2.12. These phases must not expand scope. Full feedback automation and retrospective automation belong to later roadmaps unless already supported by existing founder review infrastructure.
+- Database or persistent storage for pilot runs.
+- UI or dashboard for pilot run monitoring.
+
+### Escalation Triggers
+
+- If Phase 9 (opportunity candidate framing) requires LLM calls that cannot be stubbed or deferred, escalate.
+- If any required output artifact cannot be produced from available pipeline data, escalate.
+- If the orchestrator needs to modify existing weekly run code to function, escalate.
+
+---
+
 ## 8. Controlled Pilot Smoke Test
 
 ### Intent
@@ -804,7 +808,7 @@ Implement a deterministic controlled smoke test that runs the full pilot pipelin
 
 - Create or update: `tests/test_discovery_pilot_smoke.py` (new smoke test file)
 - Update: `scripts/run-controlled-smoke.ps1` (to include pilot smoke if needed)
-- May read (do not modify): `docs/runbooks/controlled_weekly_run_smoke_test.md`, `docs/contracts/operational_discovery_pilot_run_contract.md`, `src/oos/discovery_pilot.py` (from item 6)
+- May read (do not modify): `docs/runbooks/controlled_weekly_run_smoke_test.md`, `docs/contracts/operational_discovery_pilot_run_contract.md`, `src/oos/discovery_pilot.py` (from item 7)
 - Do NOT modify existing source code outside the smoke test file.
 - Do NOT modify scripts except `run-controlled-smoke.ps1`.
 
@@ -825,11 +829,11 @@ Implement a deterministic controlled smoke test that runs the full pilot pipelin
   - Fixtures must include noise items (flamewars, launch hype, low-context issues, stale issues).
 - [ ] **8.2** Implement smoke test that:
   - Runs the full pilot pipeline with fixture input.
-  - Verifies all 10 required output artifacts exist at expected paths.
+  - Verifies all 12 required output artifacts exist at expected paths.
   - Verifies source URL traceability: every evidence entry has `http(s)://` URL, zero placeholder URLs.
   - Verifies source quality report: all 8 sections present, all 18 metrics computed.
   - Verifies founder review package: clusters ranked, candidates listed, decision prompts present.
-  - Verifies no deferred sources are used (only `hacker_news_algolia` and `github_issues` appear in source fields).
+  - Verifies no deferred sources are used (only `hacker_news` and `github_issues` appear in source fields).
   - Verifies traceability index completeness.
   - Verifies output artifacts are valid JSON.
 - [ ] **8.3** Smoke test must be deterministic: same fixture input → same output every run.
@@ -927,7 +931,7 @@ v2.12 is successful if the system can run a deterministic controlled pilot produ
 | Cross-source clusters | At least 2 with source_diversity >= 2 | At least 1–2 from fixtures (fixtures engineered for cross-over) |
 
 The system must also:
-- Produce all 10 required output artifacts.
+- Produce all 12 required output artifacts.
 - Have zero placeholder or missing source URLs.
 - Have deterministic output for identical fixture input.
 - Pass all unit tests.
@@ -1025,9 +1029,9 @@ This branch implements items 1–9 from this roadmap.
 2. **Item 2 — HN RawEvidence hardening** (source readiness).
 3. **Item 3 — GitHub Issues RawEvidence hardening** (source readiness).
 4. **Item 4 — Cross-source deduplication and PainCluster assembly** (connects items 1–3).
-5. **Item 5 — Source Quality Report** (can parallel items 2–3 if PainCluster model exists).
-6. **Item 6 — Operational Discovery Pilot orchestrator** (integrates items 1–5).
-7. **Item 7 — Founder Review Package** (depends on items 1 and 6).
+5. **Item 5 — Source Quality Report** (contract/module can be drafted earlier; meaningful fixture tests depend on hardened HN/GitHub outputs from items 2–3; final validation should run after items 2–4).
+6. **Item 6 — Founder Review Package for Pilot** (depends on items 1, 4, 5; must be implemented before item 7 orchestrator relies on it).
+7. **Item 7 — Operational Discovery Pilot orchestrator** (integrates items 1–6).
 8. **Item 8 — Controlled pilot smoke** (depends on items 1–7).
 9. **Item 9 — Final v2.12 checkpoint** (closure; depends on items 1–8).
 
