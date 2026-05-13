@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `11 — Final v2.13 Checkpoint`
-- [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **11 / 12**
-- [x] **0.5** Remaining: **1 / 12**
+- [x] **0.2** Current item: `none / complete`
+- [x] **0.3** Roadmap state: `complete / closed`
+- [x] **0.4** Completed from this roadmap: **12 / 12**
+- [x] **0.5** Remaining: **0 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -16,8 +16,8 @@
 - **Planning branch:** `planning/v2-13-operational-pilot-go-no-go` (docs-only; this file)
 - **Recommended implementation branch:** `ops/v2-13-operational-pilot-cycle-1`
 - **Based on:** v2.12 / PR #52 + PR #53 / tag `v2.12`
-- **Status:** Execution
-- **Goal:** Run first controlled operational pilot cycle and produce Go / Conditional Go / No-Go decision
+- **Status:** complete / closed
+- **Goal:** ~~Run first controlled operational pilot cycle and produce Go / Conditional Go / No-Go decision~~ Operational preparation package complete. Actual pilot run, founder review, noise/quality analysis, and Go/No-Go decision remain next operational actions after merge/approval.
 
 ### Strategic Purpose
 
@@ -290,9 +290,9 @@ Create the formal Pilot Cycle 1 brief that defines scope, expectations, success/
 
 - [x] **2.9** Pilot Cycle 1 Brief document exists.
 - [x] **2.10** All 8 required sections are populated.
-- [ ] **2.11** Founder has reviewed and approved the brief.
-- [ ] **2.12** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **2.13** One local commit made.
+- [ ] **2.11** Founder has reviewed and approved the brief. *(Pending — not applicable until pilot execution.)*
+- [x] **2.12** `.\scripts\dev-git-check.ps1` passes.
+- [x] **2.13** One local commit made (`[v2.13] 2 define pilot cycle brief` — commit `7a84003`).
 
 ### Explicit Non-Goals
 
@@ -411,7 +411,7 @@ Define the GitHub repository allowlist and issue search logic for Pilot Cycle 1.
 - [x] **4.8** GitHub Issues Repo Allowlist and Query Plan document exists.
 - [x] **4.9** All 7 required sections are populated.
 - [x] **4.10** Repo allowlist is aligned with founder ICP from item 1.
-- [ ] **4.11** Founder has reviewed and approved the repo allowlist.
+- [ ] **4.11** Founder has reviewed and approved the repo allowlist. *(Pending — not applicable until pilot execution.)*
 - [x] **4.12** `.\scripts\dev-git-check.ps1` passes.
 - [x] **4.13** One local commit made (`[v2.13] 4 define github issues query plan` — commit `d28f587`).
 
@@ -470,7 +470,7 @@ Define the procedure for preparing pilot inputs: how raw evidence will be collec
 
 - [x] **5.7** Pilot Input Preparation Procedure document exists.
 - [x] **5.8** All 6 required sections are populated.
-- [ ] **5.9** Collection method (live vs. fixture) is explicitly chosen and founder-approved.
+- [ ] **5.9** Collection method (live vs. fixture) is explicitly chosen and founder-approved. *(Pending — not applicable until pilot execution.)*
 - [x] **5.10** `.\scripts\dev-git-check.ps1` passes.
 - [x] **5.11** One local commit made.
 
@@ -799,12 +799,12 @@ Make the formal Go / Conditional Go / No-Go decision based on pilot results, noi
 
 ### Definition of Done
 
-- [x] **10.6** Go/No-Go Decision document exists.
-- [ ] **10.7** Decision is recorded (GO / CONDITIONAL GO / NO-GO) with rationale. *(Pending actual decision — framework defines the process only.)*
-- [x] **10.8** Next roadmap direction is explicitly stated.
-- [ ] **10.9** Founder has reviewed and signed off on the decision. *(Pending actual decision — framework defines the process only.)*
+- [x] **10.6** Go/No-Go Decision Framework document exists at `docs/decisions/go_no_go_decision_framework_v2_13.md`.
+- [ ] **10.7** Decision is recorded (GO / CONDITIONAL GO / NO-GO) with rationale. *(Pending — not applicable until after actual pilot execution and founder review.)*
+- [x] **10.8** Next roadmap direction is explicitly stated (GO / CONDITIONAL GO / NO-GO paths mapped in framework).
+- [ ] **10.9** Founder has reviewed and signed off on the decision. *(Pending — not applicable until after actual pilot execution.)*
 - [x] **10.10** `.\scripts\dev-git-check.ps1` passes.
-- [x] **10.11** One local commit made.
+- [x] **10.11** One local commit made (`[v2.13] 10 define go no-go decision framework` — commit `9e86288`).
 
 ### Explicit Non-Goals
 
@@ -854,15 +854,15 @@ Close the v2.13 operational pilot cycle. Verify all items are complete, all docu
 
 ### Definition of Done
 
-- [ ] **11.1** All operational items (1–10) are complete and committed.
-- [ ] **11.2** Go/No-Go decision is recorded with rationale.
-- [ ] **11.3** Roadmap overview trackers (0.1–0.6) updated: state → `complete`, current item → `none / complete`, completed → `12 / 12`, remaining → `0 / 12`.
-- [ ] **11.4** Closure run report exists at `docs/dev_ledger/03_run_reports/`.
-- [ ] **11.5** `.\scripts\run-controlled-smoke.ps1` passes.
-- [ ] **11.6** `.\scripts\dev-validate-final.ps1` passes.
-- [ ] **11.7** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **11.8** Do not start v2.14 without explicit roadmap.
-- [ ] **11.9** One local commit made.
+- [x] **11.1** All operational items (1–10) are complete and committed.
+- [x] **11.2** Go/No-Go decision framework defined. Actual decision is not applicable until after pilot execution — framework scope only in v2.13.
+- [x] **11.3** Roadmap overview trackers (0.1–0.6) updated: state → `complete / closed`, current item → `none / complete`, completed → `12 / 12`, remaining → `0 / 12`.
+- [x] **11.4** Closure run report exists at `docs/dev_ledger/03_run_reports/11.1-roadmap-v2-13-final-validation.md`.
+- [x] **11.5** `.\scripts\run-controlled-smoke.ps1` passes.
+- [x] **11.6** `.\scripts\dev-validate-final.ps1` passes.
+- [x] **11.7** `.\scripts\dev-git-check.ps1` passes.
+- [x] **11.8** Do not start v2.14 without explicit roadmap.
+- [x] **11.9** One local commit made.
 
 ### Explicit Non-Goals
 
@@ -1029,3 +1029,39 @@ The following source candidates are explicitly deferred to v2.14+ and are condit
 ---
 
 *Roadmap v2.13 — Operational Pilot Cycle 1 / Go-No-Go Decision. Planning phase. Docs-only. Do not execute without explicit founder approval.*
+
+---
+
+## Pilot Cycle 1 Execution Package Readiness Statement
+
+**Pilot Cycle 1 execution package ready.**
+
+OOS has complete v2.13 operational preparation documents for running the first bounded pilot cycle:
+
+| # | Deliverable | Location |
+|---|------------|----------|
+| 1 | Founder ICP and Preference Profile | `docs/decisions/founder_icp_preference_profile_v2_13.md` |
+| 2 | Pilot Cycle 1 Brief | `docs/decisions/pilot_cycle_1_brief_v2_13.md` |
+| 3 | Hacker News Pilot Query Plan | `docs/decisions/hacker_news_pilot_query_plan_v2_13.md` |
+| 4 | GitHub Issues Repo Allowlist and Query Plan | `docs/decisions/github_issues_repo_allowlist_query_plan_v2_13.md` |
+| 5 | Pilot Input Preparation Procedure | `docs/decisions/pilot_input_preparation_procedure_v2_13.md` |
+| 6 | Pilot Run Procedure | `docs/decisions/pilot_run_procedure_v2_13.md` |
+| 7 | Founder Review Protocol | `docs/decisions/founder_review_protocol_v2_13.md` |
+| 8 | Pilot Results Report Template | `docs/decisions/pilot_results_report_template_v2_13.md` |
+| 9 | Noise and Quality Analysis Framework | `docs/decisions/noise_quality_analysis_framework_v2_13.md` |
+| 10 | Go / Conditional Go / No-Go Decision Framework | `docs/decisions/go_no_go_decision_framework_v2_13.md` |
+
+### Remaining Pending Next Operational Actions
+
+The following actions remain pending and are **not** part of the v2.13 closure:
+
+1. Prepare actual bounded input package (fixture/live, per item 5 procedure).
+2. Obtain required founder approvals (live collection, repo allowlist sign-off).
+3. Run pilot using explicit `output_dir` (per item 6 procedure).
+4. Perform founder review (per item 7 protocol).
+5. Complete noise/quality analysis (per item 9 framework, populated with real data).
+6. Make actual Go / Conditional Go / No-Go decision (per item 10 framework).
+
+Broad source expansion remains blocked until after actual Go/No-Go decision.
+
+> **Actual pilot run, founder review, noise/quality analysis, and Go/No-Go decision remain next operational actions after merge/approval.**

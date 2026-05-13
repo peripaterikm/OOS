@@ -10,8 +10,9 @@
 - Roadmap v2.10 status: **complete / closed** (`8 / 9`, item 5 skipped; replace-all gate BLOCKED)
 - Roadmap v2.11 status: **complete / closed** (`10 / 10`, branch `feat/v2-11-discovery-sources-foundation`, local-only)
 - Roadmap v2.12 status: **complete / closed** (`10 / 10`, branch `feat/v2-12-operational-discovery-pilot`, PR #52 merged)
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
-- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
+- Roadmap v2.13 status: **complete / closed** (`12 / 12`, branch `ops/v2-13-operational-pilot-cycle-1`, operational preparation package)
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
+- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
@@ -21,18 +22,20 @@
 - Roadmap v2.11 status: `complete / closed` (`10 / 10`, branch `feat/v2-11-discovery-sources-foundation`)
 - Roadmap v2.12 planning created: yes
 - Roadmap v2.12 status: `complete / closed` (`10 / 10`, branch `feat/v2-12-operational-discovery-pilot`)
+- Roadmap v2.13 planning created: yes
+- Roadmap v2.13 status: **complete / closed** (`12 / 12`, branch `ops/v2-13-operational-pilot-cycle-1`)
 - Current item: `none / complete`
 - Roadmap state: `complete / closed`
-- Completed: `10 / 10`
-- Remaining: `0 / 10`
-- Latest completed roadmap item: Roadmap v2.12 item `9` — Final v2.12 Checkpoint
-- Next planned roadmap item: `none (v2.12 is complete; v2.13 requires explicit roadmap)`
+- Completed: `12 / 12`
+- Remaining: `0 / 12`
+- Latest completed roadmap item: Roadmap v2.13 item `11` — Final v2.13 Checkpoint
+- Next planned roadmap item: `none (v2.13 is complete; v2.14 requires explicit roadmap and actual Go/No-Go decision or explicit founder override)`
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `docs/v2-12-post-merge-metadata-fix`
+- Current branch: `ops/v2-13-operational-pilot-cycle-1`
 - Previous branch (v2.11 implementation): `feat/v2-11-discovery-sources-foundation`
 - Previous branch (v2.10 implementation): `feat/v2-10-recovery-correction`
 - Previous branch (v2.9 implementation): `feat/v2-9-output-source-recovery-block-1`
@@ -281,3 +284,52 @@ OOS can run a deterministic controlled discovery pilot on HN + GitHub Issues fix
 - PR #52 merged to main; v2.12 tag pending.
 - v2.12 is complete and closed.
 - **Next action:** Main verification / tag after this cleanup PR is merged. Do not start v2.13 without explicit roadmap.
+
+## Roadmap v2.13 Completion
+
+- Roadmap: v2.13 Operational Pilot Cycle 1 / Go-No-Go Decision
+- Branch: `ops/v2-13-operational-pilot-cycle-1`
+- Status: **complete / closed** as operational preparation package
+- Current item: `none / complete`
+- Latest local commit before final checkpoint: `9e86288` ([v2.13] 10 define go no-go decision framework)
+- Final checkpoint commit: pending before commit
+
+### v2.13 Key Outcomes
+
+1. **Founder ICP and Preference Profile** — `docs/decisions/founder_icp_preference_profile_v2_13.md`
+2. **Pilot Cycle 1 Brief** — `docs/decisions/pilot_cycle_1_brief_v2_13.md`
+3. **Hacker News Pilot Query Plan** — `docs/decisions/hacker_news_pilot_query_plan_v2_13.md`
+4. **GitHub Issues Repo Allowlist and Query Plan** — `docs/decisions/github_issues_repo_allowlist_query_plan_v2_13.md`
+5. **Pilot Input Preparation Procedure** — `docs/decisions/pilot_input_preparation_procedure_v2_13.md`
+6. **Pilot Run Procedure** — `docs/decisions/pilot_run_procedure_v2_13.md`
+7. **Founder Review Protocol** — `docs/decisions/founder_review_protocol_v2_13.md`
+8. **Pilot Results Report Template** — `docs/decisions/pilot_results_report_template_v2_13.md`
+9. **Noise and Quality Analysis Framework** — `docs/decisions/noise_quality_analysis_framework_v2_13.md`
+10. **Go / Conditional Go / No-Go Decision Framework** — `docs/decisions/go_no_go_decision_framework_v2_13.md`
+11. **Final v2.13 Checkpoint** — this item
+
+**Pilot Cycle 1 execution package ready.**
+
+### Explicitly Pending Next Operational Actions
+
+The following actions remain pending and are NOT part of v2.13 closure:
+
+1. Prepare actual bounded input package.
+2. Obtain required founder approvals (live collection, repo allowlist sign-off).
+3. Run pilot using explicit `output_dir`.
+4. Perform founder review.
+5. Complete noise/quality analysis (populated with real data).
+6. Make actual Go / Conditional Go / No-Go decision.
+
+Broad source expansion remains blocked until after actual Go/No-Go decision. Do not start v2.14 without explicit roadmap and actual Go/No-Go decision or explicit founder override.
+
+### v2.13 Branch and Commit Notes
+
+- Planning branch: `planning/v2-13-operational-pilot-go-no-go` (docs-only; merged to main via PR #54)
+- Implementation/execution branch: `ops/v2-13-operational-pilot-cycle-1`
+- Based on: v2.12 / PR #52 + PR #53 / tag `v2.12`
+- Latest local commit before final checkpoint: `9e86288` ([v2.13] 10 define go no-go decision framework)
+- Final checkpoint commit: pending
+- No push, PR, merge, or tag was performed.
+- v2.13 is complete and closed as operational preparation package.
+- **Next action:** Prepare PR/merge only when explicitly requested. Do not start actual pilot run without explicit founder approval. Do not start v2.14 without actual Go/No-Go decision or explicit roadmap.
