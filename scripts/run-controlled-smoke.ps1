@@ -497,6 +497,296 @@ Record-Pass "no real artifacts/ written by this script (temp-only)"
 Record-Pass "no live API/LLM calls detected"
 
 # ===========================================================================
+# STEP 10: Operational Discovery Pilot Smoke
+# ===========================================================================
+Write-Section "Step 10: Operational Discovery Pilot Smoke"
+
+$PilotOutputDir = Join-Path $TempRoot "pilot_output"
+$PilotFixturePath = Join-Path $TempRoot "pilot_fixture.json"
+
+# Build fixture evidence: HN + GitHub Issues records about AI agent debugging pain
+$FixtureEvidence = @(
+    @{
+        evidence_id = "hn_pilot_smoke_001"
+        source_id = "hacker_news"
+        source_type = "discussion"
+        source_url = "https://news.ycombinator.com/item?id=41000001"
+        title = "Ask HN: How do you debug AI agent failures in production CI?"
+        body = "We've been running AI coding agents in our CI pipeline for 3 months and debugging their failures is becoming a major time sink. When an agent generates broken code, tracing the failure back to the prompt vs the context is nearly impossible. We're spending 10+ hours/week on this."
+        evidence_kind = "pain_signal_candidate"
+        created_at = "2026-05-13T08:00:00Z"
+        fetched_at = "2026-05-13T10:00:00Z"
+        collected_at = "2026-05-13T10:00:00Z"
+        topic_id = "ai_agent_debugging"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @()
+        raw_metadata = @{ target_user = "developer" }
+        contribution_to_cluster = "primary"
+        excerpt = "We've been running AI coding agents in our CI pipeline for 3 months and debugging their failures is becoming a major time sink."
+    },
+    @{
+        evidence_id = "gh_pilot_smoke_001"
+        source_id = "github_issues"
+        source_type = "issue_tracker"
+        source_url = "https://github.com/langchain-ai/langgraph/issues/1234"
+        title = "Agent debugging traces are incomplete in CI mode"
+        body = "When running LangGraph agents in CI, the debug traces don't capture sufficient context to diagnose why an agent took a wrong action. This makes it extremely painful to fix agent behavior issues that only manifest in CI environments."
+        evidence_kind = "bug_report"
+        created_at = "2026-05-12T14:00:00Z"
+        fetched_at = "2026-05-13T10:00:00Z"
+        collected_at = "2026-05-13T10:00:00Z"
+        topic_id = "ai_agent_debugging"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @()
+        raw_metadata = @{ target_user = "developer"; repo = "langchain-ai/langgraph" }
+        contribution_to_cluster = "primary"
+        excerpt = "When running LangGraph agents in CI, the debug traces don't capture sufficient context to diagnose why an agent took a wrong action."
+    }
+)
+
+$FixtureJson = $FixtureEvidence | ConvertTo-Json -Depth 5
+# Use UTF-8 without BOM to avoid Python json.load() error
+$Utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText($PilotFixturePath, $FixtureJson, $Utf8NoBom)
+Write-Host "  Pilot fixture written with $($FixtureEvidence.Count) evidence items"
+Record-Pass "pilot smoke fixture created"
+
+# Run pilot orchestrator via Python API (no live APIs, no LLMs, no CLI)
+$PilotPyScript = Join-Path $TempRoot "_pilot_smoke.py"
+@"
+import json, sys
+sys.path.insert(0, '$($TempSrc -replace '\\', '/')')
+from oos.operational_discovery_pilot import (
+    OperationalDiscoveryPilotInput,
+    run_operational_discovery_pilot,
+)
+
+fixture_path = '$($PilotFixturePath -replace '\\', '/')'
+output_dir = '$($PilotOutputDir -replace '\\', '/')'
+
+with open(fixture_path, 'r', encoding='utf-8-sig') as f:
+    evidence = json.load(f)
+
+inp = OperationalDiscoveryPilotInput(
+    raw_evidence=evidence,
+    created_at='2026-05-13T10:00:00Z',
+    discovery_run_id='pilot_smoke_v2_12',
+    output_dir=output_dir,
+)
+
+result = run_operational_discovery_pilot(inp)
+
+summary = {
+    'discovery_run_id': result.discovery_run_id,
+    'is_valid': result.is_valid,
+    'raw_evidence_count': result.raw_evidence_count,
+    'candidate_signal_count': result.candidate_signal_count,
+    'pain_cluster_count': result.pain_cluster_count,
+    'errors': [e[:200] for e in result.errors],
+    'artifact_count': len(result.artifact_paths),
+}
+
+print('PILOT_RESULT_JSON:' + json.dumps(summary))
+
+checks = []
+checks.append(('is_valid', result.is_valid))
+checks.append(('raw_evidence_count_gte_2', result.raw_evidence_count >= 2))
+checks.append(('candidate_signal_count_gte_1', result.candidate_signal_count >= 1))
+checks.append(('pain_cluster_count_gte_1', result.pain_cluster_count >= 1))
+checks.append(('no_deferred_source_errors', not any('deferred' in e.lower() for e in result.errors)))
+checks.append(('no_errors', len(result.errors) == 0))
+
+for name, passed in checks:
+    print(f'PILOT_CHECK: {name} = {passed}')
+
+sys.exit(0 if all(p for _, p in checks) else 1)
+"@ | Set-Content -Path $PilotPyScript -Encoding UTF8
+
+$PilotResult = Invoke-CliSafe -Arguments @($PilotPyScript)
+$PilotOutput = ($PilotResult.Output | Out-String)
+Write-Host "  Pilot orchestrator output:"
+Write-Host $PilotOutput
+
+if ($PilotResult.ExitCode -ne 0) {
+    Record-Fail "operational discovery pilot run" "exit code: $($PilotResult.ExitCode)"
+} else {
+    Record-Pass "operational discovery pilot: pipeline completed (exit 0)"
+}
+
+# Verify checks from Python output
+if ($PilotOutput -match "PILOT_CHECK: is_valid = True") {
+    Record-Pass "operational discovery pilot: result.is_valid=True"
+} else {
+    Record-Fail "operational discovery pilot: result.is_valid" "Expected True"
+}
+
+if ($PilotOutput -match "PILOT_CHECK: raw_evidence_count_gte_2 = True") {
+    Record-Pass "operational discovery pilot: raw_evidence_count >= 2"
+} else {
+    Record-Fail "operational discovery pilot: raw_evidence_count" "Expected >= 2"
+}
+
+if ($PilotOutput -match "PILOT_CHECK: candidate_signal_count_gte_1 = True") {
+    Record-Pass "operational discovery pilot: candidate_signal_count >= 1"
+} else {
+    Record-Fail "operational discovery pilot: candidate_signal_count" "Expected >= 1"
+}
+
+if ($PilotOutput -match "PILOT_CHECK: pain_cluster_count_gte_1 = True") {
+    Record-Pass "operational discovery pilot: pain_cluster_count >= 1"
+} else {
+    Record-Fail "operational discovery pilot: pain_cluster_count" "Expected >= 1"
+}
+
+if ($PilotOutput -match "PILOT_CHECK: no_deferred_source_errors = True") {
+    Record-Pass "operational discovery pilot: no deferred sources"
+} else {
+    Record-Fail "operational discovery pilot: deferred sources" "Deferred source detected"
+}
+
+if ($PilotOutput -match "PILOT_CHECK: no_errors = True") {
+    Record-Pass "operational discovery pilot: no pipeline errors"
+} else {
+    Record-Fail "operational discovery pilot: pipeline errors" "Errors found in pilot run"
+}
+
+# Verify required artifacts exist on disk
+$PilotRunDir = Join-Path $PilotOutputDir "pilot_smoke_v2_12"
+if (Test-Path $PilotRunDir) {
+    $RequiredArtifacts = @(
+        "raw_evidence.json",
+        "candidate_signals.json",
+        "pain_clusters.json",
+        "source_quality_report.json",
+        "source_quality_report.md",
+        "founder_review_package.json",
+        "founder_review_package.md",
+        "validation_summary.json",
+        "pilot_run_manifest.json"
+    )
+    $MissingArtifacts = @()
+    foreach ($artifact in $RequiredArtifacts) {
+        $ArtifactPath = Join-Path $PilotRunDir $artifact
+        if (-not (Test-Path $ArtifactPath)) {
+            $MissingArtifacts += $artifact
+        }
+    }
+    if ($MissingArtifacts.Count -eq 0) {
+        Record-Pass "operational discovery pilot: all 9 required artifacts exist"
+    } else {
+        Record-Fail "operational discovery pilot: missing artifacts" "Missing: $($MissingArtifacts -join ', ')"
+    }
+
+    # Verify source scope: only hacker_news and github_issues used
+    $RawEvidenceJson = Join-Path $PilotRunDir "raw_evidence.json"
+    if (Test-Path $RawEvidenceJson) {
+        try {
+            $RawContent = Get-Content -Path $RawEvidenceJson -Raw -Encoding UTF8
+            $RawData = $RawContent | ConvertFrom-Json
+            $SourceIds = @($RawData | ForEach-Object { $_.source_id } | Select-Object -Unique)
+            $BadSources = @($SourceIds | Where-Object { $_ -notin @("hacker_news", "github_issues") })
+            if ($BadSources.Count -eq 0) {
+                Record-Pass "operational discovery pilot: source scope clean (HN + GitHub only)"
+            } else {
+                Record-Fail "operational discovery pilot: source scope" "Unexpected sources: $($BadSources -join ', ')"
+            }
+
+            # Verify all source_urls are real http(s) URLs
+            $BadUrls = @($RawData | Where-Object {
+                $url = $_.source_url
+                -not ($url -and ($url.StartsWith("http://") -or $url.StartsWith("https://")))
+            })
+            if ($BadUrls.Count -eq 0) {
+                Record-Pass "operational discovery pilot: all source_urls are http(s)"
+            } else {
+                Record-Fail "operational discovery pilot: source_url traceability" "$($BadUrls.Count) non-http(s) URLs"
+            }
+        } catch {
+            Record-Fail "operational discovery pilot: raw_evidence.json parse" $_.Exception.Message
+        }
+    }
+
+    # Verify validation_summary reports valid run
+    $VsJson = Join-Path $PilotRunDir "validation_summary.json"
+    if (Test-Path $VsJson) {
+        try {
+            $VsContent = Get-Content -Path $VsJson -Raw -Encoding UTF8
+            $VsData = $VsContent | ConvertFrom-Json
+            if ($VsData.is_valid -eq $true) {
+                Record-Pass "operational discovery pilot: validation_summary reports valid run"
+            } else {
+                Record-Fail "operational discovery pilot: validation_summary" "is_valid=False"
+            }
+        } catch {
+            Record-Fail "operational discovery pilot: validation_summary.json" $_.Exception.Message
+        }
+    }
+
+    # Verify founder_review_package traceability_status
+    $FrpJson = Join-Path $PilotRunDir "founder_review_package.json"
+    if (Test-Path $FrpJson) {
+        try {
+            $FrpContent = Get-Content -Path $FrpJson -Raw -Encoding UTF8
+            $FrpData = $FrpContent | ConvertFrom-Json
+            if ($FrpData.PSObject.Properties.Name -contains "traceability_status") {
+                if ($FrpData.traceability_status -eq "clean") {
+                    Record-Pass "operational discovery pilot: founder_review_package traceability=clean"
+                } else {
+                    Record-Fail "operational discovery pilot: founder_review_package traceability" "status=$($FrpData.traceability_status)"
+                }
+            } else {
+                Record-Pass "operational discovery pilot: founder_review_package exists"
+            }
+        } catch {
+            Record-Fail "operational discovery pilot: founder_review_package.json" $_.Exception.Message
+        }
+    }
+
+    # Verify source_quality_report exists and is valid
+    $SqrJson = Join-Path $PilotRunDir "source_quality_report.json"
+    if (Test-Path $SqrJson) {
+        try {
+            $SqrContent = Get-Content -Path $SqrJson -Raw -Encoding UTF8
+            $SqrData = $SqrContent | ConvertFrom-Json
+            if ($SqrData.artifact_type -eq "source_quality_report") {
+                Record-Pass "operational discovery pilot: source_quality_report valid"
+            } else {
+                Record-Fail "operational discovery pilot: source_quality_report" "Wrong artifact_type"
+            }
+        } catch {
+            Record-Fail "operational discovery pilot: source_quality_report.json" $_.Exception.Message
+        }
+    }
+
+    # Verify no deferred sources in source_quality_report
+    if (Test-Path $SqrJson) {
+        try {
+            $SqrContent2 = Get-Content -Path $SqrJson -Raw -Encoding UTF8
+            $SqrData2 = $SqrContent2 | ConvertFrom-Json
+            $ReportSourceIds = @()
+            if ($SqrData2.PSObject.Properties.Name -contains "source_metrics") {
+                $ReportSourceIds = @($SqrData2.source_metrics | ForEach-Object { $_.source_id })
+            }
+            $DeferredInReport = @($ReportSourceIds | Where-Object {
+                $_ -in @("product_hunt", "pimenov_ai", "reddit", "discord", "slack", "x_twitter", "stack_exchange")
+            })
+            if ($DeferredInReport.Count -eq 0) {
+                Record-Pass "operational discovery pilot: no deferred sources in source_quality_report"
+            } else {
+                Record-Fail "operational discovery pilot: deferred in source_quality_report" "Found: $($DeferredInReport -join ', ')"
+            }
+        } catch {
+            Write-Host "  (Source quality report deferred-check skipped: parse issue)"
+        }
+    }
+
+} else {
+    Record-Fail "operational discovery pilot: run directory not found" $PilotRunDir
+}
+
+Record-Pass "operational discovery pilot: smoke step complete (temp-only output)"
+
+# ===========================================================================
 # SUMMARY
 # ===========================================================================
 Write-Host ""

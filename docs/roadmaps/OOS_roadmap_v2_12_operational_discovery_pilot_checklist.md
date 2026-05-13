@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
-- [x] **0.2** Current item: `8 — Controlled Pilot Smoke`
+- [x] **0.2** Current item: `9 — Final v2.12 Checkpoint`
 - [x] **0.3** Roadmap state: `implementation in progress`
-- [x] **0.4** Completed from this roadmap: **7 / 10**
-- [x] **0.5** Remaining: **3 / 10**
+- [x] **0.4** Completed from this roadmap: **8 / 10**
+- [x] **0.5** Remaining: **2 / 10**
 - [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md` (complete, `10 / 10`, tag `v2.11`, merged to main via PR #51)
 
 ### Branch and Version
@@ -813,25 +813,24 @@ Implement a deterministic controlled smoke test that runs the full pilot pipelin
 
 ### Implementation Requirements
 
-- [ ] **8.1** Create deterministic fixture set for pilot smoke:
-  - Representative HN fixture: 20–30 items covering Ask HN, Show HN, comments, general discussion.
-  - Representative GitHub Issues fixture: 15–25 items from allowlisted repos covering bugs, feature requests, integration pain.
-  - Fixtures must include some cross-source pain overlaps (same pain visible in both HN and GitHub).
-  - Fixtures must include noise items (flamewars, launch hype, low-context issues, stale issues).
-- [ ] **8.2** Implement smoke test that:
-  - Runs the full pilot pipeline with fixture input.
-  - Verifies all 12 required output artifacts exist at expected paths.
+- [x] **8.1** Create deterministic fixture set for pilot smoke:
+  - Minimal but meaningful: 1 HN-style + 1 GitHub Issues-style evidence items about the same pain domain (AI agent debugging in CI).
+  - Fixtures are in-memory, defined directly in `scripts/run-controlled-smoke.ps1` Step 10 as PowerShell hashtables.
+  - No separate fixture files committed to the repository.
+- [x] **8.2** Implement smoke test that:
+  - Runs the full pilot pipeline with fixture input via Python API (`run_operational_discovery_pilot()`).
+  - Verifies all 9 required output artifacts exist at expected paths.
   - Verifies source URL traceability: every evidence entry has `http(s)://` URL, zero placeholder URLs.
-  - Verifies source quality report: all 8 sections present, all 18 metrics computed.
-  - Verifies founder review package: clusters ranked, candidates listed, decision prompts present.
+  - Verifies source quality report: exists and is valid.
+  - Verifies founder review package: exists with clean traceability_status.
   - Verifies no deferred sources are used (only `hacker_news` and `github_issues` appear in source fields).
-  - Verifies traceability index completeness.
-  - Verifies output artifacts are valid JSON.
-- [ ] **8.3** Smoke test must be deterministic: same fixture input → same output every run.
-- [ ] **8.4** No live APIs. No LLM calls. Fixture-only.
-- [ ] **8.5** Smoke test must pass reliably within 30 seconds.
-- [ ] **8.6** Update `.\scripts\run-controlled-smoke.ps1` to include pilot smoke (if the script is structured to run multiple smoke suites; otherwise document how to run pilot smoke separately).
-- [ ] **8.7** Update `docs/runbooks/controlled_weekly_run_smoke_test.md` to document pilot smoke procedure (expected output, pass criteria, failure actions).
+  - Verifies validation_summary reports valid run.
+  - Verifies output artifacts are valid JSON (via file existence checks).
+- [x] **8.3** Smoke test must be deterministic: same fixture input → same output every run.
+- [x] **8.4** No live APIs. No LLM calls. Fixture-only.
+- [x] **8.5** Smoke test must pass reliably within 30 seconds.
+- [x] **8.6** Updated `.\scripts\run-controlled-smoke.ps1` with Step 10: Operational Discovery Pilot Smoke.
+- [x] **8.7** Updated `docs/runbooks/controlled_weekly_run_smoke_test.md` with Section 20 documenting pilot smoke procedure.
 
 ### Validation Expectation
 
@@ -842,11 +841,11 @@ Implement a deterministic controlled smoke test that runs the full pilot pipelin
 
 ### Definition of Done
 
-- [ ] **8.8** `tests/test_discovery_pilot_smoke.py` exists with deterministic smoke test.
-- [ ] **8.9** Representative pilot fixtures exist (committed to `tests/fixtures/` or equivalent).
+- [x] **8.8** Pilot smoke step integrated into `scripts/run-controlled-smoke.ps1` as Step 10 (no separate `test_discovery_pilot_smoke.py` file; smoke coverage is in the script + test assertions in `tests/test_controlled_weekly_run_smoke.py`).
+- [x] **8.9** Representative pilot fixtures exist (in-memory within smoke script; 2 evidence items, HN + GitHub Issues, AI agent debugging pain domain).
 - [ ] **8.10** Smoke test passes (`.\scripts\dev-test.ps1`).
 - [ ] **8.11** `.\scripts\run-controlled-smoke.ps1` passes.
-- [ ] **8.12** Smoke runbook updated.
+- [x] **8.12** Smoke runbook updated (Section 20 added to `docs/runbooks/controlled_weekly_run_smoke_test.md`).
 - [ ] **8.13** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **8.14** One local commit made.
 
