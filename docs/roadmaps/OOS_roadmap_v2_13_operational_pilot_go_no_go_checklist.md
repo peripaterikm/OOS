@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `4 — GitHub Issues Repo Allowlist and Query Plan`
+- [x] **0.2** Current item: `5 — Pilot Input Preparation Procedure`
 - [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **4 / 12**
-- [x] **0.5** Remaining: **8 / 12**
+- [x] **0.4** Completed from this roadmap: **5 / 12**
+- [x] **0.5** Remaining: **7 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -351,8 +351,8 @@ Define the specific Hacker News search queries, filters, and collection paramete
 - [x] **3.8** HN Pilot Query Plan document exists.
 - [x] **3.9** All 7 required sections are populated.
 - [x] **3.10** Query plan is aligned with founder ICP from item 1.
-- [ ] **3.11** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **3.12** One local commit made.
+- [x] **3.11** `.\scripts\dev-git-check.ps1` passes.
+- [x] **3.12** One local commit made (`[v2.13] 3 define hacker news query plan` — commit `ee3f5ab`).
 
 ### Explicit Non-Goals
 
@@ -391,13 +391,13 @@ Define the GitHub repository allowlist and issue search logic for Pilot Cycle 1.
 
 ### Requirements
 
-- [ ] **4.1** Define repo allowlist: specific GitHub repositories approved for issue collection.
-- [ ] **4.2** Define issue search logic: keywords, labels, state filters.
-- [ ] **4.3** Exclude pull requests explicitly (enforce `pull_request` key filtering).
-- [ ] **4.4** Require `html_url` for every collected issue (`https://github.com/<owner>/<repo>/issues/<number>`).
-- [ ] **4.5** Focus on AI agents / devtools / data / automation / integration pain themes (aligned with founder ICP).
-- [ ] **4.6** Require explicit `source_url` traceability for every collected item.
-- [ ] **4.7** No default live access unless explicitly approved by founder.
+- [x] **4.1** Define repo allowlist: specific GitHub repositories approved for issue collection.
+- [x] **4.2** Define issue search logic: keywords, labels, state filters.
+- [x] **4.3** Exclude pull requests explicitly (enforce `pull_request` key filtering).
+- [x] **4.4** Require `html_url` for every collected issue (`https://github.com/<owner>/<repo>/issues/<number>`).
+- [x] **4.5** Focus on AI agents / devtools / data / automation / integration pain themes (aligned with founder ICP).
+- [x] **4.6** Require explicit `source_url` traceability for every collected item.
+- [x] **4.7** No default live access unless explicitly approved by founder.
 
 ### Validation Expectation
 
@@ -408,9 +408,9 @@ Define the GitHub repository allowlist and issue search logic for Pilot Cycle 1.
 
 ### Definition of Done
 
-- [ ] **4.8** GitHub Issues Repo Allowlist and Query Plan document exists.
-- [ ] **4.9** All 7 required sections are populated.
-- [ ] **4.10** Repo allowlist is aligned with founder ICP from item 1.
+- [x] **4.8** GitHub Issues Repo Allowlist and Query Plan document exists.
+- [x] **4.9** All 7 required sections are populated.
+- [x] **4.10** Repo allowlist is aligned with founder ICP from item 1.
 - [ ] **4.11** Founder has reviewed and approved the repo allowlist.
 - [ ] **4.12** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **4.13** One local commit made.
