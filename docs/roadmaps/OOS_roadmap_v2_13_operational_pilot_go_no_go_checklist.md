@@ -7,8 +7,8 @@
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
 - [x] **0.2** Current item: `9 — Noise and Quality Analysis`
 - [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **8 / 12**
-- [x] **0.5** Remaining: **4 / 12**
+- [x] **0.4** Completed from this roadmap: **9 / 12**
+- [x] **0.5** Remaining: **3 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -667,8 +667,8 @@ Define the structure and requirements for the Pilot Results Report. This report 
 - [x] **8.18** Artifact and commit policy defined (Section 8): template vs. populated report distinction.
 - [x] **8.19** Required inputs listed (Section 2): 14 expected input artifacts.
 - [x] **8.20** Self-audit checklist present and complete (Section 9).
-- [ ] **8.21** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **8.22** One local commit made.
+- [x] **8.21** `.\scripts\dev-git-check.ps1` passes.
+- [x] **8.22** One local commit made.
 
 ### Explicit Non-Goals
 
