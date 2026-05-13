@@ -5,11 +5,11 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
-- [x] **0.2** Current item: `9 — Final v2.12 Checkpoint`
-- [x] **0.3** Roadmap state: `implementation in progress`
-- [x] **0.4** Completed from this roadmap: **8 / 10**
-- [x] **0.5** Remaining: **2 / 10**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md` (complete, `10 / 10`, tag `v2.11`, merged to main via PR #51)
+- [x] **0.2** Current item: `none / complete`
+- [x] **0.3** Roadmap state: `complete / closed`
+- [x] **0.4** Completed from this roadmap: **10 / 10**
+- [x] **0.5** Remaining: **0 / 10**
+- [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md` (complete, `10 / 10`, tag `v2.11`, merged to main via PR #51)
 
 ### Branch and Version
 
@@ -890,18 +890,27 @@ Close the v2.12 pilot implementation phase. Verify all implementation items are 
 
 ### Definition of Done
 
-- [ ] **9.1** All implementation items (1–8) are complete and committed.
-- [ ] **9.2** Cross-document consistency review complete (implementation matches v2.11 contracts).
-- [ ] **9.3** Roadmap overview trackers (0.1–0.6) updated: state → `complete`, current item → `none / complete`, completed → `10 / 10`, remaining → `0 / 10`.
-- [ ] **9.4** Closure run report exists at `docs/dev_ledger/03_run_reports/11.0-roadmap-v2-12-pilot-implementation-checkpoint.md`.
-- [ ] **9.5** `.\scripts\dev-test.ps1` passes.
-- [ ] **9.6** `.\scripts\run-controlled-smoke.ps1` passes.
-- [ ] **9.7** `.\scripts\dev-validate-final.ps1` passes.
-- [ ] **9.8** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **9.9** Readiness statement produced:
-  - **Operational Discovery Pilot ready** — if all items complete, all tests pass, smoke passes, traceability clean.
-  - **Operational Discovery Pilot not ready** — if any blocking issue remains, with specific reasons.
-- [ ] **9.10** One local commit made.
+- [x] **9.1** All implementation items (1–8) are complete and committed.
+- [x] **9.2** Cross-document consistency review complete (implementation matches v2.11 contracts).
+- [x] **9.3** Roadmap overview trackers (0.1–0.6) updated: state → `complete`, current item → `none / complete`, completed → `10 / 10`, remaining → `0 / 10`.
+- [x] **9.4** Closure run report exists at `docs/dev_ledger/03_run_reports/9.1-roadmap-v2-12-final-validation.md`.
+- [x] **9.5** `.\scripts\dev-test.ps1` passes.
+- [x] **9.6** `.\scripts\run-controlled-smoke.ps1` passes.
+- [x] **9.7** `.\scripts\dev-validate-final.ps1` passes.
+- [x] **9.8** `.\scripts\dev-git-check.ps1` passes.
+- [x] **9.9** Readiness statement produced:
+  - **Operational Discovery Pilot ready** — all items complete, all tests pass, smoke passes, traceability clean.
+- [x] **9.10** One local commit made.
+
+### Final v2.12 Readiness Statement
+
+**Operational Discovery Pilot ready.**
+
+Meaning:
+- OOS can run a deterministic controlled discovery pilot on HN + GitHub Issues fixture/bounded inputs.
+- The pipeline produces Raw Evidence, Candidate Signals, PainClusters, Source Quality Report, Founder Review Package, and controlled smoke artifacts.
+- Live operation still requires explicit founder approval, real source allowlists, and first 1–2 pilot cycles.
+- Broad source expansion remains deferred until v2.13 Go/No-Go.
 
 ---
 
