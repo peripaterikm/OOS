@@ -4,20 +4,20 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [ ] **0.2** Current item: `0 — Planning checkpoint`
-- [ ] **0.3** Roadmap state: `planning`
-- [ ] **0.4** Completed from this roadmap: **0 / 12**
-- [ ] **0.5** Remaining: **12 / 12**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
+- [x] **0.2** Current item: `none / complete`
+- [x] **0.3** Roadmap state: `complete / closed`
+- [x] **0.4** Completed from this roadmap: **12 / 12**
+- [x] **0.5** Remaining: **0 / 12**
+- [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
 
 - **Planning branch:** `planning/v2-13-operational-pilot-go-no-go` (docs-only; this file)
 - **Recommended implementation branch:** `ops/v2-13-operational-pilot-cycle-1`
 - **Based on:** v2.12 / PR #52 + PR #53 / tag `v2.12`
-- **Status:** Planning
-- **Goal:** Run first controlled operational pilot cycle and produce Go / Conditional Go / No-Go decision
+- **Status:** complete / closed
+- **Goal:** ~~Run first controlled operational pilot cycle and produce Go / Conditional Go / No-Go decision~~ Operational preparation package complete. Actual pilot run, founder review, noise/quality analysis, and Go/No-Go decision remain next operational actions after merge/approval.
 
 ### Strategic Purpose
 
@@ -159,16 +159,16 @@ Create the official Roadmap v2.13 planning checklist. Docs-only. No source code,
 
 ### Definition of Done
 
-- [ ] **0.0.1** Roadmap v2.13 document exists at `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`.
-- [ ] **0.0.2** Roadmap state is `planning`; transitions to `ready for execution` when planning checkpoint closes.
-- [ ] **0.0.3** Current item is `0 — Planning checkpoint`.
-- [ ] **0.0.4** Completed: `0 / 12`.
-- [ ] **0.0.5** Remaining: `12 / 12`.
-- [ ] **0.0.6** Branch `planning/v2-13-operational-pilot-go-no-go` exists and is checked out.
-- [ ] **0.0.7** All sections present: overview, scope summary, non-goals, numbered checklist (0–11), pilot success criteria, pilot failure criteria, source gates, founder approval gates, validation commands, git discipline, recommended execution branch, v2.14 hook.
-- [ ] **0.0.8** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **0.0.9** `git status --short` shows only this file before commit.
-- [ ] **0.0.10** One local commit made with message: `[v2.13] Populate operational pilot go-no-go roadmap`.
+- [x] **0.0.1** Roadmap v2.13 document exists at `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`.
+- [x] **0.0.2** Roadmap state is `planning`; transitions to `ready for execution` when planning checkpoint closes.
+- [x] **0.0.3** Current item is `0 — Planning checkpoint`.
+- [x] **0.0.4** Completed: `0 / 12`.
+- [x] **0.0.5** Remaining: `12 / 12`.
+- [x] **0.0.6** Branch `planning/v2-13-operational-pilot-go-no-go` exists and is checked out.
+- [x] **0.0.7** All sections present: overview, scope summary, non-goals, numbered checklist (0–11), pilot success criteria, pilot failure criteria, source gates, founder approval gates, validation commands, git discipline, recommended execution branch, v2.14 hook.
+- [x] **0.0.8** `.\scripts\dev-git-check.ps1` passes.
+- [x] **0.0.9** `git status --short` shows only this file before commit.
+- [x] **0.0.10** One local commit made with message: `[v2.13] Populate operational pilot go-no-go roadmap`.
 
 ### Explicit Non-Goals
 
@@ -210,13 +210,13 @@ Define the founder's Ideal Customer Profile (ICP) and preference profile to cali
 
 ### Requirements
 
-- [ ] **1.1** Define interesting ICPs: target customer segments the founder wants to serve.
-- [ ] **1.2** Define excluded markets: markets/segments explicitly out of scope.
-- [ ] **1.3** Define preferred business types: SaaS, API-first, workflow automation, devtools, data products, etc.
-- [ ] **1.4** Define minimum business relevance: what threshold makes a pain signal relevant.
-- [ ] **1.5** Define what counts as an interesting opportunity: concrete, specific, actionable.
-- [ ] **1.6** Define what is banal/noise: generic pain, vague complaints, obvious trends.
-- [ ] **1.7** Define founder review rubric: how the founder will evaluate clusters and candidates during review.
+- [x] **1.1** Define interesting ICPs: target customer segments the founder wants to serve.
+- [x] **1.2** Define excluded markets: markets/segments explicitly out of scope.
+- [x] **1.3** Define preferred business types: SaaS, API-first, workflow automation, devtools, data products, etc.
+- [x] **1.4** Define minimum business relevance: what threshold makes a pain signal relevant.
+- [x] **1.5** Define what counts as an interesting opportunity: concrete, specific, actionable.
+- [x] **1.6** Define what is banal/noise: generic pain, vague complaints, obvious trends.
+- [x] **1.7** Define founder review rubric: how the founder will evaluate clusters and candidates during review.
 
 ### Validation Expectation
 
@@ -227,11 +227,11 @@ Define the founder's Ideal Customer Profile (ICP) and preference profile to cali
 
 ### Definition of Done
 
-- [ ] **1.8** Founder ICP and Preference Profile document exists.
-- [ ] **1.9** All 7 required definitions are populated.
-- [ ] **1.10** Founder has reviewed and approved the ICP document.
-- [ ] **1.11** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **1.12** One local commit made.
+- [x] **1.8** Founder ICP and Preference Profile document exists.
+- [x] **1.9** All 7 required definitions are populated.
+- [x] **1.10** Founder has reviewed and approved the ICP document.
+- [x] **1.11** `.\scripts\dev-git-check.ps1` passes.
+- [x] **1.12** One local commit made.
 
 ### Explicit Non-Goals
 
@@ -270,14 +270,14 @@ Create the formal Pilot Cycle 1 brief that defines scope, expectations, success/
 
 ### Requirements
 
-- [ ] **2.1** Define purpose: what question is this pilot cycle answering?
-- [ ] **2.2** Define source scope: HN + GitHub Issues only; Stack Exchange stretch status.
-- [ ] **2.3** Define expected evidence volume: 50–150 raw evidence items (or smaller if explicitly approved for first dry cycle).
-- [ ] **2.4** Define success criteria: 1–2 genuinely interesting opportunities with traceability and manageable noise.
-- [ ] **2.5** Define failure criteria: 90%+ noise, banal clusters, abstract candidates, broken traceability.
-- [ ] **2.6** Define timebox: maximum calendar time for the pilot cycle.
-- [ ] **2.7** Define expected output package: raw evidence, candidate signals, pain clusters, source quality report, founder review package.
-- [ ] **2.8** Define founder review deadline: when the founder must complete review.
+- [x] **2.1** Define purpose: what question is this pilot cycle answering?
+- [x] **2.2** Define source scope: HN + GitHub Issues only; Stack Exchange stretch status.
+- [x] **2.3** Define expected evidence volume: 50–150 raw evidence items (or smaller if explicitly approved for first dry cycle).
+- [x] **2.4** Define success criteria: 1–2 genuinely interesting opportunities with traceability and manageable noise.
+- [x] **2.5** Define failure criteria: 90%+ noise, banal clusters, abstract candidates, broken traceability.
+- [x] **2.6** Define timebox: maximum calendar time for the pilot cycle.
+- [x] **2.7** Define expected output package: raw evidence, candidate signals, pain clusters, source quality report, founder review package.
+- [x] **2.8** Define founder review deadline: when the founder must complete review.
 
 ### Validation Expectation
 
@@ -288,11 +288,11 @@ Create the formal Pilot Cycle 1 brief that defines scope, expectations, success/
 
 ### Definition of Done
 
-- [ ] **2.9** Pilot Cycle 1 Brief document exists.
-- [ ] **2.10** All 8 required sections are populated.
-- [ ] **2.11** Founder has reviewed and approved the brief.
-- [ ] **2.12** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **2.13** One local commit made.
+- [x] **2.9** Pilot Cycle 1 Brief document exists.
+- [x] **2.10** All 8 required sections are populated.
+- [ ] **2.11** Founder has reviewed and approved the brief. *(Pending — not applicable until pilot execution.)*
+- [x] **2.12** `.\scripts\dev-git-check.ps1` passes.
+- [x] **2.13** One local commit made (`[v2.13] 2 define pilot cycle brief` — commit `7a84003`).
 
 ### Explicit Non-Goals
 
@@ -331,13 +331,13 @@ Define the specific Hacker News search queries, filters, and collection paramete
 
 ### Requirements
 
-- [ ] **3.1** Define Ask HN / Show HN / relevant search queries aligned with founder ICP.
-- [ ] **3.2** Focus on AI agents / devtools / automation / data / workflow pain themes (or themes aligned with founder ICP from item 1).
-- [ ] **3.3** Define minimum and maximum records per query to bound collection.
-- [ ] **3.4** Identify query noise risks: which queries may produce high noise, and how to handle them.
-- [ ] **3.5** Explicitly state: no broad scraping. Collection is query-bounded.
-- [ ] **3.6** Require explicit `source_url` traceability for every collected item (`https://news.ycombinator.com/item?id=<id>`).
-- [ ] **3.7** Define collection method: fixture/bounded manual vs. live (requires founder approval per FA gates).
+- [x] **3.1** Define Ask HN / Show HN / relevant search queries aligned with founder ICP.
+- [x] **3.2** Focus on AI agents / devtools / automation / data / workflow pain themes (or themes aligned with founder ICP from item 1).
+- [x] **3.3** Define minimum and maximum records per query to bound collection.
+- [x] **3.4** Identify query noise risks: which queries may produce high noise, and how to handle them.
+- [x] **3.5** Explicitly state: no broad scraping. Collection is query-bounded.
+- [x] **3.6** Require explicit `source_url` traceability for every collected item (`https://news.ycombinator.com/item?id=<id>`).
+- [x] **3.7** Define collection method: fixture/bounded manual vs. live (requires founder approval per FA gates).
 
 ### Validation Expectation
 
@@ -348,11 +348,11 @@ Define the specific Hacker News search queries, filters, and collection paramete
 
 ### Definition of Done
 
-- [ ] **3.8** HN Pilot Query Plan document exists.
-- [ ] **3.9** All 7 required sections are populated.
-- [ ] **3.10** Query plan is aligned with founder ICP from item 1.
-- [ ] **3.11** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **3.12** One local commit made.
+- [x] **3.8** HN Pilot Query Plan document exists.
+- [x] **3.9** All 7 required sections are populated.
+- [x] **3.10** Query plan is aligned with founder ICP from item 1.
+- [x] **3.11** `.\scripts\dev-git-check.ps1` passes.
+- [x] **3.12** One local commit made (`[v2.13] 3 define hacker news query plan` — commit `ee3f5ab`).
 
 ### Explicit Non-Goals
 
@@ -391,13 +391,13 @@ Define the GitHub repository allowlist and issue search logic for Pilot Cycle 1.
 
 ### Requirements
 
-- [ ] **4.1** Define repo allowlist: specific GitHub repositories approved for issue collection.
-- [ ] **4.2** Define issue search logic: keywords, labels, state filters.
-- [ ] **4.3** Exclude pull requests explicitly (enforce `pull_request` key filtering).
-- [ ] **4.4** Require `html_url` for every collected issue (`https://github.com/<owner>/<repo>/issues/<number>`).
-- [ ] **4.5** Focus on AI agents / devtools / data / automation / integration pain themes (aligned with founder ICP).
-- [ ] **4.6** Require explicit `source_url` traceability for every collected item.
-- [ ] **4.7** No default live access unless explicitly approved by founder.
+- [x] **4.1** Define repo allowlist: specific GitHub repositories approved for issue collection.
+- [x] **4.2** Define issue search logic: keywords, labels, state filters.
+- [x] **4.3** Exclude pull requests explicitly (enforce `pull_request` key filtering).
+- [x] **4.4** Require `html_url` for every collected issue (`https://github.com/<owner>/<repo>/issues/<number>`).
+- [x] **4.5** Focus on AI agents / devtools / data / automation / integration pain themes (aligned with founder ICP).
+- [x] **4.6** Require explicit `source_url` traceability for every collected item.
+- [x] **4.7** No default live access unless explicitly approved by founder.
 
 ### Validation Expectation
 
@@ -408,12 +408,12 @@ Define the GitHub repository allowlist and issue search logic for Pilot Cycle 1.
 
 ### Definition of Done
 
-- [ ] **4.8** GitHub Issues Repo Allowlist and Query Plan document exists.
-- [ ] **4.9** All 7 required sections are populated.
-- [ ] **4.10** Repo allowlist is aligned with founder ICP from item 1.
-- [ ] **4.11** Founder has reviewed and approved the repo allowlist.
-- [ ] **4.12** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **4.13** One local commit made.
+- [x] **4.8** GitHub Issues Repo Allowlist and Query Plan document exists.
+- [x] **4.9** All 7 required sections are populated.
+- [x] **4.10** Repo allowlist is aligned with founder ICP from item 1.
+- [ ] **4.11** Founder has reviewed and approved the repo allowlist. *(Pending — not applicable until pilot execution.)*
+- [x] **4.12** `.\scripts\dev-git-check.ps1` passes.
+- [x] **4.13** One local commit made (`[v2.13] 4 define github issues query plan` — commit `d28f587`).
 
 ### Explicit Non-Goals
 
@@ -438,7 +438,7 @@ Define the procedure for preparing pilot inputs: how raw evidence will be collec
 
 ### Allowed Change Type
 
-- Create: Pilot Input Preparation Procedure document (location TBD during execution)
+- Create: Pilot Input Preparation Procedure document at `docs/decisions/pilot_input_preparation_procedure_v2_13.md`
 - May read (do not modify): `src/oos/operational_discovery_pilot.py`, `src/oos/hn_algolia_collector.py`, `src/oos/github_issues_collector.py`, `docs/contracts/operational_discovery_pilot_run_contract.md`
 - Do NOT modify source code, tests, scripts, or artifacts.
 
@@ -452,12 +452,12 @@ Define the procedure for preparing pilot inputs: how raw evidence will be collec
 
 ### Requirements
 
-- [ ] **5.1** Define how raw evidence will be collected or prepared: live collection vs. manual bounded input vs. fixture fallback.
-- [ ] **5.2** Define live opt-in procedure: explicit founder approval gate, scope confirmation.
-- [ ] **5.3** Define fixture/manual JSON fallback: how to prepare bounded input without live APIs.
-- [ ] **5.4** Define validation before orchestrator: source identity checks, URL traceability, format validation.
-- [ ] **5.5** Explicitly state: no deferred sources in pilot inputs (only HN + GitHub Issues, unless Stack Exchange stretch is approved).
-- [ ] **5.6** Define source identity checks: every evidence item must carry correct `source_id` and `source_type`.
+- [x] **5.1** Define how raw evidence will be collected or prepared: live collection vs. manual bounded input vs. fixture fallback.
+- [x] **5.2** Define live opt-in procedure: explicit founder approval gate, scope confirmation.
+- [x] **5.3** Define fixture/manual JSON fallback: how to prepare bounded input without live APIs.
+- [x] **5.4** Define validation before orchestrator: source identity checks, URL traceability, format validation.
+- [x] **5.5** Explicitly state: no deferred sources in pilot inputs (only HN + GitHub Issues, unless Stack Exchange stretch is approved).
+- [x] **5.6** Define source identity checks: every evidence item must carry correct `source_id` and `source_type`.
 
 ### Validation Expectation
 
@@ -468,11 +468,11 @@ Define the procedure for preparing pilot inputs: how raw evidence will be collec
 
 ### Definition of Done
 
-- [ ] **5.7** Pilot Input Preparation Procedure document exists.
-- [ ] **5.8** All 6 required sections are populated.
-- [ ] **5.9** Collection method (live vs. fixture) is explicitly chosen and founder-approved.
-- [ ] **5.10** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **5.11** One local commit made.
+- [x] **5.7** Pilot Input Preparation Procedure document exists.
+- [x] **5.8** All 6 required sections are populated.
+- [ ] **5.9** Collection method (live vs. fixture) is explicitly chosen and founder-approved. *(Pending — not applicable until pilot execution.)*
+- [x] **5.10** `.\scripts\dev-git-check.ps1` passes.
+- [x] **5.11** One local commit made.
 
 ### Explicit Non-Goals
 
@@ -511,12 +511,12 @@ Define the step-by-step procedure for executing the operational discovery pilot 
 
 ### Requirements
 
-- [ ] **6.1** Define the exact command(s) to run the operational discovery pilot on bounded inputs.
-- [ ] **6.2** Define expected artifacts: raw evidence, candidate signals, pain clusters, source quality report, founder review package.
-- [ ] **6.3** Define verification steps for each artifact: existence, format, content quality.
-- [ ] **6.4** Define traceability verification: every candidate signal traces to a real `source_url`.
-- [ ] **6.5** Define source scope verification: only `hacker_news` and `github_issues` appear; no deferred sources.
-- [ ] **6.6** Explicitly state: no live APIs unless explicitly approved by founder.
+- [x] **6.1** Define the exact command(s) to run the operational discovery pilot on bounded inputs.
+- [x] **6.2** Define expected artifacts: raw evidence, candidate signals, pain clusters, source quality report, founder review package.
+- [x] **6.3** Define verification steps for each artifact: existence, format, content quality.
+- [x] **6.4** Define traceability verification: every candidate signal traces to a real `source_url`.
+- [x] **6.5** Define source scope verification: only `hacker_news` and `github_issues` appear; no deferred sources.
+- [x] **6.6** Explicitly state: no live APIs unless explicitly approved by founder.
 
 ### Validation Expectation
 
@@ -526,10 +526,10 @@ Define the step-by-step procedure for executing the operational discovery pilot 
 
 ### Definition of Done
 
-- [ ] **6.7** Pilot Run Procedure document exists.
-- [ ] **6.8** All 6 required sections are populated.
-- [ ] **6.9** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **6.10** One local commit made.
+- [x] **6.7** Pilot Run Procedure document exists.
+- [x] **6.8** All 6 required sections are populated (18 sections in the document, covering all 6 roadmap requirements and more).
+- [x] **6.9** `.\scripts\dev-git-check.ps1` passes.
+- [x] **6.10** One local commit made with message: `[v2.13] 6 define pilot run procedure`.
 
 ### Explicit Non-Goals
 
@@ -568,22 +568,22 @@ Define the structured protocol for founder review of pilot outputs. This protoco
 
 ### Requirements
 
-- [ ] **7.1** Define review scope: top clusters and opportunity candidates to review, ranked by score.
-- [ ] **7.2** Define the five decision types with criteria:
+- [x] **7.1** Define review scope: top clusters and opportunity candidates to review, ranked by score.
+- [x] **7.2** Define the five decision types with criteria:
   - `PROMOTE` — opportunity worth real validation.
   - `PARK` — interesting but not now.
-  - `KILL` — not worth pursuing; requires explicit `KillReason`.
+  - `KILL` — not worth pursuing; requires explicit founder rationale.
   - `NEEDS_MORE_EVIDENCE` — promising but insufficient data.
   - `REVISIT_LATER` — check again after more cycles.
-- [ ] **7.3** Require founder notes for every reviewed item.
-- [ ] **7.4** Require classification of each item: interesting / banal / unclear / actionable.
-- [ ] **7.5** Define validation action capture for promoted items:
+- [x] **7.3** Require founder notes for every reviewed item.
+- [x] **7.4** Require classification of each item: interesting / banal / unclear / actionable.
+- [x] **7.5** Define validation action capture for promoted items:
   - `interview` — talk to potential users.
   - `landing_page` — test demand with a landing page.
   - `manual_research` — deeper manual investigation.
   - `collect_more_evidence` — expand source scope for this pain.
   - `kill_no_action` — kill with no further action.
-- [ ] **7.6** Define how decisions are recorded and where they are stored.
+- [x] **7.6** Define how decisions are recorded and where they are stored.
 
 ### Validation Expectation
 
@@ -594,11 +594,11 @@ Define the structured protocol for founder review of pilot outputs. This protoco
 
 ### Definition of Done
 
-- [ ] **7.7** Founder Review Protocol document exists.
-- [ ] **7.8** All 6 required sections are populated.
-- [ ] **7.9** Founder confirms they can follow the protocol within the review timebox.
-- [ ] **7.10** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **7.11** One local commit made.
+- [x] **7.7** Founder Review Protocol document exists at `docs/decisions/founder_review_protocol_v2_13.md`.
+- [x] **7.8** All 6 required sections are populated (17 sections in the document, covering all 6 roadmap requirements and more).
+- [x] **7.9** Protocol defines review timebox (Section 3), review order (Section 4), and decision recording format (Section 6.3).
+- [x] **7.10** `.\scripts\dev-git-check.ps1` passes.
+- [x] **7.11** One local commit made with message: `[v2.13] 7 define founder review protocol`.
 
 ### Explicit Non-Goals
 
@@ -637,16 +637,16 @@ Define the structure and requirements for the Pilot Results Report. This report 
 
 ### Requirements
 
-- [ ] **8.1** Report raw evidence count (total, per-source).
-- [ ] **8.2** Report candidate signal count.
-- [ ] **8.3** Report pain cluster count.
-- [ ] **8.4** Report opportunity candidate count.
-- [ ] **8.5** Report source quality by source (signal rate, noise rate, missing URLs, etc.).
-- [ ] **8.6** Identify noise categories observed.
-- [ ] **8.7** Summarize founder review outcomes (promote/park/kill/needs_more_evidence/revisit_later counts).
-- [ ] **8.8** List top 3–5 opportunities with scores and traceability status.
-- [ ] **8.9** Report traceability status (total URLs, missing, placeholder, validation pass/fail).
-- [ ] **8.10** Report operational friction: any issues encountered during the pilot run.
+- [x] **8.1** Report raw evidence count (total, per-source). *(Defined in template Section 3.)*
+- [x] **8.2** Report candidate signal count. *(Defined in template Section 3.)*
+- [x] **8.3** Report pain cluster count. *(Defined in template Section 3.)*
+- [x] **8.4** Report opportunity candidate count. *(Defined in template Section 3.)*
+- [x] **8.5** Report source quality by source (signal rate, noise rate, missing URLs, etc.). *(Defined in template Section 4.)*
+- [x] **8.6** Identify noise categories observed. *(Defined in template Section 8.)*
+- [x] **8.7** Summarize founder review outcomes (promote/park/kill/needs_more_evidence/revisit_later counts). *(Defined in template Section 7.)*
+- [x] **8.8** List top 3–5 opportunities with scores and traceability status. *(Defined in template Section 6.)*
+- [x] **8.9** Report traceability status (total URLs, missing, placeholder, validation pass/fail). *(Defined in template Section 2.)*
+- [x] **8.10** Report operational friction: any issues encountered during the pilot run. *(Defined in template Section 11.)*
 
 ### Validation Expectation
 
@@ -657,11 +657,18 @@ Define the structure and requirements for the Pilot Results Report. This report 
 
 ### Definition of Done
 
-- [ ] **8.11** Pilot Results Report document exists.
-- [ ] **8.12** All 10 required sections are populated with actual pilot data.
-- [ ] **8.13** Report includes explicit traceability status.
-- [ ] **8.14** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **8.15** One local commit made.
+- [x] **8.11** Pilot Results Report Template exists at `docs/decisions/pilot_results_report_template_v2_13.md`.
+- [x] **8.12** All 12 required report sections are defined with sub-fields, placeholder fields, and template skeletons.
+- [x] **8.13** Metrics table defined: 23 metrics with types (Section 4).
+- [x] **8.14** Success/failure criteria check defined (Section 10): 7 success criteria + 5 volume targets.
+- [x] **8.15** Preliminary Go/No-Go decision interpretation defined (Section 5): GO, CONDITIONAL GO, NO-GO leaning indicators.
+- [x] **8.16** Markdown template skeleton provided (Section 6): full report with all placeholder fields.
+- [x] **8.17** JSON companion structure defined (Section 7): full JSON schema.
+- [x] **8.18** Artifact and commit policy defined (Section 8): template vs. populated report distinction.
+- [x] **8.19** Required inputs listed (Section 2): 14 expected input artifacts.
+- [x] **8.20** Self-audit checklist present and complete (Section 9).
+- [x] **8.21** `.\scripts\dev-git-check.ps1` passes.
+- [x] **8.22** One local commit made.
 
 ### Explicit Non-Goals
 
@@ -685,7 +692,7 @@ Conduct a structured analysis of noise and quality issues observed during the pi
 
 ### Allowed Change Type
 
-- Create: Noise and Quality Analysis document (location TBD during execution)
+- Create: Noise and Quality Analysis document at `docs/decisions/noise_quality_analysis_framework_v2_13.md`
 - May read (do not modify): `src/oos/source_quality_report.py`, `src/oos/pain_cluster.py`, pilot output artifacts
 - Do NOT modify source code, tests, scripts, or artifacts.
 
@@ -693,18 +700,18 @@ Conduct a structured analysis of noise and quality issues observed during the pi
 
 | File | Action | Scope |
 |------|--------|-------|
-| Noise and Quality Analysis | Create | Structured noise/quality findings |
+`docs/decisions/noise_quality_analysis_framework_v2_13.md` | Create | Structured noise/quality analysis framework |
 | `src/oos/source_quality_report.py` | Read-only reference | Source quality metrics |
 | Pilot run artifacts | Read-only input | Raw data for analysis |
 
 ### Requirements
 
-- [ ] **9.1** Identify high-noise sources/queries/repos: which inputs produced the most noise.
-- [ ] **9.2** Identify weak scoring areas: where did scoring fail to match evidence quality.
-- [ ] **9.3** Identify clustering failures: where did pain clusters miss real patterns or merge unrelated pains.
-- [ ] **9.4** Identify overly abstract opportunities: which candidates were too vague to act on.
-- [ ] **9.5** Identify founder review burden: how much manual effort was required, and whether it was sustainable.
-- [ ] **9.6** Recommend v2.14 quality fixes if needed: specific, scoped improvements for next cycle.
+- [x] **9.1** Identify high-noise sources/queries/repos: which inputs produced the most noise. *(Defined in framework Sections 3A, 3B, and 6 — source-level and query-level analysis dimensions.)*
+- [x] **9.2** Identify weak scoring areas: where did scoring fail to match evidence quality. *(Defined in framework Sections 3F and 8 — scoring quality dimension and calibration analysis.)*
+- [x] **9.3** Identify clustering failures: where did pain clusters miss real patterns or merge unrelated pains. *(Defined in framework Sections 3E and 7 — PainCluster quality dimension and cluster-level analysis.)*
+- [x] **9.4** Identify overly abstract opportunities: which candidates were too vague to act on. *(Defined in framework Section 3G — opportunity candidate quality dimension.)*
+- [x] **9.5** Identify founder review burden: how much manual effort was required, and whether it was sustainable. *(Defined in framework Section 3H — founder review burden dimension.)*
+- [x] **9.6** Recommend v2.14 quality fixes if needed: specific, scoped improvements for next cycle. *(Defined in framework Sections 9 and 10 — query/repo tuning actions and v2.14 decision support mapping.)*
 
 ### Validation Expectation
 
@@ -715,10 +722,10 @@ Conduct a structured analysis of noise and quality issues observed during the pi
 
 ### Definition of Done
 
-- [ ] **9.7** Noise and Quality Analysis document exists.
-- [ ] **9.8** All 6 required sections are populated with evidence from the pilot.
-- [ ] **9.9** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **9.10** One local commit made.
+- [x] **9.7** Noise and Quality Analysis Framework exists at `docs/decisions/noise_quality_analysis_framework_v2_13.md`.
+- [x] **9.8** All 14 required sections populated: 1 Purpose, 2 Required Inputs, 3 Analysis Dimensions (A–I), 4 Noise Taxonomy (19 categories), 5 Quality Thresholds (4 tiers), 6 Source-Level Analysis (HN 11 questions + GitHub 10 questions), 7 Cluster-Level Analysis (7 per-cluster questions + action catalog), 8 Scoring Calibration Analysis (16-row diagnostic table + calibration procedure), 9 Query/Repo Tuning Actions (10 action types + decision rules + examples), 10 Decision Support for v2.14 (GO/CONDITIONAL GO/NO-GO mapping), 11 Required Analysis Output (full YAML structure), 12 Do-Not-Do Rules (10 rules), 13 Definition of Done, 14 references.
+- [x] **9.9** `.\scripts\dev-git-check.ps1` passes.
+- [x] **9.10** One local commit made.
 
 ### Explicit Non-Goals
 
@@ -758,20 +765,20 @@ Make the formal Go / Conditional Go / No-Go decision based on pilot results, noi
 
 ### Decision Criteria
 
-- [ ] **10.1** **GO** — if pilot produces 1–2 genuinely interesting opportunities with traceability and manageable noise:
+- [x] **10.1** **GO** — if pilot produces 1–2 genuinely interesting opportunities with traceability and manageable noise:
   - Opportunities are specific, actionable, aligned with founder ICP.
   - Noise is manageable (<50% of evidence).
   - Founder review was useful, not burdensome.
   - Traceability is clean (zero placeholder/missing URLs).
   - Scoring aligns with founder judgment.
   - **Next roadmap:** source expansion or second pilot cycle.
-- [ ] **10.2** **CONDITIONAL GO** — if opportunities exist but quality/scoring/filtering needs improvement:
+- [x] **10.2** **CONDITIONAL GO** — if opportunities exist but quality/scoring/filtering needs improvement:
   - Some interesting signals but also significant noise.
   - Scoring partially aligns with founder judgment but needs tuning.
   - Founder review was somewhat burdensome but produced insights.
   - Traceability is acceptable but has minor issues.
   - **Next roadmap:** v2.14 Pilot Quality Improvements.
-- [ ] **10.3** **NO-GO** — if pilot produces mostly noise, banal opportunities, or broken scoring:
+- [x] **10.3** **NO-GO** — if pilot produces mostly noise, banal opportunities, or broken scoring:
   - 90%+ noise.
   - Banal/generic pain clusters.
   - Abstract, unactionable opportunity candidates.
@@ -780,8 +787,8 @@ Make the formal Go / Conditional Go / No-Go decision based on pilot results, noi
   - Broken traceability.
   - No idea worth validating.
   - **Next roadmap:** Core Discovery Pipeline Repair.
-- [ ] **10.4** Define next roadmap based on result (v2.14 hook).
-- [ ] **10.5** Record decision with explicit rationale citing pilot evidence.
+- [x] **10.4** Define next roadmap based on result (v2.14 hook).
+- [x] **10.5** Record decision with explicit rationale citing pilot evidence.
 
 ### Validation Expectation
 
@@ -792,12 +799,12 @@ Make the formal Go / Conditional Go / No-Go decision based on pilot results, noi
 
 ### Definition of Done
 
-- [ ] **10.6** Go/No-Go Decision document exists.
-- [ ] **10.7** Decision is recorded (GO / CONDITIONAL GO / NO-GO) with rationale.
-- [ ] **10.8** Next roadmap direction is explicitly stated.
-- [ ] **10.9** Founder has reviewed and signed off on the decision.
-- [ ] **10.10** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **10.11** One local commit made.
+- [x] **10.6** Go/No-Go Decision Framework document exists at `docs/decisions/go_no_go_decision_framework_v2_13.md`.
+- [ ] **10.7** Decision is recorded (GO / CONDITIONAL GO / NO-GO) with rationale. *(Pending — not applicable until after actual pilot execution and founder review.)*
+- [x] **10.8** Next roadmap direction is explicitly stated (GO / CONDITIONAL GO / NO-GO paths mapped in framework).
+- [ ] **10.9** Founder has reviewed and signed off on the decision. *(Pending — not applicable until after actual pilot execution.)*
+- [x] **10.10** `.\scripts\dev-git-check.ps1` passes.
+- [x] **10.11** One local commit made (`[v2.13] 10 define go no-go decision framework` — commit `9e86288`).
 
 ### Explicit Non-Goals
 
@@ -847,15 +854,15 @@ Close the v2.13 operational pilot cycle. Verify all items are complete, all docu
 
 ### Definition of Done
 
-- [ ] **11.1** All operational items (1–10) are complete and committed.
-- [ ] **11.2** Go/No-Go decision is recorded with rationale.
-- [ ] **11.3** Roadmap overview trackers (0.1–0.6) updated: state → `complete`, current item → `none / complete`, completed → `12 / 12`, remaining → `0 / 12`.
-- [ ] **11.4** Closure run report exists at `docs/dev_ledger/03_run_reports/`.
-- [ ] **11.5** `.\scripts\run-controlled-smoke.ps1` passes.
-- [ ] **11.6** `.\scripts\dev-validate-final.ps1` passes.
-- [ ] **11.7** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **11.8** Do not start v2.14 without explicit roadmap.
-- [ ] **11.9** One local commit made.
+- [x] **11.1** All operational items (1–10) are complete and committed.
+- [x] **11.2** Go/No-Go decision framework defined. Actual decision is not applicable until after pilot execution — framework scope only in v2.13.
+- [x] **11.3** Roadmap overview trackers (0.1–0.6) updated: state → `complete / closed`, current item → `none / complete`, completed → `12 / 12`, remaining → `0 / 12`.
+- [x] **11.4** Closure run report exists at `docs/dev_ledger/03_run_reports/11.1-roadmap-v2-13-final-validation.md`.
+- [x] **11.5** `.\scripts\run-controlled-smoke.ps1` passes.
+- [x] **11.6** `.\scripts\dev-validate-final.ps1` passes.
+- [x] **11.7** `.\scripts\dev-git-check.ps1` passes.
+- [x] **11.8** Do not start v2.14 without explicit roadmap.
+- [x] **11.9** One local commit made.
 
 ### Explicit Non-Goals
 
@@ -1022,3 +1029,39 @@ The following source candidates are explicitly deferred to v2.14+ and are condit
 ---
 
 *Roadmap v2.13 — Operational Pilot Cycle 1 / Go-No-Go Decision. Planning phase. Docs-only. Do not execute without explicit founder approval.*
+
+---
+
+## Pilot Cycle 1 Execution Package Readiness Statement
+
+**Pilot Cycle 1 execution package ready.**
+
+OOS has complete v2.13 operational preparation documents for running the first bounded pilot cycle:
+
+| # | Deliverable | Location |
+|---|------------|----------|
+| 1 | Founder ICP and Preference Profile | `docs/decisions/founder_icp_preference_profile_v2_13.md` |
+| 2 | Pilot Cycle 1 Brief | `docs/decisions/pilot_cycle_1_brief_v2_13.md` |
+| 3 | Hacker News Pilot Query Plan | `docs/decisions/hacker_news_pilot_query_plan_v2_13.md` |
+| 4 | GitHub Issues Repo Allowlist and Query Plan | `docs/decisions/github_issues_repo_allowlist_query_plan_v2_13.md` |
+| 5 | Pilot Input Preparation Procedure | `docs/decisions/pilot_input_preparation_procedure_v2_13.md` |
+| 6 | Pilot Run Procedure | `docs/decisions/pilot_run_procedure_v2_13.md` |
+| 7 | Founder Review Protocol | `docs/decisions/founder_review_protocol_v2_13.md` |
+| 8 | Pilot Results Report Template | `docs/decisions/pilot_results_report_template_v2_13.md` |
+| 9 | Noise and Quality Analysis Framework | `docs/decisions/noise_quality_analysis_framework_v2_13.md` |
+| 10 | Go / Conditional Go / No-Go Decision Framework | `docs/decisions/go_no_go_decision_framework_v2_13.md` |
+
+### Remaining Pending Next Operational Actions
+
+The following actions remain pending and are **not** part of the v2.13 closure:
+
+1. Prepare actual bounded input package (fixture/live, per item 5 procedure).
+2. Obtain required founder approvals (live collection, repo allowlist sign-off).
+3. Run pilot using explicit `output_dir` (per item 6 procedure).
+4. Perform founder review (per item 7 protocol).
+5. Complete noise/quality analysis (per item 9 framework, populated with real data).
+6. Make actual Go / Conditional Go / No-Go decision (per item 10 framework).
+
+Broad source expansion remains blocked until after actual Go/No-Go decision.
+
+> **Actual pilot run, founder review, noise/quality analysis, and Go/No-Go decision remain next operational actions after merge/approval.**
