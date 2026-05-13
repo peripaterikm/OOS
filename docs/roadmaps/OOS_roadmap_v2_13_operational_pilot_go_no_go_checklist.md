@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `5 — Pilot Input Preparation Procedure`
+- [x] **0.2** Current item: `6 — Pilot Run Procedure`
 - [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **5 / 12**
-- [x] **0.5** Remaining: **7 / 12**
+- [x] **0.4** Completed from this roadmap: **6 / 12**
+- [x] **0.5** Remaining: **6 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -412,8 +412,8 @@ Define the GitHub repository allowlist and issue search logic for Pilot Cycle 1.
 - [x] **4.9** All 7 required sections are populated.
 - [x] **4.10** Repo allowlist is aligned with founder ICP from item 1.
 - [ ] **4.11** Founder has reviewed and approved the repo allowlist.
-- [ ] **4.12** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **4.13** One local commit made.
+- [x] **4.12** `.\scripts\dev-git-check.ps1` passes.
+- [x] **4.13** One local commit made (`[v2.13] 4 define github issues query plan` — commit `d28f587`).
 
 ### Explicit Non-Goals
 
@@ -438,7 +438,7 @@ Define the procedure for preparing pilot inputs: how raw evidence will be collec
 
 ### Allowed Change Type
 
-- Create: Pilot Input Preparation Procedure document (location TBD during execution)
+- Create: Pilot Input Preparation Procedure document at `docs/decisions/pilot_input_preparation_procedure_v2_13.md`
 - May read (do not modify): `src/oos/operational_discovery_pilot.py`, `src/oos/hn_algolia_collector.py`, `src/oos/github_issues_collector.py`, `docs/contracts/operational_discovery_pilot_run_contract.md`
 - Do NOT modify source code, tests, scripts, or artifacts.
 
@@ -452,12 +452,12 @@ Define the procedure for preparing pilot inputs: how raw evidence will be collec
 
 ### Requirements
 
-- [ ] **5.1** Define how raw evidence will be collected or prepared: live collection vs. manual bounded input vs. fixture fallback.
-- [ ] **5.2** Define live opt-in procedure: explicit founder approval gate, scope confirmation.
-- [ ] **5.3** Define fixture/manual JSON fallback: how to prepare bounded input without live APIs.
-- [ ] **5.4** Define validation before orchestrator: source identity checks, URL traceability, format validation.
-- [ ] **5.5** Explicitly state: no deferred sources in pilot inputs (only HN + GitHub Issues, unless Stack Exchange stretch is approved).
-- [ ] **5.6** Define source identity checks: every evidence item must carry correct `source_id` and `source_type`.
+- [x] **5.1** Define how raw evidence will be collected or prepared: live collection vs. manual bounded input vs. fixture fallback.
+- [x] **5.2** Define live opt-in procedure: explicit founder approval gate, scope confirmation.
+- [x] **5.3** Define fixture/manual JSON fallback: how to prepare bounded input without live APIs.
+- [x] **5.4** Define validation before orchestrator: source identity checks, URL traceability, format validation.
+- [x] **5.5** Explicitly state: no deferred sources in pilot inputs (only HN + GitHub Issues, unless Stack Exchange stretch is approved).
+- [x] **5.6** Define source identity checks: every evidence item must carry correct `source_id` and `source_type`.
 
 ### Validation Expectation
 
@@ -468,11 +468,11 @@ Define the procedure for preparing pilot inputs: how raw evidence will be collec
 
 ### Definition of Done
 
-- [ ] **5.7** Pilot Input Preparation Procedure document exists.
-- [ ] **5.8** All 6 required sections are populated.
+- [x] **5.7** Pilot Input Preparation Procedure document exists.
+- [x] **5.8** All 6 required sections are populated.
 - [ ] **5.9** Collection method (live vs. fixture) is explicitly chosen and founder-approved.
-- [ ] **5.10** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **5.11** One local commit made.
+- [x] **5.10** `.\scripts\dev-git-check.ps1` passes.
+- [x] **5.11** One local commit made.
 
 ### Explicit Non-Goals
 
