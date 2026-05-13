@@ -4,12 +4,12 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [ ] **0.2** Current item: `0 — Planning checkpoint`
-- [ ] **0.3** Roadmap state: `planning`
-- [ ] **0.4** Completed from this roadmap: **0 / 12**
-- [ ] **0.5** Remaining: **12 / 12**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
+- [x] **0.2** Current item: `2 — Pilot Cycle 1 Brief`
+- [x] **0.3** Roadmap state: `execution`
+- [x] **0.4** Completed from this roadmap: **2 / 12**
+- [x] **0.5** Remaining: **10 / 12**
+- [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
 
@@ -159,16 +159,16 @@ Create the official Roadmap v2.13 planning checklist. Docs-only. No source code,
 
 ### Definition of Done
 
-- [ ] **0.0.1** Roadmap v2.13 document exists at `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`.
-- [ ] **0.0.2** Roadmap state is `planning`; transitions to `ready for execution` when planning checkpoint closes.
-- [ ] **0.0.3** Current item is `0 — Planning checkpoint`.
-- [ ] **0.0.4** Completed: `0 / 12`.
-- [ ] **0.0.5** Remaining: `12 / 12`.
-- [ ] **0.0.6** Branch `planning/v2-13-operational-pilot-go-no-go` exists and is checked out.
-- [ ] **0.0.7** All sections present: overview, scope summary, non-goals, numbered checklist (0–11), pilot success criteria, pilot failure criteria, source gates, founder approval gates, validation commands, git discipline, recommended execution branch, v2.14 hook.
-- [ ] **0.0.8** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **0.0.9** `git status --short` shows only this file before commit.
-- [ ] **0.0.10** One local commit made with message: `[v2.13] Populate operational pilot go-no-go roadmap`.
+- [x] **0.0.1** Roadmap v2.13 document exists at `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`.
+- [x] **0.0.2** Roadmap state is `planning`; transitions to `ready for execution` when planning checkpoint closes.
+- [x] **0.0.3** Current item is `0 — Planning checkpoint`.
+- [x] **0.0.4** Completed: `0 / 12`.
+- [x] **0.0.5** Remaining: `12 / 12`.
+- [x] **0.0.6** Branch `planning/v2-13-operational-pilot-go-no-go` exists and is checked out.
+- [x] **0.0.7** All sections present: overview, scope summary, non-goals, numbered checklist (0–11), pilot success criteria, pilot failure criteria, source gates, founder approval gates, validation commands, git discipline, recommended execution branch, v2.14 hook.
+- [x] **0.0.8** `.\scripts\dev-git-check.ps1` passes.
+- [x] **0.0.9** `git status --short` shows only this file before commit.
+- [x] **0.0.10** One local commit made with message: `[v2.13] Populate operational pilot go-no-go roadmap`.
 
 ### Explicit Non-Goals
 
@@ -210,13 +210,13 @@ Define the founder's Ideal Customer Profile (ICP) and preference profile to cali
 
 ### Requirements
 
-- [ ] **1.1** Define interesting ICPs: target customer segments the founder wants to serve.
-- [ ] **1.2** Define excluded markets: markets/segments explicitly out of scope.
-- [ ] **1.3** Define preferred business types: SaaS, API-first, workflow automation, devtools, data products, etc.
-- [ ] **1.4** Define minimum business relevance: what threshold makes a pain signal relevant.
-- [ ] **1.5** Define what counts as an interesting opportunity: concrete, specific, actionable.
-- [ ] **1.6** Define what is banal/noise: generic pain, vague complaints, obvious trends.
-- [ ] **1.7** Define founder review rubric: how the founder will evaluate clusters and candidates during review.
+- [x] **1.1** Define interesting ICPs: target customer segments the founder wants to serve.
+- [x] **1.2** Define excluded markets: markets/segments explicitly out of scope.
+- [x] **1.3** Define preferred business types: SaaS, API-first, workflow automation, devtools, data products, etc.
+- [x] **1.4** Define minimum business relevance: what threshold makes a pain signal relevant.
+- [x] **1.5** Define what counts as an interesting opportunity: concrete, specific, actionable.
+- [x] **1.6** Define what is banal/noise: generic pain, vague complaints, obvious trends.
+- [x] **1.7** Define founder review rubric: how the founder will evaluate clusters and candidates during review.
 
 ### Validation Expectation
 
@@ -227,9 +227,9 @@ Define the founder's Ideal Customer Profile (ICP) and preference profile to cali
 
 ### Definition of Done
 
-- [ ] **1.8** Founder ICP and Preference Profile document exists.
-- [ ] **1.9** All 7 required definitions are populated.
-- [ ] **1.10** Founder has reviewed and approved the ICP document.
+- [x] **1.8** Founder ICP and Preference Profile document exists.
+- [x] **1.9** All 7 required definitions are populated.
+- [x] **1.10** Founder has reviewed and approved the ICP document.
 - [ ] **1.11** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **1.12** One local commit made.
 
