@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `2 — Pilot Cycle 1 Brief`
+- [x] **0.2** Current item: `3 — Hacker News Pilot Query Plan`
 - [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **2 / 12**
-- [x] **0.5** Remaining: **10 / 12**
+- [x] **0.4** Completed from this roadmap: **3 / 12**
+- [x] **0.5** Remaining: **9 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -230,8 +230,8 @@ Define the founder's Ideal Customer Profile (ICP) and preference profile to cali
 - [x] **1.8** Founder ICP and Preference Profile document exists.
 - [x] **1.9** All 7 required definitions are populated.
 - [x] **1.10** Founder has reviewed and approved the ICP document.
-- [ ] **1.11** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **1.12** One local commit made.
+- [x] **1.11** `.\scripts\dev-git-check.ps1` passes.
+- [x] **1.12** One local commit made.
 
 ### Explicit Non-Goals
 
@@ -270,14 +270,14 @@ Create the formal Pilot Cycle 1 brief that defines scope, expectations, success/
 
 ### Requirements
 
-- [ ] **2.1** Define purpose: what question is this pilot cycle answering?
-- [ ] **2.2** Define source scope: HN + GitHub Issues only; Stack Exchange stretch status.
-- [ ] **2.3** Define expected evidence volume: 50–150 raw evidence items (or smaller if explicitly approved for first dry cycle).
-- [ ] **2.4** Define success criteria: 1–2 genuinely interesting opportunities with traceability and manageable noise.
-- [ ] **2.5** Define failure criteria: 90%+ noise, banal clusters, abstract candidates, broken traceability.
-- [ ] **2.6** Define timebox: maximum calendar time for the pilot cycle.
-- [ ] **2.7** Define expected output package: raw evidence, candidate signals, pain clusters, source quality report, founder review package.
-- [ ] **2.8** Define founder review deadline: when the founder must complete review.
+- [x] **2.1** Define purpose: what question is this pilot cycle answering?
+- [x] **2.2** Define source scope: HN + GitHub Issues only; Stack Exchange stretch status.
+- [x] **2.3** Define expected evidence volume: 50–150 raw evidence items (or smaller if explicitly approved for first dry cycle).
+- [x] **2.4** Define success criteria: 1–2 genuinely interesting opportunities with traceability and manageable noise.
+- [x] **2.5** Define failure criteria: 90%+ noise, banal clusters, abstract candidates, broken traceability.
+- [x] **2.6** Define timebox: maximum calendar time for the pilot cycle.
+- [x] **2.7** Define expected output package: raw evidence, candidate signals, pain clusters, source quality report, founder review package.
+- [x] **2.8** Define founder review deadline: when the founder must complete review.
 
 ### Validation Expectation
 
@@ -288,8 +288,8 @@ Create the formal Pilot Cycle 1 brief that defines scope, expectations, success/
 
 ### Definition of Done
 
-- [ ] **2.9** Pilot Cycle 1 Brief document exists.
-- [ ] **2.10** All 8 required sections are populated.
+- [x] **2.9** Pilot Cycle 1 Brief document exists.
+- [x] **2.10** All 8 required sections are populated.
 - [ ] **2.11** Founder has reviewed and approved the brief.
 - [ ] **2.12** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **2.13** One local commit made.
