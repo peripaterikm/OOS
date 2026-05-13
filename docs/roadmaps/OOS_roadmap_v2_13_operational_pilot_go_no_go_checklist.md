@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `6 — Pilot Run Procedure`
+- [x] **0.2** Current item: `7 — Founder Review Protocol`
 - [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **6 / 12**
-- [x] **0.5** Remaining: **6 / 12**
+- [x] **0.4** Completed from this roadmap: **7 / 12**
+- [x] **0.5** Remaining: **5 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -511,12 +511,12 @@ Define the step-by-step procedure for executing the operational discovery pilot 
 
 ### Requirements
 
-- [ ] **6.1** Define the exact command(s) to run the operational discovery pilot on bounded inputs.
-- [ ] **6.2** Define expected artifacts: raw evidence, candidate signals, pain clusters, source quality report, founder review package.
-- [ ] **6.3** Define verification steps for each artifact: existence, format, content quality.
-- [ ] **6.4** Define traceability verification: every candidate signal traces to a real `source_url`.
-- [ ] **6.5** Define source scope verification: only `hacker_news` and `github_issues` appear; no deferred sources.
-- [ ] **6.6** Explicitly state: no live APIs unless explicitly approved by founder.
+- [x] **6.1** Define the exact command(s) to run the operational discovery pilot on bounded inputs.
+- [x] **6.2** Define expected artifacts: raw evidence, candidate signals, pain clusters, source quality report, founder review package.
+- [x] **6.3** Define verification steps for each artifact: existence, format, content quality.
+- [x] **6.4** Define traceability verification: every candidate signal traces to a real `source_url`.
+- [x] **6.5** Define source scope verification: only `hacker_news` and `github_issues` appear; no deferred sources.
+- [x] **6.6** Explicitly state: no live APIs unless explicitly approved by founder.
 
 ### Validation Expectation
 
@@ -526,10 +526,10 @@ Define the step-by-step procedure for executing the operational discovery pilot 
 
 ### Definition of Done
 
-- [ ] **6.7** Pilot Run Procedure document exists.
-- [ ] **6.8** All 6 required sections are populated.
+- [x] **6.7** Pilot Run Procedure document exists.
+- [x] **6.8** All 6 required sections are populated (18 sections in the document, covering all 6 roadmap requirements and more).
 - [ ] **6.9** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **6.10** One local commit made.
+- [ ] **6.10** One local commit made with message: `[v2.13] 6 define pilot run procedure`.
 
 ### Explicit Non-Goals
 
