@@ -225,7 +225,9 @@ Kill when:
 - Too far from preferred domains with no redeeming signal
 - Vendor promo / launch disguised as pain
 
-KillReason must explain **why** the idea died, not just label it. Acceptable reasons include but are not limited to: `too_generic`, `no_buyer`, `vendor_promo_false_positive`, `no_real_pain`, `not_aligned`, `excluded_market`, `no_validation_path`, `founder_bottleneck`, `ethical_conflict`.
+KILL requires a written founder rationale / kill rationale explaining **why** the idea died, not just labeling it. Acceptable rationale categories include but are not limited to: `too_generic`, `no_buyer`, `vendor_promo_false_positive`, `no_real_pain`, `not_aligned`, `excluded_market`, `no_validation_path`, `founder_bottleneck`, `ethical_conflict`.
+
+This profile does not create KillReason records or kill archive entries. Any future KillReason artifact creation belongs only to a later explicitly approved workflow.
 
 ### REVISIT_LATER
 
