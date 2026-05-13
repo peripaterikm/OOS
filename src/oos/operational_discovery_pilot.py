@@ -12,6 +12,7 @@ Accepts explicit inputs only. No live APIs. No network. No LLM calls.
 import hashlib
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -136,6 +137,58 @@ def _is_placeholder_url(url: str) -> bool:
     return url.lower().startswith("urn:")
 
 
+# Conservative pattern for safe discovery_run_id.
+# Allows: letters, digits, underscore, dash, dot.
+# Rejects: path separators, drive prefixes, absolute paths, "..", spaces, other special chars.
+_SAFE_RUN_ID_RE = re.compile(r"^[a-zA-Z0-9_\-\.]+$")
+
+
+def _is_safe_discovery_run_id(run_id: str) -> bool:
+    """Return True if discovery_run_id is safe for filesystem path use.
+
+    Rejects path separators (/ \\), parent references (..), drive prefixes
+    (C:\\), absolute paths (/tmp/...), and any character outside the
+    conservative set [a-zA-Z0-9_\\-.].
+    """
+    if not run_id:
+        return False
+    # Reject anything with path separators or parent traversal
+    if "/" in run_id or "\\" in run_id or run_id.startswith("..") or ".." in run_id:
+        return False
+    # Reject absolute paths (Unix or Windows)
+    if run_id.startswith("/") or (len(run_id) >= 2 and run_id[1] == ":"):
+        return False
+    return bool(_SAFE_RUN_ID_RE.fullmatch(run_id))
+
+
+def _validate_discovery_run_id(run_id: str) -> list[str]:
+    """Validate discovery_run_id for filesystem safety.
+
+    Returns a list of error strings (empty if valid).
+    """
+    errors: list[str] = []
+    if not run_id:
+        errors.append("discovery_run_id is empty")
+        return errors
+    if "/" in run_id or "\\" in run_id:
+        errors.append(
+            f"discovery_run_id contains path separator: {run_id!r}"
+        )
+    if ".." in run_id:
+        errors.append(
+            f"discovery_run_id contains parent traversal: {run_id!r}"
+        )
+    if run_id.startswith("/") or (len(run_id) >= 2 and run_id[1] == ":"):
+        errors.append(
+            f"discovery_run_id looks like an absolute path or drive: {run_id!r}"
+        )
+    if not errors and not _SAFE_RUN_ID_RE.fullmatch(run_id):
+        errors.append(
+            f"discovery_run_id contains disallowed characters: {run_id!r}"
+        )
+    return errors
+
+
 def _normalize_input_evidence(ev: dict[str, Any]) -> dict[str, Any]:
     """Normalize source_id/source_type on an evidence dict."""
     return normalize_evidence_source(ev)
@@ -162,21 +215,26 @@ def _validate_source_scope(
     evidence_items: list[dict[str, Any]],
     *,
     stretch_allowed: bool = False,
+    label: str = "evidence",
 ) -> tuple[list[str], list[str]]:
-    """Validate that all evidence comes from allowed sources.
+    """Validate that all evidence/candidate_signals come from allowed sources.
 
     Returns (errors, warnings).
+    Unknown source_id/source_type are errors, not warnings.
     """
     errors: list[str] = []
     warnings: list[str] = []
 
     for ev in evidence_items:
-        sid = normalize_source_id(str(ev.get("source_id", "") or ""))
-        stype = normalize_source_type(str(ev.get("source_type", "") or ""))
+        raw_sid = str(ev.get("source_id", "") or "")
+        raw_stype = str(ev.get("source_type", "") or "")
+        sid = normalize_source_id(raw_sid)
+        stype = normalize_source_type(raw_stype)
+        item_id = ev.get("evidence_id") or ev.get("signal_id") or "?"
 
         if sid in DEFERRED_SOURCE_IDS:
             errors.append(
-                f"evidence[{ev.get('evidence_id', '?')}]: "
+                f"{label}[{item_id}]: "
                 f"deferred source '{sid}' is not allowed in pilot"
             )
             continue
@@ -184,23 +242,23 @@ def _validate_source_scope(
         if sid in STRETCH_SOURCE_IDS:
             if not stretch_allowed:
                 errors.append(
-                    f"evidence[{ev.get('evidence_id', '?')}]: "
+                    f"{label}[{item_id}]: "
                     f"stretch source '{sid}' requires stretch_allowed=True"
                 )
             continue
 
+        # Unknown source_id is an error, not a warning
         if sid and sid not in DEFAULT_ALLOWED_SOURCE_IDS:
-            # Unknown source — warn but don't block if it's not explicitly deferred
-            warnings.append(
-                f"evidence[{ev.get('evidence_id', '?')}]: "
-                f"unknown source_id '{sid}' (not in default allowed set)"
+            errors.append(
+                f"{label}[{item_id}]: "
+                f"unknown source_id '{raw_sid}' (normalized: '{sid}') — not in default allowed set"
             )
 
+        # Unknown source_type is an error, not a warning
         if stype and stype not in ALLOWED_SOURCE_TYPES:
-            # Check if it maps to a canonical type after normalization
-            warnings.append(
-                f"evidence[{ev.get('evidence_id', '?')}]: "
-                f"non-canonical source_type '{stype}'"
+            errors.append(
+                f"{label}[{item_id}]: "
+                f"unknown source_type '{raw_stype}' (normalized: '{stype}') — not in allowed types"
             )
 
     return errors, warnings
@@ -421,6 +479,13 @@ def run_operational_discovery_pilot(
     created_at = input.created_at or _iso_utc_now()
     discovery_run_id = input.discovery_run_id or _build_run_id(created_at)
 
+    # Validate discovery_run_id for path traversal safety (Fix 3)
+    run_id_errors = _validate_discovery_run_id(discovery_run_id)
+    if run_id_errors and input.output_dir:
+        raise ValueError(
+            f"Invalid discovery_run_id for artifact writing: {'; '.join(run_id_errors)}"
+        )
+
     errors: list[str] = []
     warnings: list[str] = []
     all_url_errors: list[str] = []
@@ -459,6 +524,18 @@ def run_operational_discovery_pilot(
         candidate_signals = [
             _normalize_input_evidence(sig) for sig in input.candidate_signals
         ]
+        # Validate source scope on candidate_signals (Fix 1: candidate_signals scope)
+        cand_scope_errors, cand_scope_warnings = _validate_source_scope(
+            candidate_signals,
+            stretch_allowed=input.stretch_allowed,
+            label="candidate_signal",
+        )
+        if cand_scope_errors:
+            errors.extend(cand_scope_errors)
+            scope_errors.extend(cand_scope_errors)
+            preflight_passed = False
+        if cand_scope_warnings:
+            scope_warnings.extend(cand_scope_warnings)
         # Validate source URLs in candidate signals too
         for sig in candidate_signals:
             url_errs = _validate_source_url(sig)
@@ -495,8 +572,18 @@ def run_operational_discovery_pilot(
                 found = True
                 break
         if not found:
-            # Add as standalone evidence entry
-            evidence_for_assembly.append(dict(sig))
+            # Add as standalone evidence entry; fill required assembly fields
+            # with sensible defaults so downstream assembly does not crash
+            standalone = dict(sig)
+            standalone.setdefault("title", str(sig.get("pain_summary", "") or sig.get("source_id", "untitled")))
+            standalone.setdefault("evidence_kind", "pain_signal_candidate")
+            standalone.setdefault("created_at", str(sig.get("created_at", "") or created_at))
+            standalone.setdefault("fetched_at", str(sig.get("fetched_at", "") or created_at))
+            standalone.setdefault("excerpt", str(sig.get("pain_summary", "") or sig.get("title", "") or ""))
+            standalone.setdefault("contribution_to_cluster", "primary")
+            standalone.setdefault("body", "")
+            standalone.setdefault("quality_flags", [])
+            evidence_for_assembly.append(standalone)
 
     try:
         clusters, duplicates, assembly_summary = assemble_pain_clusters(
@@ -709,6 +796,14 @@ def write_pilot_run_artifacts(
     Returns:
         Dict mapping artifact name to written file path.
     """
+    # Validate discovery_run_id for path traversal safety (Fix 3)
+    run_id_errors = _validate_discovery_run_id(result.discovery_run_id)
+    if run_id_errors:
+        raise ValueError(
+            f"Invalid discovery_run_id for post-hoc artifact writing: "
+            f"{'; '.join(run_id_errors)}"
+        )
+
     run_dir = Path(output_dir) / result.discovery_run_id
 
     # Reconstruct objects from dicts for writing

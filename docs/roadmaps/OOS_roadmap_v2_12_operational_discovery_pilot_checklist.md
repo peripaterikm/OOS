@@ -698,12 +698,14 @@ The Founder Review Package is **advisory-only**. It does NOT ingest founder deci
 
 ### Intent
 
-Implement the Operational Discovery Pilot orchestrator — the single entrypoint that runs the full pilot pipeline: RawEvidence → CandidateSignals → PainClusters → OpportunityCandidates → SourceQualityReport → FounderReviewPackage. Uses fixture/bounded input by default. Writes outputs to `artifacts/discovery/pilot_runs/<run_id>/`. No live APIs in unit tests. Live mode not default.
+Implement the Operational Discovery Pilot orchestrator — the single entrypoint that runs the full pilot pipeline: RawEvidence → CandidateSignals → PainClusters → OpportunityCandidates → SourceQualityReport → FounderReviewPackage. Uses fixture/bounded input by default. No live APIs in unit tests. Live mode not default.
+
+**Output policy:** The orchestrator does NOT write to the repository by default. Artifacts are written only when the caller explicitly supplies `output_dir`. The recommended convention is `artifacts/discovery/pilot_runs/<run_id>/`, but this is not a default behavior — the caller controls the output location.
 
 ### Allowed Change Type
 
-- Create: `src/oos/discovery_pilot.py` (new module: orchestrator)
-- Create: `tests/test_discovery_pilot.py` (fixture tests)
+- Create: `src/oos/operational_discovery_pilot.py` (new module: orchestrator)
+- Create: `tests/test_operational_discovery_pilot.py` (fixture tests)
 - May create: CLI entrypoint in `src/oos/cli.py` (if pilot command is added)
 - May read (do not modify): `docs/contracts/operational_discovery_pilot_run_contract.md`, `src/oos/models.py`, `src/oos/pain_cluster.py` (from item 1), `src/oos/pain_cluster_assembly.py` (from item 4), `src/oos/source_quality_report.py` (from item 5), `src/oos/founder_review_package.py` (from item 6)
 - Do NOT modify existing source code outside the new module (except possibly adding a CLI command).
@@ -713,9 +715,9 @@ Implement the Operational Discovery Pilot orchestrator — the single entrypoint
 
 | File | Action | Scope |
 |------|--------|-------|
-| `src/oos/discovery_pilot.py` | Create | Orchestrator: 14-phase lifecycle, artifact writing, preflight validation |
+| `src/oos/operational_discovery_pilot.py` | Create | Orchestrator: 8-phase lifecycle, artifact writing, preflight validation |
 | `src/oos/cli.py` | May modify | Add `discovery-pilot` CLI command |
-| `tests/test_discovery_pilot.py` | Create | Fixture tests: end-to-end pipeline, artifact output, traceability verification |
+| `tests/test_operational_discovery_pilot.py` | Create | Fixture tests: end-to-end pipeline, artifact output, traceability verification |
 
 ### Implementation Requirements
 
@@ -797,7 +799,7 @@ Implement a deterministic controlled smoke test that runs the full pilot pipelin
 
 - Create or update: `tests/test_discovery_pilot_smoke.py` (new smoke test file)
 - Update: `scripts/run-controlled-smoke.ps1` (to include pilot smoke if needed)
-- May read (do not modify): `docs/runbooks/controlled_weekly_run_smoke_test.md`, `docs/contracts/operational_discovery_pilot_run_contract.md`, `src/oos/discovery_pilot.py` (from item 7)
+- May read (do not modify): `docs/runbooks/controlled_weekly_run_smoke_test.md`, `docs/contracts/operational_discovery_pilot_run_contract.md`, `src/oos/operational_discovery_pilot.py` (from item 7)
 - Do NOT modify existing source code outside the smoke test file.
 - Do NOT modify scripts except `run-controlled-smoke.ps1`.
 

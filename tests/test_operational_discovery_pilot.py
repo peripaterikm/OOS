@@ -20,8 +20,10 @@ from oos.operational_discovery_pilot import (
     PilotRunValidationResult,
     _build_run_id,
     _derive_minimal_candidate_signals,
+    _is_safe_discovery_run_id,
     _is_valid_http_url,
     _is_placeholder_url,
+    _validate_discovery_run_id,
     _validate_source_scope,
     _validate_source_url,
     build_pilot_run_id,
@@ -278,11 +280,19 @@ class TestSourceScopeValidation(unittest.TestCase):
         errors, warnings = _validate_source_scope([ev], stretch_allowed=True)
         self.assertEqual(len(errors), 0)
 
-    def test_unknown_source_warns_not_errors(self):
+    def test_unknown_source_fails(self):
         ev = _make_hn_evidence()
         ev["source_id"] = "some_unknown_source"
         errors, warnings = _validate_source_scope([ev])
-        self.assertEqual(len(errors), 0)
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertTrue(any("unknown source_id" in e.lower() for e in errors))
+
+    def test_unknown_source_type_fails(self):
+        ev = _make_hn_evidence()
+        ev["source_type"] = "flarp_network"
+        errors, warnings = _validate_source_scope([ev])
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertTrue(any("unknown source_type" in e.lower() for e in errors))
 
     def test_multiple_deferred_sources(self):
         evidence = [
@@ -1015,3 +1025,322 @@ class TestEdgeCases(unittest.TestCase):
                 break
         self.assertIsNotNone(hn_metric)
         self.assertEqual(hn_metric["records_seen"], 50)
+
+
+# =========================================================================
+# Fix 1: Candidate signal scope validation tests
+# =========================================================================
+
+
+class TestCandidateSignalScopeValidation(unittest.TestCase):
+    """Tests that supplied candidate_signals are validated for source scope."""
+
+    def test_candidate_signal_with_product_hunt_rejected(self):
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[_make_hn_evidence()],
+            candidate_signals=[
+                {
+                    "signal_id": "cs_ph_001",
+                    "source_id": "product_hunt",
+                    "source_type": "discussion",
+                    "source_url": "https://example.com",
+                    "evidence_id": "does_not_matter",
+                }
+            ],
+            created_at=_FIXED_TS,
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertFalse(result.is_valid)
+        self.assertTrue(any("product_hunt" in e for e in result.errors))
+
+    def test_candidate_signal_with_pimenov_ai_rejected(self):
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[_make_hn_evidence()],
+            candidate_signals=[
+                {
+                    "signal_id": "cs_pai_001",
+                    "source_id": "pimenov_ai",
+                    "source_type": "discussion",
+                    "source_url": "https://example.com",
+                    "evidence_id": "does_not_matter",
+                }
+            ],
+            created_at=_FIXED_TS,
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertFalse(result.is_valid)
+        self.assertTrue(any("pimenov_ai" in e for e in result.errors))
+
+    def test_candidate_signal_with_reddit_rejected(self):
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[_make_hn_evidence()],
+            candidate_signals=[
+                {
+                    "signal_id": "cs_reddit_001",
+                    "source_id": "reddit",
+                    "source_type": "discussion",
+                    "source_url": "https://example.com",
+                    "evidence_id": "does_not_matter",
+                }
+            ],
+            created_at=_FIXED_TS,
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertFalse(result.is_valid)
+        self.assertTrue(any("reddit" in e for e in result.errors))
+
+    def test_candidate_signal_with_unknown_source_id_rejected(self):
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[_make_hn_evidence()],
+            candidate_signals=[
+                {
+                    "signal_id": "cs_unk_001",
+                    "source_id": "flarp_network_v2",
+                    "source_type": "discussion",
+                    "source_url": "https://example.com",
+                    "evidence_id": "does_not_matter",
+                }
+            ],
+            created_at=_FIXED_TS,
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertFalse(result.is_valid)
+        self.assertTrue(any("unknown source_id" in e.lower() for e in result.errors))
+
+    def test_candidate_signal_with_legacy_hacker_news_algolia_normalized(self):
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[_make_hn_evidence()],
+            candidate_signals=[
+                {
+                    "signal_id": "cs_hn_legacy_001",
+                    "evidence_id": "hn_001",
+                    "source_id": "hacker_news_algolia",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=40000001",
+                    "topic_id": "ci_cd",
+                    "query_kind": "pilot_fixture",
+                    "signal_type": "pain_signal",
+                    "pain_summary": "Test",
+                    "target_user": "developer",
+                    "current_workaround": "",
+                    "buying_intent_hint": "",
+                    "urgency_hint": "",
+                    "confidence": 0.8,
+                    "measurement_methods": {},
+                    "extraction_mode": "manual",
+                    "classification": "pain_signal_candidate",
+                    "classification_confidence": 0.8,
+                    "traceability": {"source_url": "https://news.ycombinator.com/item?id=40000001"},
+                }
+            ],
+            created_at=_FIXED_TS,
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertTrue(result.is_valid)
+        self.assertEqual(result.candidate_signals[0]["source_id"], "hacker_news")
+
+    def test_candidate_signal_with_legacy_github_issues_source_type_normalized(self):
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[_make_gh_evidence()],
+            candidate_signals=[
+                {
+                    "signal_id": "cs_gh_legacy_001",
+                    "evidence_id": "gh_001",
+                    "source_id": "github_issues",
+                    "source_type": "github_issues",
+                    "source_url": "https://github.com/owner/repo/issues/100",
+                    "topic_id": "ci_cd",
+                    "query_kind": "pilot_fixture",
+                    "signal_type": "pain_signal",
+                    "pain_summary": "Test",
+                    "target_user": "developer",
+                    "current_workaround": "",
+                    "buying_intent_hint": "",
+                    "urgency_hint": "",
+                    "confidence": 0.8,
+                    "measurement_methods": {},
+                    "extraction_mode": "manual",
+                    "classification": "pain_signal_candidate",
+                    "classification_confidence": 0.8,
+                    "traceability": {"source_url": "https://github.com/owner/repo/issues/100"},
+                }
+            ],
+            created_at=_FIXED_TS,
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertTrue(result.is_valid)
+        self.assertEqual(result.candidate_signals[0]["source_type"], "issue_tracker")
+
+    def test_candidate_signal_stack_exchange_rejected_by_default(self):
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[_make_hn_evidence()],
+            candidate_signals=[
+                {
+                    "signal_id": "cs_se_001",
+                    "source_id": "stack_exchange",
+                    "source_type": "qa",
+                    "source_url": "https://stackoverflow.com/q/123",
+                    "evidence_id": "does_not_matter",
+                }
+            ],
+            created_at=_FIXED_TS,
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertFalse(result.is_valid)
+        self.assertTrue(any("stack_exchange" in e for e in result.errors))
+
+    def test_candidate_signal_stack_exchange_accepted_with_stretch(self):
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[_make_hn_evidence()],
+            candidate_signals=[
+                {
+                    "signal_id": "cs_se_002",
+                    "source_id": "stack_exchange",
+                    "source_type": "qa",
+                    "source_url": "https://stackoverflow.com/q/456",
+                    "evidence_id": "does_not_matter",
+                }
+            ],
+            created_at=_FIXED_TS,
+            stretch_allowed=True,
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertTrue(result.is_valid)
+
+
+# =========================================================================
+# Fix 2: Unknown source ID/type must be errors
+# =========================================================================
+
+
+class TestUnknownSourceFailsPreflight(unittest.TestCase):
+    """Tests that unknown source_id/source_type produce errors, not warnings."""
+
+    def test_raw_evidence_unknown_source_id_fails(self):
+        ev = _make_hn_evidence()
+        ev["source_id"] = "mystery_source_xyz"
+        errors, _ = _validate_source_scope([ev])
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertTrue(any("unknown source_id" in e.lower() for e in errors))
+
+    def test_raw_evidence_unknown_source_type_fails(self):
+        ev = _make_hn_evidence()
+        ev["source_type"] = "mystery_protocol"
+        errors, _ = _validate_source_scope([ev])
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertTrue(any("unknown source_type" in e.lower() for e in errors))
+
+    def test_unknown_source_makes_result_invalid(self):
+        ev = _make_hn_evidence()
+        ev["source_id"] = "some_rando_source"
+        ev["source_url"] = "https://example.com/test"
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[ev], created_at=_FIXED_TS
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertFalse(result.is_valid)
+
+    def test_error_message_includes_unknown_source_id(self):
+        ev = _make_hn_evidence()
+        ev["source_id"] = "bogus_db_vendor"
+        errors, _ = _validate_source_scope([ev])
+        self.assertTrue(any("bogus_db_vendor" in e for e in errors))
+
+
+# =========================================================================
+# Fix 3: Discovery run ID path traversal safety
+# =========================================================================
+
+
+class TestDiscoveryRunIdSafety(unittest.TestCase):
+    """Tests that discovery_run_id is validated against path traversal."""
+
+    def test_dot_dot_slash_escape_rejected(self):
+        self.assertFalse(_is_safe_discovery_run_id("../escape"))
+        errs = _validate_discovery_run_id("../escape")
+        self.assertGreaterEqual(len(errs), 1)
+
+    def test_dot_dot_backslash_escape_rejected(self):
+        self.assertFalse(_is_safe_discovery_run_id("..\\escape"))
+        errs = _validate_discovery_run_id("..\\escape")
+        self.assertGreaterEqual(len(errs), 1)
+
+    def test_drive_prefix_rejected(self):
+        self.assertFalse(_is_safe_discovery_run_id("C:\\temp\\escape"))
+        errs = _validate_discovery_run_id("C:\\temp\\escape")
+        self.assertGreaterEqual(len(errs), 1)
+
+    def test_absolute_unix_path_rejected(self):
+        self.assertFalse(_is_safe_discovery_run_id("/tmp/escape"))
+        errs = _validate_discovery_run_id("/tmp/escape")
+        self.assertGreaterEqual(len(errs), 1)
+
+    def test_valid_run_id_accepted(self):
+        self.assertTrue(_is_safe_discovery_run_id("pilot_run_2026-05-12_abc12345"))
+        errs = _validate_discovery_run_id("pilot_run_2026-05-12_abc12345")
+        self.assertEqual(len(errs), 0)
+
+    def test_valid_run_id_with_dots_accepted(self):
+        self.assertTrue(_is_safe_discovery_run_id("pilot.run.v2.12"))
+        errs = _validate_discovery_run_id("pilot.run.v2.12")
+        self.assertEqual(len(errs), 0)
+
+    def test_empty_run_id_rejected(self):
+        self.assertFalse(_is_safe_discovery_run_id(""))
+        errs = _validate_discovery_run_id("")
+        self.assertGreaterEqual(len(errs), 1)
+
+    def test_run_id_with_spaces_rejected(self):
+        self.assertFalse(_is_safe_discovery_run_id("my run id"))
+        errs = _validate_discovery_run_id("my run id")
+        self.assertGreaterEqual(len(errs), 1)
+
+    def test_runtime_rejects_traversal_with_output_dir(self):
+        tmpdir = tempfile.mkdtemp(prefix="oos_trav_")
+        try:
+            inp = OperationalDiscoveryPilotInput(
+                raw_evidence=[_make_hn_evidence()],
+                discovery_run_id="../escape",
+                output_dir=tmpdir,
+                created_at=_FIXED_TS,
+            )
+            with self.assertRaises(ValueError):
+                run_operational_discovery_pilot(inp)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_posthoc_write_rejects_traversal_id(self):
+        tmpdir = tempfile.mkdtemp(prefix="oos_post_")
+        try:
+            inp = OperationalDiscoveryPilotInput(
+                raw_evidence=[_make_hn_evidence()],
+                discovery_run_id="safe_run",
+                created_at=_FIXED_TS,
+            )
+            result = run_operational_discovery_pilot(inp)
+            # corrupt the run id after the fact
+            result.discovery_run_id = "..\\oops"
+            with self.assertRaises(ValueError):
+                write_pilot_run_artifacts(result, tmpdir)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_artifacts_stay_under_output_dir(self):
+        tmpdir = tempfile.mkdtemp(prefix="oos_contain_")
+        try:
+            inp = OperationalDiscoveryPilotInput(
+                raw_evidence=[_make_hn_evidence()],
+                discovery_run_id="contained_run",
+                output_dir=tmpdir,
+                created_at=_FIXED_TS,
+            )
+            result = run_operational_discovery_pilot(inp)
+            for name, path_str in result.artifact_paths.items():
+                resolved = str(Path(path_str).resolve())
+                base = str(Path(tmpdir).resolve())
+                self.assertTrue(
+                    resolved.startswith(base),
+                    f"Artifact {name} at {resolved} escapes output_dir {base}",
+                )
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
