@@ -1107,6 +1107,24 @@ class TestCandidateSignalScopeValidation(unittest.TestCase):
         self.assertFalse(result.is_valid)
         self.assertTrue(any("unknown source_id" in e.lower() for e in result.errors))
 
+    def test_candidate_signal_with_unknown_source_type_rejected(self):
+        inp = OperationalDiscoveryPilotInput(
+            raw_evidence=[_make_hn_evidence()],
+            candidate_signals=[
+                {
+                    "signal_id": "cs_unktype_001",
+                    "source_id": "hacker_news",
+                    "source_type": "flarp_protocol_v9",
+                    "source_url": "https://example.com",
+                    "evidence_id": "does_not_matter",
+                }
+            ],
+            created_at=_FIXED_TS,
+        )
+        result = run_operational_discovery_pilot(inp)
+        self.assertFalse(result.is_valid)
+        self.assertTrue(any("unknown source_type" in e.lower() for e in result.errors))
+
     def test_candidate_signal_with_legacy_hacker_news_algolia_normalized(self):
         inp = OperationalDiscoveryPilotInput(
             raw_evidence=[_make_hn_evidence()],

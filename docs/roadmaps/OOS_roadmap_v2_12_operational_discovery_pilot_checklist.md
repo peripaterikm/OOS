@@ -735,7 +735,7 @@ Implement the Operational Discovery Pilot orchestrator — the single entrypoint
 - [x] **7.4** Implement preflight validation (Phase 1):
   - Deferred source IDs rejected (product_hunt, pimenov_ai, reddit, discord, slack, x_twitter, etc.).
   - Stretch sources rejected unless `stretch_allowed=True`.
-  - Unknown sources produce warnings, not errors.
+  - Unknown source_id / source_type values are errors (not warnings); default pilot scope is closed — only `hacker_news` and `github_issues` are allowed by default. Stack Exchange / Stack Overflow requires `stretch_allowed=True`. Deferred sources are rejected.
   - Preflight failure adds errors to result and sets `is_valid=False`.
 - [x] **7.5** Write outputs to `<output_dir>/<discovery_run_id>/` with these artifact filenames:
   - `raw_evidence.json`, `candidate_signals.json`, `pain_clusters.json`
