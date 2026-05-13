@@ -9,7 +9,7 @@
 - Roadmap v2.9 status: complete (`8 / 8`, branch `feat/v2-9-output-source-recovery-block-1`, local-only)
 - Roadmap v2.10 status: **complete / closed** (`8 / 9`, item 5 skipped; replace-all gate BLOCKED)
 - Roadmap v2.11 status: **complete / closed** (`10 / 10`, branch `feat/v2-11-discovery-sources-foundation`, local-only)
-- Roadmap v2.12 status: **complete / closed** (`10 / 10`, branch `feat/v2-12-operational-discovery-pilot`, local-only)
+- Roadmap v2.12 status: **complete / closed** (`10 / 10`, branch `feat/v2-12-operational-discovery-pilot`, PR #52 merged)
 - Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
 - Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
@@ -32,7 +32,7 @@
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-12-operational-discovery-pilot`
+- Current branch: `docs/v2-12-post-merge-metadata-fix`
 - Previous branch (v2.11 implementation): `feat/v2-11-discovery-sources-foundation`
 - Previous branch (v2.10 implementation): `feat/v2-10-recovery-correction`
 - Previous branch (v2.9 implementation): `feat/v2-9-output-source-recovery-block-1`
@@ -251,7 +251,7 @@
 - Current item: `none / complete`
 - Latest local commit before final checkpoint: `b205b78` ([v2.12] 8 add operational discovery pilot smoke)
 - Final checkpoint commit: pending
-- Do not claim push / PR / merge / tag.
+- PR #52 merged to main; v2.12 tag pending.
 
 ### v2.12 Key Outcomes
 
@@ -278,6 +278,6 @@ OOS can run a deterministic controlled discovery pilot on HN + GitHub Issues fix
 - Based on: v2.11 / PR #51 / tag `v2.11`
 - Latest local commit before final checkpoint: `b205b78` ([v2.12] 8 add operational discovery pilot smoke)
 - Final checkpoint commit: pending
-- No push, PR, merge, tag, or release was performed.
+- PR #52 merged to main; v2.12 tag pending.
 - v2.12 is complete and closed.
-- **Next action:** Prepare PR/merge only when explicitly requested. Do not start v2.13 without explicit roadmap.
+- **Next action:** Main verification / tag after this cleanup PR is merged. Do not start v2.13 without explicit roadmap.
