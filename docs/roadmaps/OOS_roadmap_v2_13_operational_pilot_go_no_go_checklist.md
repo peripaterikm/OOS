@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `7 — Founder Review Protocol`
+- [x] **0.2** Current item: `8 — Pilot Results Report`
 - [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **7 / 12**
-- [x] **0.5** Remaining: **5 / 12**
+- [x] **0.4** Completed from this roadmap: **8 / 12**
+- [x] **0.5** Remaining: **4 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -16,7 +16,7 @@
 - **Planning branch:** `planning/v2-13-operational-pilot-go-no-go` (docs-only; this file)
 - **Recommended implementation branch:** `ops/v2-13-operational-pilot-cycle-1`
 - **Based on:** v2.12 / PR #52 + PR #53 / tag `v2.12`
-- **Status:** Planning
+- **Status:** Execution
 - **Goal:** Run first controlled operational pilot cycle and produce Go / Conditional Go / No-Go decision
 
 ### Strategic Purpose
@@ -528,8 +528,8 @@ Define the step-by-step procedure for executing the operational discovery pilot 
 
 - [x] **6.7** Pilot Run Procedure document exists.
 - [x] **6.8** All 6 required sections are populated (18 sections in the document, covering all 6 roadmap requirements and more).
-- [ ] **6.9** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **6.10** One local commit made with message: `[v2.13] 6 define pilot run procedure`.
+- [x] **6.9** `.\scripts\dev-git-check.ps1` passes.
+- [x] **6.10** One local commit made with message: `[v2.13] 6 define pilot run procedure`.
 
 ### Explicit Non-Goals
 
@@ -568,22 +568,22 @@ Define the structured protocol for founder review of pilot outputs. This protoco
 
 ### Requirements
 
-- [ ] **7.1** Define review scope: top clusters and opportunity candidates to review, ranked by score.
-- [ ] **7.2** Define the five decision types with criteria:
+- [x] **7.1** Define review scope: top clusters and opportunity candidates to review, ranked by score.
+- [x] **7.2** Define the five decision types with criteria:
   - `PROMOTE` — opportunity worth real validation.
   - `PARK` — interesting but not now.
-  - `KILL` — not worth pursuing; requires explicit `KillReason`.
+  - `KILL` — not worth pursuing; requires explicit founder rationale.
   - `NEEDS_MORE_EVIDENCE` — promising but insufficient data.
   - `REVISIT_LATER` — check again after more cycles.
-- [ ] **7.3** Require founder notes for every reviewed item.
-- [ ] **7.4** Require classification of each item: interesting / banal / unclear / actionable.
-- [ ] **7.5** Define validation action capture for promoted items:
+- [x] **7.3** Require founder notes for every reviewed item.
+- [x] **7.4** Require classification of each item: interesting / banal / unclear / actionable.
+- [x] **7.5** Define validation action capture for promoted items:
   - `interview` — talk to potential users.
   - `landing_page` — test demand with a landing page.
   - `manual_research` — deeper manual investigation.
   - `collect_more_evidence` — expand source scope for this pain.
   - `kill_no_action` — kill with no further action.
-- [ ] **7.6** Define how decisions are recorded and where they are stored.
+- [x] **7.6** Define how decisions are recorded and where they are stored.
 
 ### Validation Expectation
 
@@ -594,11 +594,11 @@ Define the structured protocol for founder review of pilot outputs. This protoco
 
 ### Definition of Done
 
-- [ ] **7.7** Founder Review Protocol document exists.
-- [ ] **7.8** All 6 required sections are populated.
-- [ ] **7.9** Founder confirms they can follow the protocol within the review timebox.
-- [ ] **7.10** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **7.11** One local commit made.
+- [x] **7.7** Founder Review Protocol document exists at `docs/decisions/founder_review_protocol_v2_13.md`.
+- [x] **7.8** All 6 required sections are populated (17 sections in the document, covering all 6 roadmap requirements and more).
+- [x] **7.9** Protocol defines review timebox (Section 3), review order (Section 4), and decision recording format (Section 6.3).
+- [x] **7.10** `.\scripts\dev-git-check.ps1` passes.
+- [x] **7.11** One local commit made with message: `[v2.13] 7 define founder review protocol`.
 
 ### Explicit Non-Goals
 
