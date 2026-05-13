@@ -16,7 +16,7 @@
 - **Planning branch:** `planning/v2-12-operational-discovery-pilot-roadmap` (docs-only; this file)
 - **Recommended implementation branch:** `feat/v2-12-operational-discovery-pilot`
 - **Based on:** v2.11 / PR #51 / tag `v2.11`
-- **Status:** Planning
+- **Status:** Complete / closed
 - **Goal:** Reach Operational Discovery Pilot ready state
 
 ### Core Concept
@@ -1083,4 +1083,4 @@ The following source candidates are explicitly deferred to v2.14+ and are condit
 
 ---
 
-*Roadmap v2.12 — Operational Discovery Pilot Implementation. Planning phase. Do not implement sources beyond pilot scope.*
+*Roadmap v2.12 — Operational Discovery Pilot Implementation. Implementation phase complete / Operational Discovery Pilot ready.*
