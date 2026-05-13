@@ -5,7 +5,7 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `8 — Pilot Results Report`
+- [x] **0.2** Current item: `9 — Noise and Quality Analysis`
 - [x] **0.3** Roadmap state: `execution`
 - [x] **0.4** Completed from this roadmap: **8 / 12**
 - [x] **0.5** Remaining: **4 / 12**
@@ -637,16 +637,16 @@ Define the structure and requirements for the Pilot Results Report. This report 
 
 ### Requirements
 
-- [ ] **8.1** Report raw evidence count (total, per-source).
-- [ ] **8.2** Report candidate signal count.
-- [ ] **8.3** Report pain cluster count.
-- [ ] **8.4** Report opportunity candidate count.
-- [ ] **8.5** Report source quality by source (signal rate, noise rate, missing URLs, etc.).
-- [ ] **8.6** Identify noise categories observed.
-- [ ] **8.7** Summarize founder review outcomes (promote/park/kill/needs_more_evidence/revisit_later counts).
-- [ ] **8.8** List top 3–5 opportunities with scores and traceability status.
-- [ ] **8.9** Report traceability status (total URLs, missing, placeholder, validation pass/fail).
-- [ ] **8.10** Report operational friction: any issues encountered during the pilot run.
+- [x] **8.1** Report raw evidence count (total, per-source). *(Defined in template Section 3.)*
+- [x] **8.2** Report candidate signal count. *(Defined in template Section 3.)*
+- [x] **8.3** Report pain cluster count. *(Defined in template Section 3.)*
+- [x] **8.4** Report opportunity candidate count. *(Defined in template Section 3.)*
+- [x] **8.5** Report source quality by source (signal rate, noise rate, missing URLs, etc.). *(Defined in template Section 4.)*
+- [x] **8.6** Identify noise categories observed. *(Defined in template Section 8.)*
+- [x] **8.7** Summarize founder review outcomes (promote/park/kill/needs_more_evidence/revisit_later counts). *(Defined in template Section 7.)*
+- [x] **8.8** List top 3–5 opportunities with scores and traceability status. *(Defined in template Section 6.)*
+- [x] **8.9** Report traceability status (total URLs, missing, placeholder, validation pass/fail). *(Defined in template Section 2.)*
+- [x] **8.10** Report operational friction: any issues encountered during the pilot run. *(Defined in template Section 11.)*
 
 ### Validation Expectation
 
@@ -657,11 +657,18 @@ Define the structure and requirements for the Pilot Results Report. This report 
 
 ### Definition of Done
 
-- [ ] **8.11** Pilot Results Report document exists.
-- [ ] **8.12** All 10 required sections are populated with actual pilot data.
-- [ ] **8.13** Report includes explicit traceability status.
-- [ ] **8.14** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **8.15** One local commit made.
+- [x] **8.11** Pilot Results Report Template exists at `docs/decisions/pilot_results_report_template_v2_13.md`.
+- [x] **8.12** All 12 required report sections are defined with sub-fields, placeholder fields, and template skeletons.
+- [x] **8.13** Metrics table defined: 23 metrics with types (Section 4).
+- [x] **8.14** Success/failure criteria check defined (Section 10): 7 success criteria + 5 volume targets.
+- [x] **8.15** Preliminary Go/No-Go decision interpretation defined (Section 5): GO, CONDITIONAL GO, NO-GO leaning indicators.
+- [x] **8.16** Markdown template skeleton provided (Section 6): full report with all placeholder fields.
+- [x] **8.17** JSON companion structure defined (Section 7): full JSON schema.
+- [x] **8.18** Artifact and commit policy defined (Section 8): template vs. populated report distinction.
+- [x] **8.19** Required inputs listed (Section 2): 14 expected input artifacts.
+- [x] **8.20** Self-audit checklist present and complete (Section 9).
+- [ ] **8.21** `.\scripts\dev-git-check.ps1` passes.
+- [ ] **8.22** One local commit made.
 
 ### Explicit Non-Goals
 
