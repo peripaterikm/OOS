@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `3 — Hacker News Pilot Query Plan`
+- [x] **0.2** Current item: `4 — GitHub Issues Repo Allowlist and Query Plan`
 - [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **3 / 12**
-- [x] **0.5** Remaining: **9 / 12**
+- [x] **0.4** Completed from this roadmap: **4 / 12**
+- [x] **0.5** Remaining: **8 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -331,13 +331,13 @@ Define the specific Hacker News search queries, filters, and collection paramete
 
 ### Requirements
 
-- [ ] **3.1** Define Ask HN / Show HN / relevant search queries aligned with founder ICP.
-- [ ] **3.2** Focus on AI agents / devtools / automation / data / workflow pain themes (or themes aligned with founder ICP from item 1).
-- [ ] **3.3** Define minimum and maximum records per query to bound collection.
-- [ ] **3.4** Identify query noise risks: which queries may produce high noise, and how to handle them.
-- [ ] **3.5** Explicitly state: no broad scraping. Collection is query-bounded.
-- [ ] **3.6** Require explicit `source_url` traceability for every collected item (`https://news.ycombinator.com/item?id=<id>`).
-- [ ] **3.7** Define collection method: fixture/bounded manual vs. live (requires founder approval per FA gates).
+- [x] **3.1** Define Ask HN / Show HN / relevant search queries aligned with founder ICP.
+- [x] **3.2** Focus on AI agents / devtools / automation / data / workflow pain themes (or themes aligned with founder ICP from item 1).
+- [x] **3.3** Define minimum and maximum records per query to bound collection.
+- [x] **3.4** Identify query noise risks: which queries may produce high noise, and how to handle them.
+- [x] **3.5** Explicitly state: no broad scraping. Collection is query-bounded.
+- [x] **3.6** Require explicit `source_url` traceability for every collected item (`https://news.ycombinator.com/item?id=<id>`).
+- [x] **3.7** Define collection method: fixture/bounded manual vs. live (requires founder approval per FA gates).
 
 ### Validation Expectation
 
@@ -348,9 +348,9 @@ Define the specific Hacker News search queries, filters, and collection paramete
 
 ### Definition of Done
 
-- [ ] **3.8** HN Pilot Query Plan document exists.
-- [ ] **3.9** All 7 required sections are populated.
-- [ ] **3.10** Query plan is aligned with founder ICP from item 1.
+- [x] **3.8** HN Pilot Query Plan document exists.
+- [x] **3.9** All 7 required sections are populated.
+- [x] **3.10** Query plan is aligned with founder ICP from item 1.
 - [ ] **3.11** `.\scripts\dev-git-check.ps1` passes.
 - [ ] **3.12** One local commit made.
 
