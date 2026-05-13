@@ -91,7 +91,16 @@ v2.13 is **operational, not feature expansion**. It takes the v2.12 pilot-ready 
 - Production deployment
 - UI / dashboard work
 - Database / server architecture
-- Any source code, test, script, example, or artifact changes (this is a docs-only planning roadmap)
+- Any source code, test, script, or example changes
+- Committed repository artifacts unless explicitly approved per-item
+
+### Artifact Policy (v2.13 Operational Pilot)
+
+- **No committed repository artifacts unless explicitly approved per-item.** The repository must not accumulate unapproved runtime outputs.
+- **Runtime pilot outputs are allowed only under explicit caller-provided `output_dir`.** The pilot orchestrator writes artifacts only when the caller supplies a destination directory; it does not default-write to `artifacts/` or any repository path.
+- **Generated pilot outputs must remain uncommitted** unless explicitly approved as sample/evidence artifacts by the founder or by a roadmap item that authorizes committing specific outputs.
+- **Validation and dev ledger reports may be committed only in the final checkpoint** (item 11) if the roadmap item explicitly allows them. Interim validation reports must not be committed.
+- **No directory defaults.** The roadmap does not assume or hardcode `artifacts/`, `reports/`, or any output location. Caller controls destination.
 
 ### LLM Role Statement
 
@@ -905,7 +914,7 @@ These gates are enforced during v2.13 execution. Any violation must be detected 
 |---|------|-------------|
 | G1 | No Product Hunt in v2.13 | Rejected if `product_hunt` appears in any pilot input or output |
 | G2 | No pimenov.ai in v2.13 | Rejected if `pimenov_ai` appears in any pilot input or output |
-| G3 | No Reddit/social/broad scraping | Rejected if any source outside `discussion`, `issue_tracker`, `qa` appears |
+| G3 | No deferred sources; gate by `source_id` | Default allowed `source_id`: `hacker_news`, `github_issues`. Default allowed `source_type`: `discussion`, `issue_tracker`. Stack Exchange / Stack Overflow (`stack_exchange`, `stack_overflow`) allowed only if explicitly approved as stretch. Rejected if any deferred `source_id` appears: `product_hunt`, `pimenov_ai`, `reddit`, `discord`, `slack`, `x_twitter` / `twitter` / `x`, `alternative_to`, `yc` / `y_combinator` / `crunchbase`, app marketplaces, job boards, blogs/newsletters, `broad_web_crawl`. Do not rely on `source_type` alone to distinguish allowed vs deferred sources. |
 | G4 | No Stack Exchange unless explicitly approved as stretch | Rejected unless founder has explicitly approved stretch |
 | G5 | No live source access without explicit founder approval | Default is fixture/bounded input; live requires explicit opt-in |
 | G6 | No source without source_url traceability | Every evidence item must have a real `http(s)://` URL |
