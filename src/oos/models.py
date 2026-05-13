@@ -744,6 +744,8 @@ class FounderReviewDecision:
             _require_non_empty(self.linked_kill_reason_id, "FounderReviewDecision.linked_kill_reason_id")
 
 
+from .pain_cluster import PainCluster, PainClusterScoring, SourceEvidenceEntry  # noqa: E402
+
 MODEL_KIND = {
     RawEvidence: "raw_evidence",
     CleanedEvidence: "cleaned_evidence",
@@ -762,6 +764,9 @@ MODEL_KIND = {
     PortfolioState: "portfolio",
     KillReason: "kills",
     FounderReviewDecision: "founder_reviews",
+    PainCluster: "pain_clusters",
+    PainClusterScoring: "pain_cluster_scorings",
+    SourceEvidenceEntry: "source_evidence_entries",
 }
 
 
@@ -820,6 +825,15 @@ def model_from_dict(model_cls: Any, data: Dict[str, Any]) -> Any:
                 "decision": _enum_from_value(FounderReviewDecisionEnum, data.get("decision")),
             }
         )
+    elif model_cls is PainCluster:
+        obj = PainCluster.from_dict(data)
+        return obj
+    elif model_cls is PainClusterScoring:
+        obj = PainClusterScoring.from_dict(data)
+        return obj
+    elif model_cls is SourceEvidenceEntry:
+        obj = SourceEvidenceEntry.from_dict(data)
+        return obj
     else:
         obj = model_cls(**data)
 

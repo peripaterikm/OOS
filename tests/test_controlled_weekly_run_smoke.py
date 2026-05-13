@@ -467,3 +467,132 @@ class TestSmokeScriptExpectsStatusPass(unittest.TestCase):
                 break
 
         self.assertTrue(found_check, "Could not find weekly-cycle-status-v2 pass/fail pattern")
+
+
+# ---------------------------------------------------------------------------
+# Operational Discovery Pilot smoke tests (v2.12 item 8)
+# ---------------------------------------------------------------------------
+
+
+class TestSmokeScriptContainsOperationalDiscoveryPilotStep(unittest.TestCase):
+    """Verify the smoke script includes the Operational Discovery Pilot smoke step."""
+
+    def test_contains_pilot_smoke_section(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("Operational Discovery Pilot Smoke", text,
+                      "Smoke script missing Operational Discovery Pilot Smoke section")
+
+    def test_contains_pilot_smoke_step_label(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("STEP 10:", text,
+                      "Smoke script missing STEP 10 label")
+        self.assertIn("Operational Discovery Pilot", text,
+                      "Smoke script missing Operational Discovery Pilot reference")
+
+    def test_references_run_operational_discovery_pilot(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("run_operational_discovery_pilot", text,
+                      "Smoke script missing run_operational_discovery_pilot import/call")
+
+    def test_references_operational_discovery_pilot_input(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("OperationalDiscoveryPilotInput", text,
+                      "Smoke script missing OperationalDiscoveryPilotInput reference")
+
+    def test_checks_required_artifacts(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        required_artifacts = [
+            "raw_evidence.json",
+            "candidate_signals.json",
+            "pain_clusters.json",
+            "source_quality_report.json",
+            "source_quality_report.md",
+            "founder_review_package.json",
+            "founder_review_package.md",
+            "validation_summary.json",
+            "pilot_run_manifest.json",
+        ]
+        for artifact in required_artifacts:
+            with self.subTest(artifact=artifact):
+                self.assertIn(artifact, text,
+                              f"Smoke script missing artifact check: {artifact}")
+
+    def test_checks_no_deferred_sources(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("deferred", text.lower(),
+                      "Smoke script missing deferred source checks for pilot smoke")
+        self.assertIn("no_deferred_source_errors", text,
+                      "Smoke script missing no_deferred_source_errors check")
+
+    def test_checks_source_scope_clean(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("source scope clean", text.lower(),
+                      "Smoke script missing source scope clean check")
+        self.assertIn("hacker_news", text,
+                      "Smoke script must reference hacker_news in source scope check")
+        self.assertIn("github_issues", text,
+                      "Smoke script must reference github_issues in source scope check")
+
+    def test_checks_source_url_http(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("source_urls are http", text,
+                      "Smoke script missing http(s) source_url check")
+
+    def test_checks_validation_summary(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("validation_summary reports valid", text,
+                      "Smoke script missing validation_summary valid check")
+
+    def test_checks_founder_review_package_traceability(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("traceability", text.lower(),
+                      "Smoke script missing traceability checks in pilot smoke step")
+
+    def test_checks_source_quality_report(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("source_quality_report valid", text,
+                      "Smoke script missing source_quality_report validity check")
+
+    def test_uses_temp_output_location(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("pilot_output", text,
+                      "Smoke script missing pilot_output temp directory")
+        # Must use $TempRoot, not $ProjectRoot for pilot output
+        self.assertIn("$TempRoot", text,
+                      "Smoke script pilot step must reference $TempRoot")
+
+    def test_no_live_api_in_pilot_step(self) -> None:
+        """The pilot step must not contain live API call patterns."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        # Check the pilot step section for live call patterns
+        pilot_start = text.find("STEP 10:")
+        pilot_end = text.find("SUMMARY", pilot_start) if pilot_start >= 0 else -1
+        if pilot_start >= 0 and pilot_end >= 0:
+            pilot_section = text[pilot_start:pilot_end]
+            live_patterns = ["Invoke-RestMethod", "Invoke-WebRequest", "curl ", "wget "]
+            for pattern in live_patterns:
+                self.assertNotIn(pattern, pilot_section,
+                                 f"Pilot smoke step contains live API pattern: {pattern}")
+
+    def test_no_deferred_source_ids_in_fixture(self) -> None:
+        """The pilot smoke fixture must not use any deferred source_ids."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        deferred = ["product_hunt", "pimenov_ai", "reddit", "discord",
+                     "slack", "x_twitter", "stack_exchange"]
+        pilot_start = text.find("STEP 10:")
+        pilot_end = text.find("SUMMARY", pilot_start) if pilot_start >= 0 else -1
+        if pilot_start >= 0 and pilot_end >= 0:
+            pilot_section = text[pilot_start:pilot_end]
+            for source in deferred:
+                # Must be in safety/rejection check, not in fixture data source_id
+                # We check that any occurrence is inside a safety context
+                if source in pilot_section:
+                    idx = pilot_section.find(source)
+                    context_start = max(0, idx - 100)
+                    context_end = min(len(pilot_section), idx + len(source) + 100)
+                    context = pilot_section[context_start:context_end]
+                    if ('source_id = "' + source + '"') in context or ("source_id = '" + source + "'") in context:
+                        self.fail(
+                            f"Pilot smoke fixture uses deferred source_id '{source}' "
+                            f"in fixture data"
+                        )

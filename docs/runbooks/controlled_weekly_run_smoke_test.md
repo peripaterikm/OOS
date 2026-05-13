@@ -394,6 +394,77 @@ python -m venv .venv
 - Deletion of tracked files — no `git clean`, `git reset --hard`, `Remove-Item` on tracked paths
 - Writing to `artifacts/` in automated mode — smoke script uses temp directories
 
+## 20. Operational Discovery Pilot Smoke (v2.12 item 8)
+
+### Purpose
+
+This additional smoke step runs the full Operational Discovery Pilot pipeline end-to-end using deterministic fixture input and verifies all required pilot artifacts are produced correctly. It serves as the controlled smoke gate proving the pilot pipeline is operational before any live collection is attempted.
+
+### What It Verifies
+
+- **Pipeline integrity:** The pilot orchestrator (`run_operational_discovery_pilot()`) runs successfully from raw evidence through founder review package.
+- **Artifact completeness:** All 9 required artifacts exist under the temp output directory.
+- **Source scope:** Only `hacker_news` and `github_issues` are used; no deferred sources (Product Hunt, Reddit, Discord, etc.) appear.
+- **Source URL traceability:** Every raw evidence `source_url` is a real `http(s)://` URL; zero placeholder or `github://` URLs.
+- **Validation summary:** The `validation_summary.json` reports `is_valid=True`.
+- **Source Quality Report:** Exists and is structurally valid with `artifact_type=source_quality_report`.
+- **Founder Review Package:** Exists with clean `traceability_status`.
+
+### Expected Artifacts
+
+The pilot smoke step verifies these files exist under `<temp_root>/pilot_output/pilot_smoke_v2_12/`:
+
+| Artifact | Format | Verification |
+|----------|--------|-------------|
+| `raw_evidence.json` | JSON | Exists, all source_urls are http(s) |
+| `candidate_signals.json` | JSON | Exists, count >= 1 |
+| `pain_clusters.json` | JSON | Exists, count >= 1 |
+| `source_quality_report.json` | JSON | Exists, artifact_type correct |
+| `source_quality_report.md` | Markdown | Exists |
+| `founder_review_package.json` | JSON | Exists, traceability_status=clean |
+| `founder_review_package.md` | Markdown | Exists |
+| `validation_summary.json` | JSON | Exists, is_valid=True |
+| `pilot_run_manifest.json` | JSON | Exists |
+
+Optional artifacts (`opportunity_candidates.json`, `duplicates.json`) may also appear but are not required.
+
+### No Live APIs / No LLMs
+
+The pilot smoke step uses deterministic in-memory fixture data only:
+- No network calls to HN Algolia API or GitHub API.
+- No LLM calls to OpenAI, Anthropic, or any other provider.
+- No source collector calls.
+- No deferred sources.
+
+### Temp-Output Behavior
+
+All pilot artifacts are written to a temp directory under `$TempRoot/pilot_output/`. The real repository `artifacts/` directory is never touched. The `discovery_run_id` is fixed to `pilot_smoke_v2_12` for determinism.
+
+### Failure Guidance
+
+| Failure | Likely Cause | Fix |
+|---------|-------------|-----|
+| Source scope failure | Deferred source_id in fixture or pipeline | Verify fixture uses only `hacker_news` and `github_issues` |
+| Traceability failure | Missing or non-http(s) source_url | Check fixture evidence has valid source_urls |
+| Missing artifact | Pipeline phase failed or file not written | Check `run_operational_discovery_pilot` returns valid result |
+| Invalid founder_review_package | traceability_status not clean | Check evidence source_urls are valid http(s) URLs |
+| Invalid source_quality_report | artifact_type mismatch or missing source_metrics | Check source_quality_report.py build function |
+| No pain clusters | Evidence items too dissimilar for clustering | Add more related evidence items or verify clustering logic |
+| Pipeline errors | Unknown source type, bad data format | Check fixture evidence matches expected schema |
+| Exit code non-zero | Any check failed | Review the specific FAIL lines in smoke output |
+
+### Running the Pilot Smoke Standalone
+
+The pilot smoke runs as part of the full controlled smoke script:
+
+```powershell
+.\scripts\run-controlled-smoke.ps1
+```
+
+The pilot step appears as "Step 10: Operational Discovery Pilot Smoke" and reports individual PASS/FAIL for each verification gate.
+
+---
+
 **For automated execution, use the companion script:**
 
 ```powershell

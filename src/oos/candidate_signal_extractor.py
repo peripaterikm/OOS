@@ -240,13 +240,15 @@ def _pain_summary(cleaned: CleanedEvidence) -> str:
 
 
 def _target_user(cleaned: CleanedEvidence, text: str) -> str:
-    if cleaned.source_type in {"github_issues", "stack_exchange"}:
+    # Accept both canonical ("issue_tracker", "discussion") and legacy
+    # ("github_issues", "hacker_news_algolia") source_type values.
+    if cleaned.source_type in {"github_issues", "issue_tracker", "stack_exchange"}:
         return "developer"
     if cleaned.source_type == "rss_feed":
         if any(term in text for term in ("regulation", "compliance", "law")):
             return "regulated organization"
         return "market participant"
-    if cleaned.source_type == "hacker_news_algolia":
+    if cleaned.source_type in {"hacker_news_algolia", "hacker_news", "discussion"}:
         if any(term in text for term in ("founder", "startup", "smb owner")):
             return "founder"
         if any(term in text for term in ("developer", "api", "code", "engineer")):

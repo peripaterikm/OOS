@@ -9,7 +9,8 @@
 - Roadmap v2.9 status: complete (`8 / 8`, branch `feat/v2-9-output-source-recovery-block-1`, local-only)
 - Roadmap v2.10 status: **complete / closed** (`8 / 9`, item 5 skipped; replace-all gate BLOCKED)
 - Roadmap v2.11 status: **complete / closed** (`10 / 10`, branch `feat/v2-11-discovery-sources-foundation`, local-only)
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_11_discovery_sources_checklist.md`
+- Roadmap v2.12 status: **complete / closed** (`10 / 10`, branch `feat/v2-12-operational-discovery-pilot`, local-only)
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`
 - Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
@@ -18,22 +19,26 @@
 - Roadmap v2.10 status: `complete / closed` (`8 / 9`, branch `feat/v2-10-recovery-correction`)
 - Roadmap v2.11 planning created: yes
 - Roadmap v2.11 status: `complete / closed` (`10 / 10`, branch `feat/v2-11-discovery-sources-foundation`)
+- Roadmap v2.12 planning created: yes
+- Roadmap v2.12 status: `complete / closed` (`10 / 10`, branch `feat/v2-12-operational-discovery-pilot`)
 - Current item: `none / complete`
 - Roadmap state: `complete / closed`
 - Completed: `10 / 10`
-- Remaining: `0 applicable items`
-- Latest completed roadmap item: Roadmap v2.11 `10-B` — Dev ledger update and final mini-epic/run report
-- Next planned roadmap item: `none (v2.11 is complete; v2.12+ to be planned)`
+- Remaining: `0 / 10`
+- Latest completed roadmap item: Roadmap v2.12 item `9` — Final v2.12 Checkpoint
+- Next planned roadmap item: `none (v2.12 is complete; v2.13 requires explicit roadmap)`
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `feat/v2-11-discovery-sources-foundation`
+- Current branch: `feat/v2-12-operational-discovery-pilot`
+- Previous branch (v2.11 implementation): `feat/v2-11-discovery-sources-foundation`
 - Previous branch (v2.10 implementation): `feat/v2-10-recovery-correction`
 - Previous branch (v2.9 implementation): `feat/v2-9-output-source-recovery-block-1`
 - Previous branch (v2.8 implementation): `feat/v2-8-decision-correction-block-1`
 - Previous branch (v2.7 implementation): `feat/v2-7-traceability-block-1`
+- Planning branch (v2.12): `planning/v2-12-operational-discovery-pilot-roadmap` (docs-only)
 - Planning branch (v2.11): `planning/v2-11-discovery-sources-roadmap` (docs-only)
 - Planning branch (v2.8): `planning/v2-8-roadmap` (merged to main)
 - MVP branch (historical, v2.3 era): `feat/source-intelligence-mvp-discovery-loop`
@@ -233,7 +238,46 @@
 - Implementation branch: `feat/v2-11-discovery-sources-foundation`
 - Based on: v2.10 / tag `v2.10`
 - Latest local commit before final checkpoint: `3e613b5` ([v2.11] 9 define operational discovery pilot contract)
-- Final checkpoint commit: pending
+- Final checkpoint commit: pending (committed as part of v2.11 closure)
 - No push, PR, merge, tag, or release was performed.
 - v2.11 is complete and closed.
 - **Next action:** Prepare PR/merge only when explicitly requested. Do not start pilot implementation without explicit founder approval.
+
+## Roadmap v2.12 Completion
+
+- Roadmap: v2.12 Operational Discovery Pilot Implementation
+- Branch: `feat/v2-12-operational-discovery-pilot`
+- Status: **complete / closed**
+- Current item: `none / complete`
+- Latest local commit before final checkpoint: `b205b78` ([v2.12] 8 add operational discovery pilot smoke)
+- Final checkpoint commit: pending
+- Do not claim push / PR / merge / tag.
+
+### v2.12 Key Outcomes
+
+1. **PainCluster model + scoring implemented** — `src/oos/pain_cluster.py` with all 19 fields, deterministic scoring formula (8 weighted components), promotion thresholds, and 16 fail / 8 warn validation rules.
+2. **HN RawEvidence hardening completed** — `source_id` aligned to `hacker_news`, `source_type=discussion`, `evidence_kind` classification (8 categories), noise/quality flags, source quality summary, stable `source_url`.
+3. **GitHub Issues RawEvidence hardening completed** — `source_id=github_issues`, `source_type=issue_tracker`, zero `github://` fallback URLs, mandatory PR filtering, repo allowlist, `evidence_kind` classification (7 categories), noise/quality flags, `GitHubSourceQualitySummary`.
+4. **Cross-source dedupe + PainCluster assembly implemented** — `src/oos/pain_cluster_assembly.py` with exact evidence_id dedup, canonical URL dedup, actor/workflow/object/pain_pattern grouping, cross-source consolidation, provenance preservation, merge candidate handling.
+5. **Source Quality Report implemented** — `src/oos/source_quality_report.py` with all 8 report sections, 18 source quality metrics, JSON and Markdown output formats.
+6. **Founder Review Package for Pilot implemented** — `src/oos/pilot_founder_review_package.py` with ranked pain clusters and opportunity candidates, deterministic recommendations (PROMOTE/PARK/KILL/NEEDS_MORE_EVIDENCE/REVISIT_LATER), advisory-only feedback hooks, traceability summary, JSON and Markdown output.
+7. **Operational Discovery Pilot Orchestrator implemented** — `src/oos/operational_discovery_pilot.py` with 8-phase lifecycle, preflight source scope validation, fixture/bounded input mode, artifact writing, 79 focused tests.
+8. **Controlled Pilot Smoke added** — integrated into `scripts/run-controlled-smoke.ps1` Step 10, runbook updated with Section 20, deterministic fixture set covering HN + GitHub Issues cross-source scenario.
+9. **Final checkpoint completed** — roadmap state `complete / closed`, 10 / 10 items, all tests pass, smoke passes, final validation passes, dev-git-check 6/6 PASS.
+
+### Operational Discovery Pilot Readiness
+
+**Operational Discovery Pilot ready.**
+
+OOS can run a deterministic controlled discovery pilot on HN + GitHub Issues fixture/bounded inputs. The pipeline produces Raw Evidence, Candidate Signals, PainClusters, Source Quality Report, Founder Review Package, and controlled smoke artifacts. Live operation still requires explicit founder approval, real source allowlists, and first 1–2 pilot cycles. Broad source expansion remains deferred until v2.13 Go/No-Go.
+
+### v2.12 Branch and Commit Notes
+
+- Planning branch: `planning/v2-12-operational-discovery-pilot-roadmap` (docs-only)
+- Implementation branch: `feat/v2-12-operational-discovery-pilot`
+- Based on: v2.11 / PR #51 / tag `v2.11`
+- Latest local commit before final checkpoint: `b205b78` ([v2.12] 8 add operational discovery pilot smoke)
+- Final checkpoint commit: pending
+- No push, PR, merge, tag, or release was performed.
+- v2.12 is complete and closed.
+- **Next action:** Prepare PR/merge only when explicitly requested. Do not start v2.13 without explicit roadmap.

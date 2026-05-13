@@ -429,7 +429,8 @@ def classify_evidence(cleaned: CleanedEvidence) -> EvidenceClassification:
     return _classification(
         cleaned=cleaned,
         classification=NEEDS_HUMAN_REVIEW,
-        confidence=0.4 if cleaned.source_type in {"hacker_news_algolia", "github_issues"} else 0.35,
+        # Accept both canonical and legacy source_type values
+        confidence=0.4 if cleaned.source_type in {"hacker_news_algolia", "hacker_news", "discussion", "github_issues", "issue_tracker"} else 0.35,
         matched_rules=["default:ambiguous_non_empty"],
         reason="Non-empty evidence did not match a deterministic signal rule and is retained for human review.",
         requires_human_review=True,
@@ -536,7 +537,7 @@ def urgency_indicator_score(text: str) -> float:
 
 
 def _low_relevance_review(cleaned: CleanedEvidence, matches: List[str]) -> EvidenceClassification:
-    if cleaned.source_type in {"hacker_news_algolia", "github_issues"}:
+    if cleaned.source_type in {"hacker_news_algolia", "hacker_news", "discussion", "github_issues", "issue_tracker"}:
         return _classification(
             cleaned=cleaned,
             classification=NEEDS_HUMAN_REVIEW,
