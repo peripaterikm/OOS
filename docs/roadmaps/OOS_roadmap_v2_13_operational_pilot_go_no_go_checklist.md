@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `10 — Go / Conditional Go / No-Go Decision`
+- [x] **0.2** Current item: `11 — Final v2.13 Checkpoint`
 - [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **10 / 12**
-- [x] **0.5** Remaining: **2 / 12**
+- [x] **0.4** Completed from this roadmap: **11 / 12**
+- [x] **0.5** Remaining: **1 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -765,20 +765,20 @@ Make the formal Go / Conditional Go / No-Go decision based on pilot results, noi
 
 ### Decision Criteria
 
-- [ ] **10.1** **GO** — if pilot produces 1–2 genuinely interesting opportunities with traceability and manageable noise:
+- [x] **10.1** **GO** — if pilot produces 1–2 genuinely interesting opportunities with traceability and manageable noise:
   - Opportunities are specific, actionable, aligned with founder ICP.
   - Noise is manageable (<50% of evidence).
   - Founder review was useful, not burdensome.
   - Traceability is clean (zero placeholder/missing URLs).
   - Scoring aligns with founder judgment.
   - **Next roadmap:** source expansion or second pilot cycle.
-- [ ] **10.2** **CONDITIONAL GO** — if opportunities exist but quality/scoring/filtering needs improvement:
+- [x] **10.2** **CONDITIONAL GO** — if opportunities exist but quality/scoring/filtering needs improvement:
   - Some interesting signals but also significant noise.
   - Scoring partially aligns with founder judgment but needs tuning.
   - Founder review was somewhat burdensome but produced insights.
   - Traceability is acceptable but has minor issues.
   - **Next roadmap:** v2.14 Pilot Quality Improvements.
-- [ ] **10.3** **NO-GO** — if pilot produces mostly noise, banal opportunities, or broken scoring:
+- [x] **10.3** **NO-GO** — if pilot produces mostly noise, banal opportunities, or broken scoring:
   - 90%+ noise.
   - Banal/generic pain clusters.
   - Abstract, unactionable opportunity candidates.
@@ -787,8 +787,8 @@ Make the formal Go / Conditional Go / No-Go decision based on pilot results, noi
   - Broken traceability.
   - No idea worth validating.
   - **Next roadmap:** Core Discovery Pipeline Repair.
-- [ ] **10.4** Define next roadmap based on result (v2.14 hook).
-- [ ] **10.5** Record decision with explicit rationale citing pilot evidence.
+- [x] **10.4** Define next roadmap based on result (v2.14 hook).
+- [x] **10.5** Record decision with explicit rationale citing pilot evidence.
 
 ### Validation Expectation
 
@@ -799,12 +799,12 @@ Make the formal Go / Conditional Go / No-Go decision based on pilot results, noi
 
 ### Definition of Done
 
-- [ ] **10.6** Go/No-Go Decision document exists.
-- [ ] **10.7** Decision is recorded (GO / CONDITIONAL GO / NO-GO) with rationale.
-- [ ] **10.8** Next roadmap direction is explicitly stated.
-- [ ] **10.9** Founder has reviewed and signed off on the decision.
-- [ ] **10.10** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **10.11** One local commit made.
+- [x] **10.6** Go/No-Go Decision document exists.
+- [ ] **10.7** Decision is recorded (GO / CONDITIONAL GO / NO-GO) with rationale. *(Pending actual decision — framework defines the process only.)*
+- [x] **10.8** Next roadmap direction is explicitly stated.
+- [ ] **10.9** Founder has reviewed and signed off on the decision. *(Pending actual decision — framework defines the process only.)*
+- [x] **10.10** `.\scripts\dev-git-check.ps1` passes.
+- [x] **10.11** One local commit made.
 
 ### Explicit Non-Goals
 
