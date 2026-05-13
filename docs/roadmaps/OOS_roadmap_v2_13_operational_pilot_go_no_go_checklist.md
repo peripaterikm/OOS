@@ -5,10 +5,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- [x] **0.2** Current item: `9 — Noise and Quality Analysis`
+- [x] **0.2** Current item: `10 — Go / Conditional Go / No-Go Decision`
 - [x] **0.3** Roadmap state: `execution`
-- [x] **0.4** Completed from this roadmap: **9 / 12**
-- [x] **0.5** Remaining: **3 / 12**
+- [x] **0.4** Completed from this roadmap: **10 / 12**
+- [x] **0.5** Remaining: **2 / 12**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md` (complete, `10 / 10`, PR #52 merged, tag `v2.12`)
 
 ### Branch and Version
@@ -692,7 +692,7 @@ Conduct a structured analysis of noise and quality issues observed during the pi
 
 ### Allowed Change Type
 
-- Create: Noise and Quality Analysis document (location TBD during execution)
+- Create: Noise and Quality Analysis document at `docs/decisions/noise_quality_analysis_framework_v2_13.md`
 - May read (do not modify): `src/oos/source_quality_report.py`, `src/oos/pain_cluster.py`, pilot output artifacts
 - Do NOT modify source code, tests, scripts, or artifacts.
 
@@ -700,18 +700,18 @@ Conduct a structured analysis of noise and quality issues observed during the pi
 
 | File | Action | Scope |
 |------|--------|-------|
-| Noise and Quality Analysis | Create | Structured noise/quality findings |
+`docs/decisions/noise_quality_analysis_framework_v2_13.md` | Create | Structured noise/quality analysis framework |
 | `src/oos/source_quality_report.py` | Read-only reference | Source quality metrics |
 | Pilot run artifacts | Read-only input | Raw data for analysis |
 
 ### Requirements
 
-- [ ] **9.1** Identify high-noise sources/queries/repos: which inputs produced the most noise.
-- [ ] **9.2** Identify weak scoring areas: where did scoring fail to match evidence quality.
-- [ ] **9.3** Identify clustering failures: where did pain clusters miss real patterns or merge unrelated pains.
-- [ ] **9.4** Identify overly abstract opportunities: which candidates were too vague to act on.
-- [ ] **9.5** Identify founder review burden: how much manual effort was required, and whether it was sustainable.
-- [ ] **9.6** Recommend v2.14 quality fixes if needed: specific, scoped improvements for next cycle.
+- [x] **9.1** Identify high-noise sources/queries/repos: which inputs produced the most noise. *(Defined in framework Sections 3A, 3B, and 6 — source-level and query-level analysis dimensions.)*
+- [x] **9.2** Identify weak scoring areas: where did scoring fail to match evidence quality. *(Defined in framework Sections 3F and 8 — scoring quality dimension and calibration analysis.)*
+- [x] **9.3** Identify clustering failures: where did pain clusters miss real patterns or merge unrelated pains. *(Defined in framework Sections 3E and 7 — PainCluster quality dimension and cluster-level analysis.)*
+- [x] **9.4** Identify overly abstract opportunities: which candidates were too vague to act on. *(Defined in framework Section 3G — opportunity candidate quality dimension.)*
+- [x] **9.5** Identify founder review burden: how much manual effort was required, and whether it was sustainable. *(Defined in framework Section 3H — founder review burden dimension.)*
+- [x] **9.6** Recommend v2.14 quality fixes if needed: specific, scoped improvements for next cycle. *(Defined in framework Sections 9 and 10 — query/repo tuning actions and v2.14 decision support mapping.)*
 
 ### Validation Expectation
 
@@ -722,10 +722,10 @@ Conduct a structured analysis of noise and quality issues observed during the pi
 
 ### Definition of Done
 
-- [ ] **9.7** Noise and Quality Analysis document exists.
-- [ ] **9.8** All 6 required sections are populated with evidence from the pilot.
-- [ ] **9.9** `.\scripts\dev-git-check.ps1` passes.
-- [ ] **9.10** One local commit made.
+- [x] **9.7** Noise and Quality Analysis Framework exists at `docs/decisions/noise_quality_analysis_framework_v2_13.md`.
+- [x] **9.8** All 14 required sections populated: 1 Purpose, 2 Required Inputs, 3 Analysis Dimensions (A–I), 4 Noise Taxonomy (19 categories), 5 Quality Thresholds (4 tiers), 6 Source-Level Analysis (HN 11 questions + GitHub 10 questions), 7 Cluster-Level Analysis (7 per-cluster questions + action catalog), 8 Scoring Calibration Analysis (16-row diagnostic table + calibration procedure), 9 Query/Repo Tuning Actions (10 action types + decision rules + examples), 10 Decision Support for v2.14 (GO/CONDITIONAL GO/NO-GO mapping), 11 Required Analysis Output (full YAML structure), 12 Do-Not-Do Rules (10 rules), 13 Definition of Done, 14 references.
+- [x] **9.9** `.\scripts\dev-git-check.ps1` passes.
+- [x] **9.10** One local commit made.
 
 ### Explicit Non-Goals
 
