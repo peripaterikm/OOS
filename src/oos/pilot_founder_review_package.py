@@ -25,6 +25,10 @@ from typing import Any
 
 from .pain_cluster import PainCluster
 from .source_quality_report import SourceQualityReport
+from .noise_classifier import (
+    compute_evidence_quality_summary,
+    compute_quality_gate_reasons,
+)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -196,6 +200,12 @@ class FounderReviewQueueItem:
     pain_cluster_id: str = ""
     opportunity_id: str = ""
     founder_final_decision: str = ""
+    # v2.14 quality integration fields
+    quality_summary: dict[str, Any] = field(default_factory=dict)
+    promotion_blockers: list[str] = field(default_factory=list)
+    quality_gate_reasons: list[str] = field(default_factory=list)
+    evidence_quality_counts: dict[str, int] = field(default_factory=dict)
+    dominant_quality_flags: list[str] = field(default_factory=list)
 
     def validate(self) -> None:
         _require_non_empty(self.review_item_id, "FounderReviewQueueItem.review_item_id")
@@ -276,6 +286,11 @@ class FounderReviewQueueItem:
             "pain_cluster_id": self.pain_cluster_id,
             "opportunity_id": self.opportunity_id,
             "founder_final_decision": self.founder_final_decision,
+            "quality_summary": dict(self.quality_summary),
+            "promotion_blockers": list(self.promotion_blockers),
+            "quality_gate_reasons": list(self.quality_gate_reasons),
+            "evidence_quality_counts": dict(self.evidence_quality_counts),
+            "dominant_quality_flags": list(self.dominant_quality_flags),
         }
 
     @classmethod
@@ -311,6 +326,11 @@ class FounderReviewQueueItem:
             pain_cluster_id=str(data.get("pain_cluster_id", "")),
             opportunity_id=str(data.get("opportunity_id", "")),
             founder_final_decision=str(data.get("founder_final_decision", "")),
+            quality_summary=dict(data.get("quality_summary", {})),
+            promotion_blockers=list(data.get("promotion_blockers", [])),
+            quality_gate_reasons=list(data.get("quality_gate_reasons", [])),
+            evidence_quality_counts=dict(data.get("evidence_quality_counts", {})),
+            dominant_quality_flags=list(data.get("dominant_quality_flags", [])),
         )
         item.validate()
         return item
@@ -505,11 +525,19 @@ def recommend_decision(
     uncertainty: str,
     source_url_traceability_clean: bool,
     has_credible_evidence: bool,
+    promotion_blockers: list[str] | None = None,
 ) -> tuple[str, str]:
     """Compute a recommended founder decision and reason.
 
     Returns (recommended_decision, recommendation_reason).
+
+    v2.14: promotion_blockers are checked before PROMOTE. If any blocker
+    is present, the item cannot be PROMOTE and is routed to the next
+    best decision (KILL if traceability broken, else NEEDS_MORE_EVIDENCE
+    or PARK depending on score/evidence quality).
     """
+    blockers = promotion_blockers or []
+
     # ---- KILL ----
     if noise_risk >= 0.80:
         return ("KILL", "Noise risk >= 0.80: cluster is dominated by noise indicators.")
@@ -519,6 +547,21 @@ def recommend_decision(
         return ("KILL", f"Score too low ({score:.2f}): below minimum threshold.")
     if business_relevance < 0.20 and not has_credible_evidence:
         return ("KILL", "Low business relevance and no credible evidence.")
+
+    # ---- v2.14: Quality blocker checks before PROMOTE ----
+    # If traceability or source-scope blockers exist, KILL or route down
+    if blockers:
+        # Traceability/scope blockers are fatal
+        fatal_blockers = [b for b in blockers if "traceability" in b.lower() or "source scope" in b.lower()]
+        if fatal_blockers:
+            return ("KILL", f"Quality gate failure: {'; '.join(fatal_blockers[:2])}")
+
+        # Noise-ratio or severe-noise blockers → NEEDS_MORE_EVIDENCE or PARK
+        if score >= 0.50:
+            return ("NEEDS_MORE_EVIDENCE",
+                    f"Quality gate blocked PROMOTE: {'; '.join(blockers[:2])}")
+        else:
+            return ("PARK", f"Quality gate concerns + low score: {'; '.join(blockers[:2])}")
 
     # ---- PROMOTE ----
     # PROMOTE requires source_diversity >= 2 OR recurrence >= 2
@@ -736,6 +779,16 @@ def _build_review_item_for_cluster(
         noise_risk=noise_risk,
     )
 
+    # v2.14: Compute quality summary from evidence
+    quality_summary = compute_evidence_quality_summary(evidence_list)
+    blockers, gate_reasons = compute_quality_gate_reasons(
+        quality_summary,
+        source_diversity=source_diversity,
+        recurrence=recurrence,
+        traceability_clean=source_url_traceability_clean,
+        source_scope_clean=True,  # scope violations are preflight, not per-cluster
+    )
+
     recommended_decision, recommendation_reason = recommend_decision(
         score=overall,
         noise_risk=noise_risk,
@@ -745,7 +798,14 @@ def _build_review_item_for_cluster(
         uncertainty=uncertainty,
         source_url_traceability_clean=source_url_traceability_clean,
         has_credible_evidence=has_credible_evidence,
+        promotion_blockers=blockers,
     )
+
+    # Add blocker/gate info to recommendation reason if applicable
+    if blockers:
+        recommendation_reason += f" BLOCKERS: {'; '.join(blockers[:2])}"
+    if gate_reasons and not blockers:
+        recommendation_reason += f" ({'; '.join(gate_reasons[:2])})"
 
     suggested_action = suggest_validation_action(
         recommended_decision=recommended_decision,
@@ -781,6 +841,13 @@ def _build_review_item_for_cluster(
 
     title = pain_pattern if pain_pattern else f"Cluster {cluster_id}"
 
+    # v2.14: Build evidence quality counts
+    evidence_quality_counts = {
+        "accepted": quality_summary["accepted_evidence_count"],
+        "weak": quality_summary["weak_evidence_count"],
+        "noise": quality_summary["noise_evidence_count"],
+    }
+
     return FounderReviewQueueItem(
         review_item_id=review_item_id,
         item_type="pain_cluster",
@@ -807,6 +874,11 @@ def _build_review_item_for_cluster(
         created_at=created_at,
         pain_cluster_id=cluster_id,
         opportunity_id="",
+        quality_summary=quality_summary,
+        promotion_blockers=blockers,
+        quality_gate_reasons=gate_reasons,
+        evidence_quality_counts=evidence_quality_counts,
+        dominant_quality_flags=quality_summary.get("dominant_quality_flags", []),
     )
 
 

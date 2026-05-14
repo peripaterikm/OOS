@@ -1195,5 +1195,218 @@ class TestPainMatchingWordBoundary(unittest.TestCase):
         self.assertEqual(result, ACCEPTED)
 
 
+# =========================================================================
+# v2.14 item 2 — Quality Summary and Gate Tests
+# =========================================================================
+
+
+class TestComputeEvidenceQualitySummary(unittest.TestCase):
+    """Tests for compute_evidence_quality_summary()."""
+
+    def test_all_clean_evidence_accepted(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=[]),
+            _make_evidence(evidence_id="ev_2", quality_flags=[]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["debugging_pain"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["accepted_evidence_count"], 3)
+        self.assertEqual(summary["weak_evidence_count"], 0)
+        self.assertEqual(summary["noise_evidence_count"], 0)
+        self.assertEqual(summary["total_evidence_count"], 3)
+        self.assertEqual(summary["accepted_ratio"], 1.0)
+        self.assertEqual(summary["weak_ratio"], 0.0)
+        self.assertEqual(summary["noise_ratio"], 0.0)
+
+    def test_cluster_with_weak_evidence(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=[]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["requires_manual_review"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["stale_issue"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["accepted_evidence_count"], 1)
+        self.assertEqual(summary["weak_evidence_count"], 2)
+        self.assertEqual(summary["noise_evidence_count"], 0)
+        self.assertGreater(summary["weak_ratio"], 0.5)
+        self.assertAlmostEqual(summary["weak_ratio"], 2.0 / 3.0, places=4)
+
+    def test_cluster_with_noise_evidence(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["bot_generated"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["maintainer_housekeeping"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["accepted_evidence_count"], 1)
+        self.assertEqual(summary["noise_evidence_count"], 2)
+        self.assertAlmostEqual(summary["noise_ratio"], 2.0 / 3.0, places=4)
+
+    def test_quality_flag_counts_aggregate_correctly(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain", "debugging_pain"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["debugging_pain", "integration_pain"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["quality_flag_counts"].get("debugging_pain", 0), 3)
+        self.assertEqual(summary["quality_flag_counts"].get("integration_pain", 0), 1)
+
+    def test_positive_pain_flags_dont_count_as_noise(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain", "business_cost_signal"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["positive_pain_flag_count"], 2)
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+        self.assertEqual(summary["medium_risk_flag_count"], 0)
+        self.assertEqual(summary["accepted_evidence_count"], 1)
+
+    def test_severe_noise_flag_count(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["bot_generated", "flamewar_or_meta_discussion"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["maintainer_housekeeping"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["severe_noise_flag_count"], 3)
+        self.assertEqual(summary["noise_evidence_count"], 2)
+
+    def test_medium_risk_flag_count(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["requires_manual_review", "stale_issue"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["generic_language"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 3)
+        self.assertEqual(summary["weak_evidence_count"], 2)
+
+    def test_dominant_quality_flags(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain", "debugging_pain"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["integration_pain"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["bot_generated"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        dominant = summary["dominant_quality_flags"]
+        self.assertIn("debugging_pain", dominant)
+        self.assertEqual(dominant[0], "debugging_pain")  # most frequent first
+
+    def test_empty_list(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        summary = compute_evidence_quality_summary([])
+        self.assertEqual(summary["total_evidence_count"], 0)
+        self.assertEqual(summary["accepted_ratio"], 0.0)
+        self.assertEqual(summary["dominant_quality_flags"], [])
+
+
+class TestComputeQualityGateReasons(unittest.TestCase):
+    """Tests for compute_quality_gate_reasons()."""
+
+    def test_clean_cluster_no_blockers(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["integration_pain"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=2,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertEqual(blockers, [])
+        # May have single-source gate reason if diversity=1, but we set diversity=2.
+
+    def test_high_noise_ratio_blocks_promotion(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["bot_generated"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["maintainer_housekeeping"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # noise_ratio = 2/3 >= 0.5
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=1, recurrence=3,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertTrue(any("noise ratio" in b.lower() for b in blockers))
+
+    def test_only_weak_evidence_blocks_promotion(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["requires_manual_review"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["stale_issue"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["generic_language"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # weak_ratio = 1.0, accepted=0
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=3,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertTrue(any("all evidence is weak" in b.lower() for b in blockers))
+
+    def test_severe_noise_no_clean_cross_source_blocks(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["bot_generated"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # severe_noise_flag_count=1, accepted=1 (< 2)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=1, recurrence=2,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertTrue(any("severe noise flags present" in b.lower() for b in blockers))
+
+    def test_traceability_failure_blocks(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=2,
+            traceability_clean=False, source_scope_clean=True,
+        )
+        self.assertTrue(any("traceability" in b.lower() for b in blockers))
+
+    def test_source_scope_failure_blocks(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=2,
+            traceability_clean=True, source_scope_clean=False,
+        )
+        self.assertTrue(any("source scope" in b.lower() for b in blockers))
+
+    def test_clean_cross_source_can_promote(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain"]),
+            _make_evidence(evidence_id="ev_2", source_id="github_issues", source_type="issue_tracker",
+                          source_url="https://github.com/o/r/issues/1",
+                          quality_flags=["integration_pain"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["workaround_signal"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=3,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertEqual(blockers, [])
+
+
 if __name__ == "__main__":
     unittest.main()

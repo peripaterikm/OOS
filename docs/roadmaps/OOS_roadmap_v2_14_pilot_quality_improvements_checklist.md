@@ -1,6 +1,6 @@
 # OOS Roadmap v2.14 — Pilot Quality Improvements
 
-**Status:** Active / item 2 ready
+**Status:** Active / item 3 ready
 **Branch:** `ops/v2-13-pilot-cycle-1-run`
 **Created:** 2026-05-14
 **Based on:** v2.13 Pilot Cycle 1 CONDITIONAL GO decision
@@ -13,10 +13,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `2 — Quality Flags to Scoring/Tier Integration`
-- [x] **0.3** Roadmap state: `active / item 2 ready`
-- [x] **0.4** Completed from this roadmap: **2 / 11**
-- [x] **0.5** Remaining: **9 / 11**
+- [x] **0.2** Current item: `3 — Cluster Title Generation Cleanup`
+- [x] **0.3** Roadmap state: `active / item 3 ready`
+- [x] **0.4** Completed from this roadmap: **3 / 11**
+- [x] **0.5** Remaining: **8 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -270,14 +270,16 @@ Extend the noise classification work (item 1) to full integration with the scori
 
 ### Definition of Done
 
-- [ ] **2.1** Quality flag → scoring adjustment mapping implemented
-- [ ] **2.2** Tier eligibility gates for noise signals implemented
-- [ ] **2.3** `quality_penalty_breakdown` in scoring metadata
-- [ ] **2.4** Source Quality Report reflects quality flag distribution
-- [ ] **2.5** All existing tests pass
-- [ ] **2.6** At least 20 focused tests pass
-- [ ] **2.7** `.\scripts\dev-git-check.ps1` passes
+- [x] **2.1** Quality flag → scoring adjustment mapping implemented
+- [x] **2.2** Tier eligibility gates for noise signals implemented
+- [x] **2.3** `quality_penalty_breakdown` in scoring metadata
+- [x] **2.4** Source Quality Report reflects quality flag distribution
+- [x] **2.5** All existing tests pass
+- [x] **2.6** At least 20 focused tests pass
+- [x] **2.7** `.\scripts\dev-git-check.ps1` passes
 - [ ] **2.8** One local commit made with message: `[v2.14] 2 quality flags to scoring tier integration`
+
+**Item 2 complete; item 3 is next.**
 
 ---
 

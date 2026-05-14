@@ -1644,5 +1644,318 @@ class TestLinkTraceabilityHelpers(unittest.TestCase):
         self.assertEqual(result["missing_source_url_count"], 1)
 
 
+# ---------------------------------------------------------------------------
+# v2.14 item 2 — Quality Flags to Scoring/Tier Integration
+# ---------------------------------------------------------------------------
+
+
+class TestQualitySummaryInReviewItem(unittest.TestCase):
+    """Tests that review items include quality summary / blocker / gate info."""
+
+    def test_clean_cluster_has_quality_summary_fields(self):
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=["debugging_pain"]),
+            _make_evidence("ev_002", "github_issues", "issue_tracker",
+                          "https://github.com/o/r/issues/1",
+                          quality_flags=["integration_pain"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_clean_qs", overall=0.85, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        d = item.to_dict()
+        self.assertIn("quality_summary", d)
+        self.assertIn("promotion_blockers", d)
+        self.assertIn("quality_gate_reasons", d)
+        self.assertIn("evidence_quality_counts", d)
+        self.assertIn("dominant_quality_flags", d)
+
+    def test_clean_cluster_promote_has_no_blockers(self):
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1"),
+            _make_evidence("ev_002", "github_issues", "issue_tracker",
+                          "https://github.com/o/r/issues/1"),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_promote", overall=0.85, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertEqual(item.promotion_blockers, [])
+        self.assertEqual(item.recommended_decision, "PROMOTE")
+
+    def test_high_score_noise_ratio_blocks_promote(self):
+        """Cluster with noise_ratio >= 0.5 cannot PROMOTE."""
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=["bot_generated"]),
+            _make_evidence("ev_002", "github_issues", "issue_tracker",
+                          "https://github.com/o/r/issues/1",
+                          quality_flags=["maintainer_housekeeping"]),
+            _make_evidence("ev_003", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=2",
+                          quality_flags=[]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_noise_heavy", overall=0.75, source_diversity=2, recurrence=3,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertNotEqual(item.recommended_decision, "PROMOTE",
+                           "Cluster with noise_ratio >= 0.5 must not PROMOTE")
+        self.assertTrue(len(item.promotion_blockers) > 0,
+                       "Expected promotion_blockers for noise-heavy cluster")
+
+    def test_only_weak_evidence_routes_to_needs_more(self):
+        """Clusters with only weak evidence should be NEEDS_MORE_EVIDENCE."""
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=["requires_manual_review"]),
+            _make_evidence("ev_002", "github_issues", "issue_tracker",
+                          "https://github.com/o/r/issues/1",
+                          quality_flags=["generic_language"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_weak_only", overall=0.65, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertNotEqual(item.recommended_decision, "PROMOTE",
+                           "Only-weak evidence should not PROMOTE")
+        self.assertIn(item.recommended_decision, ("NEEDS_MORE_EVIDENCE", "PARK"))
+
+    def test_evidence_quality_counts_accurate(self):
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=[]),
+            _make_evidence("ev_002", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=2",
+                          quality_flags=["requires_manual_review"]),
+            _make_evidence("ev_003", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=3",
+                          quality_flags=["bot_generated"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_counts", overall=0.55, source_diversity=1, recurrence=3,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertEqual(item.evidence_quality_counts, {
+            "accepted": 1, "weak": 1, "noise": 1,
+        })
+        self.assertEqual(item.quality_summary["accepted_evidence_count"], 1)
+        self.assertEqual(item.quality_summary["weak_evidence_count"], 1)
+        self.assertEqual(item.quality_summary["noise_evidence_count"], 1)
+
+    def test_dominant_quality_flags_in_review_item(self):
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=["debugging_pain", "debugging_pain"]),
+            _make_evidence("ev_002", "github_issues", "issue_tracker",
+                          "https://github.com/o/r/issues/1",
+                          quality_flags=["debugging_pain"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_flags", overall=0.75, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertIn("debugging_pain", item.dominant_quality_flags)
+
+    def test_roundtrip_preserves_quality_fields(self):
+        """to_dict/from_dict roundtrip preserves v2.14 quality fields."""
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=["debugging_pain"]),
+            _make_evidence("ev_002", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=2",
+                          quality_flags=["bot_generated"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_rt", overall=0.55, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        d = item.to_dict()
+        restored = FounderReviewQueueItem.from_dict(d)
+        self.assertEqual(item.quality_summary, restored.quality_summary)
+        self.assertEqual(item.promotion_blockers, restored.promotion_blockers)
+        self.assertEqual(item.quality_gate_reasons, restored.quality_gate_reasons)
+        self.assertEqual(item.evidence_quality_counts, restored.evidence_quality_counts)
+        self.assertEqual(item.dominant_quality_flags, restored.dominant_quality_flags)
+
+    def test_markdown_includes_quality_fields(self):
+        """Markdown rendering works with quality fields present."""
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=["debugging_pain"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_md", overall=0.75, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIsInstance(md, str)
+        self.assertTrue(len(md) > 0)
+
+
+class TestPromotionBlockerIntegration(unittest.TestCase):
+    """End-to-end tests for promotion blockers in recommend_decision."""
+
+    def test_high_base_score_noise_ratio_blocks_promote(self):
+        """High score + noise_ratio >= 0.5 => not PROMOTE."""
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["bot_generated"]),
+            _make_evidence("ev_002", quality_flags=["maintainer_housekeeping"]),
+            _make_evidence("ev_003", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, _ = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=3,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        decision, reason = recommend_decision(
+            score=0.85, noise_risk=0.10, source_diversity=2, recurrence=3,
+            business_relevance=0.70, uncertainty="low",
+            source_url_traceability_clean=True, has_credible_evidence=True,
+            promotion_blockers=blockers,
+        )
+        self.assertNotEqual(decision, "PROMOTE")
+
+    def test_only_weak_evidence_routes_to_needs_more(self):
+        """All weak evidence => not PROMOTE."""
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["requires_manual_review"]),
+            _make_evidence("ev_002", quality_flags=["generic_language"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, _ = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=2,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        decision, reason = recommend_decision(
+            score=0.75, noise_risk=0.10, source_diversity=2, recurrence=2,
+            business_relevance=0.50, uncertainty="moderate",
+            source_url_traceability_clean=True, has_credible_evidence=True,
+            promotion_blockers=blockers,
+        )
+        self.assertNotEqual(decision, "PROMOTE")
+
+    def test_severe_noise_no_clean_support_blocks(self):
+        """Severe noise + no clean cross-source => not PROMOTE."""
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["bot_generated"]),
+            _make_evidence("ev_002", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, _ = compute_quality_gate_reasons(
+            summary, source_diversity=1, recurrence=2,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        decision, reason = recommend_decision(
+            score=0.80, noise_risk=0.45, source_diversity=1, recurrence=2,
+            business_relevance=0.60, uncertainty="moderate",
+            source_url_traceability_clean=True, has_credible_evidence=True,
+            promotion_blockers=blockers,
+        )
+        self.assertNotEqual(decision, "PROMOTE")
+
+    def test_clean_cross_source_can_still_promote(self):
+        """Clean cross-source evidence with no blockers can PROMOTE."""
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain"]),
+            _make_evidence("ev_002", source_id="github_issues", source_type="issue_tracker",
+                          source_url="https://github.com/o/r/issues/1",
+                          quality_flags=["integration_pain"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, _ = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=2,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        decision, reason = recommend_decision(
+            score=0.85, noise_risk=0.10, source_diversity=2, recurrence=2,
+            business_relevance=0.70, uncertainty="low",
+            source_url_traceability_clean=True, has_credible_evidence=True,
+            promotion_blockers=blockers,
+        )
+        self.assertEqual(decision, "PROMOTE")
+
+    def test_traceability_blocker_kills(self):
+        """Traceability blocker => KILL even with high score."""
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence("ev_001", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, _ = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=2,
+            traceability_clean=False, source_scope_clean=True,
+        )
+        decision, reason = recommend_decision(
+            score=0.90, noise_risk=0.05, source_diversity=2, recurrence=2,
+            business_relevance=0.80, uncertainty="low",
+            source_url_traceability_clean=False, has_credible_evidence=True,
+            promotion_blockers=blockers,
+        )
+        self.assertEqual(decision, "KILL")
+
+    def test_recommend_decision_backward_compat_no_blockers(self):
+        """recommend_decision() works with promotion_blockers=None (backward compat)."""
+        decision, reason = recommend_decision(
+            score=0.85, noise_risk=0.10, source_diversity=2, recurrence=3,
+            business_relevance=0.70, uncertainty="low",
+            source_url_traceability_clean=True, has_credible_evidence=True,
+            promotion_blockers=None,
+        )
+        self.assertEqual(decision, "PROMOTE")
+
+
 if __name__ == "__main__":
     unittest.main()

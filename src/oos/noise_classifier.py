@@ -306,6 +306,176 @@ def classify_noise_for_signal(signal: dict[str, Any]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Cluster-level quality summary (v2.14 item 2)
+# ---------------------------------------------------------------------------
+
+
+def compute_evidence_quality_summary(
+    evidence_items: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Compute a quality summary across a list of evidence dicts.
+
+    Runs classify_noise_for_evidence() on each item and aggregates results.
+
+    Returns a dict with:
+        accepted_evidence_count, weak_evidence_count, noise_evidence_count,
+        total_evidence_count, accepted_ratio, weak_ratio, noise_ratio,
+        quality_flag_counts, severe_noise_flag_count, medium_risk_flag_count,
+        positive_pain_flag_count, dominant_quality_flags.
+    """
+    if not evidence_items:
+        return {
+            "accepted_evidence_count": 0,
+            "weak_evidence_count": 0,
+            "noise_evidence_count": 0,
+            "total_evidence_count": 0,
+            "accepted_ratio": 0.0,
+            "weak_ratio": 0.0,
+            "noise_ratio": 0.0,
+            "quality_flag_counts": {},
+            "severe_noise_flag_count": 0,
+            "medium_risk_flag_count": 0,
+            "positive_pain_flag_count": 0,
+            "dominant_quality_flags": [],
+        }
+
+    accepted_count = 0
+    weak_count = 0
+    noise_count = 0
+    severe_flag_total = 0
+    medium_flag_total = 0
+    positive_flag_total = 0
+    flag_counts: dict[str, int] = {}
+
+    for ev in evidence_items:
+        classification = classify_noise_for_evidence(ev)
+        if classification == ACCEPTED:
+            accepted_count += 1
+        elif classification == NOISE:
+            noise_count += 1
+        else:
+            weak_count += 1
+
+        flags = list(ev.get("quality_flags", []) or [])
+        for flag_raw in flags:
+            flag = _normalize_flag(flag_raw)
+            flag_counts[flag] = flag_counts.get(flag, 0) + 1
+
+            if flag in SEVERE_NOISE_FLAGS:
+                severe_flag_total += 1
+            elif flag in MEDIUM_NOISE_FLAGS:
+                medium_flag_total += 1
+            elif flag in POSITIVE_PAIN_FLAGS:
+                positive_flag_total += 1
+
+    total = accepted_count + weak_count + noise_count
+
+    # Dominant quality flags (top 5 by count)
+    sorted_flags = sorted(flag_counts.items(), key=lambda x: (-x[1], x[0]))
+    dominant_flags = [f for f, _ in sorted_flags[:5]]
+
+    return {
+        "accepted_evidence_count": accepted_count,
+        "weak_evidence_count": weak_count,
+        "noise_evidence_count": noise_count,
+        "total_evidence_count": total,
+        "accepted_ratio": round(accepted_count / total, 4) if total > 0 else 0.0,
+        "weak_ratio": round(weak_count / total, 4) if total > 0 else 0.0,
+        "noise_ratio": round(noise_count / total, 4) if total > 0 else 0.0,
+        "quality_flag_counts": flag_counts,
+        "severe_noise_flag_count": severe_flag_total,
+        "medium_risk_flag_count": medium_flag_total,
+        "positive_pain_flag_count": positive_flag_total,
+        "dominant_quality_flags": dominant_flags,
+    }
+
+
+def compute_quality_gate_reasons(
+    quality_summary: dict[str, Any],
+    *,
+    source_diversity: int = 1,
+    recurrence: int = 1,
+    traceability_clean: bool = True,
+    source_scope_clean: bool = True,
+) -> tuple[list[str], list[str]]:
+    """Compute promotion_blockers and quality_gate_reasons from a quality summary.
+
+    Returns (promotion_blockers, quality_gate_reasons).
+
+    Promotion blockers are hard gates that prevent PROMOTE:
+      - traceability failure
+      - source scope failure
+      - noise_ratio >= 0.5
+      - severe noise flags without strong clean cross-source support
+      - only weak evidence (zero accepted, zero noise, at least one weak)
+
+    Quality gate reasons are softer issues that reduce confidence but don't
+    independently block PROMOTE.
+    """
+    blockers: list[str] = []
+    gate_reasons: list[str] = []
+
+    if not traceability_clean:
+        blockers.append("Source URL traceability failure: missing or placeholder URLs.")
+
+    if not source_scope_clean:
+        blockers.append("Source scope violation: evidence from non-allowed source.")
+
+    noise_ratio = float(quality_summary.get("noise_ratio", 0.0))
+    weak_ratio = float(quality_summary.get("weak_ratio", 0.0))
+    accepted_count = int(quality_summary.get("accepted_evidence_count", 0))
+    weak_count = int(quality_summary.get("weak_evidence_count", 0))
+    noise_count = int(quality_summary.get("noise_evidence_count", 0))
+    total = int(quality_summary.get("total_evidence_count", 0))
+    severe_count = int(quality_summary.get("severe_noise_flag_count", 0))
+
+    if noise_ratio >= 0.5:
+        blockers.append(
+            f"Noise ratio {noise_ratio:.2f} >= 0.5: {noise_count}/{total} evidence items classified as noise."
+        )
+
+    if severe_count > 0 and accepted_count < 2:
+        blockers.append(
+            f"Severe noise flags present ({severe_count}) with insufficient clean cross-source support "
+            f"(accepted={accepted_count}, need >= 2)."
+        )
+
+    if weak_ratio >= 1.0 and total > 0:
+        blockers.append(
+            f"All evidence is weak ({weak_count}/{total}): no clean accepted or noise-classified evidence."
+        )
+
+    # Quality gate reasons (non-blocking)
+    if weak_ratio > 0.0 and weak_ratio < 1.0:
+        gate_reasons.append(
+            f"Weak evidence ratio {weak_ratio:.2f}: {weak_count}/{total} items are weak."
+        )
+
+    if noise_ratio > 0.0 and noise_ratio < 0.5:
+        gate_reasons.append(
+            f"Noise evidence ratio {noise_ratio:.2f}: {noise_count}/{total} items are noise."
+        )
+
+    if severe_count > 0:
+        gate_reasons.append(
+            f"Severe noise flags present ({severe_count} total across evidence)."
+        )
+
+    if weak_count > 0 and accepted_count == 0 and noise_count > 0:
+        gate_reasons.append(
+            "Evidence is a mix of weak and noise with no clean accepted items."
+        )
+
+    if source_diversity == 1:
+        gate_reasons.append("Single-source evidence only; cross-source validation missing.")
+
+    if recurrence < 2:
+        gate_reasons.append(f"Low recurrence ({recurrence}); may be anecdotal.")
+
+    return blockers, gate_reasons
+
+
+# ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
 
