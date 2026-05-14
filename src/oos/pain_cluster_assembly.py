@@ -5,6 +5,9 @@ from __future__ import annotations
 Takes RawEvidence / CandidateSignal-style dict inputs from HN and GitHub Issues
 and assembles PainCluster artifacts with full provenance and source_url traceability.
 
+v2.14 Item 4: Canonical pain anchors, cohesion scoring, catch-all splitting,
+over-merge prevention, and quality-aware clustering.
+
 No LLM calls. No semantic embeddings. No live APIs.
 """
 
@@ -81,6 +84,397 @@ _BUSINESS_NEGATIVE_TERMS: tuple[str, ...] = (
     "meta", "meta discussion",
     "one-off", "one off",
 )
+
+
+# ---------------------------------------------------------------------------
+# v2.14 Item 4: Canonical pain anchors
+# ---------------------------------------------------------------------------
+
+# Canonical pain anchors map known v2.13 themes to deterministic keyword sets.
+# Each anchor has a name and a tuple of keyword terms.
+# An evidence item may match multiple anchors (multi-anchor).
+# The anchor with the most keyword matches wins; ties go to first defined.
+
+_CANONICAL_PAIN_ANCHORS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        "agent_trace_debugging",
+        (
+            "trace", "tracing", "spans", "callbacks", "run tree",
+            "agent traces", "observability",
+        ),
+    ),
+    (
+        "tool_call_inspection",
+        (
+            "tool call", "function call", "tool execution", "callback", "span",
+        ),
+    ),
+    (
+        "output_provenance",
+        (
+            "provenance", "source attribution", "which agent",
+            "contributed which part", "claim provenance", "source tracking",
+        ),
+    ),
+    (
+        "prompt_trace_replay",
+        (
+            "prompt variables", "prompt playground", "production trace",
+            "replay", "rerun trace", "generation variables",
+        ),
+    ),
+    (
+        "stack_trace_context",
+        (
+            "stack trace", "exception context", "error context",
+            "traceback", "missing error message",
+        ),
+    ),
+    (
+        "checkpoint_state_reproducibility",
+        (
+            "checkpoint", "state", "reproduce", "reproducibility",
+            "deterministic", "corruption",
+        ),
+    ),
+    (
+        "structured_output_reliability",
+        (
+            "structured output", "schema", "json mode", "parser", "tool schema",
+        ),
+    ),
+    (
+        "llm_eval_testing",
+        (
+            "eval", "evaluation", "regression testing", "test cases",
+            "prompt tests",
+        ),
+    ),
+    (
+        "integration_pipeline_friction",
+        (
+            "integration", "connector", "pipeline", "sync", "import", "export",
+        ),
+    ),
+    (
+        "generic_agent_debugging",
+        (
+            "agent", "debugging", "debug", "ai agent", "llm agent",
+        ),
+    ),
+)
+
+# Fallback anchor name when no specific anchor matches
+_FALLBACK_ANCHOR = "generic_agent_debugging"
+
+# Over-merge prevention: anchor pairs that must NOT be merged
+# These anchor pairs represent distinct pain domains that should stay separate
+# even if some keywords overlap.
+_ANCHOR_MERGE_BLOCK_PAIRS: frozenset[tuple[str, str]] = frozenset({
+    ("output_provenance", "prompt_trace_replay"),
+    ("output_provenance", "stack_trace_context"),
+    ("stack_trace_context", "prompt_trace_replay"),
+    ("checkpoint_state_reproducibility", "llm_eval_testing"),
+    ("checkpoint_state_reproducibility", "prompt_trace_replay"),
+    ("structured_output_reliability", "agent_trace_debugging"),
+    ("structured_output_reliability", "checkpoint_state_reproducibility"),
+})
+
+# Generic terms that should NOT alone justify a merge
+_GENERIC_MERGE_TERMS: frozenset[str] = frozenset({
+    "agent", "llm", "ai", "debugging", "observability",
+    "github", "api", "prompt",
+})
+
+
+def _detect_canonical_anchors(evidence: dict[str, Any]) -> list[str]:
+    """Detect which canonical pain anchors match this evidence.
+
+    Returns a list of anchor names, sorted by match strength (most keywords
+    matched first). Falls back to ``["generic_agent_debugging"]`` if no
+    specific anchor matches.
+
+    Uses the evidence title, body, and excerpt for keyword matching.
+    """
+    title = str(evidence.get("title", "") or "").lower()
+    body = str(evidence.get("body", "") or "").lower()
+    excerpt = str(evidence.get("excerpt", "") or "").lower()
+    combined = f"{title} {body} {excerpt}"
+
+    scored: list[tuple[int, str]] = []
+    for anchor_name, keywords in _CANONICAL_PAIN_ANCHORS:
+        raw_score = sum(1 for kw in keywords if kw in combined)
+        if raw_score > 0:
+            # Specific anchors get 2x multiplier to always outrank generic fallback
+            if anchor_name == _FALLBACK_ANCHOR:
+                score = raw_score
+            else:
+                score = raw_score * 2
+            scored.append((score, anchor_name))
+
+    if not scored:
+        return [_FALLBACK_ANCHOR]
+
+    # Sort: specific anchors always outrank generic fallback; then by score
+    # descending; then alphabetical as tiebreaker.
+    scored.sort(key=lambda x: (1 if x[1] == _FALLBACK_ANCHOR else 0, -x[0], x[1]))
+    return [name for _, name in scored]
+
+
+def _primary_canonical_anchor(evidence: dict[str, Any]) -> str:
+    """Return the strongest canonical anchor for a single evidence item."""
+    anchors = _detect_canonical_anchors(evidence)
+    return anchors[0] if anchors else _FALLBACK_ANCHOR
+
+
+def _anchors_allow_merge(anchor_a: str, anchor_b: str) -> bool:
+    """Return True if two canonical anchors are allowed to merge.
+
+    Same anchor always merges. Different anchors merge unless they
+    appear in _ANCHOR_MERGE_BLOCK_PAIRS.
+    """
+    if anchor_a == anchor_b:
+        return True
+    pair = (anchor_a, anchor_b)
+    reverse = (anchor_b, anchor_a)
+    if pair in _ANCHOR_MERGE_BLOCK_PAIRS or reverse in _ANCHOR_MERGE_BLOCK_PAIRS:
+        return False
+    return True
+
+
+def _compute_cohesion_score(
+    ev_group: list[dict[str, Any]],
+) -> float:
+    """Compute cluster cohesion score (0.0-1.0).
+
+    Based on:
+    - Anchor overlap: fraction of evidence sharing the primary anchor.
+    - Actor overlap: fraction sharing the same actor.
+    - Workflow overlap: fraction sharing the same workflow (normalized).
+    - Object domain overlap: fraction sharing the same object.
+
+    High cohesion = evidence is tightly related.
+    Low cohesion (< 0.4) = potential catch-all cluster.
+    """
+    if not ev_group or len(ev_group) <= 1:
+        return 1.0 if ev_group else 0.5
+
+    n = len(ev_group)
+
+    # Anchor cohesion
+    anchors = [_primary_canonical_anchor(ev) for ev in ev_group]
+    primary_anchor = max(set(anchors), key=anchors.count)
+    anchor_cohesion = anchors.count(primary_anchor) / n
+
+    # Actor cohesion
+    actors = [str(ev.get("_pain_actor", ev.get("target_user", "unknown"))).lower()
+              for ev in ev_group]
+    primary_actor = max(set(actors), key=actors.count)
+    actor_cohesion = actors.count(primary_actor) / n
+
+    # Workflow cohesion (normalize to known buckets)
+    workflows = [str(ev.get("_pain_workflow", "unknown")).lower()
+                 for ev in ev_group]
+    _COARSE_WORKFLOW_MAP: dict[str, str] = {
+        "debug": "debugging",
+        "debugging": "debugging",
+        "test": "testing",
+        "testing": "testing",
+        "deploy": "deployment",
+        "deployment": "deployment",
+        "build": "build_and_ci",
+        "integrate": "integration",
+        "integration": "integration",
+        "monitor": "monitoring",
+        "monitoring": "monitoring",
+    }
+    coarse_wfs = []
+    for wf in workflows:
+        coarse = "other"
+        for key, val in _COARSE_WORKFLOW_MAP.items():
+            if key in wf:
+                coarse = val
+                break
+        coarse_wfs.append(coarse)
+    primary_cwf = max(set(coarse_wfs), key=coarse_wfs.count)
+    workflow_cohesion = coarse_wfs.count(primary_cwf) / n
+
+    # Object cohesion (coarse)
+    objects = [str(ev.get("_pain_object", "unknown")).lower()
+               for ev in ev_group]
+    primary_obj = max(set(objects), key=objects.count)
+    object_cohesion = objects.count(primary_obj) / n
+
+    # Weighted combination
+    cohesion = (
+        0.35 * anchor_cohesion
+        + 0.25 * actor_cohesion
+        + 0.20 * workflow_cohesion
+        + 0.20 * object_cohesion
+    )
+    return round(max(0.0, min(1.0, cohesion)), 4)
+
+
+def _classify_catch_all(
+    cohesion_score: float,
+    recurrence: int,
+) -> bool:
+    """Determine if a cluster is a catch-all risk.
+
+    A cluster is catch-all if cohesion < 0.4 AND recurrence > 6.
+    A cluster with many signals but low coherence is likely a catch-all.
+    """
+    return cohesion_score < 0.4 and recurrence > 6
+
+
+def _suggest_split(
+    ev_group: list[dict[str, Any]],
+) -> list[list[dict[str, Any]]]:
+    """Suggest splitting a low-cohesion cluster into sub-groups.
+
+    Groups evidence by primary canonical anchor. If a sub-group has
+    >= 2 items and a different anchor than the parent, it's a viable split.
+
+    Returns a list of sub-groups (lists of evidence dicts). If no viable
+    split is found, returns [ev_group] (original group unchanged).
+    """
+    if len(ev_group) <= 2:
+        return [list(ev_group)]
+
+    # Group by primary canonical anchor
+    anchor_groups: dict[str, list[dict[str, Any]]] = {}
+    for ev in ev_group:
+        anchor = _primary_canonical_anchor(ev)
+        anchor_groups.setdefault(anchor, []).append(ev)
+
+    # If only one anchor group, try sub-anchor splitting by actor|object
+    if len(anchor_groups) == 1:
+        # Try splitting by actor|object instead
+        ao_groups: dict[str, list[dict[str, Any]]] = {}
+        for ev in ev_group:
+            a = str(ev.get("_pain_actor", "unknown"))
+            o = str(ev.get("_pain_object", "unknown"))
+            ao_key = f"{a}|{o}"
+            ao_groups.setdefault(ao_key, []).append(ev)
+
+        if len(ao_groups) >= 2:
+            viable = [g for g in ao_groups.values() if len(g) >= 2]
+            if viable:
+                return viable
+
+        return [list(ev_group)]
+
+    # Filter to viable sub-groups (>= 2 items)
+    viable = [g for g in anchor_groups.values() if len(g) >= 2]
+
+    if len(viable) >= 2:
+        return viable
+
+    # Not enough viable sub-groups; return unsplit
+    return [list(ev_group)]
+
+
+def _should_merge(
+    ev_a: dict[str, Any],
+    ev_b: dict[str, Any],
+) -> bool:
+    """Determine if two evidence items should merge into the same cluster.
+
+    v2.14 rules:
+    - Must share at least 2 of {actor, workflow_family, object_domain}
+      OR share a specific (non-generic) canonical anchor.
+    - Product launch / self-promo evidence does NOT merge with concrete
+      bug reports unless they share a specific pain anchor.
+    - Low text context / context_only does NOT dominate merge decisions.
+    - Noise evidence does NOT merge with accepted evidence unless they
+      share a specific anchor.
+    """
+    # Quality-based filtering
+    flags_a = set(ev_a.get("quality_flags", []) or [])
+    flags_b = set(ev_b.get("quality_flags", []) or [])
+    kind_a = str(ev_a.get("evidence_kind", "")).lower()
+    kind_b = str(ev_b.get("evidence_kind", "")).lower()
+    contrib_a = str(ev_a.get("contribution_to_cluster",
+                             ev_a.get("_contribution", "context_only"))).lower()
+    contrib_b = str(ev_b.get("contribution_to_cluster",
+                             ev_b.get("_contribution", "context_only"))).lower()
+
+    # Product launch + bug report -> no merge without specific anchor overlap
+    is_launch_a = ("product_launch" in kind_a or "launch_hype" in flags_a
+                   or "suspected_self_promo" in flags_a)
+    is_launch_b = ("product_launch" in kind_b or "launch_hype" in flags_b
+                   or "suspected_self_promo" in flags_b)
+    is_bug_a = "bug_report" in kind_a or "primary_pain" in contrib_a
+    is_bug_b = "bug_report" in kind_b or "primary_pain" in contrib_b
+
+    if (is_launch_a and is_bug_b) or (is_launch_b and is_bug_a):
+        # Only merge if they share a specific (non-generic) anchor
+        anchor_a = _primary_canonical_anchor(ev_a)
+        anchor_b = _primary_canonical_anchor(ev_b)
+        if anchor_a == anchor_b and anchor_a != _FALLBACK_ANCHOR:
+            return True
+        return False
+
+    # Low text context / context_only should not drive merging
+    is_weak_a = "low_text_context" in flags_a or contrib_a == "context_only"
+    is_weak_b = "low_text_context" in flags_b or contrib_b == "context_only"
+    if is_weak_a and is_weak_b:
+        # Both weak: only merge if same specific anchor
+        anchor_a = _primary_canonical_anchor(ev_a)
+        anchor_b = _primary_canonical_anchor(ev_b)
+        return anchor_a == anchor_b and anchor_a != _FALLBACK_ANCHOR
+    if is_weak_a or is_weak_b:
+        # One weak, one not: weak can follow the strong only if anchor matches
+        anchor_a = _primary_canonical_anchor(ev_a)
+        anchor_b = _primary_canonical_anchor(ev_b)
+        return anchor_a == anchor_b and anchor_a != _FALLBACK_ANCHOR
+
+    # Noise classification check: noise does NOT merge with accepted
+    from .noise_classifier import classify_noise_for_evidence
+    noise_a = classify_noise_for_evidence(ev_a)
+    noise_b = classify_noise_for_evidence(ev_b)
+    if noise_a == "noise" and noise_b != "noise":
+        return False
+    if noise_b == "noise" and noise_a != "noise":
+        return False
+
+    # Canonical anchor check: shared specific anchor -> merge
+    anchor_a = _primary_canonical_anchor(ev_a)
+    anchor_b = _primary_canonical_anchor(ev_b)
+    if anchor_a == anchor_b and anchor_a != _FALLBACK_ANCHOR:
+        # Check if this pair is blocked from merging
+        if not _anchors_allow_merge(anchor_a, anchor_b):
+            return False
+        return True
+
+    # Different anchors that are blocked -> no merge
+    if not _anchors_allow_merge(anchor_a, anchor_b):
+        return False
+
+    # Generic anchor case: need at least 2 of {actor, workflow_family, object} to match
+    actor_a = str(ev_a.get("_pain_actor", ev_a.get("target_user", "unknown"))).lower()
+    actor_b = str(ev_b.get("_pain_actor", ev_b.get("target_user", "unknown"))).lower()
+    match_actor = (actor_a == actor_b and actor_a != "unknown")
+
+    wf_a = str(ev_a.get("_pain_workflow", "unknown")).lower()
+    wf_b = str(ev_b.get("_pain_workflow", "unknown")).lower()
+    _WF_NORMALIZE: dict[str, str] = {
+        "debug": "debugging", "debugging": "debugging",
+        "test": "testing", "testing": "testing",
+        "deploy": "deployment", "deployment": "deployment",
+        "build": "build", "integrate": "integration", "integration": "integration",
+        "monitor": "monitoring", "monitoring": "monitoring",
+    }
+    wf_ca = _WF_NORMALIZE.get(wf_a, wf_a)
+    wf_cb = _WF_NORMALIZE.get(wf_b, wf_b)
+    match_workflow = (wf_ca == wf_cb and wf_a != "unknown")
+
+    obj_a = str(ev_a.get("_pain_object", "unknown")).lower()
+    obj_b = str(ev_b.get("_pain_object", "unknown")).lower()
+    match_object = (obj_a == obj_b and obj_a != "unknown")
+
+    matches = sum([match_actor, match_workflow, match_object])
+    return matches >= 2
 
 
 # ---------------------------------------------------------------------------
@@ -554,9 +948,10 @@ def assemble_pain_clusters(
     1. Normalize source_id/source_type on all inputs.
     2. Optionally deduplicate by evidence_id, canonical_url, source_url.
     3. Extract pain patterns (actor, workflow, object, pain_verb).
-    4. Group by normalized pattern key.
-    5. Build PainCluster for each group with scoring.
-    6. Return clusters, unassigned evidence, and assembly summary.
+    4. Group by canonical_anchor|actor key (v2.14).
+    5. Build PainCluster for each group with scoring and cohesion.
+    6. Auto-split catch-all clusters.
+    7. Return clusters, unassigned evidence, and assembly summary.
 
     Args:
         evidence_items: List of dicts with fields like evidence_id, source_id,
@@ -587,8 +982,7 @@ def assemble_pain_clusters(
     if dedupe:
         normalized, duplicates = dedupe_full(normalized)
 
-    # Step 3: Extract pain patterns and group
-    pattern_groups: dict[str, list[dict[str, Any]]] = {}
+    # Step 3: Extract pain patterns and detect canonical anchors
     for ev in normalized:
         pattern = extract_pain_pattern(ev)
         ev["_pain_actor"] = pattern["actor"]
@@ -596,19 +990,29 @@ def assemble_pain_clusters(
         ev["_pain_object"] = pattern["object"]
         ev["_pain_verb"] = pattern["pain_verb"]
         ev["_pain_pattern"] = pattern["pain_pattern"]
+        ev["_canonical_anchor"] = _primary_canonical_anchor(ev)
+        ev["_canonical_anchors"] = _detect_canonical_anchors(ev)
 
-        group_key = f"{pattern['actor']}|{pattern['object']}"
+    # Step 4: Group by anchor|actor key (v2.14: tighter than actor|object)
+    pattern_groups: dict[str, list[dict[str, Any]]] = {}
+    for ev in normalized:
+        anchor = str(ev.get("_canonical_anchor", _FALLBACK_ANCHOR))
+        actor = str(ev.get("_pain_actor", "unknown"))
+        group_key = f"{anchor}|{actor}"
         if group_key not in pattern_groups:
             pattern_groups[group_key] = []
         pattern_groups[group_key].append(ev)
 
-    # Step 4: Build clusters
+    # Step 5: Build initial clusters
     clusters: list[PainCluster] = []
     now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     for group_key, ev_group in pattern_groups.items():
         cluster = _build_single_cluster(ev_group, now_iso)
         clusters.append(cluster)
+
+    # Step 6: v2.14 Auto-split catch-all clusters
+    clusters = _apply_catch_all_split(clusters, now_iso)
 
     # Sort clusters by overall score descending
     clusters.sort(key=lambda c: c.scoring.overall, reverse=True)
@@ -629,14 +1033,27 @@ def _build_single_cluster(
     ev_group: list[dict[str, Any]],
     now_iso: str,
 ) -> PainCluster:
-    """Build a single PainCluster from a group of evidence items."""
-    # Use the first item's extracted pattern (all items in group share it)
+    """Build a single PainCluster from a group of evidence items.
+
+    v2.14: Computes cohesion_score, catch_all_risk, canonical_anchor.
+    """
     first = ev_group[0]
     actor = str(first.get("_pain_actor", "unknown"))
     workflow = str(first.get("_pain_workflow", "unknown"))
     object_ = str(first.get("_pain_object", "unknown"))
     pain_verb = str(first.get("_pain_verb", "unknown"))
     pain_pattern = str(first.get("_pain_pattern", "needs_more_evidence"))
+
+    # v2.14: Canonical anchors
+    canonical_anchor = str(first.get("_canonical_anchor", _FALLBACK_ANCHOR))
+    canonical_anchors: list[str] = []
+    all_anchors: set[str] = set()
+    for ev in ev_group:
+        for a in ev.get("_canonical_anchors", [canonical_anchor]):
+            all_anchors.add(str(a))
+    canonical_anchors = sorted(all_anchors)
+    if not canonical_anchors:
+        canonical_anchors = [canonical_anchor]
 
     # Build evidence entries
     entries: list[SourceEvidenceEntry] = []
@@ -667,11 +1084,19 @@ def _build_single_cluster(
     # Representative excerpts
     excerpts = select_representative_excerpts(ev_group)
 
-    # Cluster identity
-    cluster_id = compute_cluster_id(actor, workflow, object_, pain_pattern)
+    # v2.14: Cohesion score and catch-all detection
+    cohesion_score = _compute_cohesion_score(ev_group)
+    catch_all_risk = _classify_catch_all(cohesion_score, recurrence)
+
+    # Cluster identity (v2.14: use canonical_anchor)
+    cluster_id = compute_cluster_id(
+        f"{canonical_anchor}:{actor}",
+        workflow,
+        object_,
+        pain_pattern,
+    )
 
     # Initial scoring (defaults for pain_explicitness, icp_fit, actionability)
-    # We'll compute these from evidence quality
     pain_explicitness = _estimate_pain_explicitness(ev_group)
     icp_fit = 0.5  # default neutral; founder reviews later
     actionability = 0.5  # default neutral
@@ -695,6 +1120,10 @@ def _build_single_cluster(
         updated_at=now_iso,
         status="new",
         scoring=default_pain_cluster_scoring(),
+        cohesion_score=cohesion_score,
+        catch_all_risk=catch_all_risk,
+        canonical_anchor=canonical_anchor,
+        canonical_anchors=list(canonical_anchors),
     )
 
     scoring = compute_pain_cluster_scoring(
@@ -729,9 +1158,69 @@ def _build_single_cluster(
         updated_at=now_iso,
         status=auto_status,
         scoring=scoring,
+        cohesion_score=cohesion_score,
+        catch_all_risk=catch_all_risk,
+        canonical_anchor=canonical_anchor,
+        canonical_anchors=list(canonical_anchors),
     )
 
     return final_cluster
+
+
+def _apply_catch_all_split(
+    clusters: list[PainCluster],
+    now_iso: str,
+) -> list[PainCluster]:
+    """Apply catch-all splitting to clusters with low cohesion and many signals.
+
+    For each cluster flagged as catch_all_risk, attempt to split into
+    sub-groups with higher internal cohesion.
+    """
+    result: list[PainCluster] = []
+
+    for cluster in clusters:
+        if not cluster.catch_all_risk or cluster.recurrence <= 6:
+            result.append(cluster)
+            continue
+
+        ev_dicts: list[dict[str, Any]] = []
+        for entry in cluster.source_evidence_list:
+            ev = {
+                "evidence_id": entry.evidence_id,
+                "source_id": entry.source_id,
+                "source_type": entry.source_type,
+                "source_url": entry.source_url,
+                "title": entry.title,
+                "body": entry.excerpt,
+                "excerpt": entry.excerpt,
+                "evidence_kind": entry.evidence_kind,
+                "quality_flags": list(entry.quality_flags),
+                "_pain_actor": cluster.actor,
+                "_pain_workflow": cluster.workflow,
+                "_pain_object": cluster.object,
+                "_pain_verb": cluster.pain_verb,
+                "_pain_pattern": cluster.pain_pattern,
+                "_canonical_anchor": cluster.canonical_anchor,
+                "_canonical_anchors": list(cluster.canonical_anchors),
+                "created_at": entry.created_at,
+                "collected_at": entry.fetched_at,
+                "signal_id": entry.signal_id,
+            }
+            ev_dicts.append(ev)
+
+        sub_groups = _suggest_split(ev_dicts)
+        if len(sub_groups) <= 1:
+            result.append(cluster)
+            continue
+
+        for sub_group in sub_groups:
+            for ev in sub_group:
+                ev["_canonical_anchor"] = _primary_canonical_anchor(ev)
+                ev["_canonical_anchors"] = _detect_canonical_anchors(ev)
+            sub_cluster = _build_single_cluster(sub_group, now_iso)
+            result.append(sub_cluster)
+
+    return result
 
 
 def _determine_contribution(evidence: dict[str, Any]) -> str:
@@ -739,17 +1228,17 @@ def _determine_contribution(evidence: dict[str, Any]) -> str:
     evidence_kind = str(evidence.get("evidence_kind", "") or "").lower()
     body = str(evidence.get("body", "") or "").lower()
 
-    # Pain-explicit kinds → primary_pain
+    # Pain-explicit kinds -> primary_pain
     primary_kinds = {"pain_signal_candidate", "bug_report", "complaint",
                      "integration_pain", "performance_pain"}
     if evidence_kind in primary_kinds:
         return "primary_pain"
 
-    # Workaround-related → workaround_description
+    # Workaround-related -> workaround_description
     if evidence_kind == "workaround" or "workaround" in body:
         return "workaround_description"
 
-    # Cost-related → cost_evidence
+    # Cost-related -> cost_evidence
     cost_terms = ("cost", "price", "pricing", "pay", "spend", "expensive",
                   "dollars", "$", "budget")
     if any(t in body for t in cost_terms):
@@ -805,7 +1294,7 @@ def _estimate_pain_explicitness(
 # ---------------------------------------------------------------------------
 
 
-# Pattern-based title matching: keyword groups → normalized titles.
+# Pattern-based title matching: keyword groups -> normalized titles.
 # Ordered: first match wins. Prefer more specific patterns first.
 _PATTERN_TITLE_MAP: list[tuple[tuple[str, ...], str]] = [
     # Trace / tracing / observability
@@ -845,13 +1334,13 @@ _TITLE_PLACEHOLDERS: frozenset[str] = frozenset({
 
 # Malformed grammar patterns to clean from derived titles
 _MALFORMED_PATTERNS: list[tuple[str, str]] = [
-    # "because X is cannot" → remove trailing " is cannot" / " is missing" etc.
+    # "because X is cannot" -> remove trailing " is cannot" / " is missing" etc.
     (" because it is cannot", ""),
     (" because it is unknown", ""),
     (" because it is painful", " is painful"),
     (" because X is cannot", ""),
     (" because X is missing", " is unavailable"),
-    # "developer cannot [dead]" → remove noise words
+    # "developer cannot [dead]" -> remove noise words
     (" cannot [dead]", ""),
     (" cannot dead", ""),
     (" cannot needs_more_evidence", ""),
@@ -896,7 +1385,7 @@ def generate_cluster_review_title(cluster: dict[str, Any]) -> str:
         cluster: A cluster dict (from ``PainCluster.to_dict()`` or similar).
 
     Returns:
-        A cleaned, founder-readable title string (non-empty, ≤ 90 chars).
+        A cleaned, founder-readable title string (non-empty, <= 90 chars).
     """
     evidence_list: list[dict[str, Any]] = cluster.get("source_evidence_list", [])
     actor = str(cluster.get("actor", "developer"))
@@ -988,7 +1477,7 @@ def _build_combined_text(
 
 
 def _match_known_pattern(combined_text: str) -> str | None:
-    """Try to match combined text against known pattern → title map.
+    """Try to match combined text against known pattern -> title map.
 
     Uses a scoring approach: each matching keyword gives +1. The pattern
     with the most matching keywords wins (break ties by order in the map).

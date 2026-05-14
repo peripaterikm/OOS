@@ -232,7 +232,14 @@ def default_pain_cluster_scoring() -> PainClusterScoring:
 
 @dataclass(frozen=True)
 class PainCluster:
-    """First-class artifact for cross-source pain consolidation (contract Section 3.1)."""
+    """First-class artifact for cross-source pain consolidation (contract Section 3.1).
+
+    v2.14 fields:
+        cohesion_score: 0.0–1.0 internal coherence across evidence items.
+        catch_all_risk: True if cluster is a suspected catch-all (low cohesion, many signals).
+        canonical_anchor: Primary canonical pain anchor (e.g. agent_trace_debugging).
+        canonical_anchors: All canonical anchors detected in evidence (may be > 1).
+    """
 
     cluster_id: str
     actor: str
@@ -253,6 +260,11 @@ class PainCluster:
     scoring: PainClusterScoring
     linked_opportunity_candidates: list[str] = field(default_factory=list)
     notes: str = ""
+    # v2.14 Item 4: cluster coherence fields
+    cohesion_score: float = 0.5
+    catch_all_risk: bool = False
+    canonical_anchor: str = ""
+    canonical_anchors: list[str] = field(default_factory=list)
 
     @property
     def id(self) -> str:
@@ -359,6 +371,20 @@ class PainCluster:
         if not isinstance(self.notes, str):
             raise ValueError("PainCluster.notes must be a string")
 
+        # v2.14 fields validation
+        if not isinstance(self.cohesion_score, (int, float)) or not (
+            0.0 <= float(self.cohesion_score) <= 1.0
+        ):
+            raise ValueError("PainCluster.cohesion_score must be 0.0–1.0")
+
+        if not isinstance(self.catch_all_risk, bool):
+            raise ValueError("PainCluster.catch_all_risk must be a bool")
+
+        if not isinstance(self.canonical_anchor, str):
+            raise ValueError("PainCluster.canonical_anchor must be a string")
+
+        _require_list(self.canonical_anchors, "PainCluster.canonical_anchors")
+
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = asdict(self)
         d["source_evidence_list"] = [
@@ -377,6 +403,13 @@ class PainCluster:
         if not isinstance(scoring_data, PainClusterScoring):
             scoring_data = PainClusterScoring.from_dict(scoring_data)
         data["scoring"] = scoring_data
+
+        # v2.14 backward-compatible defaults
+        data.setdefault("cohesion_score", 0.5)
+        data.setdefault("catch_all_risk", False)
+        data.setdefault("canonical_anchor", "")
+        data.setdefault("canonical_anchors", [])
+
         cluster = cls(**data)
         cluster.validate()
         return cluster

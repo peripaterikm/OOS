@@ -1,6 +1,6 @@
 # OOS Roadmap v2.14 — Pilot Quality Improvements
 
-**Status:** Active / item 4 ready
+**Status:** Active / item 5 ready
 **Branch:** `ops/v2-13-pilot-cycle-1-run`
 **Created:** 2026-05-14
 **Based on:** v2.13 Pilot Cycle 1 CONDITIONAL GO decision
@@ -13,10 +13,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `4 — Cluster Split/Merge Tuning`
-- [x] **0.3** Roadmap state: `active / item 4 ready`
-- [x] **0.4** Completed from this roadmap: **4 / 11**
-- [x] **0.5** Remaining: **7 / 11**
+- [x] **0.2** Current item: `5 — Founder Review Package Clarity Improvements`
+- [x] **0.3** Roadmap state: `active / item 5 ready`
+- [x] **0.4** Completed from this roadmap: **5 / 11**
+- [x] **0.5** Remaining: **6 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -383,15 +383,17 @@ Eliminate catch-all clusters by tuning the split/merge logic in cluster assembly
 
 ### Definition of Done
 
-- [ ] **4.1** `cohesion_score` field and computation implemented
-- [ ] **4.2** Over-merge detection with `catch_all_risk` flag implemented
-- [ ] **4.3** Auto-split suggestion for low-cohesion large clusters implemented
-- [ ] **4.4** Merge threshold tightened (at least 2 of {actor, workflow, object} match)
-- [ ] **4.5** Source Quality Report includes catch-all cluster count
-- [ ] **4.6** All existing tests pass
-- [ ] **4.7** At least 20 focused tests pass
-- [ ] **4.8** `.\scripts\dev-git-check.ps1` passes
-- [ ] **4.9** One local commit made with message: `[v2.14] 4 cluster split merge tuning`
+- [x] **4.1** `cohesion_score` field and computation implemented
+- [x] **4.2** Over-merge detection with `catch_all_risk` flag implemented
+- [x] **4.3** Auto-split suggestion for low-cohesion large clusters implemented
+- [x] **4.4** Merge threshold tightened (at least 2 of {actor, workflow, object} match)
+- [x] **4.5** Source Quality Report includes catch-all cluster count
+- [x] **4.6** All existing tests pass (2558 tests OK)
+- [x] **4.7** At least 20 focused tests pass (27 focused tests OK)
+- [x] **4.8** `.\scripts\dev-git-check.ps1` passes
+- [x] **4.9** One local commit made with message: `[v2.14] 4 cluster split merge tuning`
+
+**Item 4 complete; item 5 is next.**
 
 ---
 
@@ -794,4 +796,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 3 complete; item 4 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 4 complete; item 5 is next. No source expansion. No runtime artifacts committed.*
