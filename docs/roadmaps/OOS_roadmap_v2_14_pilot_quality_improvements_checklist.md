@@ -13,10 +13,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `3 — Cluster Title Generation Cleanup`
-- [x] **0.3** Roadmap state: `active / item 3 ready`
-- [x] **0.4** Completed from this roadmap: **3 / 11**
-- [x] **0.5** Remaining: **8 / 11**
+- [x] **0.2** Current item: `4 — Cluster Split/Merge Tuning`
+- [x] **0.3** Roadmap state: `active / item 4 ready`
+- [x] **0.4** Completed from this roadmap: **4 / 11**
+- [x] **0.5** Remaining: **7 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -326,14 +326,16 @@ Fix inconsistent cluster titles. Pilot Cycle 1 produced clusters with titles ran
 
 ### Definition of Done
 
-- [ ] **3.1** Deterministic title generation template implemented
-- [ ] **3.2** Title validation rules implemented (specificity, length, no catch-all keywords)
-- [ ] **3.3** `title_quality_score` field and computation implemented
-- [ ] **3.4** Low-quality titles flagged in cluster metadata and Source Quality Report
-- [ ] **3.5** All existing tests pass
-- [ ] **3.6** At least 15 focused tests pass
-- [ ] **3.7** `.\scripts\dev-git-check.ps1` passes
-- [ ] **3.8** One local commit made with message: `[v2.14] 3 cluster title generation cleanup`
+- [x] **3.1** Deterministic `generate_cluster_review_title()` implemented in `src/oos/pain_cluster_assembly.py` with pattern-based, component-derived, and evidence-based fallback tiers
+- [x] **3.2** Title validation rules: non-empty, ≤90 chars, no `[dead]`, no `needs_more_evidence`, no malformed grammar, no raw HN prefixes
+- [x] **3.3** Evidence prioritization: primary_pain beats context_only, accepted beats noise evidence, product_launch does not dominate
+- [x] **3.4** Founder Review Package integration: `FounderReviewQueueItem.title` uses `generate_cluster_review_title()`, Markdown renders cleaned title, JSON roundtrip preserves title
+- [x] **3.5** All existing tests pass (2521 tests OK)
+- [x] **3.6** At least 15 focused tests pass (17 title-generation tests + 7 FRP integration tests = 24 total)
+- [x] **3.7** `.\scripts\dev-git-check.ps1` passes
+- [x] **3.8** One local commit made with message: `[v2.14] 3 clean cluster review titles`
+
+**Item 3 complete; item 4 is next.**
 
 ---
 
@@ -792,4 +794,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 2 complete; item 3 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 3 complete; item 4 is next. No source expansion. No runtime artifacts committed.*

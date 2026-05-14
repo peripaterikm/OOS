@@ -800,6 +800,369 @@ def _estimate_pain_explicitness(
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Cluster review title generation (deterministic, founder-facing)
+# ---------------------------------------------------------------------------
+
+
+# Pattern-based title matching: keyword groups → normalized titles.
+# Ordered: first match wins. Prefer more specific patterns first.
+_PATTERN_TITLE_MAP: list[tuple[tuple[str, ...], str]] = [
+    # Trace / tracing / observability
+    (("trace", "tracing", "observability", "observable"), "Agent traces lack actionable debugging context"),
+    # Tool calls / spans / callbacks
+    (("tool call", "tool calls", "span", "spans", "callback", "callbacks"), "Agent tool-call traces are hard to inspect"),
+    # Provenance / source attribution
+    (("provenance", "source attribution", "output provenance", "which agent"), "Multi-agent outputs lose provenance"),
+    # Prompt variables / playground / production trace
+    (("prompt variable", "production trace", "prompt playground", "replay"), "Prompt workflows cannot replay production trace inputs"),
+    # Stack trace / exception / error context
+    (("stack trace", "exception", "error context", "debugging context"), "Stack traces lack actionable state details"),
+    # Checkpoint / state / reproducibility
+    (("checkpoint", "reproduc", "state serializ", "deterministic"), "Agent state is hard to reproduce and debug"),
+    # Structured output / schema
+    (("structured output", "schema", "json schema", "output format", "output schema"), "Structured LLM outputs fail unpredictably"),
+    # Eval / testing / regression
+    (("eval", "testing", "regression test", "test suite", "benchmark"), "LLM app testing lacks reliable regression workflow"),
+    # Debug / debugging (generic, lower priority)
+    (("debug", "debugging"), "Agent debugging workflows lack actionable context"),
+    # Agent / LLM general
+    (("agent", "llm", "ai agent"), "Multi-agent systems lose output provenance"),
+]
+
+# Terms to strip from raw titles
+_TITLE_PREFIXES_TO_STRIP: tuple[str, ...] = (
+    "[dead]", "(dead)", "[dead] ",
+    "Show HN:", "Ask HN:", "Launch HN:", "Tell HN:",
+    "[Feature]", "[Bug]", "[RFC]", "RFC:",
+    "[Feature Request]", "[Request]",
+)
+
+# Placeholder values that should never appear as titles
+_TITLE_PLACEHOLDERS: frozenset[str] = frozenset({
+    "needs_more_evidence", "unknown", "[dead]", "dead",
+})
+
+# Malformed grammar patterns to clean from derived titles
+_MALFORMED_PATTERNS: list[tuple[str, str]] = [
+    # "because X is cannot" → remove trailing " is cannot" / " is missing" etc.
+    (" because it is cannot", ""),
+    (" because it is unknown", ""),
+    (" because it is painful", " is painful"),
+    (" because X is cannot", ""),
+    (" because X is missing", " is unavailable"),
+    # "developer cannot [dead]" → remove noise words
+    (" cannot [dead]", ""),
+    (" cannot dead", ""),
+    (" cannot needs_more_evidence", ""),
+]
+
+# Maximum title length
+_MAX_TITLE_LENGTH: int = 90
+
+# Quality flags that suggest noise (prefer other evidence)
+_SEVERE_QUALITY_FLAGS: frozenset[str] = frozenset({
+    "bot_generated", "maintainer_housekeeping", "flamewar_or_meta_discussion",
+    "high_noise_source", "duplicate_or_invalid",
+})
+_MODERATE_QUALITY_FLAGS: frozenset[str] = frozenset({
+    "suspected_self_promo", "vendor_promo", "launch_hype", "low_text_context",
+    "generic_language", "low_confidence_extraction", "missing_actor", "unclear_actor",
+})
+
+# Contribution priority for evidence selection (higher = prefer)
+_CONTRIBUTION_PRIORITY: dict[str, int] = {
+    "primary_pain": 5,
+    "supporting_pain": 4,
+    "workaround_description": 3,
+    "cost_evidence": 2,
+    "context_only": 1,
+}
+
+
+def generate_cluster_review_title(cluster: dict[str, Any]) -> str:
+    """Generate a clean, founder-readable cluster review title.
+
+    Deterministic only. No LLM calls. Uses cluster evidence titles/excerpts
+    and pattern-based heuristics to produce short, readable, business-relevant titles.
+
+    Fallback hierarchy:
+      A. Pattern-based match against known pain patterns (trace, debugging, etc.)
+      B. Actor + object + pain verb normalization
+      C. Cleaned best evidence title
+      D. ``"Unclear developer workflow pain"``
+
+    Args:
+        cluster: A cluster dict (from ``PainCluster.to_dict()`` or similar).
+
+    Returns:
+        A cleaned, founder-readable title string (non-empty, ≤ 90 chars).
+    """
+    evidence_list: list[dict[str, Any]] = cluster.get("source_evidence_list", [])
+    actor = str(cluster.get("actor", "developer"))
+    obj = str(cluster.get("object", "unknown"))
+    workflow = str(cluster.get("workflow", "unknown"))
+    pain_verb = str(cluster.get("pain_verb", "unknown"))
+    pain_pattern = str(cluster.get("pain_pattern", ""))
+
+    # Step 1: Select best evidence for title derivation
+    best_evidence = _select_best_evidence_for_title(evidence_list)
+
+    # Step 2: Build combined text for pattern detection
+    combined_text = _build_combined_text(best_evidence, actor, obj, workflow, pain_verb)
+
+    # Step 3: Pattern-based matching (Tier A)
+    pattern_title = _match_known_pattern(combined_text)
+    if pattern_title:
+        return pattern_title
+
+    # Step 4: Derived from components (Tier B)
+    derived = _derive_from_components(actor, obj, workflow, pain_verb, pain_pattern)
+    if derived and derived not in _TITLE_PLACEHOLDERS:
+        return _clean_and_truncate(derived)
+
+    # Step 5: Best evidence title (Tier C)
+    evidence_title = _best_evidence_title_cleaned(best_evidence)
+    if evidence_title and evidence_title not in _TITLE_PLACEHOLDERS:
+        return _clean_and_truncate(evidence_title)
+
+    # Step 6: Fallback (Tier D)
+    return "Unclear developer workflow pain"
+
+
+def _select_best_evidence_for_title(
+    evidence_list: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Select and rank evidence items best suited for title generation.
+
+    Prioritizes primary_pain with fewer quality flags.
+    Returns up to 3 items, sorted by quality.
+    """
+    if not evidence_list:
+        return []
+
+    scored: list[tuple[int, dict[str, Any]]] = []
+    for ev in evidence_list:
+        contribution = str(ev.get("contribution_to_cluster", "context_only"))
+        quality_flags: list[str] = list(ev.get("quality_flags", []) or [])
+
+        # Score: higher = better for title
+        contrib_score = _CONTRIBUTION_PRIORITY.get(contribution, 1)
+
+        # Penalize noise/weak evidence
+        severe_count = sum(1 for f in quality_flags if f in _SEVERE_QUALITY_FLAGS)
+        moderate_count = sum(1 for f in quality_flags if f in _MODERATE_QUALITY_FLAGS)
+        flag_penalty = severe_count * 10 + moderate_count * 3
+
+        score = contrib_score * 10 - flag_penalty
+        scored.append((score, ev))
+
+    scored.sort(key=lambda x: -x[0])
+    return [ev for _, ev in scored[:3]]
+
+
+def _build_combined_text(
+    evidence_items: list[dict[str, Any]],
+    actor: str,
+    obj: str,
+    workflow: str,
+    pain_verb: str,
+) -> str:
+    """Build combined text from evidence for pattern matching."""
+    parts: list[str] = []
+    for ev in evidence_items:
+        title = str(ev.get("title", ""))
+        excerpt = str(ev.get("excerpt", ""))
+        if title:
+            parts.append(title)
+        if excerpt and excerpt != title:
+            parts.append(excerpt)
+
+    # Add cluster field context
+    parts.append(actor)
+    parts.append(obj)
+    parts.append(workflow)
+    parts.append(pain_verb)
+
+    return " ".join(parts).lower()
+
+
+def _match_known_pattern(combined_text: str) -> str | None:
+    """Try to match combined text against known pattern → title map.
+
+    Uses a scoring approach: each matching keyword gives +1. The pattern
+    with the most matching keywords wins (break ties by order in the map).
+    """
+    best_score = 0
+    best_title: str | None = None
+    for keywords, title in _PATTERN_TITLE_MAP:
+        score = sum(1 for kw in keywords if kw in combined_text)
+        if score > best_score:
+            best_score = score
+            best_title = title
+    return best_title
+
+
+def _derive_from_components(
+    actor: str,
+    obj: str,
+    workflow: str,
+    pain_verb: str,
+    pain_pattern: str,
+) -> str | None:
+    """Derive a title from actor + object + normalized pain phrase.
+
+    Produces titles like: "Developers lack debugging context for agent traces"
+    """
+    # Map pain verbs to cleaner phrases
+    pain_verb_map: dict[str, str] = {
+        "cannot": "cannot",
+        "hard to": "struggle with",
+        "hard to use": "struggle with",
+        "hard to debug": "struggle to debug",
+        "hard to understand": "struggle to understand",
+        "broken": "experience broken",
+        "too slow": "experience slow",
+        "unreliable": "experience unreliable",
+        "requires manual workaround": "need manual workarounds for",
+        "too expensive": "find expensive",
+        "missing": "lack",
+        "not working": "experience broken",
+        "confusing": "find confusing",
+        "cannot integrate": "cannot integrate",
+        "frustrating": "find frustrating",
+        "painful": "find painful",
+        "loses data": "lose data from",
+    }
+
+    # Map actors to readable labels
+    actor_label_map: dict[str, str] = {
+        "developer": "Developers",
+        "founder": "Founders",
+        "finance professional": "Finance professionals",
+        "unknown": "Developers",
+    }
+
+    pv = pain_verb_map.get(pain_verb, "struggle with")
+    al = actor_label_map.get(actor, actor.capitalize())
+
+    # Build readable object phrase
+    obj_clean = _clean_object_for_title(obj, workflow)
+
+    if not obj_clean or obj_clean in ("unknown", "needs_more_evidence"):
+        return f"{al} {pv} {workflow}"
+
+    return f"{al} {pv} {obj_clean}"
+
+
+def _clean_object_for_title(obj: str, workflow: str) -> str:
+    """Clean object field for use in a title."""
+    if obj == "unknown":
+        # Use workflow as substitute
+        wf = workflow.strip().lower()
+        # Clean workflow of raw HN prefixes
+        for prefix in _TITLE_PREFIXES_TO_STRIP:
+            wf = wf.replace(prefix.lower(), "")
+        wf = wf.strip().rstrip(".")
+        if wf and wf not in ("unknown", "needs_more_evidence"):
+            return wf[:60]
+        return ""
+
+    # Clean object of known noise
+    obj_clean = obj.strip()
+    # Remove long repo-like prefixes
+    if obj_clean.startswith("github repository "):
+        obj_clean = obj_clean[len("github repository "):]
+
+    if not obj_clean or obj_clean in ("unknown", "needs_more_evidence"):
+        return ""
+
+    return obj_clean[:60]
+
+
+def _best_evidence_title_cleaned(evidence_items: list[dict[str, Any]]) -> str:
+    """Return the cleaned title from the best evidence item."""
+    if not evidence_items:
+        return ""
+    best = evidence_items[0]
+    title = str(best.get("title", ""))
+    return _clean_raw_title(title)
+
+
+def _clean_raw_title(raw_title: str) -> str:
+    """Clean a raw evidence title for display.
+
+    - Strip HN/GitHub prefixes like [Feature], Show HN:, etc.
+    - Remove [dead] markers
+    - Remove trailing junk
+    - Collapse whitespace
+    """
+    title = raw_title.strip()
+    if not title or title.lower() in _TITLE_PLACEHOLDERS:
+        return ""
+
+    # Remove known prefixes (case-insensitive)
+    title_lower = title.lower()
+    for prefix in _TITLE_PREFIXES_TO_STRIP:
+        if title_lower.startswith(prefix.lower()):
+            title = title[len(prefix):].strip()
+            title_lower = title.lower()
+            break
+
+    # Remove [dead] anywhere
+    title = title.replace("[dead]", "").replace("(dead)", "").strip()
+
+    # Remove leading/trailing special chars
+    title = title.strip(" :-.,;!?")
+
+    if not title:
+        return ""
+
+    # Capitalize first letter
+    title = title[0].upper() + title[1:] if len(title) > 1 else title.upper()
+
+    return title
+
+
+def _clean_and_truncate(title: str, max_len: int = _MAX_TITLE_LENGTH) -> str:
+    """Apply final cleaning and truncation to a generated title.
+
+    - Fix malformed grammar patterns
+    - Capitalize first letter
+    - Truncate at word boundary
+    """
+    if not title:
+        return "Unclear developer workflow pain"
+
+    title = title.strip()
+
+    # Fix malformed patterns
+    for pattern, replacement in _MALFORMED_PATTERNS:
+        title = title.replace(pattern, replacement)
+
+    # Remove double spaces
+    while "  " in title:
+        title = title.replace("  ", " ")
+
+    # Remove leading/trailing junk
+    title = title.strip(" :-.,;!?")
+
+    # Capitalize first letter
+    if len(title) > 1:
+        title = title[0].upper() + title[1:]
+
+    # Truncate at word boundary
+    if len(title) > max_len:
+        # Try to break at last space before max_len
+        cutoff = title.rfind(" ", 0, max_len)
+        if cutoff > max_len // 2:
+            title = title[:cutoff].strip()
+        else:
+            title = title[:max_len - 3].strip() + "..."
+
+    return title if title else "Unclear developer workflow pain"
+
+
 def validate_cluster_traceability(
     cluster: PainCluster,
 ) -> tuple[list[str], list[str]]:

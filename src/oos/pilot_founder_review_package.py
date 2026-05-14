@@ -24,6 +24,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .pain_cluster import PainCluster
+from .pain_cluster_assembly import generate_cluster_review_title
 from .source_quality_report import SourceQualityReport
 from .noise_classifier import (
     compute_evidence_quality_summary,
@@ -839,7 +840,7 @@ def _build_review_item_for_cluster(
     id_hash = hashlib.sha256(id_key.encode("utf-8")).hexdigest()[:12]
     review_item_id = f"ri_{id_hash}"
 
-    title = pain_pattern if pain_pattern else f"Cluster {cluster_id}"
+    title = generate_cluster_review_title(cluster)
 
     # v2.14: Build evidence quality counts
     evidence_quality_counts = {

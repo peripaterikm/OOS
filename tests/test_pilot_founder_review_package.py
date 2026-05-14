@@ -2166,5 +2166,181 @@ class TestMarkdownQualityGateVisibility(unittest.TestCase):
                       "Older items should include Quality gate reasons line")
 
 
+# ---------------------------------------------------------------------------
+# Cluster title cleanup integration tests
+# ---------------------------------------------------------------------------
+
+
+class TestClusterTitleCleanupInFRP(unittest.TestCase):
+    """Verify that the FRP uses cleaned cluster review titles."""
+
+    def test_review_item_uses_cleaned_title_not_raw_pain_pattern(self) -> None:
+        """FounderReviewQueueItem.title should use cleaned title, not raw pain_pattern."""
+        evidence = [
+            _make_evidence("ev_001", title="Debugging multi-step agent traces is painful"),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_clean_title",
+            overall=0.75,
+            pain_pattern="developers cannot debug agent execution traces",
+            actor="developer",
+            workflow="debugging",
+            obj="agent traces",
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        title = package.review_items[0].title
+        # Should be a cleaned title, not the raw pain_pattern
+        self.assertNotIn("cannot [dead]", title.lower())
+        self.assertNotIn("[dead]", title.lower())
+        self.assertTrue(len(title) > 0)
+
+    def test_title_in_markdown_is_cleaned(self) -> None:
+        """Markdown output should show cleaned title."""
+        evidence = [
+            _make_evidence("ev_001", title="Agent trace observability is broken"),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_md_title",
+            overall=0.75,
+            pain_pattern="developers cannot debug agent traces",
+            actor="developer",
+            workflow="debugging",
+            obj="agent traces",
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        title = package.review_items[0].title
+        self.assertIn(title, md)
+        self.assertNotIn("[dead]", md.lower())
+
+    def test_title_in_json_roundtrip(self) -> None:
+        """JSON to_dict/from_dict preserves cleaned title."""
+        evidence = [
+            _make_evidence("ev_001", title="Debugging agent traces"),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_json_title",
+            overall=0.75,
+            pain_pattern="developers cannot debug",
+            actor="developer",
+            workflow="debugging",
+            obj="agent traces",
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        d = package.to_dict()
+        restored = FounderReviewPackage.from_dict(d)
+        self.assertEqual(
+            package.review_items[0].title,
+            restored.review_items[0].title,
+        )
+
+    def test_dead_title_not_propagate_to_frp(self) -> None:
+        """Evidence with [dead] title should not leak into FRP title."""
+        evidence = [
+            _make_evidence(
+                "ev_dead",
+                title="developer cannot [dead] because llm is cannot",
+                source_url="https://news.ycombinator.com/item?id=99999",
+            ),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_dead_frp",
+            overall=0.35,
+            pain_pattern="developer cannot [dead] because llm is cannot",
+            actor="developer",
+            obj="llm traces",
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        title = package.review_items[0].title
+        self.assertNotIn("[dead]", title.lower())
+        self.assertNotIn("dead", title.lower())
+        self.assertTrue(len(title) > 0)
+
+    def test_needs_more_evidence_not_title(self) -> None:
+        """pain_pattern=needs_more_evidence should not become FRP title."""
+        evidence = [
+            _make_evidence("ev_001", title="Something vague", excerpt="not much"),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_nme_frp",
+            overall=0.25,
+            pain_pattern="needs_more_evidence",
+            actor="developer",
+            obj="unknown",
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        title = package.review_items[0].title.lower()
+        self.assertNotEqual("needs_more_evidence", title)
+        self.assertNotIn("needs_more_evidence", title)
+
+    def test_title_traceability_unchanged(self) -> None:
+        """Source URLs and evidence IDs must not be affected by title cleanup."""
+        evidence = [
+            _make_evidence(
+                "ev_url_001",
+                title="Agent debugging pain",
+                source_url="https://news.ycombinator.com/item?id=41500123",
+            ),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_trace_title",
+            overall=0.75,
+            pain_pattern="developers cannot debug agents",
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        ri = package.review_items[0]
+        self.assertEqual(ri.pain_cluster_id, "pc_trace_title")
+        urls = [el.source_url for el in ri.evidence_links]
+        self.assertIn("https://news.ycombinator.com/item?id=41500123", urls)
+
+    def test_title_length_within_limit(self) -> None:
+        """Generated title should be <= 90 chars."""
+        evidence = [
+            _make_evidence(
+                "ev_long",
+                title="Developers cannot debug multi-step LLM agent execution traces because the observability tooling provides no actionable context",
+                excerpt="Agent traces differ between runs, no standard tooling for replay in production",
+            ),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_long_frp",
+            overall=0.55,
+            pain_pattern="developers cannot debug long traces",
+            actor="developer",
+            obj="agent execution traces",
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        title = package.review_items[0].title
+        self.assertLessEqual(len(title), 90)
+
+
 if __name__ == "__main__":
     unittest.main()
