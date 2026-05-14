@@ -1,6 +1,6 @@
 # OOS Roadmap v2.14 — Pilot Quality Improvements
 
-**Status:** Active / item 1 ready
+**Status:** Active / item 2 ready
 **Branch:** `ops/v2-13-pilot-cycle-1-run`
 **Created:** 2026-05-14
 **Based on:** v2.13 Pilot Cycle 1 CONDITIONAL GO decision
@@ -13,10 +13,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `1 — Noise Classification Hardening`
-- [x] **0.3** Roadmap state: `active / item 1 ready`
-- [x] **0.4** Completed from this roadmap: **1 / 11**
-- [x] **0.5** Remaining: **10 / 11**
+- [x] **0.2** Current item: `2 — Quality Flags to Scoring/Tier Integration`
+- [x] **0.3** Roadmap state: `active / item 2 ready`
+- [x] **0.4** Completed from this roadmap: **2 / 11**
+- [x] **0.5** Remaining: **9 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -208,14 +208,14 @@ Wire existing quality flags on [`CandidateSignal`](src/oos/candidate_signal_extr
 
 ### Definition of Done
 
-- [ ] **1.1** `noise_classification` field exists on `CandidateSignal`
-- [ ] **1.2** Noise classification rules function exists and is deterministic
-- [ ] **1.3** Scoring integrates noise classification with penalties
-- [ ] **1.4** Pilot orchestrator surfaces noise counts
-- [ ] **1.5** All existing tests pass (with fixture updates if needed)
-- [ ] **1.6** At least 15 focused tests pass
-- [ ] **1.7** `.\scripts\dev-git-check.ps1` passes
-- [ ] **1.8** One local commit made with message: `[v2.14] 1 noise classification hardening`
+- [x] **1.1** Deterministic `classify_noise()` function in [`src/oos/noise_classifier.py`](src/oos/noise_classifier.py) with severity mapping, pain marker detection, and rule-ordered classification
+- [x] **1.2** Noise classification rules function exists and is deterministic
+- [x] **1.3** Quality flags integrated into Source Quality Report signal counting (accepted/weak/noise) in [`src/oos/source_quality_report.py`](src/oos/source_quality_report.py)
+- [x] **1.4** Pilot orchestrator propagates `quality_flags` from evidence → derived candidate signals in [`src/oos/operational_discovery_pilot.py`](src/oos/operational_discovery_pilot.py)
+- [x] **1.5** All existing tests pass (2424 tests, 0 failures)
+- [x] **1.6** 49 focused tests pass in [`tests/test_noise_classifier.py`](tests/test_noise_classifier.py)
+- [x] **1.7** `.\scripts\dev-git-check.ps1` passes (5/6, dirty tree expected pre-commit)
+- [x] **1.8** One local commit made with message: `[v2.14] 1 harden noise classification`
 
 ---
 

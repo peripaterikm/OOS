@@ -12,6 +12,12 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+from .noise_classifier import (
+    ACCEPTED,
+    NOISE as NC_NOISE,
+    WEAK,
+    classify_noise_for_evidence,
+)
 from .pain_cluster_dedupe import (
     normalize_source_id,
     normalize_source_type,
@@ -556,26 +562,35 @@ def _build_source_metrics(
     records_emitted = int(local_summary.get("records_emitted", 0)) or len(source_evidence)
     records_rejected = max(0, records_seen - records_emitted)
 
-    # Signal classification — infer from signal's classification field
+    # Signal classification — infer from classification field + noise classifier
     accepted = weak = noise = 0
     for sig in source_signals:
+        # First, determine base classification from explicit field
         classification = str(sig.get("classification", "") or "").lower()
-        if classification in ("pain_signal_candidate", "workaround_signal_candidate",
-                              "buying_intent_candidate", "competitor_weakness_candidate",
-                              "trend_trigger_candidate"):
-            accepted += 1
-        elif classification in ("needs_human_review",):
-            weak += 1
-        elif classification in ("noise",):
+        sig_type = str(sig.get("signal_type", "") or "").lower()
+
+        if classification in ("noise",):
             noise += 1
+            continue
+        elif classification in ("needs_human_review",) or sig_type in ("needs_human_review",):
+            weak += 1
+            continue
+
+        # Apply noise classifier override: quality_flags can downgrade accepted → weak/noise
+        nc_result = classify_noise_for_evidence(sig)
+        if nc_result == NC_NOISE:
+            noise += 1
+        elif nc_result == WEAK:
+            weak += 1
         else:
-            # Try signal_type
-            sig_type = str(sig.get("signal_type", "") or "").lower()
-            if sig_type in ("pain_signal", "workaround", "buying_intent",
+            # ACCEPTED or fallback: check explicit classification
+            if classification in ("pain_signal_candidate", "workaround_signal_candidate",
+                                  "buying_intent_candidate", "competitor_weakness_candidate",
+                                  "trend_trigger_candidate"):
+                accepted += 1
+            elif sig_type in ("pain_signal", "workaround", "buying_intent",
                             "competitor_weakness", "trend_trigger"):
                 accepted += 1
-            elif sig_type in ("needs_human_review",):
-                weak += 1
             else:
                 # Default: count as weak (unclassified)
                 weak += 1
