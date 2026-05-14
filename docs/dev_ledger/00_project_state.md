@@ -1,4 +1,4 @@
-﻿# Dev Ledger Project State
+# Dev Ledger Project State
 
 ## Current Roadmap
 
@@ -11,7 +11,7 @@
 - Roadmap v2.11 status: **complete / closed** (`10 / 10`, branch `feat/v2-11-discovery-sources-foundation`, local-only)
 - Roadmap v2.12 status: **complete / closed** (`10 / 10`, branch `feat/v2-12-operational-discovery-pilot`, PR #52 merged)
 - Roadmap v2.13 status: **complete / closed** (`12 / 12`, branch `ops/v2-13-operational-pilot-cycle-1`); Pilot Cycle 1 executed — result: **CONDITIONAL GO**
-- Roadmap v2.14 status: **planning** (`0 / 11`, branch `ops/v2-13-pilot-cycle-1-run`)
+- Roadmap v2.14 status: **active / item 1 ready** (`1 / 11`, branch `ops/v2-13-pilot-cycle-1-run`)
 - Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
 - Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
@@ -26,13 +26,13 @@
 - Roadmap v2.13 planning created: yes
 - Roadmap v2.13 status: **complete / closed** (`12 / 12`, branch `ops/v2-13-operational-pilot-cycle-1`); Pilot Cycle 1 executed — result: **CONDITIONAL GO**
 - Roadmap v2.14 planning created: yes
-- Roadmap v2.14 status: **planning** (`0 / 11`, branch `ops/v2-13-pilot-cycle-1-run`)
-- Current item: `0 — Planning checkpoint`
-- Roadmap state: `planning`
-- Completed: `0 / 11`
-- Remaining: `11 / 11`
-- Latest completed roadmap item: Roadmap v2.13 item `11` — Final v2.13 Checkpoint
-- Next planned roadmap item: Roadmap v2.14 item `0` — Planning checkpoint
+- Roadmap v2.14 status: **active / item 1 ready** (`1 / 11`, branch `ops/v2-13-pilot-cycle-1-run`)
+- Current item: `1 — Noise Classification Hardening`
+- Roadmap state: `active / item 1 ready`
+- Completed: `1 / 11`
+- Remaining: `10 / 11`
+- Latest completed roadmap item: Roadmap v2.14 item `0` — Planning checkpoint
+- Next planned roadmap item: Roadmap v2.14 item `1` — Noise Classification Hardening
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
@@ -348,17 +348,17 @@ Pilot Cycle 1 was executed in two runtime runs outside the repository (no runtim
 
 - Roadmap: v2.14 Pilot Quality Improvements
 - Branch: `ops/v2-13-pilot-cycle-1-run`
-- Status: **planning** (roadmap created, items defined, not yet implemented)
+- Status: **active / item 1 ready** (planning checkpoint complete; no source implementation yet)
 - Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
 - Parent decision: CONDITIONAL GO (`docs/operations/pilot_cycle_1_conditional_go_summary_v2_13.md`)
-- Completed: `0 / 11`
-- Remaining: `11 / 11`
+- Completed: `1 / 11`
+- Remaining: `10 / 11`
 
 ### v2.14 Items (Planned)
 
 | # | Item | Status |
 |---|------|--------|
-| 0 | Planning checkpoint | [ ] |
+| 0 | Planning checkpoint | [x] |
 | 1 | Noise classification hardening | [ ] |
 | 2 | Quality flags to scoring/tier integration | [ ] |
 | 3 | Cluster title generation cleanup | [ ] |
@@ -395,6 +395,6 @@ Pilot Cycle 1 was executed in two runtime runs outside the repository (no runtim
 
 - Branch: `ops/v2-13-pilot-cycle-1-run` (reused for v2.14 planning/docs)
 - Based on: v2.13 Pilot Cycle 1 CONDITIONAL GO
-- No implementation commits yet (planning phase)
+- Item 0 planning checkpoint completed locally; no source implementation commits yet.
 - No push, PR, merge, or tag.
-- **Next action:** Founder review and approval of v2.14 roadmap. Implementation begins at item 1 after explicit approval.
+- **Next action:** Roadmap v2.14 item 1 — Noise Classification Hardening. Source expansion remains blocked until an explicit GO decision in a future pilot cycle.

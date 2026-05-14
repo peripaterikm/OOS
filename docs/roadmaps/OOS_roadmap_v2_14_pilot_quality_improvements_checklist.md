@@ -1,6 +1,6 @@
 # OOS Roadmap v2.14 — Pilot Quality Improvements
 
-**Status:** Active / planning
+**Status:** Active / item 1 ready
 **Branch:** `ops/v2-13-pilot-cycle-1-run`
 **Created:** 2026-05-14
 **Based on:** v2.13 Pilot Cycle 1 CONDITIONAL GO decision
@@ -12,12 +12,12 @@
 
 ### Active Roadmap
 
-- [ ] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [ ] **0.2** Current item: `0 — Planning checkpoint`
-- [ ] **0.3** Roadmap state: `planning`
-- [ ] **0.4** Completed from this roadmap: **0 / 11**
-- [ ] **0.5** Remaining: **11 / 11**
-- [ ] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
+- [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
+- [x] **0.2** Current item: `1 — Noise Classification Hardening`
+- [x] **0.3** Roadmap state: `active / item 1 ready`
+- [x] **0.4** Completed from this roadmap: **1 / 11**
+- [x] **0.5** Remaining: **10 / 11**
+- [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
 
@@ -124,12 +124,13 @@ Create the official Roadmap v2.14 planning checklist. Docs-only. No source code,
 ### Allowed Scope
 
 - Create: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md` (this file)
-- Read (do not modify): `docs/operations/pilot_cycle_1_conditional_go_summary_v2_13.md`, `docs/dev_ledger/00_project_state.md`, existing source files
+- Read (do not modify): `docs/operations/pilot_cycle_1_conditional_go_summary_v2_13.md`, existing source files
+- Update: `docs/dev_ledger/00_project_state.md` for roadmap bookkeeping only
 
 ### Non-Goals
 
 - Creating source code, test, script, or artifact files
-- Modifying any existing file outside this roadmap document
+- Modifying any existing file outside this roadmap document except `docs/dev_ledger/00_project_state.md` bookkeeping
 - Running any part of the pilot pipeline
 - Making live API or LLM calls
 
@@ -137,24 +138,25 @@ Create the official Roadmap v2.14 planning checklist. Docs-only. No source code,
 
 - Roadmap document exists at the specified path
 - All 11 items (0–10) are defined with intent, allowed scope, non-goals, implementation requirements, tests/validation expectations, and definition of done
-- Roadmap overview trackers (0.1–0.6) are initialized
+- Roadmap overview trackers (0.1–0.6) are updated to show item 0 complete and item 1 next
+- v2.14 intent, scope, non-goals, quality targets, branch strategy, and source-expansion block are verified against the v2.13 Conditional Go decision
 
 ### Tests/Validation Expectations
 
 - `.\scripts\dev-git-check.ps1` passes
-- `git status --short` shows only this file before commit
+- `git status --short` shows only docs-only roadmap and dev-ledger changes before commit
 
 ### Definition of Done
 
-- [ ] **0.0.1** Roadmap v2.14 document exists at `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [ ] **0.0.2** Roadmap state is `planning`
-- [ ] **0.0.3** Current item is `0 — Planning checkpoint`
-- [ ] **0.0.4** Completed: `0 / 11`
-- [ ] **0.0.5** Remaining: `11 / 11`
-- [ ] **0.0.6** All 11 items defined with all required sections
-- [ ] **0.0.7** `.\scripts\dev-git-check.ps1` passes
-- [ ] **0.0.8** `git status --short` shows only this file before commit
-- [ ] **0.0.9** One local commit made with message: `[v2.14] 0 planning checkpoint`
+- [x] **0.0.1** Roadmap v2.14 document exists at `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
+- [x] **0.0.2** Roadmap state is `active / item 1 ready`
+- [x] **0.0.3** Current item is `1 — Noise Classification Hardening`
+- [x] **0.0.4** Completed: `1 / 11`
+- [x] **0.0.5** Remaining: `10 / 11`
+- [x] **0.0.6** All 11 items defined with all required sections
+- [x] **0.0.7** `.\scripts\dev-git-check.ps1` passes or reports only the expected pre-commit dirty tree
+- [x] **0.0.8** `git status --short` shows only docs-only roadmap and dev-ledger changes before commit
+- [x] **0.0.9** One local commit made with message: `[v2.14] 0 planning checkpoint`
 
 ---
 
@@ -781,4 +783,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Planning phase. Docs-only at item 0. Do not implement without explicit founder approval. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 0 planning checkpoint complete; item 1 is next. No source expansion. No runtime artifacts committed.*
