@@ -847,7 +847,7 @@ class TestClusterReviewTitle(unittest.TestCase):
             f"Expected stack/actionable context in title: {title}"
         )
 
-    def test_provenance_title(self) -> None:
+    def test_provenance_title_requires_provenance_or_source_attribution(self) -> None:
         c = self._cluster(
             actor="developer",
             object="multi-agent outputs",
@@ -870,8 +870,8 @@ class TestClusterReviewTitle(unittest.TestCase):
         self.assertTrue(len(title) > 0)
         self.assertNotIn("[dead]", title.lower())
         self.assertTrue(
-            any(t in title.lower() for t in ("provenance", "multi-agent", "agent", "output")),
-            f"Expected provenance/agent context in title: {title}"
+            any(t in title.lower() for t in ("provenance", "source attribution")),
+            f"Expected provenance or source attribution in title: {title}"
         )
 
     def test_checkpoint_state_title(self) -> None:
@@ -900,6 +900,274 @@ class TestClusterReviewTitle(unittest.TestCase):
             any(t in title.lower() for t in ("reproduc", "state", "debug", "agent")),
             f"Expected state/reproducibility context in title: {title}"
         )
+
+    # --- Provenance negative tests (Fix 1) ---
+
+    def test_generic_llm_token_cost_not_provenance(self) -> None:
+        """Generic LLM token cost evidence must NOT become provenance title."""
+        c = self._cluster(
+            actor="developer",
+            object="llm",
+            workflow="LLM API usage",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "LLM token costs are too high",
+                    "excerpt": "We spend too much on token costs for our LLM API calls.",
+                    "evidence_kind": "pain_signal_candidate",
+                    "contribution_to_cluster": "primary_pain",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertNotEqual(
+            title, "Multi-agent systems lose output provenance",
+            f"Generic LLM token cost must not become provenance title: {title}"
+        )
+
+    def test_confusing_docs_setup_not_provenance(self) -> None:
+        """Confusing docs / setup pain must NOT become provenance title."""
+        c = self._cluster(
+            actor="developer",
+            object="ai agent",
+            workflow="setup",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "AI agent setup docs are confusing",
+                    "excerpt": "Documentation for setting up AI agents is unclear and hard to follow.",
+                    "evidence_kind": "pain_signal_candidate",
+                    "contribution_to_cluster": "primary_pain",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertNotEqual(
+            title, "Multi-agent systems lose output provenance",
+            f"Confusing docs/setup must not become provenance title: {title}"
+        )
+
+    def test_needs_more_evidence_llm_not_provenance(self) -> None:
+        """needs_more_evidence with object=llm must NOT become provenance title."""
+        c = self._cluster(
+            actor="developer",
+            object="llm",
+            workflow="LLM API usage",
+            pain_pattern="needs_more_evidence",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "",
+                    "excerpt": "",
+                    "evidence_kind": "unknown",
+                    "contribution_to_cluster": "context_only",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertNotEqual(
+            title, "Multi-agent systems lose output provenance",
+            f"needs_more_evidence with llm must not become provenance title: {title}"
+        )
+
+    def test_generic_agent_debugging_not_provenance(self) -> None:
+        """Generic 'agent debugging' without provenance terms must NOT become provenance title."""
+        c = self._cluster(
+            actor="developer",
+            object="agent",
+            workflow="debugging",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "Debugging agent workflows is hard",
+                    "excerpt": "Generic agent debugging pain with no mention of provenance or source attribution.",
+                    "evidence_kind": "pain_signal_candidate",
+                    "contribution_to_cluster": "primary_pain",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertNotEqual(
+            title, "Multi-agent systems lose output provenance",
+            f"Generic agent debugging must not become provenance title: {title}"
+        )
+
+    def test_explicit_provenance_evidence_does_become_provenance_title(self) -> None:
+        """Explicit provenance/source-attribution evidence DOES become provenance title."""
+        c = self._cluster(
+            actor="developer",
+            object="multi-agent outputs",
+            workflow="provenance tracking",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "Cannot trace output provenance in multi-agent systems",
+                    "excerpt": "We cannot determine output provenance - which agent contributed which part. Source attribution is broken.",
+                    "evidence_kind": "pain_signal_candidate",
+                    "contribution_to_cluster": "primary_pain",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertTrue(
+            any(t in title.lower() for t in ("provenance", "source attribution")),
+            f"Explicit provenance evidence must produce provenance title: {title}"
+        )
+
+    def test_which_agent_contributed_which_part_becomes_provenance_title(self) -> None:
+        """"which agent contributed which part" evidence DOES become provenance title."""
+        c = self._cluster(
+            actor="developer",
+            object="multi-agent outputs",
+            workflow="provenance tracking",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "Which agent contributed which part is unclear",
+                    "excerpt": "In multi-agent systems, it's hard to tell which agent contributed which part of the final output.",
+                    "evidence_kind": "pain_signal_candidate",
+                    "contribution_to_cluster": "primary_pain",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertTrue(
+            any(t in title.lower() for t in ("provenance", "which agent")),
+            f"'which agent' evidence must produce provenance title: {title}"
+        )
+
+    # --- Component fallback grammar tests (Fix 2) ---
+
+    def test_developer_cannot_invoices_grammar(self) -> None:
+        """actor=developer, pain_verb=cannot, object=invoices => no 'Developers cannot invoices'."""
+        c = self._cluster(
+            actor="developer",
+            object="invoices",
+            workflow="invoice processing",
+            pain_verb="cannot",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "Cannot process invoices efficiently",
+                    "excerpt": "Developers struggle with invoice workflows.",
+                    "evidence_kind": "pain_signal_candidate",
+                    "contribution_to_cluster": "primary_pain",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertNotEqual(title, "Developers cannot invoices")
+        self.assertNotIn("Developers cannot invoices", title)
+        self.assertTrue(
+            title.startswith("Developers struggle with")
+            or title.startswith("Developers cannot complete"),
+            f"Expected grammatical title, got: {title}"
+        )
+
+    def test_developer_missing_debugging_context_grammar(self) -> None:
+        """actor=developer, pain_verb=missing, object=debugging context => grammatical."""
+        c = self._cluster(
+            actor="developer",
+            object="debugging context",
+            workflow="debugging",
+            pain_verb="missing",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "Debugging context is missing",
+                    "excerpt": "Developers lack debugging context for agent traces.",
+                    "evidence_kind": "pain_signal_candidate",
+                    "contribution_to_cluster": "primary_pain",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertTrue(len(title) > 0)
+        self.assertNotIn(" is cannot", title.lower())
+        self.assertNotIn(" because", title.lower())
+
+    def test_developer_too_slow_llm_api_grammar(self) -> None:
+        """actor=developer, pain_verb=too slow, object=llm api => grammatical."""
+        c = self._cluster(
+            actor="developer",
+            object="llm",
+            workflow="LLM API usage",
+            pain_verb="too slow",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "LLM API is too slow",
+                    "excerpt": "The LLM API response times are too slow for interactive use.",
+                    "evidence_kind": "pain_signal_candidate",
+                    "contribution_to_cluster": "primary_pain",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertTrue(len(title) > 0)
+        self.assertNotIn(" is cannot", title.lower())
+
+    def test_malformed_because_x_is_cannot_never_appears(self) -> None:
+        """Malformed phrase 'because X is cannot' never appears in any title."""
+        c = self._cluster(
+            actor="developer",
+            object="llm",
+            workflow="debugging",
+            pain_verb="cannot",
+            pain_pattern="developer cannot debug because llm is cannot",
+            source_evidence_list=[
+                {
+                    "evidence_id": "ev_001",
+                    "source_id": "hacker_news",
+                    "source_type": "discussion",
+                    "source_url": "https://news.ycombinator.com/item?id=1",
+                    "title": "debug because llm is cannot",
+                    "excerpt": "debugging agent traces",
+                    "evidence_kind": "pain_signal_candidate",
+                    "contribution_to_cluster": "primary_pain",
+                    "quality_flags": [],
+                },
+            ]
+        )
+        title = generate_cluster_review_title(c)
+        self.assertNotIn("because X is cannot", title.lower())
+        self.assertNotIn(" is cannot", title.lower())
 
     # --- Evidence prioritization ---
 

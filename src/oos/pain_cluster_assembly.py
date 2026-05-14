@@ -826,8 +826,6 @@ _PATTERN_TITLE_MAP: list[tuple[tuple[str, ...], str]] = [
     (("eval", "testing", "regression test", "test suite", "benchmark"), "LLM app testing lacks reliable regression workflow"),
     # Debug / debugging (generic, lower priority)
     (("debug", "debugging"), "Agent debugging workflows lack actionable context"),
-    # Agent / LLM general
-    (("agent", "llm", "ai agent"), "Multi-agent systems lose output provenance"),
 ]
 
 # Terms to strip from raw titles
@@ -1016,7 +1014,7 @@ def _derive_from_components(
     """
     # Map pain verbs to cleaner phrases
     pain_verb_map: dict[str, str] = {
-        "cannot": "cannot",
+        "cannot": "struggle with",
         "hard to": "struggle with",
         "hard to use": "struggle with",
         "hard to debug": "struggle to debug",
