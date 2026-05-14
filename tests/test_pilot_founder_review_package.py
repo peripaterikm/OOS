@@ -1957,5 +1957,214 @@ class TestPromotionBlockerIntegration(unittest.TestCase):
         self.assertEqual(decision, "PROMOTE")
 
 
+class TestMarkdownQualityGateVisibility(unittest.TestCase):
+    """v2.14 Fix 2: Markdown includes Quality Gate block per review item."""
+
+    def test_markdown_includes_quality_gate_section(self):
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=["debugging_pain"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_qg", overall=0.75, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("#### Quality Gate", md,
+                      "Markdown should include '#### Quality Gate' section per review item")
+
+    def test_markdown_includes_accepted_weak_noise_counts(self):
+        evidence = [
+            _make_evidence("ev_001", quality_flags=[]),
+            _make_evidence("ev_002", quality_flags=["requires_manual_review"]),
+            _make_evidence("ev_003", quality_flags=["bot_generated"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_counts_md", overall=0.55, source_diversity=1, recurrence=3,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("accepted=1", md,
+                      "Markdown should show accepted=1")
+        self.assertIn("weak=1", md,
+                      "Markdown should show weak=1")
+        self.assertIn("noise=1", md,
+                      "Markdown should show noise=1")
+
+    def test_markdown_includes_promotion_blockers_when_present(self):
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["bot_generated"]),
+            _make_evidence("ev_002", quality_flags=["maintainer_housekeeping"]),
+            _make_evidence("ev_003", quality_flags=[]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_blockers_md", overall=0.75, source_diversity=1, recurrence=3,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("Promotion blockers", md,
+                      "Markdown should include 'Promotion blockers' line")
+        self.assertIn("noise ratio", md.lower(),
+                      "Markdown should mention noise ratio in blockers")
+
+    def test_markdown_says_blockers_none_when_empty(self):
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain"]),
+            _make_evidence("ev_002", source_id="github_issues", source_type="issue_tracker",
+                          source_url="https://github.com/o/r/issues/1",
+                          quality_flags=["integration_pain"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_clean_md", overall=0.85, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("Promotion blockers", md,
+                      "Markdown should include 'Promotion blockers' line")
+        self.assertTrue("Promotion blockers: none" in md or "Promotion blockers" in md,
+                       "Markdown should indicate no promotion blockers")
+
+    def test_markdown_includes_dominant_quality_flags(self):
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain", "debugging_pain"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_dom_md", overall=0.75, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("Dominant quality flags", md,
+                      "Markdown should include 'Dominant quality flags' line")
+        self.assertIn("debugging_pain", md,
+                      "Markdown should include 'debugging_pain' in dominant flags")
+
+    def test_markdown_includes_quality_gate_reasons(self):
+        # Create a single-source cluster with low recurrence to trigger gate reasons
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["stale_issue"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_qgr_md", overall=0.50, source_diversity=1, recurrence=1,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("Quality gate reasons", md,
+                      "Markdown should include 'Quality gate reasons' line")
+
+    def test_markdown_says_gate_reasons_none_when_empty(self):
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain"]),
+            _make_evidence("ev_002", source_id="github_issues", source_type="issue_tracker",
+                          source_url="https://github.com/o/r/issues/1",
+                          quality_flags=["integration_pain"]),
+            _make_evidence("ev_003", quality_flags=["business_cost_signal"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_nogate_md", overall=0.85, source_diversity=2, recurrence=3,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("Quality gate reasons", md,
+                      "Markdown should include 'Quality gate reasons' line")
+        self.assertTrue("Quality gate reasons: none" in md or "Quality gate reasons" in md,
+                       "Markdown should indicate no quality gate reasons")
+
+    def test_json_roundtrip_remains_intact_with_quality_fields(self):
+        """Verify that JSON roundtrip still works after quality fields are visible in Markdown."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain"]),
+            _make_evidence("ev_002", quality_flags=["bot_generated"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_rt_md", overall=0.55, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        d = package.to_dict()
+        restored = FounderReviewPackage.from_dict(d)
+        ri_orig = package.review_items[0]
+        ri_rest = restored.review_items[0]
+        self.assertEqual(ri_orig.quality_summary, ri_rest.quality_summary)
+        self.assertEqual(ri_orig.promotion_blockers, ri_rest.promotion_blockers)
+        self.assertEqual(ri_orig.evidence_quality_counts, ri_rest.evidence_quality_counts)
+        self.assertEqual(ri_orig.dominant_quality_flags, ri_rest.dominant_quality_flags)
+
+    def test_backward_compatible_older_review_items_render_without_crashing(self):
+        """Older review items without quality fields should render without error."""
+        item = FounderReviewQueueItem(
+            review_item_id="ri_old",
+            item_type="pain_cluster",
+            title="Old cluster",
+            actor="dev",
+            workflow="test",
+            object="test",
+            pain_pattern="test",
+            score=0.5,
+            score_components={},
+            evidence_summary="test",
+            evidence_links=[],
+            source_ids=["hacker_news"],
+            source_diversity=1,
+            recurrence=1,
+            noise_risk=0.0,
+            business_relevance=0.5,
+            uncertainty="moderate",
+            recommended_decision="PARK",
+            recommendation_reason="test",
+            suggested_validation_action="manual_research",
+            source_quality_notes="",
+            traceability_status="clean",
+            created_at="2026-01-01T00:00:00Z",
+            # No quality fields set — defaults to empty
+        )
+        pkg = FounderReviewPackage(
+            package_id="frp_old",
+            discovery_run_id="test_old",
+            created_at="2026-01-01T00:00:00Z",
+            total_review_items=1,
+            review_items=[item],
+        )
+        md = render_founder_review_package_markdown(pkg)
+        self.assertIsInstance(md, str)
+        self.assertIn("#### Quality Gate", md,
+                      "Quality Gate section should appear even for older items")
+        self.assertIn("Promotion blockers", md,
+                      "Older items should include Promotion blockers line")
+        self.assertIn("Quality gate reasons", md,
+                      "Older items should include Quality gate reasons line")
+
+
 if __name__ == "__main__":
     unittest.main()

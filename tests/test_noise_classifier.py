@@ -27,6 +27,7 @@ from oos.noise_classifier import (
     classify_noise,
     classify_noise_for_evidence,
     classify_noise_for_signal,
+    compute_evidence_quality_summary,
 )
 from oos.source_quality_report import (
     build_source_quality_report,
@@ -1406,6 +1407,115 @@ class TestComputeQualityGateReasons(unittest.TestCase):
             traceability_clean=True, source_scope_clean=True,
         )
         self.assertEqual(blockers, [])
+
+
+class TestAliasAwareQualitySummarySeverityCounts(unittest.TestCase):
+    """v2.14 Fix 1: compute_evidence_quality_summary resolves aliases for severity counts."""
+
+    def test_vendor_promo_increments_medium_risk_flag_count(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_vp", quality_flags=["vendor_promo"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 1,
+                         "vendor_promo alias should count as medium-risk via suspected_self_promo")
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+        self.assertEqual(summary["positive_pain_flag_count"], 0)
+
+    def test_missing_actor_increments_medium_risk_flag_count(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_ma", quality_flags=["missing_actor"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 1,
+                         "missing_actor alias should count as medium-risk via unclear_actor")
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+
+    def test_low_confidence_extraction_increments_medium_risk_flag_count(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_lce", quality_flags=["low_confidence_extraction"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 1)
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+
+    def test_generic_language_increments_medium_risk_flag_count(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_gl", quality_flags=["generic_language"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 1)
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+
+    def test_original_quality_flag_counts_still_contains_original_names(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_vp", quality_flags=["vendor_promo"]),
+            _make_evidence(evidence_id="ev_ma", quality_flags=["missing_actor"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        qfc = summary["quality_flag_counts"]
+        self.assertEqual(qfc.get("vendor_promo", 0), 1,
+                         "quality_flag_counts should preserve original flag name vendor_promo")
+        self.assertEqual(qfc.get("missing_actor", 0), 1,
+                         "quality_flag_counts should preserve original flag name missing_actor")
+        self.assertEqual(summary["medium_risk_flag_count"], 2,
+                         "Both aliases should count as medium-risk")
+
+    def test_positive_pain_flags_do_not_increment_medium_or_severe(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_pp", quality_flags=["debugging_pain", "integration_pain"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["positive_pain_flag_count"], 2)
+        self.assertEqual(summary["medium_risk_flag_count"], 0)
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+
+    def test_mixed_aliases_and_original_flags_aggregate_deterministically(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["vendor_promo", "low_confidence_extraction"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["missing_actor", "generic_language"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["debugging_pain", "bot_generated"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # severity counts (alias-resolved):
+        # ev_1: vendor_promo->suspected_self_promo(medium), low_confidence_extraction(medium) = 2 medium
+        # ev_2: missing_actor->unclear_actor(medium), generic_language(medium) = 2 medium
+        # ev_3: debugging_pain(positive), bot_generated(severe) = 1 positive, 1 severe
+        # Total: 4 medium, 1 severe, 1 positive
+        self.assertEqual(summary["medium_risk_flag_count"], 4)
+        self.assertEqual(summary["severe_noise_flag_count"], 1)
+        self.assertEqual(summary["positive_pain_flag_count"], 1)
+        # Original flag counts:
+        qfc = summary["quality_flag_counts"]
+        self.assertEqual(qfc.get("vendor_promo", 0), 1)
+        self.assertEqual(qfc.get("low_confidence_extraction", 0), 1)
+        self.assertEqual(qfc.get("missing_actor", 0), 1)
+        self.assertEqual(qfc.get("generic_language", 0), 1)
+        self.assertEqual(qfc.get("debugging_pain", 0), 1)
+        self.assertEqual(qfc.get("bot_generated", 0), 1)
+
+    def test_severe_aliases_count_in_severe_noise_flag_count(self):
+        # If any flag aliases to a severe flag, it should count as severe.
+        # Current alias map has none, but test defensively.
+        # We use a direct severe flag for safety.
+        evidence = [
+            _make_evidence(evidence_id="ev_sev", quality_flags=["bot_generated"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["severe_noise_flag_count"], 1)
+        self.assertEqual(summary["medium_risk_flag_count"], 0)
+
+    def test_quality_summary_severity_counts_different_from_old_behavior(self):
+        """Demonstrate that the alias-resolved counts differ from original-flag-based counts.
+        vendor_promo is NOT in MEDIUM_NOISE_FLAGS set (only suspected_self_promo is).
+        The old behavior would NOT count vendor_promo as medium."""
+        evidence = [
+            _make_evidence(evidence_id="ev_vp", quality_flags=["vendor_promo"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # With alias resolution: vendor_promo -> suspected_self_promo -> MEDIUM_NOISE_FLAGS -> medium=1
+        self.assertEqual(summary["medium_risk_flag_count"], 1,
+                         "vendor_promo must count as medium after alias resolution")
 
 
 if __name__ == "__main__":

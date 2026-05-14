@@ -1319,6 +1319,36 @@ def render_founder_review_package_markdown(
         lines.append(f"- **Evidence Summary**: {ri.evidence_summary}")
         lines.append("")
 
+        # v2.14 Fix 2: Quality Gate block per review item
+        lines.append("#### Quality Gate")
+        lines.append("")
+        eqc = ri.evidence_quality_counts if ri.evidence_quality_counts else {}
+        accepted = eqc.get("accepted", ri.quality_summary.get("accepted_evidence_count", 0) if ri.quality_summary else 0)
+        weak = eqc.get("weak", ri.quality_summary.get("weak_evidence_count", 0) if ri.quality_summary else 0)
+        noise = eqc.get("noise", ri.quality_summary.get("noise_evidence_count", 0) if ri.quality_summary else 0)
+        total_q = accepted + weak + noise
+        a_ratio = ri.quality_summary.get("accepted_ratio", round(accepted / total_q, 4) if total_q > 0 else 0.0) if ri.quality_summary else 0.0
+        w_ratio = ri.quality_summary.get("weak_ratio", round(weak / total_q, 4) if total_q > 0 else 0.0) if ri.quality_summary else 0.0
+        n_ratio = ri.quality_summary.get("noise_ratio", round(noise / total_q, 4) if total_q > 0 else 0.0) if ri.quality_summary else 0.0
+        lines.append(f"- **Evidence quality**: accepted={accepted} / weak={weak} / noise={noise} / total={total_q}")
+        lines.append(f"- **Ratios**: accepted={a_ratio:.2f}, weak={w_ratio:.2f}, noise={n_ratio:.2f}")
+        dominant = ri.dominant_quality_flags if ri.dominant_quality_flags else (ri.quality_summary.get("dominant_quality_flags", []) if ri.quality_summary else [])
+        if dominant:
+            lines.append(f"- **Dominant quality flags**: {', '.join(dominant)}")
+        else:
+            lines.append("- **Dominant quality flags**: none")
+        blockers = ri.promotion_blockers if hasattr(ri, 'promotion_blockers') and ri.promotion_blockers else []
+        if blockers:
+            lines.append(f"- **Promotion blockers**: {'; '.join(blockers)}")
+        else:
+            lines.append("- **Promotion blockers**: none")
+        gate_reasons = ri.quality_gate_reasons if hasattr(ri, 'quality_gate_reasons') and ri.quality_gate_reasons else []
+        if gate_reasons:
+            lines.append(f"- **Quality gate reasons**: {'; '.join(gate_reasons)}")
+        else:
+            lines.append("- **Quality gate reasons**: none")
+        lines.append("")
+
     lines.append("## Score Explanations")
     lines.append("")
     for ri in package.review_items:

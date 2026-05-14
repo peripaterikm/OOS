@@ -66,7 +66,7 @@ v2.14 is **quality improvement, not feature expansion**. It takes the specific q
 
 ### Scope
 
-- Wire quality flags into scoring and tiering so noise can be rejected.
+- Wire quality flags into Founder Review Package recommendation behavior via quality summary aggregation, promotion blockers, and founder-visible quality context.
 - Fix cluster title generation for consistency and specificity.
 - Tune cluster split/merge to eliminate catch-all clusters.
 - Harden opportunity synthesis to produce candidates from real clusters.
@@ -231,53 +231,52 @@ Implement a deterministic noise classifier that maps quality flags (including `v
 
 ### Intent
 
-Extend the noise classification work (item 1) to full integration with the scoring model and tier system. Quality flags should affect not just a binary noise/clean decision but the full scoring pipeline: component scores, overall score, tier assignment, and cluster eligibility. This ensures that signals with partial quality concerns are down-ranked even if they don't meet the full `confirmed_noise` threshold.
+Integrate quality flags into the Founder Review Package recommendation behavior via quality summary aggregation, promotion blockers, and founder-visible quality context. Quality evidence summary (noise classification from Item 1) feeds into promotion gates: clusters with high noise ratios, severe flags, or only weak evidence are blocked from PROMOTE. This ensures that signals with quality concerns are appropriately flagged for founder review without rewriting the broad scoring model.
 
 ### Allowed Scope
 
-- Modify: [`src/oos/signal_scoring_model_v2.py`](src/oos/signal_scoring_model_v2.py) — per-flag scoring adjustments
-- Modify: [`src/oos/pain_cluster.py`](src/oos/pain_cluster.py) — cluster eligibility gates based on signal quality
-- Modify: tests for scoring and clustering
+- Modify: [`src/oos/noise_classifier.py`](src/oos/noise_classifier.py) — `compute_evidence_quality_summary()` and `compute_quality_gate_reasons()` for cluster-level quality aggregation and gate reasoning
+- Modify: [`src/oos/pilot_founder_review_package.py`](src/oos/pilot_founder_review_package.py) — integrate quality summary and blockers into review item recommendation logic and Markdown rendering
+- Modify: tests for noise classifier and founder review package
 
 ### Non-Goals
 
-- Changing the scoring formula weights (only adding quality flag integration)
-- Adding new scoring dimensions
+- Changing the scoring formula weights
+- Creating signal_scoring_model_v2.py
+- Rewriting PainCluster scoring weights
+- Implementing full cluster eligibility scoring model beyond FRP promotion gates
+- Adding new scoring dimensions or tier system redesign
 - LLM-based scoring
-- Tier system redesign
+- Broad scoring model rewrite
 
 ### Implementation Requirements
 
-1. Map each quality flag to a scoring adjustment:
-   - `low_confidence_extraction` → `specificity` component penalty (0.5x)
-   - `generic_language` → `pain_explicitness` component penalty (0.5x)
-   - `missing_actor` → `icp_match` component penalty (0.5x)
-   - `no_business_cost` → `cost_signal` component penalty (0.0 — zero out)
-   - `vendor_promo` → overall score cap (max 0.4)
-2. Add tier eligibility gates:
-   - `confirmed_noise` signals are excluded from cluster membership
-   - `suspected_noise` signals can join clusters but with reduced weight in cluster scoring
-3. Add `quality_penalty_breakdown` to scoring metadata for traceability.
-4. Update Source Quality Report to reflect per-signal quality flag distribution.
+1. `compute_evidence_quality_summary()` aggregates per-evidence noise classifications into cluster-level quality summary with severity counts.
+2. `compute_quality_gate_reasons()` computes promotion_blockers and quality_gate_reasons from quality summary + traceability/source-scope flags.
+3. `FounderReviewQueueItem` carries quality_summary, promotion_blockers, quality_gate_reasons, evidence_quality_counts, and dominant_quality_flags.
+4. `recommend_decision()` checks promotion_blockers before PROMOTE; blockers route to KILL, NEEDS_MORE_EVIDENCE, or PARK.
+5. Markdown renderer exposes a compact "Quality Gate" block per review item with evidence quality counts, ratios, dominant flags, blockers, and gate reasons.
+6. Alias resolution (`vendor_promo` → `suspected_self_promo`, `missing_actor` → `unclear_actor`) applied in severity bucket counting within quality summary.
 
 ### Tests/Validation Expectations
 
-- Unit tests verify each quality flag produces the correct scoring adjustment
-- Unit tests verify tier gates exclude `confirmed_noise` from clusters
-- Unit tests verify `suspected_noise` signals have reduced cluster weight
-- Scoring metadata includes `quality_penalty_breakdown`
+- Unit tests verify quality summary severity counts resolve aliases
+- Unit tests verify promotion blockers prevent PROMOTE
+- Unit tests verify Markdown includes Quality Gate section per review item
+- Unit tests verify backward-compatible older review items render without crashing
+- JSON roundtrip preserves quality fields
 - At least 20 focused tests
 
 ### Definition of Done
 
-- [x] **2.1** Quality flag → scoring adjustment mapping implemented
-- [x] **2.2** Tier eligibility gates for noise signals implemented
-- [x] **2.3** `quality_penalty_breakdown` in scoring metadata
-- [x] **2.4** Source Quality Report reflects quality flag distribution
-- [x] **2.5** All existing tests pass
-- [x] **2.6** At least 20 focused tests pass
-- [x] **2.7** `.\scripts\dev-git-check.ps1` passes
-- [ ] **2.8** One local commit made with message: `[v2.14] 2 quality flags to scoring tier integration`
+- [x] **2.1** Quality summary aggregation with alias resolution implemented
+- [x] **2.2** Promotion blocker and quality gate reason computation implemented
+- [x] **2.3** Quality fields added to FounderReviewQueueItem and roundtrip
+- [x] **2.4** `recommend_decision()` checks promotion_blockers before PROMOTE
+- [x] **2.5** Markdown Quality Gate block per review item
+- [x] **2.6** All existing tests pass
+- [x] **2.7** At least 20 focused tests pass
+- [x] **2.8** One local commit made with message: `[v2.14] 2 integrate quality flags into scoring tiers`
 
 **Item 2 complete; item 3 is next.**
 
@@ -793,4 +792,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 1 complete; item 2 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 2 complete; item 3 is next. No source expansion. No runtime artifacts committed.*

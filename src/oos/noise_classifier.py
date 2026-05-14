@@ -320,8 +320,9 @@ def compute_evidence_quality_summary(
     Returns a dict with:
         accepted_evidence_count, weak_evidence_count, noise_evidence_count,
         total_evidence_count, accepted_ratio, weak_ratio, noise_ratio,
-        quality_flag_counts, severe_noise_flag_count, medium_risk_flag_count,
-        positive_pain_flag_count, dominant_quality_flags.
+        quality_flag_counts (original flag names preserved), severe_noise_flag_count,
+        medium_risk_flag_count (alias-resolved), positive_pain_flag_count,
+        dominant_quality_flags.
     """
     if not evidence_items:
         return {
@@ -359,13 +360,18 @@ def compute_evidence_quality_summary(
         flags = list(ev.get("quality_flags", []) or [])
         for flag_raw in flags:
             flag = _normalize_flag(flag_raw)
+            # Preserve original flag names in quality_flag_counts
             flag_counts[flag] = flag_counts.get(flag, 0) + 1
 
-            if flag in SEVERE_NOISE_FLAGS:
+            # Resolve alias for severity bucket assignment.
+            # vendor_promo -> suspected_self_promo (medium)
+            # missing_actor -> unclear_actor (medium)
+            resolved = _FLAG_ALIASES.get(flag, flag)
+            if resolved in SEVERE_NOISE_FLAGS:
                 severe_flag_total += 1
-            elif flag in MEDIUM_NOISE_FLAGS:
+            elif resolved in MEDIUM_NOISE_FLAGS:
                 medium_flag_total += 1
-            elif flag in POSITIVE_PAIN_FLAGS:
+            elif resolved in POSITIVE_PAIN_FLAGS:
                 positive_flag_total += 1
 
     total = accepted_count + weak_count + noise_count
