@@ -7,8 +7,18 @@ signals to one of three outcomes: accepted, weak, noise.
 
 This module is the implementation of v2.14 item 1 — Noise Classification Hardening.
 It ensures that evidence with clear noise/risk flags is not reported as clean accepted.
+
+Classification rules (priority order):
+1. Severe/fatal flags → noise (overrides everything)
+2. low_text_context + no clear pain → noise
+3. low_text_context + clear pain → weak (never accepted)
+4. suspected_self_promo / vendor_promo + product_launch + no clear pain → noise
+5. generic_language + unclear_actor / missing_actor + no clear pain → noise
+6. Medium-risk flags → weak (stale_issue + strong pain → accepted exception)
+7. No negative flags → accepted
 """
 
+import re
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -18,6 +28,15 @@ from typing import Any
 ACCEPTED = "accepted"
 WEAK = "weak"
 NOISE = "noise"
+
+# ---------------------------------------------------------------------------
+# Flag alias mapping
+# ---------------------------------------------------------------------------
+
+_FLAG_ALIASES: dict[str, str] = {
+    "vendor_promo": "suspected_self_promo",
+    "missing_actor": "unclear_actor",
+}
 
 # ---------------------------------------------------------------------------
 # Flag severity groups
@@ -42,6 +61,8 @@ MEDIUM_NOISE_FLAGS: frozenset[str] = frozenset({
     "suspected_self_promo",
     "launch_hype",
     "low_confidence_source",
+    "low_confidence_extraction",
+    "generic_language",
     "stale_issue",
     "duplicate_or_invalid",
     "wontfix_or_not_planned",
@@ -68,14 +89,12 @@ POSITIVE_PAIN_FLAGS: frozenset[str] = frozenset({
 # Pain marker terms for detecting clear/strong pain in text
 # ---------------------------------------------------------------------------
 
-_PAIN_MARKER_TERMS: tuple[str, ...] = (
+# Single-word markers: must match word boundaries only (regex \\b).
+# "bug" must NOT match inside "debugging".
+_SINGLE_WORD_PAIN_MARKERS: tuple[str, ...] = (
     "problem",
     "pain",
     "struggle",
-    "hard to",
-    "can't",
-    "cannot",
-    "doesn't work",
     "broken",
     "frustrating",
     "frustrated",
@@ -109,14 +128,26 @@ _PAIN_MARKER_TERMS: tuple[str, ...] = (
     "missing",
     "lacks",
     "need",
-    "would like",
     "wish",
     "please",
     "help",
+)
+
+# Phrase markers: matched as substrings in normalized text.
+# These are specific enough that accidental substring matches are unlikely.
+_PHRASE_PAIN_MARKERS: tuple[str, ...] = (
+    "hard to",
+    "can't",
+    "cannot",
+    "doesn't work",
+    "would like",
     "how do i",
     "anyone else",
     "does anyone",
 )
+
+# Combined set of all pain marker terms for _has_strong_pain count.
+_ALL_PAIN_MARKER_TERMS: tuple[str, ...] = _SINGLE_WORD_PAIN_MARKERS + _PHRASE_PAIN_MARKERS
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -146,18 +177,28 @@ def classify_noise(
     2. **low_text_context + no clear pain** → ``"noise"``.
        Evidence with too little text and no pain markers is noise.
 
-    3. **suspected_self_promo + product_launch + no clear pain** → ``"noise"``.
-       Self-promotional launch announcements without pain evidence.
+    3. **low_text_context + clear pain** → ``"weak"``.
+       Low-text evidence with pain is suspicious but not clean. Never accepted.
 
-    4. **Medium-risk flags** → ``"weak"`` (needs human review).
-       Includes: requires_manual_review, suspected_self_promo (with pain),
-       launch_hype, low_confidence_source, stale_issue, duplicate_or_invalid,
-       wontfix_or_not_planned, wishlist_without_pain, one_off_bug, unclear_actor,
-       unclear_workflow, unclear_buyer, no_business_cost.
+    4. **suspected_self_promo / vendor_promo + product_launch + no clear pain** → ``"noise"``.
+       Self-promotional launch announcements without pain evidence.
+       (vendor_promo is an alias for suspected_self_promo.)
+
+    5. **generic_language + unclear_actor/missing_actor + no clear pain** → ``"noise"``.
+       Vague, actor-less text with no concrete pain.
+       (missing_actor is an alias for unclear_actor.)
+
+    6. **Medium-risk flags** → ``"weak"`` (needs human review).
+       Includes: requires_manual_review, suspected_self_promo, vendor_promo,
+       launch_hype, low_confidence_source, low_confidence_extraction,
+       generic_language, stale_issue, duplicate_or_invalid,
+       wontfix_or_not_planned, wishlist_without_pain, one_off_bug,
+       unclear_actor, missing_actor, unclear_workflow, unclear_buyer,
+       no_business_cost.
 
        Exception: ``stale_issue`` with strong pain evidence stays ``"accepted"``.
 
-    5. **No negative flags, or only positive flags** → ``"accepted"``.
+    7. **No negative flags, or only positive flags** → ``"accepted"``.
 
     Positive pain flags (integration_pain, debugging_pain, reliability_pain,
     workflow_pain, business_cost_signal, workaround_signal) do NOT by themselves
@@ -175,6 +216,7 @@ def classify_noise(
         "accepted", "weak", or "noise".
     """
     flags = [_normalize_flag(f) for f in (quality_flags or [])]
+    flags = _resolve_aliases(flags)
 
     combined_text = f"{title} {body} {excerpt}".strip()
     has_clear_pain = _has_clear_pain(combined_text)
@@ -189,17 +231,28 @@ def classify_noise(
     if "low_text_context" in flags and not has_clear_pain:
         return NOISE
 
+    # Rule 3: low_text_context + clear pain → weak (never accepted by itself)
+    if "low_text_context" in flags and has_clear_pain:
+        return WEAK
+
     # Determine product_launch context
     is_product_launch = (
         evidence_kind.lower() in ("product_launch", "launch_hype")
         or "launch_hype" in flags
     )
 
-    # Rule 3: suspected_self_promo + product_launch + no clear pain → noise
-    if "suspected_self_promo" in flags and is_product_launch and not has_clear_pain:
+    # Rule 4: suspected_self_promo + product_launch + no clear pain → noise
+    has_self_promo = "suspected_self_promo" in flags
+    if has_self_promo and is_product_launch and not has_clear_pain:
         return NOISE
 
-    # Rule 4: Medium-risk flags → weak (with exceptions)
+    # Rule 5: generic_language + unclear_actor + no clear pain → noise
+    has_generic = "generic_language" in flags
+    has_unclear_actor = "unclear_actor" in flags
+    if has_generic and has_unclear_actor and not has_clear_pain:
+        return NOISE
+
+    # Rule 6: Medium-risk flags → weak (with exceptions)
     medium_flags_present = [f for f in flags if f in MEDIUM_NOISE_FLAGS]
     if medium_flags_present:
         # Exception: stale_issue + strong pain → accepted
@@ -207,7 +260,7 @@ def classify_noise(
             return ACCEPTED
         return WEAK
 
-    # Rule 5: No negative flags → accepted
+    # Rule 7: No negative flags → accepted
     # (positive flags like debugging_pain, integration_pain don't cause noise)
     return ACCEPTED
 
@@ -262,21 +315,77 @@ def _normalize_flag(flag: str) -> str:
     return str(flag or "").strip().lower().replace(" ", "_")
 
 
+def _resolve_aliases(flags: list[str]) -> list[str]:
+    """Resolve known flag aliases (e.g., vendor_promo → suspected_self_promo).
+
+    Returns a new list with aliases resolved. Preserves original flags that
+    don't have an alias mapping.
+    """
+    result: list[str] = []
+    seen: set[str] = set()
+    for f in flags:
+        resolved = _FLAG_ALIASES.get(f, f)
+        if resolved not in seen:
+            seen.add(resolved)
+            result.append(resolved)
+    return result
+
+
+# Compiled regex for single-word boundary matching
+_WORD_BOUNDARY_PATTERNS: dict[str, re.Pattern[str]] = {
+    w: re.compile(r"\b" + re.escape(w) + r"\b") for w in _SINGLE_WORD_PAIN_MARKERS
+}
+
+
 def _has_clear_pain(text: str) -> bool:
-    """Return True if the text contains at least 1 pain marker term."""
+    """Return True if the text contains at least 1 pain marker term.
+
+    Single-word markers require word-boundary match (\\\\b). This prevents
+    \"bug\" from matching inside \"debugging\", \"debug\", \"debugger\", etc.
+
+    Phrase markers are matched as substrings in normalized text.
+    Requires minimum 50 characters of text.
+    """
     if not text or len(text.strip()) < 50:
         return False
     lowered = text.lower()
-    return any(term in lowered for term in _PAIN_MARKER_TERMS)
+
+    # Check single-word markers with word boundaries
+    for word, pattern in _WORD_BOUNDARY_PATTERNS.items():
+        if pattern.search(lowered):
+            return True
+
+    # Check phrase markers as substrings
+    for phrase in _PHRASE_PAIN_MARKERS:
+        if phrase in lowered:
+            return True
+
+    return False
 
 
 def _has_strong_pain(text: str) -> bool:
     """Return True if the text contains strong pain evidence.
 
-    Requires: >= 150 characters AND at least 2 distinct pain marker terms.
+    Requires: >= 150 characters AND at least 2 distinct pain marker terms
+    (single-word markers found with word boundaries, phrase markers as substrings).
     """
     if not text or len(text.strip()) < 150:
         return False
     lowered = text.lower()
-    matches = sum(1 for term in _PAIN_MARKER_TERMS if term in lowered)
+    matches = 0
+    seen: set[str] = set()
+
+    # Count single-word matches with word boundaries
+    for word, pattern in _WORD_BOUNDARY_PATTERNS.items():
+        if pattern.search(lowered):
+            seen.add(word)
+            matches += 1
+
+    # Count phrase matches
+    for phrase in _PHRASE_PAIN_MARKERS:
+        if phrase in lowered:
+            if phrase not in seen:
+                seen.add(phrase)
+                matches += 1
+
     return matches >= 2

@@ -202,14 +202,47 @@ class TestLowTextContextNoise(unittest.TestCase):
         )
         self.assertEqual(result, NOISE)
 
-    def test_low_text_context_with_clear_pain_stays_accepted_if_overridden(self):
+    def test_low_text_context_with_clear_pain_weak_not_accepted(self):
+        # v2.14 Fix 2: low_text_context + clear pain → weak, never accepted by itself
         result = classify_noise(
             quality_flags=["low_text_context"],
             evidence_kind="bug_report",
             title="Agent debugging broken - costs hours",
             body="The LLM agent debugging is broken. We cannot reproduce failures. Workaround is painfully manual. This problem frustrates our whole team.",
         )
-        self.assertEqual(result, ACCEPTED)
+        self.assertEqual(result, WEAK)
+
+    def test_low_text_context_with_clear_pain_never_accepted(self):
+        # explicit assertion: never accepted-clean
+        result = classify_noise(
+            quality_flags=["low_text_context"],
+            evidence_kind="bug_report",
+            title="Agent debugging broken - costs hours",
+            body="The LLM agent debugging is broken. We cannot reproduce failures. Workaround is painfully manual.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+        self.assertEqual(result, WEAK)
+
+    def test_low_text_context_short_promo_body_noise(self):
+        # short promo text → no clear pain → noise
+        result = classify_noise(
+            quality_flags=["low_text_context"],
+            evidence_kind="bug_report",
+            title="Check out our new tool",
+            body="We just launched FooDebugger. Try it now for free!",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_low_text_context_positive_pain_flags_still_weak(self):
+        # Even with positive pain flags, low_text_context stays weak, not accepted
+        result = classify_noise(
+            quality_flags=["low_text_context", "debugging_pain"],
+            evidence_kind="bug_report",
+            title="Agent debugging broken - costs hours",
+            body="The LLM agent debugging is broken. We cannot reproduce failures. Workaround is painfully manual. This problem frustrates our whole team.",
+        )
+        self.assertEqual(result, WEAK)
+        self.assertNotEqual(result, ACCEPTED)
 
 
 # =========================================================================
@@ -929,6 +962,237 @@ class TestEdgeCases(unittest.TestCase):
             body="This only happens with a specific locale setting and an old OS.",
         )
         self.assertEqual(result, WEAK)
+
+
+# =========================================================================
+# Fix 1 — Missing flags / alias handling
+# =========================================================================
+
+class TestVendorPromoFlag(unittest.TestCase):
+    """vendor_promo is alias for suspected_self_promo; never accepted-clean."""
+
+    def test_vendor_promo_alone_weak(self):
+        result = classify_noise(
+            quality_flags=["vendor_promo"],
+            evidence_kind="pain_signal_candidate",
+            title="Our new debugging tool",
+            body="We built FooDebugger to help developers trace agent failures. It is available now.",
+        )
+        self.assertEqual(result, WEAK)
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_vendor_promo_product_launch_no_pain_noise(self):
+        result = classify_noise(
+            quality_flags=["vendor_promo"],
+            evidence_kind="product_launch",
+            title="Introducing FooDebugger 2.0",
+            body="Available for download now. Visit our homepage to sign up for early access.",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_vendor_promo_clear_pain_weak(self):
+        result = classify_noise(
+            quality_flags=["vendor_promo"],
+            evidence_kind="pain_signal_candidate",
+            title="Our debugging tool solves real pain",
+            body="We struggled for months debugging multi-step agents. The workaround was manual and broken. Our tool solves this frustrating problem that costs developers hours every week.",
+        )
+        self.assertEqual(result, WEAK)
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_vendor_promo_never_accepted(self):
+        result = classify_noise(
+            quality_flags=["vendor_promo"],
+            evidence_kind="pain_signal_candidate",
+            title="Great debugging tool",
+            body="This is a well-described problem with clear actor, workflow, and object. It affects many users and has clear pain.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+
+
+class TestLowConfidenceExtractionFlag(unittest.TestCase):
+    """low_confidence_extraction is medium-risk -> weak, never accepted."""
+
+    def test_low_confidence_extraction_weak(self):
+        result = classify_noise(
+            quality_flags=["low_confidence_extraction"],
+            evidence_kind="pain_signal_candidate",
+            title="Something about debugging maybe",
+            body="The text extraction was low confidence. Context might indicate a pain point.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_low_confidence_extraction_never_accepted(self):
+        result = classify_noise(
+            quality_flags=["low_confidence_extraction"],
+            evidence_kind="pain_signal_candidate",
+            title="Well described issue",
+            body="This is a clear problem with specific actor and workflow. Many users are affected.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_low_confidence_extraction_with_pain_still_weak(self):
+        result = classify_noise(
+            quality_flags=["low_confidence_extraction"],
+            evidence_kind="pain_signal_candidate",
+            title="Agent debugging is broken",
+            body="We cannot debug agent traces. Hours wasted every week. Manual workaround is painful and broken.",
+        )
+        self.assertEqual(result, WEAK)
+        self.assertNotEqual(result, ACCEPTED)
+
+
+class TestGenericLanguageFlag(unittest.TestCase):
+    """generic_language is medium-risk -> weak; combined with unclear_actor + no pain -> noise."""
+
+    def test_generic_language_weak(self):
+        result = classify_noise(
+            quality_flags=["generic_language"],
+            evidence_kind="pain_signal_candidate",
+            title="Development needs improvement",
+            body="Software development has many challenges that teams face daily.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_generic_language_never_accepted(self):
+        result = classify_noise(
+            quality_flags=["generic_language"],
+            evidence_kind="pain_signal_candidate",
+            title="Well described issue",
+            body="This is a clear problem with specific actor and workflow. Many users are affected.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_generic_language_unclear_actor_no_pain_noise(self):
+        # Text must NOT contain any pain markers (no "need", "problem", "issue", etc.)
+        result = classify_noise(
+            quality_flags=["generic_language", "unclear_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Development ecosystem overview",
+            body="Several categories of software are available for various technology stacks today.",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_generic_language_missing_actor_no_pain_noise(self):
+        # Text must NOT contain any pain markers
+        result = classify_noise(
+            quality_flags=["generic_language", "missing_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Technology landscape summary",
+            body="The current market provides multiple options across different segments and categories.",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_generic_language_unclear_actor_with_pain_weak(self):
+        result = classify_noise(
+            quality_flags=["generic_language", "unclear_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging is frustrating",
+            body="We struggle with debugging agent workflows every day. The manual workaround is broken and costs hours. This is a critical problem for our team.",
+        )
+        self.assertEqual(result, WEAK)
+
+
+class TestMissingActorFlag(unittest.TestCase):
+    """missing_actor is alias for unclear_actor -> weak; never accepted."""
+
+    def test_missing_actor_weak(self):
+        result = classify_noise(
+            quality_flags=["missing_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Something is wrong with the system",
+            body="Users are experiencing problems but we cannot identify who exactly is affected.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_missing_actor_never_accepted(self):
+        result = classify_noise(
+            quality_flags=["missing_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Clear issue description",
+            body="This problem has well-defined symptoms and affects many users in specific ways.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_missing_actor_generic_language_no_pain_noise(self):
+        result = classify_noise(
+            quality_flags=["missing_actor", "generic_language"],
+            evidence_kind="pain_signal_candidate",
+            title="Tooling ecosystem gaps",
+            body="There are various gaps in the current development ecosystem.",
+        )
+        self.assertEqual(result, NOISE)
+
+
+# =========================================================================
+# Fix 3 - Token/phrase-aware pain matching
+# =========================================================================
+
+class TestPainMatchingWordBoundary(unittest.TestCase):
+    """Single-word pain markers require word boundaries; bug must not match debugging."""
+
+    def test_debugging_tool_launch_no_pain(self):
+        result = classify_noise(
+            quality_flags=["suspected_self_promo"],
+            evidence_kind="product_launch",
+            title="Debugging tool launch",
+            body="We just launched FooDebugger. Try it now for free!",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_bug_not_match_inside_debugging(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging is fun",
+            body="Debugging multi-step agent workflows is an interesting challenge that we enjoy solving with our new platform.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_hard_to_debug_counts_as_pain(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="pain_signal_candidate",
+            title="Agent trace debugging",
+            body="It is hard to debug multi-step agent traces. We spend hours trying to reproduce failures and the manual workaround is broken.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_debugging_is_painful_counts_as_pain(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging agents",
+            body="Debugging multi-step agent workflows is painful. We cannot reproduce failures and waste hours every week on manual workarounds.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_cannot_reproduce_counts_as_pain(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="pain_signal_candidate",
+            title="Agent state reproducibility",
+            body="We cannot reproduce agent state after failures. This makes debugging nearly impossible and wastes hours of developer time.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_clean_explicit_bug_report_accepted(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="bug_report",
+            title="Critical bug in agent trace rendering",
+            body="There is a critical bug in the trace rendering pipeline. This bug causes crashes when viewing multi-step agent execution traces. It frustrates our whole team.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_explicit_pain_terms_work_word_boundary(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="bug_report",
+            title="System errors causing crashes",
+            body="Our monitoring system has errors and crash problems. The pipeline is broken, slow, and fails frequently. This is frustrating and costs us hours every week.",
+        )
+        self.assertEqual(result, ACCEPTED)
 
 
 if __name__ == "__main__":

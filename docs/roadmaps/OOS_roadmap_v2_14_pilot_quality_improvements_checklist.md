@@ -164,58 +164,66 @@ Create the official Roadmap v2.14 planning checklist. Docs-only. No source code,
 
 ### Intent
 
-Wire existing quality flags on [`CandidateSignal`](src/oos/candidate_signal_extractor.py) into actual noise classification decisions. Currently, quality flags exist (e.g., `low_confidence_extraction`, `generic_language`, `missing_actor`) but are decorative — they do not affect scoring, tiering, or acceptance. The pipeline accepts 100% of candidate signals regardless of flags. This item makes quality flags consequential: signals with sufficient quality problems are classified as noise and tiered accordingly.
+Implement a deterministic noise classifier that maps quality flags (including `vendor_promo`, `low_confidence_extraction`, `generic_language`, `missing_actor`) and content signals to one of three outcomes: `accepted`, `weak`, or `noise`. Wire the classifier into Source Quality Report signal counting (accepted/weak/noise) and ensure candidate signal field propagation from evidence. This item does NOT implement scoring/tier integration (that is Item 2). It does NOT add a `noise_classification` field to CandidateSignal unless already present. It does NOT modify `candidate_signal_extractor.py` or `signal_scoring_model_v2.py` unless those files were actually touched during implementation.
 
 ### Allowed Scope
 
-- Modify: [`src/oos/candidate_signal_extractor.py`](src/oos/candidate_signal_extractor.py) — add noise classification logic
-- Modify: [`src/oos/signal_scoring_model_v2.py`](src/oos/signal_scoring_model_v2.py) — integrate quality flags into scoring penalties
-- Modify: tests for candidate signal extraction and scoring
-- Create: deterministic noise classification function with clear thresholds
+- Create/Modify: [`src/oos/noise_classifier.py`](src/oos/noise_classifier.py) — deterministic noise classification function with severity groups, alias resolution, pain marker detection, and rule-ordered classification
+- Modify: [`src/oos/source_quality_report.py`](src/oos/source_quality_report.py) — integrate noise classifier into accepted/weak/noise signal counting
+- Modify: [`src/oos/operational_discovery_pilot.py`](src/oos/operational_discovery_pilot.py) — propagate `quality_flags` and `evidence_kind` from evidence → derived candidate signals
+- Modify: [`tests/test_noise_classifier.py`](tests/test_noise_classifier.py) — focused tests for all classification rules, flag aliases, pain matching, and edge cases
+- May touch: [`tests/test_source_quality_report.py`](tests/test_source_quality_report.py), [`tests/test_operational_discovery_pilot.py`](tests/test_operational_discovery_pilot.py) if existing tests need updating
 
 ### Non-Goals
 
 - Adding new quality flag dimensions (use existing flags only)
 - LLM-based noise classification
-- Source-specific noise classification (that is deferred to source quality report improvements)
+- Source-specific noise classification (deferred to source quality report improvements)
 - Auto-killing signals (classification only; founder retains kill authority)
 - Modifying the evidence cleaner or RawEvidence model
+- Scoring/tier integration (belongs to Item 2)
+- Adding `noise_classification` field to `CandidateSignal` (not required for classification)
+- Modifying `candidate_signal_extractor.py` or `signal_scoring_model_v2.py` (not required for Item 1)
+- Implementing `CandidateSignal.noise_classification` field (not needed; classification is external)
 
 ### Implementation Requirements
 
-1. Define explicit noise classification rules based on existing quality flags:
-   - `low_confidence_extraction = true` → noise candidate (unless founder override exists in preference profile)
-   - `generic_language = true` + `missing_actor = true` → noise candidate
-   - `vendor_promo = true` → noise candidate
-   - `no_business_cost = true` → noise candidate
-2. Add `noise_classification` field to `CandidateSignal`:
-   - Values: `clean`, `suspected_noise`, `confirmed_noise`
-   - `suspected_noise` = flags present but not meeting `confirmed_noise` threshold
-   - `confirmed_noise` = meets explicit noise classification rules
-3. Integrate noise classification into scoring:
-   - `suspected_noise` → score penalty (e.g., 0.7x multiplier)
-   - `confirmed_noise` → score floor (e.g., max 0.3 score) or exclusion from clusters
-4. Update the pilot orchestrator to surface noise counts in run artifacts.
-5. Preserve backward compatibility: existing fixture tests must still pass (fixtures may need quality flag annotation).
+1. Define explicit noise classification rules based on existing quality flags and content signals:
+   - Severe flags (e.g., `bot_generated`, `maintainer_housekeeping`, `flamewar_or_meta_discussion`) → `noise`
+   - `low_text_context` + no clear pain → `noise`; `low_text_context` + clear pain → `weak` (never `accepted`)
+   - `suspected_self_promo` / `vendor_promo` + `product_launch` + no clear pain → `noise`
+   - `generic_language` + `unclear_actor` / `missing_actor` + no clear pain → `noise`
+   - Medium-risk flags (`low_confidence_extraction`, `generic_language`, `stale_issue`, etc.) → `weak`
+   - No negative flags → `accepted`
+2. Resolve known flag aliases: `vendor_promo` → `suspected_self_promo`, `missing_actor` → `unclear_actor`
+3. Use token/phrase-aware pain matching: single-word pain markers require word boundaries (`\b`); phrase markers match as substrings
+4. Integrate noise classifier into Source Quality Report signal counting (accepted/weak/noise)
+5. Propagate `quality_flags` and `evidence_kind` from evidence items into derived candidate signals in the pilot orchestrator
 
 ### Tests/Validation Expectations
 
-- Unit tests verify noise classification rules produce expected outputs for known clean, suspected, and confirmed noise inputs
-- Unit tests verify scoring penalties are applied correctly
-- Existing signal extraction tests still pass (with fixture updates if needed)
-- Controlled smoke test verifies noise counts appear in pilot run artifacts
-- At least 15 focused tests
+- Unit tests verify noise classification rules produce expected outputs for all flag combinations
+- Unit tests verify flag aliases (`vendor_promo`, `missing_actor`) resolve correctly
+- Unit tests verify `low_text_context` behavior: no-pain → noise, with-pain → weak, never accepted
+- Unit tests verify pain matching: word boundaries for single words, substring for phrases
+- Unit tests verify none of the previously-missing flags classify as `accepted`-clean
+- Existing tests continue to pass
+- At least 50 focused tests
 
 ### Definition of Done
 
-- [x] **1.1** Deterministic `classify_noise()` function in [`src/oos/noise_classifier.py`](src/oos/noise_classifier.py) with severity mapping, pain marker detection, and rule-ordered classification
+- [x] **1.1** Deterministic `classify_noise()` function in [`src/oos/noise_classifier.py`](src/oos/noise_classifier.py) with severity mapping, flag aliases, token/phrase-aware pain marker detection, and rule-ordered classification
 - [x] **1.2** Noise classification rules function exists and is deterministic
 - [x] **1.3** Quality flags integrated into Source Quality Report signal counting (accepted/weak/noise) in [`src/oos/source_quality_report.py`](src/oos/source_quality_report.py)
 - [x] **1.4** Pilot orchestrator propagates `quality_flags` from evidence → derived candidate signals in [`src/oos/operational_discovery_pilot.py`](src/oos/operational_discovery_pilot.py)
-- [x] **1.5** All existing tests pass (2424 tests, 0 failures)
-- [x] **1.6** 49 focused tests pass in [`tests/test_noise_classifier.py`](tests/test_noise_classifier.py)
-- [x] **1.7** `.\scripts\dev-git-check.ps1` passes (5/6, dirty tree expected pre-commit)
-- [x] **1.8** One local commit made with message: `[v2.14] 1 harden noise classification`
+- [x] **1.5** Previously-missing flags (`vendor_promo`, `low_confidence_extraction`, `generic_language`, `missing_actor`) are handled; none classify as `accepted`-clean
+- [x] **1.6** Token/phrase-aware pain matching: `bug` does not match inside `debugging`
+- [x] **1.7** `low_text_context` + clear pain → `weak` (never `accepted`)
+- [x] **1.8** All existing and new tests pass
+- [x] **1.9** `.\scripts\dev-git-check.ps1` passes
+- [x] **1.10** One local commit made with message: `[v2.14] 1 harden noise classification`
+
+**Item 1 complete; item 2 is next.**
 
 ---
 
@@ -783,4 +791,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 0 planning checkpoint complete; item 1 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 1 complete; item 2 is next. No source expansion. No runtime artifacts committed.*
