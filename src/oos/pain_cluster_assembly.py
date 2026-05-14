@@ -813,7 +813,9 @@ _PATTERN_TITLE_MAP: list[tuple[tuple[str, ...], str]] = [
     # Tool calls / spans / callbacks
     (("tool call", "tool calls", "span", "spans", "callback", "callbacks"), "Agent tool-call traces are hard to inspect"),
     # Provenance / source attribution
-    (("provenance", "source attribution", "output provenance", "which agent"), "Multi-agent outputs lose provenance"),
+    (("provenance", "source attribution", "output provenance", "which agent",
+      "source tracking", "claim provenance", "trust and sources", "agent output metadata",
+      "contributed which part"), "Multi-agent outputs lose provenance"),
     # Prompt variables / playground / production trace
     (("prompt variable", "production trace", "prompt playground", "replay"), "Prompt workflows cannot replay production trace inputs"),
     # Stack trace / exception / error context

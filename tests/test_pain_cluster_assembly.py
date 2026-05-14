@@ -1035,11 +1035,16 @@ class TestClusterReviewTitle(unittest.TestCase):
         )
 
     def test_which_agent_contributed_which_part_becomes_provenance_title(self) -> None:
-        """"which agent contributed which part" evidence DOES become provenance title."""
+        """"which agent contributed which part" evidence DOES become provenance title.
+
+        The workflow/object/pain_pattern must NOT contain "provenance".
+        Only the evidence excerpt/body/title itself carries the signal.
+        """
         c = self._cluster(
             actor="developer",
             object="multi-agent outputs",
-            workflow="provenance tracking",
+            workflow="agent output review",
+            pain_pattern="developers struggle with multi-agent outputs",
             source_evidence_list=[
                 {
                     "evidence_id": "ev_001",
@@ -1055,9 +1060,9 @@ class TestClusterReviewTitle(unittest.TestCase):
             ]
         )
         title = generate_cluster_review_title(c)
-        self.assertTrue(
-            any(t in title.lower() for t in ("provenance", "which agent")),
-            f"'which agent' evidence must produce provenance title: {title}"
+        self.assertIn(
+            "provenance", title.lower(),
+            f"'which agent contributed which part' evidence must produce provenance title, got: {title}"
         )
 
     # --- Component fallback grammar tests (Fix 2) ---
