@@ -343,12 +343,12 @@ Fix inconsistent cluster titles. Pilot Cycle 1 produced clusters with titles ran
 
 ### Intent
 
-Eliminate catch-all clusters by tuning the split/merge logic in cluster assembly. Pilot Cycle 1 produced clusters that grouped signals sharing only superficial keywords (e.g., "AI", "LLM", "developer") rather than a coherent pain pattern. This item tightens the similarity threshold for cluster membership and adds over-merge detection.
+Eliminate catch-all clusters by tuning the split/merge logic in cluster assembly. Pilot Cycle 1 produced clusters that grouped signals sharing only superficial keywords (e.g., "AI", "LLM", "developer") rather than a coherent pain pattern. This item implements canonical pain anchors plus `_should_merge()` compatibility checks to govern cluster membership, replaces simple anchor|actor pre-grouping with union-find clustering, handles actor over-splitting, and adds over-merge detection.
 
 ### Allowed Scope
 
-- Modify: [`src/oos/pain_cluster_assembly.py`](src/oos/pain_cluster_assembly.py) — split/merge logic
-- Modify: [`src/oos/pain_cluster.py`](src/oos/pain_cluster.py) — cluster cohesion metrics
+- Modify: [`src/oos/pain_cluster_assembly.py`](src/oos/pain_cluster_assembly.py) — split/merge logic, `_should_merge()` active clustering via union-find
+- Modify: [`src/oos/pain_cluster.py`](src/oos/pain_cluster.py) — cluster cohesion metrics (only if required)
 - Modify: tests for cluster assembly
 
 ### Non-Goals
@@ -366,9 +366,14 @@ Eliminate catch-all clusters by tuning the split/merge logic in cluster assembly
    - If a cluster has >8 member signals, check cohesion
    - If cohesion < 0.4 with >8 members, flag as `catch_all_risk = true`
    - Attempt auto-split: identify sub-groups within the cluster with higher internal cohesion
-3. Tighten merge threshold:
-   - Increase required overlap from current threshold (audit current value first)
-   - Require at least 2 of {actor, workflow, object} to match for merge, not just 1
+3. Active merge/split logic via `_should_merge()` and union-find clustering:
+   - Same strong specific canonical anchor may merge even if actor differs unknown/generic.
+   - Generic anchor requires ≥2 of {actor, workflow_family, object} to match.
+   - Specific↔generic anchor crossing requires all 3 dimensions to match.
+   - Incompatible anchors (block-pairs) never merge.
+   - Product launch / self-promo and low-context evidence cannot dominate concrete bug clusters.
+   - Noise evidence does not merge with accepted evidence.
+   - Deterministic ordering (stable sort by evidence_id) ensures reproducible clusters.
 4. Add `split_suggestion` to cluster metadata when auto-split identifies viable sub-groups.
 5. Update Source Quality Report with catch-all cluster count.
 
@@ -378,22 +383,30 @@ Eliminate catch-all clusters by tuning the split/merge logic in cluster assembly
 - Unit tests verify over-merge detection triggers at correct thresholds
 - Unit tests verify auto-split produces higher-cohesion sub-groups
 - Unit tests verify merge threshold prevents superficial-keyword-only merges
+- Unit tests verify actor-mismatch merge for same strong anchor
+- Unit tests verify provenance↔generic LLM debugging not merged
+- Unit tests verify prompt_trace_replay↔stack_trace_context not merged
+- Unit tests verify checkpoint/state↔eval/testing not merged
+- Unit tests verify product_launch↔bug_report not merged without specific anchor
 - Catch-all clusters flagged in Source Quality Report
-- At least 20 focused tests
+- At least 39 focused tests
 
 ### Definition of Done
 
 - [x] **4.1** `cohesion_score` field and computation implemented
 - [x] **4.2** Over-merge detection with `catch_all_risk` flag implemented
 - [x] **4.3** Auto-split suggestion for low-cohesion large clusters implemented
-- [x] **4.4** Merge threshold tightened (at least 2 of {actor, workflow, object} match)
-- [x] **4.5** Source Quality Report includes catch-all cluster count
-- [x] **4.6** All existing tests pass (2558 tests OK)
-- [x] **4.7** At least 20 focused tests pass (27 focused tests OK)
-- [x] **4.8** `.\scripts\dev-git-check.ps1` passes
-- [x] **4.9** One local commit made with message: `[v2.14] 4 cluster split merge tuning`
+- [x] **4.4** `_should_merge()` wired into active union-find clustering (Codex fix 1)
+- [x] **4.5** Actor over-splitting fixed: same strong anchor merges despite unknown/generic actor (Codex fix 2)
+- [x] **4.6** No-overmerge tests strengthened with assertion helpers and specific assertions (Codex fix 3)
+- [x] **4.7** Roadmap reflects implemented logic: canonical anchors + `_should_merge()` compatibility checks (Codex fix 4)
+- [x] **4.8** Source Quality Report includes catch-all cluster count
+- [x] **4.9** All existing tests pass (474 focused tests OK)
+- [x] **4.10** At least 39 focused tests pass (39 focused tests OK)
+- [x] **4.11** `.\scripts\dev-git-check.ps1` passes
+- [x] **4.12** One local commit made with message: `[v2.14] Fix cluster split merge review findings`
 
-**Item 4 complete; item 5 is next.**
+**Item 4 complete (Codex review fixes applied); item 5 is next.**
 
 ---
 

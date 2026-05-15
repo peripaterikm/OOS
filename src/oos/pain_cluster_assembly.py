@@ -389,15 +389,16 @@ def _should_merge(
     - Noise evidence does NOT merge with accepted evidence unless they
       share a specific anchor.
     """
-    # Quality-based filtering
+    # Quality-based filtering.
+    # Pre-computed _contribution and _noise_classification are set in step 3.
     flags_a = set(ev_a.get("quality_flags", []) or [])
     flags_b = set(ev_b.get("quality_flags", []) or [])
     kind_a = str(ev_a.get("evidence_kind", "")).lower()
     kind_b = str(ev_b.get("evidence_kind", "")).lower()
     contrib_a = str(ev_a.get("contribution_to_cluster",
-                             ev_a.get("_contribution", "context_only"))).lower()
+                             ev_a.get("_contribution", "primary_pain"))).lower()
     contrib_b = str(ev_b.get("contribution_to_cluster",
-                             ev_b.get("_contribution", "context_only"))).lower()
+                             ev_b.get("_contribution", "primary_pain"))).lower()
 
     # Product launch + bug report -> no merge without specific anchor overlap
     is_launch_a = ("product_launch" in kind_a or "launch_hype" in flags_a
@@ -429,16 +430,18 @@ def _should_merge(
         anchor_b = _primary_canonical_anchor(ev_b)
         return anchor_a == anchor_b and anchor_a != _FALLBACK_ANCHOR
 
-    # Noise classification check: noise does NOT merge with accepted
-    from .noise_classifier import classify_noise_for_evidence
-    noise_a = classify_noise_for_evidence(ev_a)
-    noise_b = classify_noise_for_evidence(ev_b)
+    # Noise classification check: noise does NOT merge with accepted.
+    # Uses pre-computed _noise_classification set during assembly step 3.
+    noise_a = str(ev_a.get("_noise_classification", "accepted"))
+    noise_b = str(ev_b.get("_noise_classification", "accepted"))
     if noise_a == "noise" and noise_b != "noise":
         return False
     if noise_b == "noise" and noise_a != "noise":
         return False
 
-    # Canonical anchor check: shared specific anchor -> merge
+    # Canonical anchor check: shared specific anchor -> merge.
+    # v2.14: same strong specific anchor can override actor mismatch
+    # when one actor is unknown or generic.
     anchor_a = _primary_canonical_anchor(ev_a)
     anchor_b = _primary_canonical_anchor(ev_b)
     if anchor_a == anchor_b and anchor_a != _FALLBACK_ANCHOR:
@@ -451,7 +454,37 @@ def _should_merge(
     if not _anchors_allow_merge(anchor_a, anchor_b):
         return False
 
-    # Generic anchor case: need at least 2 of {actor, workflow_family, object} to match
+    # When one anchor is specific (non-generic) and the other is the
+    # generic fallback, require all 3 dimensions to match to prevent
+    # the generic anchor from pulling specific evidence into broad groups.
+    if (anchor_a != _FALLBACK_ANCHOR and anchor_b == _FALLBACK_ANCHOR) or \
+       (anchor_a == _FALLBACK_ANCHOR and anchor_b != _FALLBACK_ANCHOR):
+        actor_a = str(ev_a.get("_pain_actor", ev_a.get("target_user", "unknown"))).lower()
+        actor_b = str(ev_b.get("_pain_actor", ev_b.get("target_user", "unknown"))).lower()
+        match_actor = (actor_a == actor_b and actor_a != "unknown")
+
+        wf_a = str(ev_a.get("_pain_workflow", "unknown")).lower()
+        wf_b = str(ev_b.get("_pain_workflow", "unknown")).lower()
+        _WF_NORMALIZE: dict[str, str] = {
+            "debug": "debugging", "debugging": "debugging",
+            "test": "testing", "testing": "testing",
+            "deploy": "deployment", "deployment": "deployment",
+            "build": "build", "integrate": "integration", "integration": "integration",
+            "monitor": "monitoring", "monitoring": "monitoring",
+        }
+        wf_ca = _WF_NORMALIZE.get(wf_a, wf_a)
+        wf_cb = _WF_NORMALIZE.get(wf_b, wf_b)
+        match_workflow = (wf_ca == wf_cb and wf_a != "unknown")
+
+        obj_a = str(ev_a.get("_pain_object", "unknown")).lower()
+        obj_b = str(ev_b.get("_pain_object", "unknown")).lower()
+        match_object = (obj_a == obj_b and obj_a != "unknown")
+
+        # Need all 3 when crossing generic/specific boundary
+        return match_actor and match_workflow and match_object
+
+    # Generic anchor case: need at least 2 of {actor, workflow_family, object}
+    # to match.  unknown actor does NOT block merge if workflow+object match.
     actor_a = str(ev_a.get("_pain_actor", ev_a.get("target_user", "unknown"))).lower()
     actor_b = str(ev_b.get("_pain_actor", ev_b.get("target_user", "unknown"))).lower()
     match_actor = (actor_a == actor_b and actor_a != "unknown")
@@ -947,11 +980,20 @@ def assemble_pain_clusters(
     Steps:
     1. Normalize source_id/source_type on all inputs.
     2. Optionally deduplicate by evidence_id, canonical_url, source_url.
-    3. Extract pain patterns (actor, workflow, object, pain_verb).
-    4. Group by canonical_anchor|actor key (v2.14).
-    5. Build PainCluster for each group with scoring and cohesion.
+    3. Extract pain patterns, canonical anchors, and noise classification.
+    4. Union-find clustering: merge evidence when _should_merge() returns true.
+       Initial candidate groups are seeded by canonical anchor; then each
+       evidence pair is tested via _should_merge() and merged incrementally.
+    5. Build PainCluster for each union-find group with scoring and cohesion.
     6. Auto-split catch-all clusters.
     7. Return clusters, unassigned evidence, and assembly summary.
+
+    v2.14 Item 4 (active): _should_merge() governs cluster membership using
+    same-anchor merge (with actor-override for unknown/generic), anchor
+    blocking pairs, quality/noise filtering, product-launch isolation,
+    and at-least-2-of-{actor,workflow,object} compatibility for generic
+    anchors.  Deterministic ordering: stable sort by evidence_id ensures
+    reproducible clusters.
 
     Args:
         evidence_items: List of dicts with fields like evidence_id, source_id,
@@ -982,7 +1024,11 @@ def assemble_pain_clusters(
     if dedupe:
         normalized, duplicates = dedupe_full(normalized)
 
-    # Step 3: Extract pain patterns and detect canonical anchors
+    # Step 3: Extract pain patterns, detect canonical anchors,
+    # pre-compute noise classification, and determine contribution
+    # (all used later by _should_merge and _build_single_cluster).
+    from .noise_classifier import classify_noise_for_evidence
+
     for ev in normalized:
         pattern = extract_pain_pattern(ev)
         ev["_pain_actor"] = pattern["actor"]
@@ -992,22 +1038,77 @@ def assemble_pain_clusters(
         ev["_pain_pattern"] = pattern["pain_pattern"]
         ev["_canonical_anchor"] = _primary_canonical_anchor(ev)
         ev["_canonical_anchors"] = _detect_canonical_anchors(ev)
+        ev["_noise_classification"] = classify_noise_for_evidence(ev)
+        ev["_contribution"] = _determine_contribution(ev)
 
-    # Step 4: Group by anchor|actor key (v2.14: tighter than actor|object)
-    pattern_groups: dict[str, list[dict[str, Any]]] = {}
-    for ev in normalized:
+    # Step 4: v2.14 active union-find clustering via _should_merge().
+    # Phase 4a: Pre-group by canonical anchor as seed candidates.
+    # Evidence with the same non-generic anchor always starts together.
+    anchor_groups: dict[str, list[int]] = {}
+    for idx, ev in enumerate(normalized):
         anchor = str(ev.get("_canonical_anchor", _FALLBACK_ANCHOR))
-        actor = str(ev.get("_pain_actor", "unknown"))
-        group_key = f"{anchor}|{actor}"
-        if group_key not in pattern_groups:
-            pattern_groups[group_key] = []
-        pattern_groups[group_key].append(ev)
+        anchor_groups.setdefault(anchor, []).append(idx)
+
+    # Union-find helpers
+    n = len(normalized)
+    parent = list(range(n))
+
+    def _find(x: int) -> int:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def _union(a: int, b: int) -> None:
+        ra, rb = _find(a), _find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    # Phase 4b: Merge evidence pairs within each anchor seed group.
+    # Stable order: indices within each group are processed deterministically.
+    for anchor, indices in anchor_groups.items():
+        m = len(indices)
+        for i in range(m):
+            for j in range(i + 1, m):
+                idx_a, idx_b = indices[i], indices[j]
+                if _find(idx_a) == _find(idx_b):
+                    continue
+                if _should_merge(normalized[idx_a], normalized[idx_b]):
+                    _union(idx_a, idx_b)
+
+    # Phase 4c: Cross-anchor merging for anchors that _should_merge() allows.
+    # Sort anchor names for determinism.
+    sorted_anchors = sorted(anchor_groups.keys())
+    for ai in range(len(sorted_anchors)):
+        anchor_a = sorted_anchors[ai]
+        for aj in range(ai + 1, len(sorted_anchors)):
+            anchor_b = sorted_anchors[aj]
+            # Only consider cross-anchor merge if anchors allow it
+            if not _anchors_allow_merge(anchor_a, anchor_b):
+                continue
+            # Try merging first index from each group as representative
+            indices_a = anchor_groups[anchor_a]
+            indices_b = anchor_groups[anchor_b]
+            if not indices_a or not indices_b:
+                continue
+            rep_a = indices_a[0]
+            rep_b = indices_b[0]
+            if _find(rep_a) == _find(rep_b):
+                continue
+            if _should_merge(normalized[rep_a], normalized[rep_b]):
+                _union(rep_a, rep_b)
+
+    # Phase 4d: Collect groups by union-find root.
+    pattern_groups: dict[int, list[dict[str, Any]]] = {}
+    for idx in range(n):
+        root = _find(idx)
+        pattern_groups.setdefault(root, []).append(normalized[idx])
 
     # Step 5: Build initial clusters
     clusters: list[PainCluster] = []
     now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-    for group_key, ev_group in pattern_groups.items():
+    for _root, ev_group in pattern_groups.items():
         cluster = _build_single_cluster(ev_group, now_iso)
         clusters.append(cluster)
 

@@ -3,17 +3,81 @@ from __future__ import annotations
 """v2.14 Item 4: Cluster Split/Merge Tuning — focused tests.
 
 Tests canonical pain anchor detection, over-merge prevention, correct merge
-behavior, catch-all splitting, cohesion scoring, and quality-aware clustering.
+behavior, catch-all splitting, cohesion scoring, quality-aware clustering,
+and Codex review fixes: _should_merge() active, actor mismatch merge,
+specific assertion helpers.
 """
 
 import unittest
 
+from oos.pain_cluster import PainCluster
 from oos.pain_cluster_assembly import (
     _primary_canonical_anchor,
     _detect_canonical_anchors,
     _compute_cohesion_score,
+    _should_merge,
     assemble_pain_clusters,
 )
+
+
+# ---------------------------------------------------------------------------
+# v2.14 Item 4 Codex fix: assertion helpers for cluster membership testing
+# ---------------------------------------------------------------------------
+
+
+def cluster_ids_by_evidence_id(clusters: list[PainCluster]) -> dict[str, str]:
+    """Return {evidence_id: cluster_id} mapping."""
+    result: dict[str, str] = {}
+    for c in clusters:
+        for entry in c.source_evidence_list:
+            result[entry.evidence_id] = c.cluster_id
+    return result
+
+
+def evidence_ids_per_cluster(clusters: list[PainCluster]) -> dict[str, set[str]]:
+    """Return {cluster_id: set(evidence_id)} mapping."""
+    result: dict[str, set[str]] = {}
+    for c in clusters:
+        result[c.cluster_id] = {e.evidence_id for e in c.source_evidence_list}
+    return result
+
+
+def assert_not_same_cluster(
+    test: unittest.TestCase,
+    clusters: list[PainCluster],
+    evidence_id_a: str,
+    evidence_id_b: str,
+) -> None:
+    """Assert two evidence IDs are NOT in the same cluster."""
+    cid_map = cluster_ids_by_evidence_id(clusters)
+    cid_a = cid_map.get(evidence_id_a)
+    cid_b = cid_map.get(evidence_id_b)
+    test.assertIsNotNone(cid_a, f"{evidence_id_a} not found in any cluster")
+    test.assertIsNotNone(cid_b, f"{evidence_id_b} not found in any cluster")
+    test.assertNotEqual(
+        cid_a, cid_b,
+        f"{evidence_id_a} and {evidence_id_b} should NOT be in same cluster "
+        f"(both in {cid_a})"
+    )
+
+
+def assert_same_cluster(
+    test: unittest.TestCase,
+    clusters: list[PainCluster],
+    evidence_id_a: str,
+    evidence_id_b: str,
+) -> None:
+    """Assert two evidence IDs ARE in the same cluster."""
+    cid_map = cluster_ids_by_evidence_id(clusters)
+    cid_a = cid_map.get(evidence_id_a)
+    cid_b = cid_map.get(evidence_id_b)
+    test.assertIsNotNone(cid_a, f"{evidence_id_a} not found in any cluster")
+    test.assertIsNotNone(cid_b, f"{evidence_id_b} not found in any cluster")
+    test.assertEqual(
+        cid_a, cid_b,
+        f"{evidence_id_a} (in {cid_a}) and {evidence_id_b} (in {cid_b}) "
+        f"should be in the SAME cluster"
+    )
 
 
 # Reuse fixture helpers from test_pain_cluster_assembly
@@ -58,6 +122,49 @@ def _gh_ev(evidence_id, title="Agent execution traces not reproducible",
 
 
 # ---------------------------------------------------------------------------
+# _should_merge() active logic tests (Codex fix 1)
+# ---------------------------------------------------------------------------
+
+
+class TestShouldMergeActive(unittest.TestCase):
+    """Verify _should_merge() is now called during active clustering."""
+
+    def test_should_merge_same_specific_anchor_returns_true(self) -> None:
+        evs = [
+            _gh_ev("ev_001", body="Stack trace lacks error context."),
+            _hn_ev("ev_002", body="Exception traceback missing error context. Stack trace.",
+                   source_url="https://news.ycombinator.com/item?id=2"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        self.assertEqual(len(clusters), 1, "Same stack_trace_context anchor should merge")
+        self.assertEqual(clusters[0].recurrence, 2)
+
+    def test_should_merge_different_blocked_anchors_separate(self) -> None:
+        evs = [
+            _hn_ev("ev_001", body="Cannot replay production trace in prompt playground."),
+            _gh_ev("ev_002", body="Stack trace lacks exception context.",
+                   source_url="https://github.com/test/repo/issues/2"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        cid_map = cluster_ids_by_evidence_id(clusters)
+        self.assertNotEqual(
+            cid_map.get("ev_001"), cid_map.get("ev_002"),
+            "prompt_trace_replay and stack_trace_context must not merge"
+        )
+
+    def test_should_merge_generic_anchor_needs_2of3_compat(self) -> None:
+        # Both generic anchor, same actor+workflow+object -> should merge (3 of 3 match)
+        evs = [
+            _hn_ev("ev_001", body="LLM agent debugging is hard. Cannot debug agents."),
+            _hn_ev("ev_002", body="AI agent debugging problems.",
+                   source_url="https://news.ycombinator.com/item?id=2"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        self.assertEqual(len(clusters), 1, "Same generic anchor + same actor/wf/obj should merge")
+        self.assertEqual(clusters[0].recurrence, 2)
+
+
+# ---------------------------------------------------------------------------
 # Canonical Anchor Detection
 # ---------------------------------------------------------------------------
 
@@ -96,7 +203,7 @@ class TestCanonicalAnchors(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# No Over-Merge Cases
+# No Over-Merge Cases (Codex fix 3: strengthened with assertNotSameCluster)
 # ---------------------------------------------------------------------------
 
 
@@ -109,6 +216,7 @@ class TestNoOverMerge(unittest.TestCase):
                    source_url="https://news.ycombinator.com/item?id=2"),
         ]
         clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_001", "ev_002")
         total = sum(c.recurrence for c in clusters)
         self.assertEqual(total, 2)
 
@@ -119,7 +227,8 @@ class TestNoOverMerge(unittest.TestCase):
                    source_url="https://github.com/test/repo/issues/2"),
         ]
         clusters, _, _ = assemble_pain_clusters(evs)
-        self.assertGreaterEqual(len(clusters), 1)
+        assert_not_same_cluster(self, clusters, "ev_001", "ev_002")
+        self.assertGreaterEqual(len(clusters), 2)
 
     def test_checkpoint_does_not_merge_with_eval_testing(self) -> None:
         evs = [
@@ -128,7 +237,8 @@ class TestNoOverMerge(unittest.TestCase):
                    source_url="https://news.ycombinator.com/item?id=2"),
         ]
         clusters, _, _ = assemble_pain_clusters(evs)
-        self.assertGreaterEqual(len(clusters), 1)
+        assert_not_same_cluster(self, clusters, "ev_001", "ev_002")
+        self.assertGreaterEqual(len(clusters), 2)
 
     def test_product_launch_does_not_merge_with_bug_report(self) -> None:
         evs = [
@@ -138,6 +248,7 @@ class TestNoOverMerge(unittest.TestCase):
                    evidence_kind="bug_report", source_url="https://github.com/test/repo/issues/2"),
         ]
         clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_001", "ev_002")
         total = sum(c.recurrence for c in clusters)
         self.assertEqual(total, 2)
 
@@ -148,12 +259,66 @@ class TestNoOverMerge(unittest.TestCase):
                    quality_flags=["low_text_context"], source_url="https://news.ycombinator.com/item?id=2"),
         ]
         clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_001", "ev_002")
         total = sum(c.recurrence for c in clusters)
         self.assertEqual(total, 2)
 
+    # --- Codex fix 3: Additional strengthened tests ---
+
+    def test_provenance_and_generic_llm_debugging_not_same_cluster(self) -> None:
+        """provenance evidence and generic LLM debugging are not in same cluster."""
+        evs = [
+            _hn_ev("ev_p1", body="Cannot determine output provenance. Which agent contributed what?"),
+            _hn_ev("ev_g1", body="LLM debugging is generally hard. Generic agent pain.",
+                   source_url="https://news.ycombinator.com/item?id=2"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_p1", "ev_g1")
+
+    def test_prompt_trace_replay_and_stack_trace_context_not_same_cluster(self) -> None:
+        """prompt trace replay and stack trace context are not in same cluster."""
+        evs = [
+            _hn_ev("ev_pt1", body="Cannot replay production trace in prompt playground."),
+            _gh_ev("ev_st1", body="Stack trace lacks exception context in traceback.",
+                   source_url="https://github.com/test/repo/issues/2"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_pt1", "ev_st1")
+
+    def test_checkpoint_state_and_eval_testing_not_same_cluster(self) -> None:
+        """checkpoint/state and eval/testing are not in same cluster."""
+        evs = [
+            _gh_ev("ev_cp1", body="Checkpoint state not reproducible across runs."),
+            _hn_ev("ev_ev1", body="LLM eval and regression testing workflow lacks test cases.",
+                   source_url="https://news.ycombinator.com/item?id=2"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_cp1", "ev_ev1")
+
+    def test_product_launch_and_bug_report_not_same_cluster_without_anchor(self) -> None:
+        """Product launch/self-promo and concrete bug report not same cluster."""
+        evs = [
+            _hn_ev("ev_la1", body="Launch HN: Our new AI debugging platform is awesome!",
+                   evidence_kind="product_launch", quality_flags=["launch_hype"]),
+            _gh_ev("ev_bg1", body="Agent traces not reproducible. Bug in trace replay.",
+                   evidence_kind="bug_report", source_url="https://github.com/test/repo/issues/2"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_la1", "ev_bg1")
+
+    def test_low_text_context_does_not_join_primary_pain_cluster(self) -> None:
+        """low_text_context/context_only evidence does not join accepted primary pain cluster."""
+        evs = [
+            _hn_ev("ev_pp1", body="Cannot trace agent execution. Specific pain about observability."),
+            _hn_ev("ev_lt1", body="AI is changing things.",
+                   quality_flags=["low_text_context"], source_url="https://news.ycombinator.com/item?id=2"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_pp1", "ev_lt1")
+
 
 # ---------------------------------------------------------------------------
-# Correct Merge Cases
+# Correct Merge Cases (Codex fix 2: actor mismatch merge)
 # ---------------------------------------------------------------------------
 
 
@@ -199,6 +364,61 @@ class TestCorrectMerge(unittest.TestCase):
         clusters, _, _ = assemble_pain_clusters(evs)
         self.assertEqual(sum(c.recurrence for c in clusters), 2)
         self.assertTrue(any(c.recurrence == 2 for c in clusters))
+
+    # --- Codex fix 2: Actor mismatch same-anchor merge tests ---
+
+    def test_same_anchor_stack_trace_actor_mismatch_merge(self) -> None:
+        """same-anchor cross-source stack-trace evidence with actor mismatch DOES merge."""
+        evs = [
+            _gh_ev("ev_st_gh", body="Stack trace lacks error context. Missing exception in traceback."),
+            # HN evidence that will get actor=unknown because no developer indicators
+            _hn_ev("ev_st_hn", title="Missing error context in stack traces",
+                   body="Stack trace has no state. Error context missing from exceptions.",
+                   source_url="https://news.ycombinator.com/item?id=99"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        # Same stack_trace_context anchor -> should merge via _should_merge()
+        cid_map = cluster_ids_by_evidence_id(clusters)
+        self.assertEqual(
+            cid_map.get("ev_st_gh"), cid_map.get("ev_st_hn"),
+            "Same strong stack_trace_context anchor should merge despite actor mismatch"
+        )
+
+    def test_same_anchor_prompt_replay_actor_mismatch_merge(self) -> None:
+        """same-anchor prompt replay evidence with actor mismatch DOES merge."""
+        evs = [
+            _hn_ev("ev_pr_hn1", body="Cannot replay production trace in prompt playground with generation variables."),
+            # GitHub evidence with same anchor
+            _gh_ev("ev_pr_gh", body="Prompt playground cannot replay production trace. Prompt variables lost.",
+                   source_url="https://github.com/test/repo/issues/88"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        cid_map = cluster_ids_by_evidence_id(clusters)
+        self.assertEqual(
+            cid_map.get("ev_pr_hn1"), cid_map.get("ev_pr_gh"),
+            "Same prompt_trace_replay anchor should merge cross-source"
+        )
+
+    def test_developer_unknown_actor_same_anchor_merge(self) -> None:
+        """developer + unknown actor, both stack_trace_context -> should merge."""
+        evs = [
+            _gh_ev("ev_dev", body="Stack trace lacks error context. Missing exception context."),
+            _hn_ev("ev_unk", title="Stack traces missing error context",
+                   body="Exception traceback has no state. Missing debugging context.",
+                   source_url="https://news.ycombinator.com/item?id=77"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        assert_same_cluster(self, clusters, "ev_dev", "ev_unk")
+
+    def test_hn_gh_cross_source_same_strong_anchor_merge(self) -> None:
+        """HN + GitHub cross-source evidence with same strong canonical anchor merges."""
+        evs = [
+            _hn_ev("ev_hn_cs", body="Stack traces lack actionable error context for debugging."),
+            _gh_ev("ev_gh_cs", body="Exception traceback missing state details. Stack trace context lost.",
+                   source_url="https://github.com/test/repo/issues/55"),
+        ]
+        clusters, _, _ = assemble_pain_clusters(evs)
+        assert_same_cluster(self, clusters, "ev_hn_cs", "ev_gh_cs")
 
 
 # ---------------------------------------------------------------------------
@@ -345,6 +565,7 @@ class TestQualityAwareClustering(unittest.TestCase):
                    source_url="https://news.ycombinator.com/item?id=2"),
         ]
         clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_001", "ev_002")
         total = sum(c.recurrence for c in clusters)
         self.assertEqual(total, 2)
 
@@ -355,6 +576,7 @@ class TestQualityAwareClustering(unittest.TestCase):
                    quality_flags=["low_text_context"], source_url="https://news.ycombinator.com/item?id=2"),
         ]
         clusters, _, _ = assemble_pain_clusters(evs)
+        assert_not_same_cluster(self, clusters, "ev_001", "ev_002")
         total = sum(c.recurrence for c in clusters)
         self.assertEqual(total, 2)
 
