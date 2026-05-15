@@ -792,5 +792,102 @@ class TestCrossAnchorPairScanning(unittest.TestCase):
         self.assertEqual(total, 3)
 
 
+class TestPhase4cFixedPointTermination(unittest.TestCase):
+    """v2.14 Codex fix: Phase 4c fixed-point loop must terminate when no
+    new merge occurs in a full iteration.
+
+    Regression for stale merged=True causing infinite loop:
+    After one cross-anchor merge succeeds, the next fixed-point iteration
+    rebuilds root_to_items and scans all root-pairs again.  If no
+    _should_merge() match is found in that iteration, changed stays False
+    and the while-loop terminates cleanly.
+
+    This test creates evidence where at least one Phase 4c cross-anchor
+    merge occurs, then asserts bounded completion and correct cluster
+    membership (not just that the call returns).
+    """
+
+    def test_phase4c_fixed_point_stops_when_no_new_merge_occurs(self) -> None:
+        """Many coherent/cross-anchor inputs; merge occurs, then termination.
+
+        Evidence design:
+        - 4 generic_agent_debugging items: all share actor=developer,
+          workflow=debugging, object="agent traces" (Phase 4b merges them).
+        - 4 agent_trace_debugging items: same actor/workflow/object,
+          different canonical anchor (Phase 4c cross-anchor merge with
+          generic group via _should_merge all-3-dimensions match).
+        - 2 structured_output_reliability items: actor=founder,
+          workflow=testing, object="llm" (should NOT merge with others).
+
+        After the first cross-anchor merge (generic + trace groups unite),
+        the next fixed-point iteration rebuilds root_to_items and finds
+        no compatible pair with structured_output_reliability.  Loop
+        terminates normally instead of hanging on stale flag.
+        """
+        evs: list[dict[str, Any]] = []
+
+        # Generic anchor group (4 items): all share same actor/wf/obj
+        for i in range(1, 5):
+            evs.append(_hn_ev(
+                f"ev_gen_{i}",
+                title=f"Agent debugging issue {i}",
+                body=f"Debugging agent execution is broken. "
+                     f"Agent traces lack context {i}. Hard to trace agent runs.",
+                source_url=f"https://news.ycombinator.com/item?id=500{i}",
+            ))
+
+        # agent_trace_debugging anchor group (4 items): same actor/wf/obj as generic
+        for i in range(1, 5):
+            evs.append(_hn_ev(
+                f"ev_trace_{i}",
+                title=f"Trace debugging problem {i}",
+                body=f"Tracing agent execution across multi-step runs. "
+                     f"Observability spans missing. Cannot trace agent "
+                     f"debugging workflow {i}.",
+                source_url=f"https://news.ycombinator.com/item?id=510{i}",
+            ))
+
+        # structured_output_reliability group (2 items): different actor/wf/obj
+        for i in range(1, 3):
+            evs.append(_hn_ev(
+                f"ev_struct_{i}",
+                title=f"Schema validation failure {i}",
+                body=f"Structured output JSON schema parsing broken for llm. "
+                     f"Founder testing deployment pipeline fails {i}.",
+                source_url=f"https://news.ycombinator.com/item?id=520{i}",
+            ))
+
+        # This must complete normally (no hang)
+        clusters, _, _ = assemble_pain_clusters(evs)
+
+        # Verify total evidence preserved
+        total = sum(c.recurrence for c in clusters)
+        self.assertEqual(total, 10, "All 10 evidence items must be assigned")
+
+        # Generic + trace items should all be in the same cluster
+        # (all share same anchor after Phase 4c cross-anchor merge)
+        for i in range(1, 5):
+            assert_same_cluster(self, clusters, "ev_gen_1", f"ev_gen_{i}")
+            assert_same_cluster(self, clusters, "ev_gen_1", f"ev_trace_{i}")
+
+        # Structured output items should be in a different cluster
+        assert_not_same_cluster(self, clusters, "ev_gen_1", "ev_struct_1")
+        assert_same_cluster(self, clusters, "ev_struct_1", "ev_struct_2")
+
+        # Verify cluster count: at least 2 (merged group + struct group)
+        self.assertGreaterEqual(len(clusters), 2,
+                               "Should have at least 2 clusters: merged + struct")
+
+        # Verify at least one cluster combines both generic and trace items
+        # (proof that Phase 4c cross-anchor merge succeeded)
+        cid_map = cluster_ids_by_evidence_id(clusters)
+        gen_cid = cid_map.get("ev_gen_1")
+        trace_cid = cid_map.get("ev_trace_1")
+        self.assertIsNotNone(gen_cid)
+        self.assertIsNotNone(trace_cid)
+        self.assertEqual(gen_cid, trace_cid,
+                         "Generic and trace items must merge via Phase 4c")
+
+
 if __name__ == "__main__":
     unittest.main()

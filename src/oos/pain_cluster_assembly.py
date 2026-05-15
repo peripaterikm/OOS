@@ -1088,6 +1088,11 @@ def assemble_pain_clusters(
     # root but retrieve stale item lists, missing compatible evidence that
     # was just merged into that root.
     #
+    # v2.14 Codex fix (merged flag scoping): merged_this_pair is scoped per
+    # root-pair and reset on every pair.  changed is set immediately after
+    # a union that actually changes roots (guarded by before_a != before_b).
+    # No stale flag leaks across root-pair checks or while-loop iterations.
+    #
     # Bounded: at most n-1 successful unions; evidence counts are small
     # in expected pilot runs.
     sorted_anchors = sorted(anchor_groups.keys())
@@ -1105,8 +1110,15 @@ def assemble_pain_clusters(
 
         for ai in range(len(sorted_anchors)):
             anchor_a = sorted_anchors[ai]
+            # Initialize iteration merge flag at the for-ai scope
+            # so it is always defined even when for-aj has zero
+            # iterations (single anchor).
+            merged_this_pair = False
             for aj in range(ai + 1, len(sorted_anchors)):
                 anchor_b = sorted_anchors[aj]
+                # Reset per-anchor-pair merge flag at top of for-aj.
+                merged_this_pair = False
+
                 if not _anchors_allow_merge(anchor_a, anchor_b):
                     continue
                 indices_a = anchor_groups[anchor_a]
@@ -1133,27 +1145,31 @@ def assemble_pain_clusters(
                         items_a.sort(key=lambda idx: str(normalized[idx].get("evidence_id", "")))
                         items_b.sort(key=lambda idx: str(normalized[idx].get("evidence_id", "")))
 
-                        merged = False
                         for idx_a in items_a:
-                            if merged:
+                            if merged_this_pair:
                                 break
                             for idx_b in items_b:
                                 if _find(idx_a) == _find(idx_b):
                                     continue
                                 if _should_merge(normalized[idx_a], normalized[idx_b]):
-                                    _union(idx_a, idx_b)
-                                    merged = True
+                                    before_a = _find(idx_a)
+                                    before_b = _find(idx_b)
+                                    if before_a != before_b:
+                                        _union(idx_a, idx_b)
+                                        changed = True
+                                        merged_this_pair = True
                                     break
-                        if merged:
+                            if merged_this_pair:
+                                break
+                        if merged_this_pair:
                             # root_to_items is now stale; break to outer
                             # loop to rebuild and restart the scan
                             break
-                    if merged:
+                    if merged_this_pair:
                         break
-                if merged:
+                if merged_this_pair:
                     break
-            if merged:
-                changed = True
+            if merged_this_pair:
                 break
 
     # Phase 4d: Collect groups by union-find root.
