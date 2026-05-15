@@ -207,6 +207,12 @@ class FounderReviewQueueItem:
     quality_gate_reasons: list[str] = field(default_factory=list)
     evidence_quality_counts: dict[str, int] = field(default_factory=dict)
     dominant_quality_flags: list[str] = field(default_factory=list)
+    # v2.14 item 5: review package clarity fields
+    review_priority: int = 1
+    priority_factors: dict[str, Any] = field(default_factory=dict)
+    cluster_cohesion_score: float | None = None
+    catch_all_risk: bool = False
+    cluster_quality_label: str = "unknown"
 
     def validate(self) -> None:
         _require_non_empty(self.review_item_id, "FounderReviewQueueItem.review_item_id")
@@ -292,6 +298,11 @@ class FounderReviewQueueItem:
             "quality_gate_reasons": list(self.quality_gate_reasons),
             "evidence_quality_counts": dict(self.evidence_quality_counts),
             "dominant_quality_flags": list(self.dominant_quality_flags),
+            "review_priority": self.review_priority,
+            "priority_factors": dict(self.priority_factors),
+            "cluster_cohesion_score": self.cluster_cohesion_score,
+            "catch_all_risk": self.catch_all_risk,
+            "cluster_quality_label": self.cluster_quality_label,
         }
 
     @classmethod
@@ -332,6 +343,11 @@ class FounderReviewQueueItem:
             quality_gate_reasons=list(data.get("quality_gate_reasons", [])),
             evidence_quality_counts=dict(data.get("evidence_quality_counts", {})),
             dominant_quality_flags=list(data.get("dominant_quality_flags", [])),
+            review_priority=int(data.get("review_priority", 1)),
+            priority_factors=dict(data.get("priority_factors", {})),
+            cluster_cohesion_score=float(data["cluster_cohesion_score"]) if data.get("cluster_cohesion_score") is not None else None,
+            catch_all_risk=bool(data.get("catch_all_risk", False)),
+            cluster_quality_label=str(data.get("cluster_quality_label", "unknown")),
         )
         item.validate()
         return item
@@ -362,6 +378,13 @@ class FounderReviewPackage:
     missing_source_url_count: int = 0
     placeholder_url_count: int = 0
     non_http_url_count: int = 0
+    # v2.14 item 5: quality summary at package level
+    items_with_blockers: int = 0
+    items_with_weak_only: int = 0
+    items_with_noise_evidence: int = 0
+    items_catch_all_risk: int = 0
+    dominant_pkg_flags: list[str] = field(default_factory=list)
+    estimated_review_minutes: str = "unknown"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -387,6 +410,12 @@ class FounderReviewPackage:
             "missing_source_url_count": self.missing_source_url_count,
             "placeholder_url_count": self.placeholder_url_count,
             "non_http_url_count": self.non_http_url_count,
+            "items_with_blockers": self.items_with_blockers,
+            "items_with_weak_only": self.items_with_weak_only,
+            "items_with_noise_evidence": self.items_with_noise_evidence,
+            "items_catch_all_risk": self.items_catch_all_risk,
+            "dominant_pkg_flags": list(self.dominant_pkg_flags),
+            "estimated_review_minutes": self.estimated_review_minutes,
         }
 
     @classmethod
@@ -415,6 +444,12 @@ class FounderReviewPackage:
             missing_source_url_count=int(data.get("missing_source_url_count", 0)),
             placeholder_url_count=int(data.get("placeholder_url_count", 0)),
             non_http_url_count=int(data.get("non_http_url_count", 0)),
+            items_with_blockers=int(data.get("items_with_blockers", 0)),
+            items_with_weak_only=int(data.get("items_with_weak_only", 0)),
+            items_with_noise_evidence=int(data.get("items_with_noise_evidence", 0)),
+            items_catch_all_risk=int(data.get("items_catch_all_risk", 0)),
+            dominant_pkg_flags=list(data.get("dominant_pkg_flags", [])),
+            estimated_review_minutes=str(data.get("estimated_review_minutes", "unknown")),
         )
 
 
@@ -849,6 +884,31 @@ def _build_review_item_for_cluster(
         "noise": quality_summary["noise_evidence_count"],
     }
 
+    # v2.14 item 5: cluster cohesion / catch-all from cluster metadata
+    cohesion = float(cluster.get("cohesion_score", 0.5))
+    catch_all = bool(cluster.get("catch_all_risk", False))
+
+    # Determine cluster quality label
+    if catch_all:
+        cluster_quality_label = "low"
+    elif cohesion >= 0.6 and overall >= 0.70:
+        cluster_quality_label = "high"
+    elif cohesion >= 0.4:
+        cluster_quality_label = "medium"
+    else:
+        cluster_quality_label = "low"
+
+    # v2.14 item 5: priority factors
+    priority_factors: dict[str, Any] = {
+        "recommendation": recommended_decision,
+        "score": round(overall, 4),
+        "source_diversity": source_diversity,
+        "recurrence": recurrence,
+        "has_blockers": bool(blockers),
+        "traceability_clean": source_url_traceability_clean,
+        "catch_all_risk": catch_all,
+    }
+
     return FounderReviewQueueItem(
         review_item_id=review_item_id,
         item_type="pain_cluster",
@@ -880,6 +940,11 @@ def _build_review_item_for_cluster(
         quality_gate_reasons=gate_reasons,
         evidence_quality_counts=evidence_quality_counts,
         dominant_quality_flags=quality_summary.get("dominant_quality_flags", []),
+        review_priority=idx + 1,
+        priority_factors=priority_factors,
+        cluster_cohesion_score=cohesion,
+        catch_all_risk=catch_all,
+        cluster_quality_label=cluster_quality_label,
     )
 
 
@@ -1065,6 +1130,45 @@ def build_founder_review_package(
     # Compute package-level traceability summary
     traceability = _compute_package_traceability(review_items)
 
+    # v2.14 item 5: Package-level quality summary
+    items_with_blockers = sum(1 for ri in review_items if ri.promotion_blockers)
+    items_with_weak_only = sum(
+        1 for ri in review_items
+        if ri.evidence_quality_counts.get("accepted", 0) == 0
+        and ri.evidence_quality_counts.get("weak", 0) > 0
+    )
+    items_with_noise_evidence = sum(
+        1 for ri in review_items
+        if ri.evidence_quality_counts.get("noise", 0) > 0
+    )
+    items_catch_all_risk = sum(1 for ri in review_items if ri.catch_all_risk)
+
+    # Aggregate dominant flags across all items
+    pkg_flag_counter: dict[str, int] = {}
+    for ri in review_items:
+        for f in ri.dominant_quality_flags:
+            pkg_flag_counter[f] = pkg_flag_counter.get(f, 0) + 1
+    dominant_pkg_flags = sorted(pkg_flag_counter, key=lambda f: -pkg_flag_counter[f])[:5]
+
+    # Estimate review time: ~3 min per item, adjusted for blockers/complexity
+    estimated_review_minutes = "unknown"
+    if review_items:
+        blocker_items = items_with_blockers
+        catch_all_items = items_catch_all_risk
+        base_minutes = len(review_items) * 3
+        extra_minutes = blocker_items * 2 + catch_all_items * 1
+        total_est = base_minutes + extra_minutes
+        if total_est <= 15:
+            estimated_review_minutes = "~15 min"
+        elif total_est <= 30:
+            estimated_review_minutes = "~30 min"
+        elif total_est <= 60:
+            estimated_review_minutes = "~60 min"
+        elif total_est <= 120:
+            estimated_review_minutes = "~120 min"
+        else:
+            estimated_review_minutes = f"~{total_est} min (potentially burdensome)"
+
     warnings: list[str] = []
     if promote_count == 0 and review_items:
         warnings.append("No PROMOTE items in the review package.")
@@ -1118,6 +1222,12 @@ def build_founder_review_package(
         missing_source_url_count=traceability["missing_source_url_count"],
         placeholder_url_count=traceability["placeholder_url_count"],
         non_http_url_count=traceability["non_http_url_count"],
+        items_with_blockers=items_with_blockers,
+        items_with_weak_only=items_with_weak_only,
+        items_with_noise_evidence=items_with_noise_evidence,
+        items_catch_all_risk=items_catch_all_risk,
+        dominant_pkg_flags=dominant_pkg_flags,
+        estimated_review_minutes=estimated_review_minutes,
     )
 
 
@@ -1213,53 +1323,140 @@ def validate_founder_review_package(
 # ---------------------------------------------------------------------------
 
 
+def _decision_badge(decision: str) -> str:
+    """Return a Markdown-style badge for a recommended decision."""
+    badges = {
+        "PROMOTE": "[PROMOTE]",
+        "NEEDS_MORE_EVIDENCE": "[NEEDS_MORE_EVIDENCE]",
+        "REVISIT_LATER": "[REVISIT_LATER]",
+        "PARK": "[PARK]",
+        "KILL": "[KILL]",
+    }
+    return badges.get(decision, f"[{decision}]")
+
+
+def _quality_label_badge(label: str) -> str:
+    """Return a badge for cluster quality label."""
+    if label == "high":
+        return "[HIGH QUALITY]"
+    elif label == "low":
+        return "[LOW QUALITY]"
+    return "[MEDIUM QUALITY]"
+
+
+def _blocked_badge(has_blockers: bool) -> str:
+    """Return BLOCKED badge if blockers exist."""
+    return " [BLOCKED]" if has_blockers else ""
+
+
+def _catch_all_badge(is_catch_all: bool) -> str:
+    """Return CATCH-ALL badge if catch-all risk."""
+    return " [CATCH-ALL]" if is_catch_all else ""
+
+
 def render_founder_review_package_markdown(
     package: FounderReviewPackage,
     output_mode: str = "ascii_safe",
 ) -> str:
-    """Render a FounderReviewPackage to deterministic Markdown. ASCII-safe by default."""
+    """Render a FounderReviewPackage to deterministic Markdown. ASCII-safe by default.
+
+    v2.14 item 5: Improved with compact executive summary, quality dashboard,
+    signal-to-noise ratio, per-item decision cards, priority ordering clarity,
+    cluster quality indicators, and consistent badge formatting.
+    """
     lines: list[str] = []
 
+    # ---- Header ----
     lines.append("# Founder Review Package")
     lines.append("")
     lines.append(f"- **Package ID**: `{package.package_id}`")
     lines.append(f"- **Discovery Run ID**: `{package.discovery_run_id}`")
     lines.append(f"- **Generated**: {package.created_at}")
+    if package.source_ids:
+        lines.append(f"- **Sources**: {', '.join(f'`{sid}`' for sid in package.source_ids)}")
     lines.append("")
 
+    # ---- Executive Summary ----
     lines.append("## Executive Summary")
     lines.append("")
-    lines.append(
-        f"This review package presents **{package.total_review_items}** review items "
-        f"from the operational discovery pilot."
-    )
-    if package.promote_count > 0:
-        lines.append(f"**{package.promote_count}** items are recommended for PROMOTE.")
-    if package.needs_more_evidence_count > 0:
-        lines.append(f"**{package.needs_more_evidence_count}** items need more evidence.")
-    if package.park_count > 0:
-        lines.append(f"**{package.park_count}** items are recommended to PARK.")
-    if package.kill_count > 0:
-        lines.append(f"**{package.kill_count}** items are recommended to KILL.")
-    if package.revisit_later_count > 0:
-        lines.append(f"**{package.revisit_later_count}** items are marked REVISIT_LATER.")
+
+    # Recommendation counts table
+    lines.append("| Recommendation | Count |")
+    lines.append("|----------------|-------|")
+    lines.append(f"| PROMOTE | {package.promote_count} |")
+    lines.append(f"| NEEDS_MORE_EVIDENCE | {package.needs_more_evidence_count} |")
+    lines.append(f"| REVISIT_LATER | {package.revisit_later_count} |")
+    lines.append(f"| PARK | {package.park_count} |")
+    lines.append(f"| KILL | {package.kill_count} |")
+    lines.append(f"| **Total** | **{package.total_review_items}** |")
     lines.append("")
 
-    if package.source_ids:
-        lines.append(f"**Sources**: {', '.join(f'`{sid}`' for sid in package.source_ids)}")
-        lines.append("")
+    # Traceability status
+    trace_status = package.traceability_status
+    lines.append(f"- **Traceability**: {trace_status}")
+    if package.invalid_evidence_link_count > 0:
+        lines.append(f"  - Invalid links: {package.invalid_evidence_link_count} "
+                      f"(missing={package.missing_source_url_count}, "
+                      f"placeholder={package.placeholder_url_count}, "
+                      f"non-http={package.non_http_url_count})")
 
-    # Package-level traceability
-    lines.append("### Traceability Summary")
-    lines.append("")
-    lines.append(f"- **Status**: {package.traceability_status}")
-    lines.append(f"- **Total evidence links**: {package.total_evidence_links}")
-    lines.append(f"- **Invalid evidence links**: {package.invalid_evidence_link_count}")
-    lines.append(f"- **Missing source URLs**: {package.missing_source_url_count}")
-    lines.append(f"- **Placeholder URLs**: {package.placeholder_url_count}")
-    lines.append(f"- **Non-HTTP URLs**: {package.non_http_url_count}")
+    # Quality status
+    lines.append("- **Quality status**:")
+    if package.items_with_blockers > 0:
+        lines.append(f"  - Items with promotion blockers: {package.items_with_blockers}")
+    if package.items_with_weak_only > 0:
+        lines.append(f"  - Items with weak-only evidence: {package.items_with_weak_only}")
+    if package.items_with_noise_evidence > 0:
+        lines.append(f"  - Items with noise evidence: {package.items_with_noise_evidence}")
+    if package.items_catch_all_risk > 0:
+        lines.append(f"  - Catch-all risk clusters: {package.items_catch_all_risk}")
+    if package.dominant_pkg_flags:
+        lines.append(f"  - Dominant quality flags: {', '.join(f'`{f}`' for f in package.dominant_pkg_flags)}")
+    if package.items_with_blockers == 0 and package.items_with_weak_only == 0 and package.items_catch_all_risk == 0:
+        lines.append("  - No quality concerns detected.")
+
+    # Review time estimate
+    lines.append(f"- **Estimated review time**: {package.estimated_review_minutes}")
     lines.append("")
 
+    # Top 3 items to review first
+    lines.append("### Top Items to Review First")
+    lines.append("")
+    top3 = [ri for ri in package.review_items[:3]
+            if ri.recommended_decision == "PROMOTE"]
+    if not top3:
+        top3 = package.review_items[:3]
+    if top3:
+        for ri in top3:
+            idx = package.review_items.index(ri) + 1
+            lines.append(
+                f"{idx}. **[{ri.recommended_decision}]** `{ri.review_item_id}` -- "
+                f"{ri.title} (score={ri.score:.2f}, "
+                f"src_div={ri.source_diversity}, rec={ri.recurrence})"
+            )
+    lines.append("")
+
+    # ---- Signal-to-Noise Ratio Summary ----
+    lines.append("## Signal-to-Noise Ratio")
+    lines.append("")
+
+    total_accepted = sum(ri.evidence_quality_counts.get("accepted", 0) for ri in package.review_items)
+    total_weak = sum(ri.evidence_quality_counts.get("weak", 0) for ri in package.review_items)
+    total_noise = sum(ri.evidence_quality_counts.get("noise", 0) for ri in package.review_items)
+    total_ev = total_accepted + total_weak + total_noise
+
+    lines.append("| Classification | Count | Ratio |")
+    lines.append("|----------------|-------|-------|")
+    if total_ev > 0:
+        lines.append(f"| Accepted (clean) | {total_accepted} | {total_accepted / total_ev:.2f} |")
+        lines.append(f"| Weak (needs review) | {total_weak} | {total_weak / total_ev:.2f} |")
+        lines.append(f"| Noise | {total_noise} | {total_noise / total_ev:.2f} |")
+        lines.append(f"| **Total evidence** | **{total_ev}** | 1.00 |")
+    else:
+        lines.append("| _No evidence data_ | 0 | -- |")
+    lines.append("")
+
+    # ---- Review Counts (compact table) ----
     lines.append("## Review Counts")
     lines.append("")
     lines.append("| Decision | Count |")
@@ -1272,34 +1469,70 @@ def render_founder_review_package_markdown(
     lines.append(f"| **Total** | **{package.total_review_items}** |")
     lines.append("")
 
+    # ---- Top Review Items table (with priority and quality badges) ----
     lines.append("## Top Review Items")
     lines.append("")
     if package.review_items:
         lines.append(
-            "| # | ID | Type | Title | Score | Decision | Sources | Diversity |"
+            "| # | Priority | ID | Title | Score | Decision | "
+            "SrcDiv | Rec | Quality |"
         )
         lines.append(
-            "|---|----|------|-------|-------|----------|---------|-----------|"
+            "|---|----------|----|-------|-------|----------|"
+            "--------|-----|---------|"
         )
         for idx, ri in enumerate(package.review_items, 1):
-            short_title = ri.title[:60] + "..." if len(ri.title) > 60 else ri.title
+            short_title = ri.title[:50] + "..." if len(ri.title) > 50 else ri.title
+            quality_info = ri.cluster_quality_label
+            if ri.catch_all_risk:
+                quality_info += " (catch-all)"
+            if ri.promotion_blockers:
+                quality_info += " BLOCKED"
             lines.append(
-                f"| {idx} | `{ri.review_item_id}` | {ri.item_type} | "
-                f"{short_title} | {ri.score:.2f} | {ri.recommended_decision} | "
-                f"{', '.join(ri.source_ids) if ri.source_ids else 'none'} | "
-                f"{ri.source_diversity} |"
+                f"| {idx} | {ri.review_priority} | `{ri.review_item_id}` | "
+                f"{short_title} | {ri.score:.2f} | "
+                f"{_decision_badge(ri.recommended_decision)} | "
+                f"{ri.source_diversity} | {ri.recurrence} | "
+                f"{quality_info} |"
             )
     else:
         lines.append("_No review items._")
     lines.append("")
 
-    lines.append("## Review Item Details")
+    # ---- Review Item Details (decision cards) ----
+    lines.append("## Decision Cards")
     lines.append("")
     for idx, ri in enumerate(package.review_items, 1):
-        lines.append(f"### {idx}. {ri.review_item_id}")
+        # Card header with badges
+        badges = [_decision_badge(ri.recommended_decision)]
+        if ri.promotion_blockers:
+            badges.append("[BLOCKED]")
+        if ri.catch_all_risk:
+            badges.append("[CATCH-ALL]")
+        badges.append(_quality_label_badge(ri.cluster_quality_label))
+
+        lines.append(f"### Card {idx}: {ri.title}")
+        lines.append(f"**{ri.review_item_id}** {' '.join(badges)}")
         lines.append("")
-        lines.append(f"- **Item Type**: {ri.item_type}")
-        lines.append(f"- **Title**: {ri.title}")
+
+        # Priority / ordering explanation
+        lines.append("#### Why This Position")
+        lines.append("")
+        lines.append(f"- **Priority rank**: {ri.review_priority} of {len(package.review_items)}")
+        lines.append(f"- **Decision**: {ri.recommended_decision}")
+        lines.append(f"- **Score**: {ri.score:.2f}")
+        lines.append(f"- **Source diversity**: {ri.source_diversity}")
+        lines.append(f"- **Recurrence**: {ri.recurrence}")
+        if ri.cluster_cohesion_score is not None:
+            lines.append(f"- **Cluster cohesion**: {ri.cluster_cohesion_score:.2f}")
+        lines.append(f"- **Has blockers**: {'yes' if ri.promotion_blockers else 'no'}")
+        lines.append(f"- **Traceability**: {ri.traceability_status}")
+        lines.append(f"- **Catch-all risk**: {'yes' if ri.catch_all_risk else 'no'}")
+        lines.append("")
+
+        # Core evidence
+        lines.append("#### What It Is")
+        lines.append("")
         if ri.pain_cluster_id:
             lines.append(f"- **Pain Cluster**: `{ri.pain_cluster_id}`")
         if ri.opportunity_id:
@@ -1311,16 +1544,21 @@ def render_founder_review_package_markdown(
             lines.append(f"- **Object**: {ri.object}")
         if ri.pain_pattern:
             lines.append(f"- **Pain Pattern**: {ri.pain_pattern}")
-        lines.append(f"- **Score**: {ri.score:.2f}")
-        lines.append(f"- **Recurrence**: {ri.recurrence}")
-        lines.append(f"- **Source Diversity**: {ri.source_diversity}")
-        lines.append(f"- **Business Relevance**: {ri.business_relevance:.2f}")
-        lines.append(f"- **Noise Risk**: {ri.noise_risk:.2f}")
-        lines.append(f"- **Uncertainty**: {ri.uncertainty}")
         lines.append(f"- **Evidence Summary**: {ri.evidence_summary}")
+        lines.append(f"- **Noise Risk**: {ri.noise_risk:.2f}")
+        lines.append(f"- **Business Relevance**: {ri.business_relevance:.2f}")
+        lines.append(f"- **Uncertainty**: {ri.uncertainty}")
         lines.append("")
 
-        # v2.14 Fix 2: Quality Gate block per review item
+        # Recommendation
+        lines.append("#### System Recommendation")
+        lines.append("")
+        lines.append(f"- **Decision**: {ri.recommended_decision}")
+        lines.append(f"- **Reason**: {ri.recommendation_reason}")
+        lines.append(f"- **Suggested action**: {ri.suggested_validation_action}")
+        lines.append("")
+
+        # Quality Gate (compact)
         lines.append("#### Quality Gate")
         lines.append("")
         eqc = ri.evidence_quality_counts if ri.evidence_quality_counts else {}
@@ -1331,30 +1569,53 @@ def render_founder_review_package_markdown(
         a_ratio = ri.quality_summary.get("accepted_ratio", round(accepted / total_q, 4) if total_q > 0 else 0.0) if ri.quality_summary else 0.0
         w_ratio = ri.quality_summary.get("weak_ratio", round(weak / total_q, 4) if total_q > 0 else 0.0) if ri.quality_summary else 0.0
         n_ratio = ri.quality_summary.get("noise_ratio", round(noise / total_q, 4) if total_q > 0 else 0.0) if ri.quality_summary else 0.0
-        lines.append(f"- **Evidence quality**: accepted={accepted} / weak={weak} / noise={noise} / total={total_q}")
-        lines.append(f"- **Ratios**: accepted={a_ratio:.2f}, weak={w_ratio:.2f}, noise={n_ratio:.2f}")
+        lines.append(f"- **Evidence**: accepted={accepted} / weak={weak} / noise={noise} "
+                      f"(ratios {a_ratio:.2f}/{w_ratio:.2f}/{n_ratio:.2f})")
         dominant = ri.dominant_quality_flags if ri.dominant_quality_flags else (ri.quality_summary.get("dominant_quality_flags", []) if ri.quality_summary else [])
         if dominant:
-            lines.append(f"- **Dominant quality flags**: {', '.join(dominant)}")
+            flags_badges = " ".join(f"[{f.upper()}]" for f in dominant)
+            lines.append(f"- **Flags**: {flags_badges}")
         else:
-            lines.append("- **Dominant quality flags**: none")
+            lines.append("- **Flags**: none")
+        if ri.cluster_cohesion_score is not None:
+            lines.append(f"- **Cluster cohesion**: {ri.cluster_cohesion_score:.2f}")
+            lines.append(f"- **Cluster quality**: {ri.cluster_quality_label}")
         blockers = ri.promotion_blockers if hasattr(ri, 'promotion_blockers') and ri.promotion_blockers else []
         if blockers:
-            lines.append(f"- **Promotion blockers**: {'; '.join(blockers)}")
+            lines.append(f"- **Blockers**: {'; '.join(blockers)}")
         else:
-            lines.append("- **Promotion blockers**: none")
+            lines.append("- **Blockers**: none")
         gate_reasons = ri.quality_gate_reasons if hasattr(ri, 'quality_gate_reasons') and ri.quality_gate_reasons else []
         if gate_reasons:
-            lines.append(f"- **Quality gate reasons**: {'; '.join(gate_reasons)}")
-        else:
-            lines.append("- **Quality gate reasons**: none")
+            lines.append(f"- **Gate reasons**: {'; '.join(gate_reasons)}")
         lines.append("")
 
-    lines.append("## Score Explanations")
-    lines.append("")
-    for ri in package.review_items:
-        if ri.score_components:
-            lines.append(f"### {ri.review_item_id}")
+        # Evidence links (compact, clickable)
+        if ri.evidence_links:
+            lines.append("#### Evidence")
+            lines.append("")
+            for el in ri.evidence_links:
+                flags_badges = ""
+                if el.quality_flags:
+                    flags_badges = " " + " ".join(f"[{f.upper()}]" for f in el.quality_flags[:3])
+                lines.append(
+                    f"- [{el.title}]({el.source_url}) "
+                    f"(`{el.source_id}`, {el.evidence_kind}){flags_badges}"
+                )
+                if el.excerpt and el.excerpt.strip():
+                    excerpt_short = el.excerpt[:200]
+                    if len(el.excerpt) > 200:
+                        excerpt_short += "..."
+                    lines.append(f"  > {excerpt_short}")
+            lines.append("")
+
+    # ---- Score Explanations (compact) ----
+    items_with_scores = [ri for ri in package.review_items if ri.score_components]
+    if items_with_scores:
+        lines.append("## Score Breakdown")
+        lines.append("")
+        for ri in items_with_scores:
+            lines.append(f"### {ri.review_item_id} -- {ri.title[:60]}")
             lines.append("")
             lines.append("| Component | Score |")
             lines.append("|-----------|-------|")
@@ -1363,58 +1624,17 @@ def render_founder_review_package_markdown(
             lines.append(f"| **Overall** | **{ri.score:.2f}** |")
             lines.append("")
 
-    lines.append("## Evidence Links")
-    lines.append("")
-    for ri in package.review_items:
-        if ri.evidence_links:
-            lines.append(f"### {ri.review_item_id}")
-            lines.append("")
-            for el in ri.evidence_links:
-                lines.append(f"- **{el.evidence_id}**")
-                lines.append(f"  - Source: `{el.source_id}` ({el.source_type})")
-                lines.append(f"  - Title: {el.title}")
-                lines.append(f"  - Kind: {el.evidence_kind}")
-                lines.append(f"  - URL: {el.source_url}")
-                if el.quality_flags:
-                    lines.append(f"  - Quality Flags: {', '.join(el.quality_flags)}")
-                lines.append(f"  - Excerpt: {el.excerpt[:200]}")
-            lines.append("")
-
-    lines.append("## Recommended Decisions")
-    lines.append("")
-    lines.append("| ID | Decision | Reason |")
-    lines.append("|----|----------|--------|")
-    for ri in package.review_items:
-        reason = (
-            ri.recommendation_reason[:80] + "..."
-            if len(ri.recommendation_reason) > 80
-            else ri.recommendation_reason
-        )
-        lines.append(
-            f"| `{ri.review_item_id}` | {ri.recommended_decision} | {reason} |"
-        )
-    lines.append("")
-
-    lines.append("## Suggested Validation Actions")
-    lines.append("")
-    lines.append("| ID | Suggestion |")
-    lines.append("|----|------------|")
-    for ri in package.review_items:
-        lines.append(
-            f"| `{ri.review_item_id}` | {ri.suggested_validation_action} |"
-        )
-    lines.append("")
-
-    lines.append("## Risks and Caveats")
+    # ---- Warnings (compact) ----
+    lines.append("## Warnings and Caveats")
     lines.append("")
     if package.errors:
         for e in package.errors:
-            lines.append(f"- ERROR: {e}")
+            lines.append(f"- **ERROR**: {e}")
     if package.warnings:
         for w in package.warnings:
             lines.append(f"- WARNING: {w}")
     if not package.errors and not package.warnings:
-        lines.append("- No risks or caveats identified.")
+        lines.append("- No warnings or errors.")
     lines.append("")
     lines.append(
         "Recommendations are advisory only. The founder must review each item "
@@ -1428,15 +1648,14 @@ def render_founder_review_package_markdown(
     )
     lines.append("")
 
-    lines.append("## Source Quality Notes")
-    lines.append("")
+    # ---- Source Quality Notes (compact) ----
     items_with_notes = [ri for ri in package.review_items if ri.source_quality_notes]
     if items_with_notes:
+        lines.append("## Source Quality Notes")
+        lines.append("")
         for ri in items_with_notes:
             lines.append(f"- **{ri.review_item_id}**: {ri.source_quality_notes}")
-    else:
-        lines.append("_No source quality concerns for any review item._")
-    lines.append("")
+        lines.append("")
 
     lines.append("---")
     lines.append("")

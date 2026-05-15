@@ -1,6 +1,6 @@
 # OOS Roadmap v2.14 — Pilot Quality Improvements
 
-**Status:** Active / item 5 ready
+**Status:** Active / item 6 ready
 **Branch:** `ops/v2-13-pilot-cycle-1-run`
 **Created:** 2026-05-14
 **Based on:** v2.13 Pilot Cycle 1 CONDITIONAL GO decision
@@ -13,10 +13,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `5 — Founder Review Package Clarity Improvements`
-- [x] **0.3** Roadmap state: `active / item 5 ready`
-- [x] **0.4** Completed from this roadmap: **5 / 11**
-- [x] **0.5** Remaining: **6 / 11**
+- [x] **0.2** Current item: `6 — Opportunity Synthesis Contract / Deterministic Stub Hardening`
+- [x] **0.3** Roadmap state: `active / item 6 ready`
+- [x] **0.4** Completed from this roadmap: **6 / 11**
+- [x] **0.5** Remaining: **5 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -457,15 +457,17 @@ Improve the founder review package structure, ordering, and evidence presentatio
 
 ### Definition of Done
 
-- [ ] **5.1** Cluster quality summary with scores and flags in each cluster section
-- [ ] **5.2** Evidence excerpts (first 200 chars) per signal
-- [ ] **5.3** Signal-to-noise ratio summary at package top
-- [ ] **5.4** Consistent Markdown formatting with quality badges
-- [ ] **5.5** Redundant sections removed or collapsed
-- [ ] **5.6** All existing tests pass
-- [ ] **5.7** At least 15 focused tests pass
-- [ ] **5.8** `.\scripts\dev-git-check.ps1` passes
-- [ ] **5.9** One local commit made with message: `[v2.14] 5 founder review package clarity`
+- [x] **5.1** Cluster quality summary with scores and flags in each cluster section
+- [x] **5.2** Evidence excerpts (first 200 chars) per signal
+- [x] **5.3** Signal-to-noise ratio summary at package top
+- [x] **5.4** Consistent Markdown formatting with quality badges
+- [x] **5.5** Redundant sections removed or collapsed
+- [x] **5.6** All existing tests pass
+- [x] **5.7** At least 15 focused tests pass (17 new Item 5 tests pass)
+- [x] **5.8** `.\scripts\dev-git-check.ps1` passes
+- [x] **5.9** One local commit made with message: `[v2.14] 5 founder review package clarity`
+
+**Item 5 complete; item 6 is next.**
 
 ---
 

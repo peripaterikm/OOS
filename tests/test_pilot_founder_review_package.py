@@ -1300,16 +1300,12 @@ class TestRenderMarkdown(unittest.TestCase):
         required_sections = [
             "# Founder Review Package",
             "## Executive Summary",
-            "### Traceability Summary",
+            "## Signal-to-Noise Ratio",
             "## Review Counts",
             "## Top Review Items",
-            "## Review Item Details",
-            "## Score Explanations",
-            "## Evidence Links",
-            "## Recommended Decisions",
-            "## Suggested Validation Actions",
-            "## Risks and Caveats",
-            "## Source Quality Notes",
+            "## Decision Cards",
+            "## Score Breakdown",
+            "## Warnings and Caveats",
         ]
         for section in required_sections:
             self.assertIn(section, md, f"Missing section: {section}")
@@ -1335,7 +1331,7 @@ class TestRenderMarkdown(unittest.TestCase):
             created_at="2026-05-12T00:00:00Z",
         )
         md = render_founder_review_package_markdown(package)
-        self.assertIn("**0** review items", md)
+        self.assertIn("| **Total** | **0** |", md)
 
     def test_markdown_includes_package_traceability(self):
         """Markdown must include package-level traceability status."""
@@ -1345,9 +1341,7 @@ class TestRenderMarkdown(unittest.TestCase):
             created_at="2026-05-12T10:00:00Z",
         )
         md = render_founder_review_package_markdown(package)
-        self.assertIn("### Traceability Summary", md)
-        self.assertIn("**Status**: clean", md)
-        self.assertIn("**Total evidence links**", md)
+        self.assertIn("**Traceability**: clean", md)
 
 
 class TestToDictFromDictRoundtrip(unittest.TestCase):
@@ -2000,7 +1994,7 @@ class TestMarkdownQualityGateVisibility(unittest.TestCase):
         self.assertIn("noise=1", md,
                       "Markdown should show noise=1")
 
-    def test_markdown_includes_promotion_blockers_when_present(self):
+    def test_markdown_includes_blockers_when_present(self):
         evidence = [
             _make_evidence("ev_001", quality_flags=["bot_generated"]),
             _make_evidence("ev_002", quality_flags=["maintainer_housekeeping"]),
@@ -2015,8 +2009,8 @@ class TestMarkdownQualityGateVisibility(unittest.TestCase):
             created_at="2026-05-12T10:00:00Z",
         )
         md = render_founder_review_package_markdown(package)
-        self.assertIn("Promotion blockers", md,
-                      "Markdown should include 'Promotion blockers' line")
+        self.assertIn("- **Blockers**:", md,
+                      "Markdown should include Blockers line when blockers present")
         self.assertIn("noise ratio", md.lower(),
                       "Markdown should mention noise ratio in blockers")
 
@@ -2036,10 +2030,8 @@ class TestMarkdownQualityGateVisibility(unittest.TestCase):
             created_at="2026-05-12T10:00:00Z",
         )
         md = render_founder_review_package_markdown(package)
-        self.assertIn("Promotion blockers", md,
-                      "Markdown should include 'Promotion blockers' line")
-        self.assertTrue("Promotion blockers: none" in md or "Promotion blockers" in md,
-                       "Markdown should indicate no promotion blockers")
+        self.assertIn("- **Blockers**: none", md,
+                      "Markdown should show Blockers: none when no blockers")
 
     def test_markdown_includes_dominant_quality_flags(self):
         evidence = [
@@ -2054,12 +2046,10 @@ class TestMarkdownQualityGateVisibility(unittest.TestCase):
             created_at="2026-05-12T10:00:00Z",
         )
         md = render_founder_review_package_markdown(package)
-        self.assertIn("Dominant quality flags", md,
-                      "Markdown should include 'Dominant quality flags' line")
-        self.assertIn("debugging_pain", md,
-                      "Markdown should include 'debugging_pain' in dominant flags")
+        self.assertIn("- **Flags**: [DEBUGGING_PAIN]", md,
+                      "Markdown should show quality flags as uppercase badges")
 
-    def test_markdown_includes_quality_gate_reasons(self):
+    def test_markdown_includes_gate_reasons_when_present(self):
         # Create a single-source cluster with low recurrence to trigger gate reasons
         evidence = [
             _make_evidence("ev_001", quality_flags=["stale_issue"]),
@@ -2073,10 +2063,10 @@ class TestMarkdownQualityGateVisibility(unittest.TestCase):
             created_at="2026-05-12T10:00:00Z",
         )
         md = render_founder_review_package_markdown(package)
-        self.assertIn("Quality gate reasons", md,
-                      "Markdown should include 'Quality gate reasons' line")
+        self.assertIn("- **Gate reasons**:", md,
+                      "Markdown should include Gate reasons line when present")
 
-    def test_markdown_says_gate_reasons_none_when_empty(self):
+    def test_markdown_omits_gate_reasons_when_empty(self):
         evidence = [
             _make_evidence("ev_001", quality_flags=["debugging_pain"]),
             _make_evidence("ev_002", source_id="github_issues", source_type="issue_tracker",
@@ -2093,10 +2083,10 @@ class TestMarkdownQualityGateVisibility(unittest.TestCase):
             created_at="2026-05-12T10:00:00Z",
         )
         md = render_founder_review_package_markdown(package)
-        self.assertIn("Quality gate reasons", md,
-                      "Markdown should include 'Quality gate reasons' line")
-        self.assertTrue("Quality gate reasons: none" in md or "Quality gate reasons" in md,
-                       "Markdown should indicate no quality gate reasons")
+        self.assertNotIn("Gate reasons", md,
+                       "Gate reasons line should be absent when gate_reasons is empty")
+        self.assertIn("- **Blockers**: none", md,
+                      "Markdown should show Blockers: none when clean")
 
     def test_json_roundtrip_remains_intact_with_quality_fields(self):
         """Verify that JSON roundtrip still works after quality fields are visible in Markdown."""
@@ -2160,10 +2150,10 @@ class TestMarkdownQualityGateVisibility(unittest.TestCase):
         self.assertIsInstance(md, str)
         self.assertIn("#### Quality Gate", md,
                       "Quality Gate section should appear even for older items")
-        self.assertIn("Promotion blockers", md,
-                      "Older items should include Promotion blockers line")
-        self.assertIn("Quality gate reasons", md,
-                      "Older items should include Quality gate reasons line")
+        self.assertIn("- **Blockers**: none", md,
+                      "Older items should include Blockers: none line")
+        self.assertNotIn("Gate reasons", md,
+                       "Gate reasons should be absent when empty for older items")
 
 
 # ---------------------------------------------------------------------------
@@ -2340,6 +2330,291 @@ class TestClusterTitleCleanupInFRP(unittest.TestCase):
         )
         title = package.review_items[0].title
         self.assertLessEqual(len(title), 90)
+
+
+# ---------------------------------------------------------------------------
+# v2.14 Item 5 — Founder Review Package Clarity Tests
+# ---------------------------------------------------------------------------
+
+
+class TestReviewItemClarityFields(unittest.TestCase):
+    """Tests that v2.14 clarity fields are populated in review items."""
+
+    def test_review_item_has_priority_and_factors(self):
+        """Review items must carry review_priority and priority_factors."""
+        cluster = _make_cluster_dict(overall=0.75)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertGreaterEqual(item.review_priority, 1)
+        self.assertIn("recommendation", item.priority_factors)
+        self.assertIn("score", item.priority_factors)
+        self.assertIn("source_diversity", item.priority_factors)
+        self.assertIn("recurrence", item.priority_factors)
+        self.assertIn("has_blockers", item.priority_factors)
+        self.assertIn("traceability_clean", item.priority_factors)
+        self.assertIn("catch_all_risk", item.priority_factors)
+
+    def test_review_item_has_cluster_quality_label(self):
+        """Review items must carry cluster_quality_label."""
+        cluster = _make_cluster_dict("pc_ql", overall=0.85, source_diversity=2, recurrence=3)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertIn(item.cluster_quality_label, ("high", "medium", "low"))
+
+    def test_catch_all_risk_cluster_marked_low_quality(self):
+        """Cluster with catch_all_risk=True should be 'low' quality regardless of score."""
+        cluster = _make_cluster_dict("pc_catch", overall=0.90, source_diversity=3, recurrence=5)
+        cluster["cohesion_score"] = 0.3
+        cluster["catch_all_risk"] = True
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertTrue(item.catch_all_risk)
+        self.assertEqual(item.cluster_quality_label, "low")
+
+    def test_roundtrip_preserves_item5_fields(self):
+        """to_dict/from_dict preserves review_priority, priority_factors, cluster_cohesion, catch_all_risk, cluster_quality_label."""
+        cluster = _make_cluster_dict("pc_rt5", overall=0.55, source_diversity=1, recurrence=2)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        d = item.to_dict()
+        restored = FounderReviewQueueItem.from_dict(d)
+        self.assertEqual(item.review_priority, restored.review_priority)
+        self.assertEqual(item.priority_factors, restored.priority_factors)
+        self.assertEqual(item.cluster_cohesion_score, restored.cluster_cohesion_score)
+        self.assertEqual(item.catch_all_risk, restored.catch_all_risk)
+        self.assertEqual(item.cluster_quality_label, restored.cluster_quality_label)
+
+
+class TestPackageLevelClarityFields(unittest.TestCase):
+    """Tests for package-level v2.14 clarity fields."""
+
+    def test_package_has_items_with_blockers_count(self):
+        """Package must count items with promotion blockers."""
+        # Clean cluster: no blockers
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain"]),
+            _make_evidence("ev_002", source_id="github_issues", source_type="issue_tracker",
+                          source_url="https://github.com/o/r/issues/1",
+                          quality_flags=["integration_pain"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_clean_pkg", overall=0.85, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        self.assertEqual(package.items_with_blockers, 0)
+
+    def test_package_counts_weak_only_items(self):
+        """Package must count items with zero accepted evidence but some weak."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["requires_manual_review"]),
+            _make_evidence("ev_002", quality_flags=["generic_language"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_weak_pkg", overall=0.55, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        # All evidence is weak; accepted count should be 0
+        self.assertGreaterEqual(package.items_with_weak_only, 1)
+
+    def test_dominant_pkg_flags_aggregated(self):
+        """Package dominant_pkg_flags must aggregate across items."""
+        evidence1 = [
+            _make_evidence("ev_a", quality_flags=["debugging_pain"]),
+            _make_evidence("ev_b", quality_flags=["debugging_pain"]),
+        ]
+        c1 = _make_cluster_dict("pc_a", overall=0.75, source_diversity=1, recurrence=2,
+                                evidence_list=evidence1)
+        evidence2 = [
+            _make_evidence("ev_c", quality_flags=["integration_pain"]),
+            _make_evidence("ev_d", quality_flags=["bot_generated"]),
+        ]
+        c2 = _make_cluster_dict("pc_b", overall=0.15, noise_risk=0.85,
+                                source_diversity=1, recurrence=2, evidence_list=evidence2)
+        package = build_founder_review_package(
+            pain_clusters=[c1, c2],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        self.assertTrue(len(package.dominant_pkg_flags) > 0)
+        self.assertIsInstance(package.dominant_pkg_flags, list)
+
+    def test_estimated_review_time_is_set(self):
+        """Package must have a non-empty estimated_review_minutes."""
+        cluster = _make_cluster_dict(overall=0.75)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        self.assertNotEqual(package.estimated_review_minutes, "unknown")
+        self.assertTrue(
+            package.estimated_review_minutes.startswith("~")
+            or package.estimated_review_minutes == "unknown"
+        )
+
+    def test_package_roundtrip_preserves_item5_fields(self):
+        """to_dict/from_dict preserves items_with_blockers, dominant_pkg_flags, estimated_review_minutes."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_pkgrt5", overall=0.75, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        d = package.to_dict()
+        restored = FounderReviewPackage.from_dict(d)
+        self.assertEqual(package.items_with_blockers, restored.items_with_blockers)
+        self.assertEqual(package.items_with_weak_only, restored.items_with_weak_only)
+        self.assertEqual(package.items_with_noise_evidence, restored.items_with_noise_evidence)
+        self.assertEqual(package.items_catch_all_risk, restored.items_catch_all_risk)
+        self.assertEqual(package.dominant_pkg_flags, restored.dominant_pkg_flags)
+        self.assertEqual(package.estimated_review_minutes, restored.estimated_review_minutes)
+
+
+class TestMarkdownClaritySections(unittest.TestCase):
+    """Tests for v2.14 markdown section improvements."""
+
+    def test_markdown_executive_summary_has_recommendation_table(self):
+        """Executive Summary must contain a recommendation counts table."""
+        cluster = _make_cluster_dict(overall=0.75)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("| Recommendation | Count |", md)
+        self.assertIn("| PROMOTE | 1 |", md)
+        self.assertIn("| **Total** | **1** |", md)
+
+    def test_markdown_signal_to_noise_ratio_section(self):
+        """Signal-to-Noise Ratio section must show accepted/weak/noise counts."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=[]),
+            _make_evidence("ev_002", quality_flags=["requires_manual_review"]),
+            _make_evidence("ev_003", quality_flags=["bot_generated"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_snr", overall=0.55, source_diversity=1, recurrence=3,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("## Signal-to-Noise Ratio", md)
+        self.assertIn("| Accepted (clean) |", md)
+        self.assertIn("| Weak (needs review) |", md)
+        self.assertIn("| Noise |", md)
+
+    def test_markdown_top_items_to_review_first(self):
+        """Top Items to Review First section must highlight best candidates."""
+        clusters = [
+            _make_cluster_dict("pc_001", overall=0.85),  # PROMOTE
+            _make_cluster_dict("pc_002", overall=0.35),  # PARK
+        ]
+        package = build_founder_review_package(
+            pain_clusters=clusters,
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("### Top Items to Review First", md)
+        self.assertIn("[PROMOTE]", md)
+
+    def test_markdown_decision_card_has_why_this_position(self):
+        """Decision Cards must include 'Why This Position' subsection."""
+        cluster = _make_cluster_dict(overall=0.75)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("#### Why This Position", md)
+        self.assertIn("- **Priority rank**:", md)
+
+    def test_markdown_decision_card_has_system_recommendation(self):
+        """Decision Cards must include 'System Recommendation' subsection."""
+        cluster = _make_cluster_dict(overall=0.75)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("#### System Recommendation", md)
+        self.assertIn("- **Decision**:", md)
+        self.assertIn("- **Reason**:", md)
+        self.assertIn("- **Suggested action**:", md)
+
+    def test_markdown_no_obsolete_sections(self):
+        """Markdown must NOT contain old-style section names."""
+        cluster = _make_cluster_dict(overall=0.75)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertNotIn("## Evidence Links", md)
+        self.assertNotIn("## Recommended Decisions", md)
+        self.assertNotIn("## Suggested Validation Actions", md)
+        self.assertNotIn("## Risks and Caveats", md)
+        self.assertNotIn("## Review Item Details", md)
+        self.assertNotIn("## Score Explanations", md)
+        self.assertNotIn("### Traceability Summary", md)
+
+    def test_markdown_evidence_excerpts_present(self):
+        """Decision cards must include evidence excerpts in evidence blocks."""
+        evidence = [
+            _make_evidence("ev_001", excerpt="Developers spend hours debugging agent traces with no visibility into execution steps."),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_excerpt", overall=0.75, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("> Developers spend hours debugging", md)
+
+    def test_markdown_quality_badges_uppercase(self):
+        """Quality flags in evidence must be rendered as uppercase badges."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain", "low_text_context"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_badges", overall=0.75, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("[DEBUGGING_PAIN]", md)
+        self.assertIn("[LOW_TEXT_CONTEXT]", md)
 
 
 if __name__ == "__main__":
