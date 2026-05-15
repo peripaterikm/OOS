@@ -597,6 +597,92 @@ class TestQualityAwareClustering(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
+class TestPhase4cStaleRootToItems(unittest.TestCase):
+    """v2.14 Codex fix: Phase 4c rebuilds root_to_items after cross-anchor union.
+
+    Regression: without fixed-point root_to_items rebuilding, a successful
+    cross-anchor union makes the root item map stale.  Later root-pair scans
+    see the updated union-find root but retrieve only the original owner's
+    items, missing evidence that was just merged in.  This can cause
+    compatible evidence to be split even though _should_merge() returns True.
+
+    Scenario:
+      - ev_gen (generic_agent_debugging) merges into ev_integ
+        (integration_pipeline_friction) — same actor/workflow/object.
+      - ev_integ (now sharing a root with ev_gen) should then merge into
+        ev_struct (structured_output_reliability) because ev_integ shares
+        2 of 3 dimensions with ev_struct.
+      - Under the old stale root_to_items behavior, after the first union
+        only ev_gen's original items are visible for the merged root.
+        ev_gen is NOT compatible with ev_struct (object differs), so the
+        merge is missed.  ev_integ, which IS compatible with ev_struct,
+        is invisible because it sits under a child root whose items
+        are not reachable through the stale map.
+      - Fixed-point rebuilding resolves this: the second iteration sees
+        both ev_gen and ev_integ in the merged root and correctly finds
+        the ev_integ/ev_struct pair.
+    """
+
+    def test_phase4c_rebuilds_root_items_after_cross_anchor_union(self) -> None:
+        """Multi-step merge: generic -> integration -> structured_output.
+
+        ev_gen (generic) and ev_integ (integration) share all 3 dimensions
+        and merge first.  The merged root should then merge with ev_struct
+        because ev_integ shares 2 of 3 dimensions with ev_struct.
+        ev_gen alone is NOT compatible with ev_struct (object differs).
+        Without root_to_items rebuild, the stale map hides ev_integ and
+        the second merge is missed.
+        """
+        # ev_gen: generic_agent_debugging anchor, actor=developer, workflow=debugging,
+        #         object="agent".  Body must avoid trace/tracing/spans keywords
+        #         to avoid agent_trace_debugging winning the anchor detection.
+        ev_gen = _hn_ev(
+            "ev_gen_4c",
+            title="Agent execution issues",
+            body="Debugging agent is broken. Code fails in production. "
+                 "Cannot figure out what went wrong.",
+            source_url="https://news.ycombinator.com/item?id=401",
+        )
+
+        # ev_integ: integration_pipeline_friction anchor, actor=developer,
+        #           workflow=debugging, object="agent".
+        #           Shares all 3 dims with ev_gen -> _should_merge(gen,integ)==True.
+        ev_integ = _hn_ev(
+            "ev_integ_4c",
+            title="Pipeline connector failure",
+            body="Debugging integration agent pipeline is broken. "
+                 "Code sync fails in production.",
+            source_url="https://news.ycombinator.com/item?id=402",
+        )
+
+        # ev_struct: structured_output_reliability anchor, actor=developer,
+        #            workflow=debugging, object="llm".
+        #            Shares 2 of 3 dims with ev_integ (actor+workflow match,
+        #            object differs).  Does NOT share 3 of 3 with ev_gen
+        #            (object mismatch prevents generic->specific merge).
+        ev_struct = _hn_ev(
+            "ev_struct_4c",
+            title="Schema validation issues",
+            body="Code debugging: Structured output schema validation for llm "
+                 "broken. JSON mode parsing fails in production.",
+            source_url="https://news.ycombinator.com/item?id=403",
+        )
+
+        evs = [ev_gen, ev_integ, ev_struct]
+        clusters, _, _ = assemble_pain_clusters(evs)
+
+        # ev_gen merges into ev_integ's root (same actor/workflow/object)
+        assert_same_cluster(self, clusters, "ev_gen_4c", "ev_integ_4c")
+
+        # ev_integ (now in merged root) merges with ev_struct
+        # (2 of 3 dimensions match: actor + workflow)
+        assert_same_cluster(self, clusters, "ev_integ_4c", "ev_struct_4c")
+
+        # All three evidence items accounted for
+        total = sum(c.recurrence for c in clusters)
+        self.assertEqual(total, 3)
+
+
 class TestCrossAnchorPairScanning(unittest.TestCase):
     """v2.14 Codex fix: Phase 4c must compare all pairs, not just first reps.
 

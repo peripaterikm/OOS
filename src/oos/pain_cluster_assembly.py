@@ -1082,55 +1082,79 @@ def assemble_pain_clusters(
     # fragmentation where a matching pair is missed because the first-index
     # representative does not satisfy _should_merge().
     #
-    # Build root-to-items map once after Phase 4b so root-pair loops are
-    # efficient (bounded by fixture sizes).
-    root_to_items: dict[int, list[int]] = {}
-    for idx in range(n):
-        root = _find(idx)
-        root_to_items.setdefault(root, []).append(idx)
-
+    # v2.14 Codex fix (stale root_to_items): fixed-point loop rebuilds the
+    # root-to-items map after each successful cross-anchor union.  Without
+    # this rebuild, later root-pair scans can see the updated union-find
+    # root but retrieve stale item lists, missing compatible evidence that
+    # was just merged into that root.
+    #
+    # Bounded: at most n-1 successful unions; evidence counts are small
+    # in expected pilot runs.
     sorted_anchors = sorted(anchor_groups.keys())
-    for ai in range(len(sorted_anchors)):
-        anchor_a = sorted_anchors[ai]
-        for aj in range(ai + 1, len(sorted_anchors)):
-            anchor_b = sorted_anchors[aj]
-            if not _anchors_allow_merge(anchor_a, anchor_b):
-                continue
-            indices_a = anchor_groups[anchor_a]
-            indices_b = anchor_groups[anchor_b]
-            if not indices_a or not indices_b:
-                continue
+    changed = True
+    while changed:
+        changed = False
 
-            # Collect current union-find roots in each anchor group
-            roots_a: set[int] = {_find(idx) for idx in indices_a}
-            roots_b: set[int] = {_find(idx) for idx in indices_b}
+        # Rebuild root-to-items map fresh from current union-find state.
+        # This ensures that evidence merged in a previous iteration is
+        # visible when deciding further root-pair merges.
+        root_to_items: dict[int, list[int]] = {}
+        for idx in range(n):
+            root = _find(idx)
+            root_to_items.setdefault(root, []).append(idx)
 
-            # For every pair of roots from different anchor groups,
-            # compare all evidence items deterministically.
-            for root_a in sorted(roots_a):
-                for root_b in sorted(roots_b):
-                    if root_a == root_b:
-                        continue
-                    items_a = root_to_items.get(root_a, [])
-                    items_b = root_to_items.get(root_b, [])
-                    if not items_a or not items_b:
-                        continue
+        for ai in range(len(sorted_anchors)):
+            anchor_a = sorted_anchors[ai]
+            for aj in range(ai + 1, len(sorted_anchors)):
+                anchor_b = sorted_anchors[aj]
+                if not _anchors_allow_merge(anchor_a, anchor_b):
+                    continue
+                indices_a = anchor_groups[anchor_a]
+                indices_b = anchor_groups[anchor_b]
+                if not indices_a or not indices_b:
+                    continue
 
-                    # Sort deterministically by evidence_id
-                    items_a.sort(key=lambda idx: str(normalized[idx].get("evidence_id", "")))
-                    items_b.sort(key=lambda idx: str(normalized[idx].get("evidence_id", "")))
+                # Collect current union-find roots in each anchor group
+                roots_a: set[int] = {_find(idx) for idx in indices_a}
+                roots_b: set[int] = {_find(idx) for idx in indices_b}
 
-                    merged = False
-                    for idx_a in items_a:
-                        if merged:
-                            break
-                        for idx_b in items_b:
-                            if _find(idx_a) == _find(idx_b):
-                                continue
-                            if _should_merge(normalized[idx_a], normalized[idx_b]):
-                                _union(idx_a, idx_b)
-                                merged = True
+                # For every pair of roots from different anchor groups,
+                # compare all evidence items deterministically.
+                for root_a in sorted(roots_a):
+                    for root_b in sorted(roots_b):
+                        if root_a == root_b:
+                            continue
+                        items_a = root_to_items.get(root_a, [])
+                        items_b = root_to_items.get(root_b, [])
+                        if not items_a or not items_b:
+                            continue
+
+                        # Sort deterministically by evidence_id
+                        items_a.sort(key=lambda idx: str(normalized[idx].get("evidence_id", "")))
+                        items_b.sort(key=lambda idx: str(normalized[idx].get("evidence_id", "")))
+
+                        merged = False
+                        for idx_a in items_a:
+                            if merged:
                                 break
+                            for idx_b in items_b:
+                                if _find(idx_a) == _find(idx_b):
+                                    continue
+                                if _should_merge(normalized[idx_a], normalized[idx_b]):
+                                    _union(idx_a, idx_b)
+                                    merged = True
+                                    break
+                        if merged:
+                            # root_to_items is now stale; break to outer
+                            # loop to rebuild and restart the scan
+                            break
+                    if merged:
+                        break
+                if merged:
+                    break
+            if merged:
+                changed = True
+                break
 
     # Phase 4d: Collect groups by union-find root.
     pattern_groups: dict[int, list[dict[str, Any]]] = {}
