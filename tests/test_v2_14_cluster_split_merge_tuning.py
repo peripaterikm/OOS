@@ -592,5 +592,119 @@ class TestQualityAwareClustering(unittest.TestCase):
         self.assertIn(clusters[0].canonical_anchor, {"agent_trace_debugging", "generic_agent_debugging"})
 
 
+# ---------------------------------------------------------------------------
+# Codex review fix: Regression test for representative-order fragmentation
+# ---------------------------------------------------------------------------
+
+
+class TestCrossAnchorPairScanning(unittest.TestCase):
+    """v2.14 Codex fix: Phase 4c must compare all pairs, not just first reps.
+
+    Regression: under the old first-representative-only behavior, items
+    ev_g1 and ev_s1 would remain split despite _should_merge() returning
+    True, because ev_g0 was the first item in its anchor group and did
+    NOT match ev_s1.
+    """
+
+    def test_cross_anchor_all_pairs_not_just_first_rep(self) -> None:
+        """ev_g1 (matches ev_s1) merges even when ev_g0 (first rep) does not.
+
+        Scenario:
+        - ev_g0: generic-anchor item, comes first deterministically via
+          evidence_id ordering, does NOT match ev_s1 on actor/workflow/object.
+        - ev_g1: generic-anchor item, comes second, DOES match ev_s1 on all
+          3 dimensions (actor/workflow/object).
+        - ev_s1: specific-anchor item (agent_trace_debugging).
+
+        Old Phase 4c checked only ev_g0 (first rep) vs ev_s1 and failed,
+        leaving ev_g1 and ev_s1 split.
+        New behavior must find ev_g1/ev_s1 compatible and merge them.
+        """
+        # ev_g0: generic-debugging anchor, developer actor, debugging workflow,
+        #        "agent" object, vague pain — does NOT match ev_s1 dimensions
+        ev_g0 = _hn_ev(
+            "ev_g0",
+            title="General AI debugging discussion",
+            body="LLM agents are hard to debug in general. Vague discussion.",
+            source_url="https://news.ycombinator.com/item?id=100",
+        )
+
+        # ev_g1: generic-debugging anchor, developer actor, debugging workflow,
+        #        "agent traces" object — DOES match ev_s1 on all 3 dimensions
+        ev_g1 = _hn_ev(
+            "ev_g1",
+            title="Agent trace debugging context missing",
+            body="Agent traces lack actionable debugging context. Hard to trace.",
+            source_url="https://news.ycombinator.com/item?id=101",
+        )
+
+        # ev_s1: specific agent_trace_debugging anchor — should merge with ev_g1
+        ev_s1 = _hn_ev(
+            "ev_s1",
+            title="Cannot trace agent execution",
+            body="Tracing agent execution across multi-step runs is broken. "
+                 "Observability and spans missing. Hard to debug agent traces.",
+            source_url="https://news.ycombinator.com/item?id=102",
+        )
+
+        evs = [ev_g0, ev_g1, ev_s1]
+        clusters, _, _ = assemble_pain_clusters(evs)
+
+        # Regression assertion: ev_g1 and ev_s1 must be in the same cluster.
+        assert_same_cluster(self, clusters, "ev_g1", "ev_s1")
+
+        # ev_g0 should NOT be merged with ev_s1 — it has different body content
+        # and insufficient dimension overlap to trigger _should_merge().
+        assert_not_same_cluster(self, clusters, "ev_g0", "ev_s1")
+
+        # Total evidence count preserved
+        total = sum(c.recurrence for c in clusters)
+        self.assertEqual(total, 3)
+
+    def test_first_rep_fails_second_rep_succeeds_within_same_generic_root(self) -> None:
+        """Within the same generic-anchor root group, a later item matches.
+
+        Ensures that even after Phase 4b unions items within the generic group,
+        Phase 4c still finds the compatible pair across roots.
+        """
+        # ev_g0: generic anchor, vague
+        ev_g0 = _hn_ev(
+            "ev_gx0",
+            title="AI is interesting",
+            body="AI agents are an interesting technology area.",
+            source_url="https://news.ycombinator.com/item?id=200",
+        )
+
+        # ev_g1: generic anchor but matches specific anchor on actor/wf/obj
+        ev_g1 = _hn_ev(
+            "ev_gx1",
+            title="Tracing agent spans is broken",
+            body="Developer cannot debug agent traces because observability spans "
+                 "are missing. Tracing multi-step agent execution is broken.",
+            source_url="https://news.ycombinator.com/item?id=201",
+        )
+
+        # ev_s1: specific agent_trace_debugging anchor
+        ev_s1 = _hn_ev(
+            "ev_sx1",
+            title="Agent trace debugging lacks context",
+            body="Tracing agent execution and observability spans are broken. "
+                 "Cannot debug multi-step agent runs.",
+            source_url="https://news.ycombinator.com/item?id=202",
+        )
+
+        evs = [ev_g0, ev_g1, ev_s1]
+        clusters, _, _ = assemble_pain_clusters(evs)
+
+        # ev_g1 and ev_s1 should merge
+        assert_same_cluster(self, clusters, "ev_gx1", "ev_sx1")
+
+        # ev_g0 should remain separate
+        assert_not_same_cluster(self, clusters, "ev_gx0", "ev_sx1")
+
+        total = sum(c.recurrence for c in clusters)
+        self.assertEqual(total, 3)
+
+
 if __name__ == "__main__":
     unittest.main()
