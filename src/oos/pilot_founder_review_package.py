@@ -19,7 +19,7 @@ No live APIs. No LLM calls. No filesystem writes. Deterministic only.
 """
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Any
 
@@ -889,9 +889,25 @@ def _build_review_item_for_cluster(
     catch_all = bool(cluster.get("catch_all_risk", False))
 
     # Determine cluster quality label
-    if catch_all:
+    # v2.14: Uses blockers, evidence quality, cohesion, catch_all risk
+    accepted_count = evidence_quality_counts.get("accepted", 0)
+    weak_count = evidence_quality_counts.get("weak", 0)
+    noise_count = evidence_quality_counts.get("noise", 0)
+    total_ev = accepted_count + weak_count + noise_count
+    noise_ratio = noise_count / total_ev if total_ev > 0 else 0.0
+    weak_ratio = weak_count / total_ev if total_ev > 0 else 0.0
+
+    if blockers or catch_all or noise_ratio >= 0.5:
         cluster_quality_label = "low"
-    elif cohesion >= 0.6 and overall >= 0.70:
+    elif accepted_count == 0 and weak_count > 0:
+        cluster_quality_label = "low"
+    elif noise_count > 0:
+        cluster_quality_label = "medium"
+    elif weak_ratio >= 0.5:
+        cluster_quality_label = "medium"
+    elif cohesion < 0.4:
+        cluster_quality_label = "medium"
+    elif cohesion >= 0.6 and overall >= 0.70 and accepted_count > 0:
         cluster_quality_label = "high"
     elif cohesion >= 0.4:
         cluster_quality_label = "medium"
@@ -1115,6 +1131,9 @@ def build_founder_review_package(
     ))
 
     review_items = review_items[:max_items]
+
+    # Reassign review_priority after final sort/truncation
+    review_items = [replace(ri, review_priority=i + 1) for i, ri in enumerate(review_items)]
 
     promote_count = sum(1 for ri in review_items if ri.recommended_decision == "PROMOTE")
     park_count = sum(1 for ri in review_items if ri.recommended_decision == "PARK")
@@ -1428,7 +1447,7 @@ def render_founder_review_package_markdown(
         top3 = package.review_items[:3]
     if top3:
         for ri in top3:
-            idx = package.review_items.index(ri) + 1
+            idx = ri.review_priority
             lines.append(
                 f"{idx}. **[{ri.recommended_decision}]** `{ri.review_item_id}` -- "
                 f"{ri.title} (score={ri.score:.2f}, "
@@ -1456,8 +1475,54 @@ def render_founder_review_package_markdown(
         lines.append("| _No evidence data_ | 0 | -- |")
     lines.append("")
 
-    # ---- Review Counts (compact table) ----
-    lines.append("## Review Counts")
+    # ---- Per-source Signal-to-Noise Ratio ----
+    lines.append("### Per-Source Breakdown")
+    lines.append("")
+    # Collect evidence links by source_id, classifying via quality_flags
+    per_source: dict[str, dict[str, int]] = {}
+    from .noise_classifier import SEVERE_NOISE_FLAGS, MEDIUM_NOISE_FLAGS
+    SEVERE = frozenset(SEVERE_NOISE_FLAGS)
+    MEDIUM = frozenset(MEDIUM_NOISE_FLAGS)
+
+    def _classify_evidence_link(el: FounderReviewEvidenceLink) -> str:
+        """Classify a single evidence link as accepted/weak/noise based on quality_flags."""
+        flags = [f.lower().strip() for f in el.quality_flags]
+        for f in flags:
+            if f in SEVERE:
+                return "noise"
+        for f in flags:
+            if f in MEDIUM:
+                return "weak"
+        return "accepted"
+
+    for ri in package.review_items:
+        for el in ri.evidence_links:
+            sid = el.source_id if el.source_id else "unknown"
+            if sid not in per_source:
+                per_source[sid] = {"accepted": 0, "weak": 0, "noise": 0, "total": 0}
+            classification = _classify_evidence_link(el)
+            per_source[sid][classification] += 1
+            per_source[sid]["total"] += 1
+
+    if per_source:
+        lines.append("| Source | Accepted | Weak | Noise | Total | Acc.R | Weak.R | Noise.R |")
+        lines.append("|--------|----------|------|-------|-------|-------|--------|---------|")
+        for sid in sorted(per_source.keys()):
+            ps = per_source[sid]
+            t = ps["total"]
+            a_r = ps["accepted"] / t if t > 0 else 0.0
+            w_r = ps["weak"] / t if t > 0 else 0.0
+            n_r = ps["noise"] / t if t > 0 else 0.0
+            lines.append(
+                f"| `{sid}` | {ps['accepted']} | {ps['weak']} | "
+                f"{ps['noise']} | {t} | {a_r:.2f} | {w_r:.2f} | {n_r:.2f} |"
+            )
+    else:
+        lines.append("_No per-source evidence data available._")
+    lines.append("")
+
+    # ---- Decision Breakdown (compact table) ----
+    lines.append("## Decision Breakdown")
     lines.append("")
     lines.append("| Decision | Count |")
     lines.append("|----------|-------|")

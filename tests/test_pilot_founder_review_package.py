@@ -1301,7 +1301,7 @@ class TestRenderMarkdown(unittest.TestCase):
             "# Founder Review Package",
             "## Executive Summary",
             "## Signal-to-Noise Ratio",
-            "## Review Counts",
+            "## Decision Breakdown",
             "## Top Review Items",
             "## Decision Cards",
             "## Score Breakdown",
@@ -2615,6 +2615,345 @@ class TestMarkdownClaritySections(unittest.TestCase):
         md = render_founder_review_package_markdown(package)
         self.assertIn("[DEBUGGING_PAIN]", md)
         self.assertIn("[LOW_TEXT_CONTEXT]", md)
+
+
+# ---------------------------------------------------------------------------
+# Codex review fix tests — v2.14 Item 5 founder review clarity
+# ---------------------------------------------------------------------------
+
+
+class TestReviewPriorityAfterSort(unittest.TestCase):
+    """Fix 1: review_priority must be reassigned after final sort/truncation."""
+
+    def test_unsorted_input_clusters_produce_sequential_priorities(self):
+        """Unsorted input clusters produce review items with review_priority 1..N in final order."""
+        clusters = [
+            _make_cluster_dict("pc_a", overall=0.35, source_diversity=1, recurrence=1),  # PARK
+            _make_cluster_dict("pc_b", overall=0.85, source_diversity=2, recurrence=5),  # PROMOTE
+            _make_cluster_dict("pc_c", overall=0.15, noise_risk=0.85,
+                               source_diversity=1, recurrence=1),  # KILL
+        ]
+        package = build_founder_review_package(
+            pain_clusters=clusters,
+            created_at="2026-05-12T10:00:00Z",
+        )
+        priorities = [ri.review_priority for ri in package.review_items]
+        self.assertEqual(priorities, [1, 2, 3],
+                         f"Expected [1, 2, 3], got {priorities}")
+
+    def test_markdown_card_order_and_priority_agree(self):
+        """Markdown Card N and Priority rank must agree."""
+        clusters = [
+            _make_cluster_dict("pc_a", overall=0.35, source_diversity=1, recurrence=1),
+            _make_cluster_dict("pc_b", overall=0.85, source_diversity=2, recurrence=5),
+        ]
+        package = build_founder_review_package(
+            pain_clusters=clusters,
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        # Card 1 should show Priority rank: 1 of N
+        self.assertIn("### Card 1:", md)
+        self.assertIn("- **Priority rank**: 1 of 2", md)
+        # Card 2 should show Priority rank: 2 of N
+        self.assertIn("### Card 2:", md)
+        self.assertIn("- **Priority rank**: 2 of 2", md)
+
+    def test_to_dict_from_dict_preserves_corrected_priority(self):
+        """to_dict/from_dict preserves review_priority after reassignment."""
+        clusters = [
+            _make_cluster_dict("pc_a", overall=0.35, source_diversity=1, recurrence=1),
+            _make_cluster_dict("pc_b", overall=0.85, source_diversity=2, recurrence=3),
+        ]
+        package = build_founder_review_package(
+            pain_clusters=clusters,
+            created_at="2026-05-12T10:00:00Z",
+        )
+        d = package.to_dict()
+        restored = FounderReviewPackage.from_dict(d)
+        for i, (orig, rest) in enumerate(zip(package.review_items, restored.review_items)):
+            self.assertEqual(orig.review_priority, rest.review_priority,
+                             f"Item {i}: priority mismatch {orig.review_priority} vs {rest.review_priority}")
+
+    def test_no_duplicate_or_skipped_priority_ranks(self):
+        """Priority ranks must be 1..N with no duplicates or gaps."""
+        clusters = [_make_cluster_dict(f"pc_{i:03d}", overall=0.50) for i in range(7)]
+        package = build_founder_review_package(
+            pain_clusters=clusters,
+            created_at="2026-05-12T10:00:00Z",
+            max_items=7,
+        )
+        priorities = sorted([ri.review_priority for ri in package.review_items])
+        self.assertEqual(priorities, list(range(1, len(priorities) + 1)),
+                         f"Expected contiguous 1..{len(priorities)}, got {priorities}")
+        self.assertEqual(len(set(priorities)), len(priorities),
+                         f"Duplicate priorities found: {priorities}")
+
+
+class TestClusterQualityLabelBlockerAware(unittest.TestCase):
+    """Fix 2: cluster_quality_label must include blockers and evidence quality."""
+
+    def test_blocker_heavy_item_not_high_quality(self):
+        """Item with promotion_blockers must not be 'high' quality."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["bot_generated"]),
+            _make_evidence("ev_002", quality_flags=["maintainer_housekeeping"]),
+            _make_evidence("ev_003", quality_flags=[]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_blockers", overall=0.90, source_diversity=2, recurrence=3,
+            evidence_list=evidence,
+        )
+        cluster["cohesion_score"] = 0.8
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertNotEqual(item.cluster_quality_label, "high",
+                            "Blocker-heavy item must not be high quality")
+
+    def test_noisy_item_not_high_quality(self):
+        """Item with noise_count > 0 must not be 'high' quality."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=[]),
+            _make_evidence("ev_002", quality_flags=["bot_generated"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_noisy", overall=0.85, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        cluster["cohesion_score"] = 0.7
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertNotEqual(item.cluster_quality_label, "high",
+                            "Noisy item must not be high quality")
+
+    def test_weak_only_item_not_high_quality(self):
+        """Item with accepted_count==0 and weak_count>0 must not be 'high' quality."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["requires_manual_review"]),
+            _make_evidence("ev_002", quality_flags=["generic_language"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_weak_only", overall=0.80, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        cluster["cohesion_score"] = 0.65
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertNotEqual(item.cluster_quality_label, "high",
+                            "Weak-only item must not be high quality")
+
+    def test_clean_high_cohesion_item_can_be_high(self):
+        """Clean, high-cohesion item with no blockers and accepted_count>0 can be 'high'."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain"]),
+            _make_evidence("ev_002", source_id="github_issues", source_type="issue_tracker",
+                          source_url="https://github.com/o/r/issues/1",
+                          quality_flags=["integration_pain"]),
+            _make_evidence("ev_003", quality_flags=["business_cost_signal"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_clean_high", overall=0.85, source_diversity=2, recurrence=3,
+            evidence_list=evidence,
+        )
+        cluster["cohesion_score"] = 0.75
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertEqual(item.cluster_quality_label, "high",
+                         "Clean high-cohesion item should be high quality")
+
+    def test_catch_all_risk_forces_low(self):
+        """catch_all_risk=True always forces 'low' quality label."""
+        cluster = _make_cluster_dict(
+            "pc_catch", overall=0.95, source_diversity=3, recurrence=5,
+        )
+        cluster["cohesion_score"] = 0.9
+        cluster["catch_all_risk"] = True
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertEqual(item.cluster_quality_label, "low",
+                         "Catch-all risk cluster must be low quality")
+
+    def test_quality_label_roundtrip_remains_stable(self):
+        """cluster_quality_label roundtrip must be preserved."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["debugging_pain"]),
+            _make_evidence("ev_002", quality_flags=["requires_manual_review"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_rl_q", overall=0.60, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        d = package.to_dict()
+        restored = FounderReviewPackage.from_dict(d)
+        self.assertEqual(
+            package.review_items[0].cluster_quality_label,
+            restored.review_items[0].cluster_quality_label,
+        )
+
+    def test_markdown_badge_reflects_corrected_label(self):
+        """Markdown must show corrected quality badge matching cluster_quality_label."""
+        evidence = [
+            _make_evidence("ev_001", quality_flags=["bot_generated"]),
+            _make_evidence("ev_002", quality_flags=["maintainer_housekeeping"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_badge_low", overall=0.70, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        item = package.review_items[0]
+        self.assertEqual(item.cluster_quality_label, "low")
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("[LOW QUALITY]", md)
+        self.assertNotIn("[HIGH QUALITY]", md)
+
+
+class TestPerSourceSNRBreakdown(unittest.TestCase):
+    """Fix 3: Per-source Signal-to-Noise breakdown in Markdown."""
+
+    def test_markdown_includes_per_source_snr_table(self):
+        """Markdown must include '### Per-Source Breakdown' section."""
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1"),
+            _make_evidence("ev_002", "github_issues", "issue_tracker",
+                          "https://github.com/o/r/issues/1"),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_per_src", overall=0.75, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("### Per-Source Breakdown", md)
+        self.assertIn("| Source | Accepted | Weak | Noise | Total |", md)
+
+    def test_hn_and_github_produce_separate_rows(self):
+        """HN and GitHub evidence produce separate rows in the per-source table."""
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1"),
+            _make_evidence("ev_002", "github_issues", "issue_tracker",
+                          "https://github.com/o/r/issues/1"),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_hn_gh", overall=0.75, source_diversity=2, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("`hacker_news`", md)
+        self.assertIn("`github_issues`", md)
+
+    def test_per_source_ratios_are_correct(self):
+        """Per-source accepted/weak/noise ratios must be correct."""
+        # 2 HN evidence: 1 clean, 1 with noise flag
+        evidence = [
+            _make_evidence("ev_001", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=[]),
+            _make_evidence("ev_002", "hacker_news", "discussion",
+                          "https://news.ycombinator.com/item?id=2",
+                          quality_flags=["bot_generated"]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_ratio", overall=0.55, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("### Per-Source Breakdown", md)
+        # hacker_news should have 1 accepted, 0 weak, 1 noise
+        # Since bot_generated is in SEVERE_NOISE_FLAGS -> noise
+        self.assertIn("`hacker_news` | 1 | 0 | 1 | 2 | 0.50 | 0.00 | 0.50 |", md)
+
+    def test_unknown_source_handled_safely(self):
+        """Evidence with missing source_id must appear as 'unknown'."""
+        evidence = [
+            _make_evidence("ev_001", "", "discussion",
+                          "https://news.ycombinator.com/item?id=1",
+                          quality_flags=[]),
+        ]
+        cluster = _make_cluster_dict(
+            "pc_unk", overall=0.75, source_diversity=1, recurrence=2,
+            evidence_list=evidence,
+        )
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("`unknown`", md)
+
+    def test_per_source_table_empty_when_no_evidence(self):
+        """Per-source table safely empty when no evidence exists."""
+        package = FounderReviewPackage(
+            package_id="frp_empty",
+            discovery_run_id="test_empty",
+            created_at="2026-05-12T00:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("### Per-Source Breakdown", md)
+        self.assertIn("_No per-source evidence data available._", md)
+
+
+class TestDecisionBreakdownSection(unittest.TestCase):
+    """Fix 4: 'Review Counts' renamed to 'Decision Breakdown'."""
+
+    def test_markdown_uses_decision_breakdown_not_review_counts(self):
+        """Markdown must use 'Decision Breakdown' not 'Review Counts'."""
+        cluster = _make_cluster_dict(overall=0.75)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        self.assertIn("## Decision Breakdown", md)
+        self.assertNotIn("## Review Counts", md)
+
+    def test_executive_summary_still_has_recommendation_counts(self):
+        """Executive Summary still contains recommendation counts."""
+        cluster = _make_cluster_dict(overall=0.75)
+        package = build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+        md = render_founder_review_package_markdown(package)
+        # Executive Summary table must still exist
+        self.assertIn("| Recommendation | Count |", md)
+        # Decision Breakdown table must exist separately
+        self.assertIn("| Decision | Count |", md)
 
 
 if __name__ == "__main__":

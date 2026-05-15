@@ -451,6 +451,7 @@ Improve the founder review package structure, ordering, and evidence presentatio
 - Unit tests verify cluster quality summary fields are present and correct
 - Unit tests verify evidence excerpts are included and truncated correctly
 - Unit tests verify signal-to-noise ratio summary at package top
+- Unit tests verify per-source SNR breakdown table
 - Unit tests verify Markdown formatting consistency
 - Markdown output is human-readable and well-structured
 - At least 15 focused tests
@@ -459,15 +460,16 @@ Improve the founder review package structure, ordering, and evidence presentatio
 
 - [x] **5.1** Cluster quality summary with scores and flags in each cluster section
 - [x] **5.2** Evidence excerpts (first 200 chars) per signal
-- [x] **5.3** Signal-to-noise ratio summary at package top
+- [x] **5.3** Signal-to-noise ratio summary at package top (aggregate + per-source breakdown)
 - [x] **5.4** Consistent Markdown formatting with quality badges
-- [x] **5.5** Redundant sections removed or collapsed
-- [x] **5.6** All existing tests pass
-- [x] **5.7** At least 15 focused tests pass (17 new Item 5 tests pass)
-- [x] **5.8** `.\scripts\dev-git-check.ps1` passes
-- [x] **5.9** One local commit made with message: `[v2.14] 5 founder review package clarity`
+- [x] **5.5** Redundant sections removed or collapsed; "Review Counts" renamed to "Decision Breakdown"
+- [x] **5.6** All existing tests pass (2609 tests OK)
+- [x] **5.7** At least 15 focused tests pass (18 new Codex fix tests + 17 existing = 35 Item 5 tests)
+- [x] **5.8** `.\scripts\dev-git-check.ps1` passes (dirty tree expected pre-commit)
+- [x] **5.9** Codex fixes applied: stale review_priority reassigned after sort, cluster_quality_label blocker-aware, per-source SNR breakdown, Decision Breakdown rename
+- [x] **5.10** One local commit made with message: `[v2.14] Fix founder review clarity findings`
 
-**Item 5 complete; item 6 is next.**
+**Item 5 complete (Codex review fixes applied); item 6 is next.**
 
 ---
 
