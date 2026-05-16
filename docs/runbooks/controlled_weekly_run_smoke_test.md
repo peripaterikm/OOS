@@ -465,6 +465,92 @@ The pilot step appears as "Step 10: Operational Discovery Pilot Smoke" and repor
 
 ---
 
+## 21. v2.14 Controlled Quality Smoke (v2.14 Item 9)
+
+### Purpose
+
+This smoke step runs the full Operational Discovery Pilot pipeline on a curated v2.14 quality fixture that exercises all quality gates introduced in v2.14 (noise classification, cluster assembly tuning, title generation, founder review package clarity, opportunity synthesis hardening, and Source Quality Report contradiction fix). It verifies end-to-end that v2.14 quality improvements work correctly before any source expansion or live pilot re-run.
+
+### What It Verifies
+
+- **Gate A — Source Quality Report:** classification_health is not falsely clean when weak/noise/flags exist; evidence_quality_status reflects caution/problematic; contradiction_warnings present; dominant_quality_flags include evidence-only flags; per-source warnings render in Markdown.
+- **Gate B — PainCluster Assembly:** mixed anchors do not collapse into one catch-all cluster; coherent stack-trace/trace-debugging items remain clustered; cluster titles are readable (not `[dead]` / `needs_more_evidence`); zero `catch_all_risk = true` clusters.
+- **Gate C — Founder Review Package:** Executive Summary present; Signal-to-Noise Ratio present; Per-Source Breakdown present; Quality Gate per review item; Opportunity Hypotheses section present (even if empty).
+- **Gate D — Opportunity Synthesis:** synthesis does not produce candidates from invalid/noisy/placeholder inputs; hypotheses have `not_a_solution_yet = true`, `created_by = deterministic_stub`, `evidence_links` preserved; unknown actor results in `unproven; validate actor` (no invented ICP).
+
+### Fixture Composition
+
+The v2.14 quality smoke fixture includes 9 evidence items:
+
+| Evidence ID | Source | Character | Expected Classification |
+|-------------|--------|-----------|------------------------|
+| `v214_gh_stack_001` | GitHub Issues | Concrete stack-trace debugging pain | Accepted |
+| `v214_gh_trace_001` | GitHub Issues | Prompt replay / trace debugging pain | Accepted |
+| `v214_gh_prov_001` | GitHub Issues | Multi-agent provenance pain | Accepted |
+| `v214_hn_noise_001` | HN | Product launch + vendor_promo flags | Noise |
+| `v214_hn_noise_002` | HN | Product launch + launch_hype flags | Noise |
+| `v214_hn_flagged_001` | HN | Evidence-only flags (low_text_context) | Weak/Noise |
+| `v214_hn_pain_001` | HN | Positive pain flags (cost_signal, workaround) | Accepted (flagged) |
+| `v214_hn_clean_001` | HN | Clean agent debugging pain (no flags) | Accepted |
+
+### Expected Artifacts
+
+The v2.14 quality smoke writes only to `<temp_root>/v2_14_quality_smoke/pilot_smoke_v2_14_quality/`. All 9 required artifacts are verified.
+
+### Running the Quality Smoke Standalone
+
+```powershell
+.\scripts\run-controlled-smoke.ps1
+```
+
+The quality smoke step appears as "Step 11: v2.14 Controlled Quality Smoke" and reports individual PASS/FAIL for each gate check.
+
+### Smoke Assertions
+
+| Gate | Assertion | Expected |
+|------|-----------|----------|
+| A1 | classification_health | Not `clean` when noise/weak/flags exist |
+| A2 | evidence_quality_status | Reflects caution/problematic |
+| A3 | contradiction_warnings | List present in quality_health |
+| A4 | dominant_quality_flags | Includes vendor_promo/suspected_self_promo |
+| A5 | Per-source warnings in Markdown | Present in SQR MD |
+| B1 | Multiple clusters | > 1 cluster (not single catch-all) |
+| B2 | Coherent trace items | Stack/trace items clustered together |
+| B3 | No dead/nme titles | Zero `[dead]` or `needs_more_evidence` titles |
+| B4 | Zero catch-all risk | No `catch_all_risk = true` clusters |
+| C1 | Executive Summary | Present in FRP Markdown |
+| C2 | Signal-to-Noise Ratio | Present in FRP Markdown |
+| C3 | Per-Source Breakdown | Present in FRP Markdown |
+| C4 | Quality Gate per item | Present in FRP Markdown |
+| C5 | Opportunity Hypotheses | Section present in FRP Markdown |
+| D1 | Opportunity candidates list | May be empty; must be a list |
+| D2 | not_a_solution_yet | True on all hypotheses |
+| D3 | created_by | `deterministic_stub` on all hypotheses |
+| D4 | evidence_links | Preserved on all hypotheses |
+| D5 | No invented ICP | Unknown actor → `unproven; validate actor` |
+
+### Failure Guidance
+
+| Failure | Likely Cause | Fix |
+|---------|-------------|-----|
+| Gate A1/A2/A4 fail | Noise classifier not rejecting flagged evidence | Check `noise_classifier.py` rules for vendor_promo, low_text_context |
+| Gate A3 fail | SQR contradiction detection not triggered | Check `source_quality_report.py` contradiction thresholds |
+| Gate B1 fail | Catch-all cluster formed | Check cluster assembly `_should_merge()` and canonical anchors |
+| Gate B3 fail | Bad cluster title generated | Check `generate_cluster_review_title()` fallback logic |
+| Gate C failures | FRP section missing | Check `pilot_founder_review_package.py` rendering |
+| Gate D2/D3/D4/D5 | Synthesis contract violation | Check `opportunity_synthesis.py` hypothesis construction |
+| Exit code non-zero | Any check failed | Review the specific V214_CHECK FAIL lines |
+
+### No Live APIs / No LLMs
+
+The v2.14 quality smoke step uses deterministic in-memory fixture data only. No network calls. No LLM calls. All assertions are computed from pipeline outputs.
+
+### Temp-Output Behavior
+
+All v2.14 quality smoke artifacts are written to a temp directory under `$TempRoot/v2_14_quality_smoke/`. The real repository `artifacts/` directory is never touched.
+
+---
+
 **For automated execution, use the companion script:**
 
 ```powershell

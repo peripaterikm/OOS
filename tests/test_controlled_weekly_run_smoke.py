@@ -596,3 +596,166 @@ class TestSmokeScriptContainsOperationalDiscoveryPilotStep(unittest.TestCase):
                             f"Pilot smoke fixture uses deferred source_id '{source}' "
                             f"in fixture data"
                         )
+
+
+# ---------------------------------------------------------------------------
+# v2.14 Item 9 Controlled Quality Smoke tests
+# ---------------------------------------------------------------------------
+
+
+class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
+    """Verify the smoke script includes the v2.14 quality smoke step (Step 11)."""
+
+    def test_contains_v214_quality_smoke_section(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("v2.14 Controlled Quality Smoke", text,
+                      "Smoke script missing v2.14 Controlled Quality Smoke section")
+
+    def test_contains_v214_step_label(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("STEP 11:", text,
+                      "Smoke script missing STEP 11 label")
+        self.assertIn("v2.14 Controlled Quality Smoke", text,
+                      "Smoke script missing v2.14 quality smoke reference")
+
+    def test_references_run_operational_discovery_pilot(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("run_operational_discovery_pilot", text,
+                      "Smoke script missing run_operational_discovery_pilot in Step 11")
+
+    def test_checks_gate_a_source_quality_report(self) -> None:
+        """Step 11 must check Gate A: Source Quality Report."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        gate_a_checks = [
+            "A1_classification_health_not_simply_clean",
+            "A2_evidence_quality_status_reflects_caution",
+            "A3_contradiction_warnings_field_present",
+            "A4_dominant_quality_flags_include_evidence_flags",
+            "A5_per_source_warnings_in_markdown",
+        ]
+        for check in gate_a_checks:
+            with self.subTest(check=check):
+                self.assertIn(check, text,
+                              f"Step 11 missing Gate A check: {check}")
+
+    def test_checks_gate_b_pain_cluster_assembly(self) -> None:
+        """Step 11 must check Gate B: PainCluster assembly."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        gate_b_checks = [
+            "B1_multiple_clusters_not_single_catch_all",
+            "B2_coherent_trace_items_clustered_together",
+            "B3_no_dead_or_nme_titles",
+            "B4_zero_catch_all_risk_clusters",
+        ]
+        for check in gate_b_checks:
+            with self.subTest(check=check):
+                self.assertIn(check, text,
+                              f"Step 11 missing Gate B check: {check}")
+
+    def test_checks_gate_c_founder_review_package(self) -> None:
+        """Step 11 must check Gate C: Founder Review Package."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        gate_c_checks = [
+            "C1_executive_summary",
+            "C2_signal_to_noise_ratio",
+            "C3_per_source_breakdown",
+            "C4_quality_gate_per_item",
+            "C5_opportunity_hypotheses_section",
+        ]
+        for check in gate_c_checks:
+            with self.subTest(check=check):
+                self.assertIn(check, text,
+                              f"Step 11 missing Gate C check: {check}")
+
+    def test_checks_gate_d_opportunity_synthesis(self) -> None:
+        """Step 11 must check Gate D: Opportunity synthesis."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        gate_d_checks = [
+            "D1_opportunity_candidates_may_exist",
+            "D2_all_hypotheses_not_a_solution_yet",
+            "D3_all_created_by_deterministic_stub",
+            "D4_all_hypotheses_have_evidence_links",
+            "D5_no_invented_icp_for_unknown_actor",
+        ]
+        for check in gate_d_checks:
+            with self.subTest(check=check):
+                self.assertIn(check, text,
+                              f"Step 11 missing Gate D check: {check}")
+
+    def test_uses_temp_output_location(self) -> None:
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("v2_14_quality_smoke", text,
+                      "Step 11 missing v2_14_quality_smoke temp directory")
+        self.assertIn("$TempRoot", text,
+                      "Step 11 must reference $TempRoot")
+
+    def test_fixture_includes_quality_flags(self) -> None:
+        """Step 11 fixture must include evidence with quality flags."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        required_flags = [
+            "requires_manual_review",
+            "low_confidence_source",
+            "suspected_self_promo",
+            "debugging_pain",
+            "workaround_signal",
+        ]
+        for flag in required_flags:
+            with self.subTest(flag=flag):
+                self.assertIn(flag, text,
+                              f"Step 11 fixture missing quality flag: {flag}")
+
+    def test_fixture_includes_evidence_only_flags_case(self) -> None:
+        """Step 11 must include evidence-only flag case (low_text_context)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        # Look in the Step 11 section
+        step11_start = text.find("STEP 11:")
+        step11_end = text.find("SUMMARY", step11_start) if step11_start >= 0 else -1
+        if step11_start >= 0 and step11_end >= 0:
+            step11_section = text[step11_start:step11_end]
+            self.assertIn("low_text_context", step11_section,
+                          "Step 11 fixture missing low_text_context flag (evidence-only case)")
+
+    def test_fixture_has_valid_http_source_urls(self) -> None:
+        """All source_urls in Step 11 fixture must be http(s)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        step11_start = text.find("STEP 11:")
+        step11_end = text.find("SUMMARY", step11_start) if step11_start >= 0 else -1
+        if step11_start >= 0 and step11_end >= 0:
+            step11_section = text[step11_start:step11_end]
+            self.assertIn("https://news.ycombinator.com/item?id=", step11_section,
+                          "Step 11 fixture must use valid HN https source URLs")
+            self.assertIn("https://github.com/example/", step11_section,
+                          "Step 11 fixture must use valid GitHub https source URLs")
+
+    def test_no_live_api_in_step11(self) -> None:
+        """Step 11 must not contain live API call patterns."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        step11_start = text.find("STEP 11:")
+        step11_end = text.find("SUMMARY", step11_start) if step11_start >= 0 else -1
+        if step11_start >= 0 and step11_end >= 0:
+            step11_section = text[step11_start:step11_end]
+            live_patterns = ["Invoke-RestMethod", "Invoke-WebRequest", "curl ", "wget "]
+            for pattern in live_patterns:
+                self.assertNotIn(pattern, step11_section,
+                                 f"Step 11 contains live API pattern: {pattern}")
+
+    def test_no_deferred_source_ids_in_step11_fixture(self) -> None:
+        """Step 11 fixture must not use any deferred source_ids."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        deferred = ["product_hunt", "pimenov_ai", "reddit", "discord",
+                     "slack", "x_twitter", "stack_exchange"]
+        step11_start = text.find("STEP 11:")
+        step11_end = text.find("SUMMARY", step11_start) if step11_start >= 0 else -1
+        if step11_start >= 0 and step11_end >= 0:
+            step11_section = text[step11_start:step11_end]
+            for source in deferred:
+                if source in step11_section:
+                    idx = step11_section.find(source)
+                    context_start = max(0, idx - 100)
+                    context_end = min(len(step11_section), idx + len(source) + 100)
+                    context = step11_section[context_start:context_end]
+                    if ('source_id = "' + source + '"') in context or ("source_id = '" + source + "'") in context:
+                        self.fail(
+                            f"Step 11 fixture uses deferred source_id '{source}' "
+                            f"in fixture data"
+                        )

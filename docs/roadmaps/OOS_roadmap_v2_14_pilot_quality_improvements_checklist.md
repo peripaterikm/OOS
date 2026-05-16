@@ -1,6 +1,6 @@
 # OOS Roadmap v2.14 — Pilot Quality Improvements
 
-**Status:** Active / item 8 ready
+**Status:** Active / item 10 ready
 **Branch:** `ops/v2-13-pilot-cycle-1-run`
 **Created:** 2026-05-14
 **Based on:** v2.13 Pilot Cycle 1 CONDITIONAL GO decision
@@ -13,10 +13,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `9 — Controlled pilot smoke re-run with v2.14 quality gates`
-- [x] **0.3** Roadmap state: `active / item 9 ready`
-- [x] **0.4** Completed from this roadmap: **9 / 11**
-- [x] **0.5** Remaining: **2 / 11**
+- [x] **0.2** Current item: `10 — Final v2.14 checkpoint`
+- [x] **0.3** Roadmap state: `active / item 10 ready`
+- [x] **0.4** Completed from this roadmap: **10 / 11**
+- [x] **0.5** Remaining: **1 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -694,12 +694,12 @@ Run a deterministic, fixture-only controlled quality smoke test focused on the c
 
 ### Definition of Done
 
-- [ ] **9.1** Quality smoke step added to `scripts/run-controlled-smoke.ps1`
-- [ ] **9.2** Smoke step passes on v2.14 fixtures (temp directory)
-- [ ] **9.3** All existing smoke steps still pass
-- [ ] **9.4** Smoke runbook updated with quality smoke section
-- [ ] **9.5** `.\scripts\dev-git-check.ps1` passes
-- [ ] **9.6** One local commit made with message: `[v2.14] 9 controlled quality smoke agent debugging theme`
+- [x] **9.1** Quality smoke step added to `scripts/run-controlled-smoke.ps1`
+- [x] **9.2** Smoke step passes on v2.14 fixtures (temp directory)
+- [x] **9.3** All existing smoke steps still pass
+- [x] **9.4** Smoke runbook updated with quality smoke section
+- [x] **9.5** `.\scripts\dev-git-check.ps1` passes
+- [x] **9.6** One local commit made with message: `[v2.14] 9 run controlled quality smoke`
 
 ---
 
@@ -819,4 +819,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 8 complete; item 9 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 9 complete; item 10 is next. No source expansion. No runtime artifacts committed.*
