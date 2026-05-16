@@ -1,6 +1,6 @@
 # OOS Roadmap v2.14 — Pilot Quality Improvements
 
-**Status:** Active / item 6 ready
+**Status:** Active / item 7 ready
 **Branch:** `ops/v2-13-pilot-cycle-1-run`
 **Created:** 2026-05-14
 **Based on:** v2.13 Pilot Cycle 1 CONDITIONAL GO decision
@@ -13,10 +13,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `6 — Opportunity Synthesis Contract / Deterministic Stub Hardening`
-- [x] **0.3** Roadmap state: `active / item 6 ready`
-- [x] **0.4** Completed from this roadmap: **6 / 11**
-- [x] **0.5** Remaining: **5 / 11**
+- [x] **0.2** Current item: `7 — Source Quality Report Contradiction Fix`
+- [x] **0.3** Roadmap state: `active / item 7 ready`
+- [x] **0.4** Completed from this roadmap: **7 / 11**
+- [x] **0.5** Remaining: **4 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -524,15 +524,17 @@ Harden the opportunity synthesis pipeline so it produces opportunity candidates 
 
 ### Definition of Done
 
-- [ ] **6.1** Deterministic stub produces candidates from qualifying clusters
-- [ ] **6.2** Candidate fields populated: title, pain_summary, target_buyer, evidence_ids, source_urls, confidence
-- [ ] **6.3** Opportunity synthesis wired into pilot orchestrator
-- [ ] **6.4** `opportunity_candidates.json` in pilot run artifacts
-- [ ] **6.5** LLM contract hardened (prompt template, validation, version; provider disabled)
-- [ ] **6.6** All existing tests pass
-- [ ] **6.7** At least 20 focused tests pass
-- [ ] **6.8** `.\scripts\dev-git-check.ps1` passes
-- [ ] **6.9** One local commit made with message: `[v2.14] 6 opportunity synthesis contract deterministic stub hardening`
+- [x] **6.1** Deterministic stub produces candidates from qualifying clusters
+- [x] **6.2** Candidate fields populated: title, pain_summary, target_buyer, evidence_ids, source_urls, confidence
+- [x] **6.3** Opportunity synthesis wired into pilot orchestrator
+- [x] **6.4** `opportunity_candidates.json` in pilot run artifacts
+- [x] **6.5** LLM contract hardened (prompt template, validation, version; provider disabled)
+- [x] **6.6** All existing tests pass
+- [x] **6.7** At least 20 focused tests pass
+- [x] **6.8** `.\scripts\dev-git-check.ps1` passes
+- [x] **6.9** One local commit made with message: `[v2.14] 6 harden opportunity synthesis stub`
+
+**Item 6 complete; item 7 is next.**
 
 ---
 
@@ -813,4 +815,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 4 complete; item 5 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 6 complete; item 7 is next. No source expansion. No runtime artifacts committed.*

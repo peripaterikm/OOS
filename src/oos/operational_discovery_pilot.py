@@ -662,6 +662,11 @@ def run_operational_discovery_pilot(
     frp_validation = validate_founder_review_package(frp)
     frp_valid_dict = frp_validation.to_dict()
 
+    # v2.14 item 6: If no external opportunity_candidates were provided,
+    # populate from the FRP's opportunity_hypotheses.
+    if not opp_candidates and frp.opportunity_hypotheses:
+        opp_candidates = [dict(oh) for oh in frp.opportunity_hypotheses]
+
     # ---------------------------------------------------------------
     # Phase 7: Validation
     # ---------------------------------------------------------------

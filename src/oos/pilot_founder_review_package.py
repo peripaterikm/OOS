@@ -31,6 +31,10 @@ from .noise_classifier import (
     compute_evidence_quality_summary,
     compute_quality_gate_reasons,
 )
+from .opportunity_synthesis import (
+    OpportunityHypothesis,
+    render_opportunity_hypotheses_markdown,
+)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -386,6 +390,8 @@ class FounderReviewPackage:
     items_catch_all_risk: int = 0
     dominant_pkg_flags: list[str] = field(default_factory=list)
     estimated_review_minutes: str = "unknown"
+    # v2.14 item 6: opportunity hypotheses
+    opportunity_hypotheses: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -417,6 +423,7 @@ class FounderReviewPackage:
             "items_catch_all_risk": self.items_catch_all_risk,
             "dominant_pkg_flags": list(self.dominant_pkg_flags),
             "estimated_review_minutes": self.estimated_review_minutes,
+            "opportunity_hypotheses": [dict(oh) for oh in self.opportunity_hypotheses],
         }
 
     @classmethod
@@ -451,6 +458,7 @@ class FounderReviewPackage:
             items_catch_all_risk=int(data.get("items_catch_all_risk", 0)),
             dominant_pkg_flags=list(data.get("dominant_pkg_flags", [])),
             estimated_review_minutes=str(data.get("estimated_review_minutes", "unknown")),
+            opportunity_hypotheses=[dict(oh) for oh in data.get("opportunity_hypotheses", [])],
         )
 
 
@@ -1217,6 +1225,22 @@ def build_founder_review_package(
                 "recurrence": ri.recurrence,
             })
 
+    # v2.14 item 6: Synthesize opportunity hypotheses from eligible clusters
+    opportunity_hypotheses: list[dict[str, Any]] = []
+    if clusters:
+        try:
+            ri_dicts = [ri.to_dict() for ri in review_items]
+            from .opportunity_synthesis import synthesize_opportunities
+            oh_list = synthesize_opportunities(
+                pain_clusters=clusters,
+                review_items=ri_dicts,
+                generated_at=created_at,
+            )
+            opportunity_hypotheses = [oh.to_dict() for oh in oh_list]
+        except Exception:
+            # Synthesis is best-effort; never block package building
+            pass
+
     pkg_key = f"{discovery_run_id}|{created_at}|review"
     pkg_hash = hashlib.sha256(pkg_key.encode("utf-8")).hexdigest()[:12]
     package_id = f"frp_{pkg_hash}"
@@ -1248,6 +1272,7 @@ def build_founder_review_package(
         items_catch_all_risk=items_catch_all_risk,
         dominant_pkg_flags=dominant_pkg_flags,
         estimated_review_minutes=estimated_review_minutes,
+        opportunity_hypotheses=opportunity_hypotheses,
     )
 
 
@@ -1687,6 +1712,13 @@ def render_founder_review_package_markdown(
                 lines.append(f"| {name} | {value:.2f} |")
             lines.append(f"| **Overall** | **{ri.score:.2f}** |")
             lines.append("")
+
+    # ---- Opportunity Hypotheses (v2.14 item 6) ----
+    if package.opportunity_hypotheses:
+        lines.append(render_opportunity_hypotheses_markdown(
+            [OpportunityHypothesis.from_dict(oh) for oh in package.opportunity_hypotheses]
+        ))
+        lines.append("")
 
     # ---- Warnings (compact) ----
     lines.append("## Warnings and Caveats")
