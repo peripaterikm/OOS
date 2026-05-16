@@ -2956,5 +2956,282 @@ class TestDecisionBreakdownSection(unittest.TestCase):
         self.assertIn("| Decision | Count |", md)
 
 
+class TestPerSourceSNRClassifierParity(unittest.TestCase):
+    """Codex review fix: per-source SNR must use classify_noise_for_evidence().
+
+    These tests verify that per-source SNR rows agree with the canonical
+    noise classifier, including alias resolution, content-based rules,
+    and positive-flag handling.
+    """
+
+    # -- helpers -----------------------------------------------------------
+
+    def _build_pkg(
+        self,
+        evidence_list: list[dict[str, object]],
+        source_id: str = "hacker_news",
+    ) -> FounderReviewPackage:
+        """Build a minimal package from a single-cluster fixture."""
+        cluster = _make_cluster_dict(
+            "pc_snr_parity",
+            overall=0.75,
+            source_diversity=1,
+            recurrence=len(evidence_list),
+            evidence_list=evidence_list,
+        )
+        # Override evidence source_id to keep per-source rows simple
+        for ev in evidence_list:
+            ev["source_id"] = source_id
+        return build_founder_review_package(
+            pain_clusters=[cluster],
+            created_at="2026-05-12T10:00:00Z",
+        )
+
+    def _get_per_source_counts(
+        self, package: FounderReviewPackage, source_id: str
+    ) -> dict[str, int]:
+        """Return {accepted, weak, noise, total} for a source from Markdown."""
+        md = render_founder_review_package_markdown(package)
+        # Locate the per-source table row
+        import re
+        pattern = re.compile(
+            r"\| `" + re.escape(source_id) + r"` \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|"
+        )
+        m = pattern.search(md)
+        self.assertIsNotNone(m, f"Per-source row for {source_id!r} not found in Markdown")
+        return {
+            "accepted": int(m.group(1)),
+            "weak": int(m.group(2)),
+            "noise": int(m.group(3)),
+            "total": int(m.group(4)),
+        }
+
+    # -- vendor_promo (alias → suspected_self_promo) -----------------------
+
+    def test_vendor_promo_not_accepted(self):
+        """vendor_promo aliases to suspected_self_promo → should be weak, not accepted."""
+        evidence = [
+            _make_evidence(
+                "ev_vp", "hacker_news", "discussion",
+                "https://news.ycombinator.com/item?id=1",
+                title="Our new product launch",
+                excerpt="Check out our new platform! We just launched v2.",
+                evidence_kind="product_launch",
+                quality_flags=["vendor_promo"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="hacker_news")
+        counts = self._get_per_source_counts(pkg, "hacker_news")
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["accepted"], 0,
+                         "vendor_promo must not be accepted-clean")
+        # vendor_promo → suspected_self_promo (medium); product_launch + no pain → noise
+        # classify_noise rule 4: suspected_self_promo + product_launch + no clear pain → noise
+        self.assertIn(counts["weak"] + counts["noise"], (1,),
+                      "vendor_promo should be weak or noise, not accepted")
+
+    # -- missing_actor (alias → unclear_actor) -----------------------------
+
+    def test_missing_actor_weak_via_alias(self):
+        """missing_actor aliases to unclear_actor (medium flag) → weak."""
+        evidence = [
+            _make_evidence(
+                "ev_ma", "hacker_news", "discussion",
+                "https://news.ycombinator.com/item?id=1",
+                title="Something is broken",
+                excerpt="Some tool is broken and it is frustrating to use every day. "
+                        "We keep losing work and there is no workaround. Hours wasted.",
+                evidence_kind="pain_signal_candidate",
+                quality_flags=["missing_actor"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="hacker_news")
+        counts = self._get_per_source_counts(pkg, "hacker_news")
+        self.assertEqual(counts["total"], 1)
+        # missing_actor → unclear_actor (medium). With clear pain text, generic_language
+        # rule doesn't fire, so medium flag → weak.
+        self.assertEqual(counts["weak"], 1,
+                         "missing_actor should be weak via alias handling")
+        self.assertEqual(counts["accepted"], 0)
+
+    # -- low_text_context without clear pain → noise -----------------------
+
+    def test_low_text_context_no_pain_is_noise(self):
+        """low_text_context + no pain markers → noise."""
+        evidence = [
+            _make_evidence(
+                "ev_ltc", "hacker_news", "discussion",
+                "https://news.ycombinator.com/item?id=1",
+                title="Short title",
+                excerpt="Too short.",  # < 50 chars, no pain markers
+                evidence_kind="pain_signal_candidate",
+                quality_flags=["low_text_context"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="hacker_news")
+        counts = self._get_per_source_counts(pkg, "hacker_news")
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["noise"], 1,
+                         "low_text_context without pain must be noise")
+        self.assertEqual(counts["accepted"], 0)
+
+    # -- low_text_context with clear pain → weak ---------------------------
+
+    def test_low_text_context_with_pain_is_weak(self):
+        """low_text_context + clear pain markers → weak, never accepted."""
+        evidence = [
+            _make_evidence(
+                "ev_ltcp", "hacker_news", "discussion",
+                "https://news.ycombinator.com/item?id=1",
+                title="Debugging is broken",
+                excerpt="This bug is critical. We waste hours on manual workarounds. "
+                        "The problem keeps coming back and it is frustrating.",
+                # >=50 chars with pain markers like "bug", "manual", "workarounds", etc.
+                evidence_kind="pain_signal_candidate",
+                quality_flags=["low_text_context"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="hacker_news")
+        counts = self._get_per_source_counts(pkg, "hacker_news")
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["weak"], 1,
+                         "low_text_context with pain must be weak, not accepted")
+        self.assertEqual(counts["accepted"], 0)
+
+    # -- product_launch + suspected_self_promo without pain → noise --------
+
+    def test_product_launch_self_promo_no_pain_is_noise(self):
+        """suspected_self_promo + product_launch evidence_kind + no pain → noise."""
+        evidence = [
+            _make_evidence(
+                "ev_pl", "hacker_news", "discussion",
+                "https://news.ycombinator.com/item?id=1",
+                title="Introducing our new AI tool",
+                excerpt="We are excited to announce the launch of our new product "
+                        "that helps teams collaborate better.",
+                evidence_kind="product_launch",
+                quality_flags=["suspected_self_promo"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="hacker_news")
+        counts = self._get_per_source_counts(pkg, "hacker_news")
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["noise"], 1,
+                         "product_launch + suspected_self_promo + no pain must be noise")
+
+    # -- stale_issue + strong pain → accepted (exception) ------------------
+
+    def test_stale_issue_strong_pain_is_accepted(self):
+        """stale_issue with strong pain evidence → accepted via classifier exception."""
+        evidence = [
+            _make_evidence(
+                "ev_si", "github_issues", "issue_tracker",
+                "https://github.com/o/r/issues/1",
+                title="Critical bug: data loss on concurrent writes",
+                excerpt=(
+                    "This is a critical bug that causes data loss. We have been "
+                    "struggling with this issue for weeks. The problem is that "
+                    "concurrent writes cause corruption and there is no workaround. "
+                    "This is blocking our deployment deadline and costing us hours "
+                    "every day. Our team is frustrated and this needs urgent attention."
+                ),
+                # >=150 chars, "bug", "problem", "struggling", "blocked", "costing",
+                # "hours", "deadline", "frustrated", "urgent" → >=2 distinct pain markers
+                evidence_kind="bug_report",
+                quality_flags=["stale_issue"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="github_issues")
+        counts = self._get_per_source_counts(pkg, "github_issues")
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["accepted"], 1,
+                         "stale_issue + strong pain must be accepted (classifier exception)")
+
+    # -- stale_issue without strong pain → weak ----------------------------
+
+    def test_stale_issue_no_strong_pain_is_weak(self):
+        """stale_issue without strong pain evidence → weak (medium flag)."""
+        evidence = [
+            _make_evidence(
+                "ev_si2", "github_issues", "issue_tracker",
+                "https://github.com/o/r/issues/2",
+                title="Old feature request",
+                excerpt="It would be nice to have dark mode.",
+                # short, no strong pain
+                evidence_kind="feature_request",
+                quality_flags=["stale_issue"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="github_issues")
+        counts = self._get_per_source_counts(pkg, "github_issues")
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["weak"], 1,
+                         "stale_issue without strong pain must be weak")
+
+    # -- debugging_pain positive flag → not noise by itself ----------------
+
+    def test_debugging_pain_flag_not_noise(self):
+        """debugging_pain positive flag alone → accepted, not noise."""
+        evidence = [
+            _make_evidence(
+                "ev_dp", "hacker_news", "discussion",
+                "https://news.ycombinator.com/item?id=1",
+                title="Debugging multi-step agent workflows",
+                excerpt="Debugging agent traces is painful because there is no "
+                        "standard way to replay execution steps in production.",
+                evidence_kind="pain_signal_candidate",
+                quality_flags=["debugging_pain"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="hacker_news")
+        counts = self._get_per_source_counts(pkg, "hacker_news")
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["accepted"], 1,
+                         "debugging_pain positive flag must be accepted, not noise")
+        self.assertEqual(counts["noise"], 0)
+
+    # -- integration_pain positive flag → not noise by itself --------------
+
+    def test_integration_pain_flag_not_noise(self):
+        """integration_pain positive flag alone → accepted, not noise."""
+        evidence = [
+            _make_evidence(
+                "ev_ip", "hacker_news", "discussion",
+                "https://news.ycombinator.com/item?id=1",
+                title="Integrating these tools is a nightmare",
+                excerpt="The integration between our CI and deployment pipeline "
+                        "is broken and there is no standard way to fix it.",
+                evidence_kind="pain_signal_candidate",
+                quality_flags=["integration_pain"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="hacker_news")
+        counts = self._get_per_source_counts(pkg, "hacker_news")
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["accepted"], 1,
+                         "integration_pain positive flag must be accepted, not noise")
+        self.assertEqual(counts["noise"], 0)
+
+    # -- mixed: one flag weak, one positive → overall weak -----------------
+
+    def test_mixed_weak_and_positive_is_weak(self):
+        """generic_language (medium) + debugging_pain (positive) → weak."""
+        evidence = [
+            _make_evidence(
+                "ev_mix", "hacker_news", "discussion",
+                "https://news.ycombinator.com/item?id=1",
+                title="Something about tools",
+                excerpt="Tools are hard to use. Debugging is painful.",
+                evidence_kind="pain_signal_candidate",
+                quality_flags=["generic_language", "debugging_pain"],
+            ),
+        ]
+        pkg = self._build_pkg(evidence, source_id="hacker_news")
+        counts = self._get_per_source_counts(pkg, "hacker_news")
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["weak"], 1,
+                         "generic_language + debugging_pain must be weak overall")
+
+
 if __name__ == "__main__":
     unittest.main()

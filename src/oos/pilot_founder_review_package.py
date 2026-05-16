@@ -27,6 +27,7 @@ from .pain_cluster import PainCluster
 from .pain_cluster_assembly import generate_cluster_review_title
 from .source_quality_report import SourceQualityReport
 from .noise_classifier import (
+    classify_noise_for_evidence,
     compute_evidence_quality_summary,
     compute_quality_gate_reasons,
 )
@@ -1478,29 +1479,27 @@ def render_founder_review_package_markdown(
     # ---- Per-source Signal-to-Noise Ratio ----
     lines.append("### Per-Source Breakdown")
     lines.append("")
-    # Collect evidence links by source_id, classifying via quality_flags
+    # NOTE: Per-source SNR counts review evidence links, not unique raw
+    # evidence records. If future packages contain clusters and opportunity
+    # candidates pointing to the same evidence, the table may double-count.
     per_source: dict[str, dict[str, int]] = {}
-    from .noise_classifier import SEVERE_NOISE_FLAGS, MEDIUM_NOISE_FLAGS
-    SEVERE = frozenset(SEVERE_NOISE_FLAGS)
-    MEDIUM = frozenset(MEDIUM_NOISE_FLAGS)
-
-    def _classify_evidence_link(el: FounderReviewEvidenceLink) -> str:
-        """Classify a single evidence link as accepted/weak/noise based on quality_flags."""
-        flags = [f.lower().strip() for f in el.quality_flags]
-        for f in flags:
-            if f in SEVERE:
-                return "noise"
-        for f in flags:
-            if f in MEDIUM:
-                return "weak"
-        return "accepted"
 
     for ri in package.review_items:
         for el in ri.evidence_links:
             sid = el.source_id if el.source_id else "unknown"
             if sid not in per_source:
                 per_source[sid] = {"accepted": 0, "weak": 0, "noise": 0, "total": 0}
-            classification = _classify_evidence_link(el)
+            # Build an evidence-like dict and delegate to the canonical
+            # noise classifier to avoid reimplementing classification rules.
+            ev_dict = {
+                "quality_flags": list(el.quality_flags),
+                "evidence_kind": el.evidence_kind,
+                "title": el.title,
+                "body": el.excerpt,   # body not available; use excerpt
+                "excerpt": el.excerpt,
+                "source_url": el.source_url,
+            }
+            classification = classify_noise_for_evidence(ev_dict)
             per_source[sid][classification] += 1
             per_source[sid]["total"] += 1
 
