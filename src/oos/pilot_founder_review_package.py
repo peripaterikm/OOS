@@ -1714,11 +1714,10 @@ def render_founder_review_package_markdown(
             lines.append("")
 
     # ---- Opportunity Hypotheses (v2.14 item 6) ----
-    if package.opportunity_hypotheses:
-        lines.append(render_opportunity_hypotheses_markdown(
-            [OpportunityHypothesis.from_dict(oh) for oh in package.opportunity_hypotheses]
-        ))
-        lines.append("")
+    lines.append(render_opportunity_hypotheses_markdown(
+        [OpportunityHypothesis.from_dict(oh) for oh in package.opportunity_hypotheses]
+    ))
+    lines.append("")
 
     # ---- Warnings (compact) ----
     lines.append("## Warnings and Caveats")

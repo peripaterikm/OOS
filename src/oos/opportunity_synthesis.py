@@ -50,6 +50,23 @@ ALLOWED_VALIDATION_ACTIONS: frozenset[str] = frozenset({
     "workflow_mapping",
 })
 
+# Allowed review-item decisions for synthesis
+_ALLOWED_SYNTHESIS_DECISIONS: frozenset[str] = frozenset({
+    "PROMOTE",
+    "NEEDS_MORE_EVIDENCE",
+})
+
+# Placeholder-title markers that always block synthesis
+_PLACEHOLDER_TITLE_MARKERS: frozenset[str] = frozenset({
+    "needs_more_evidence",
+    "unknown",
+    "[dead]",
+    "unclear",
+    "placeholder",
+    "n/a",
+    "none",
+})
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -75,6 +92,18 @@ def _capped_str(value: str, max_len: int = 500) -> str:
     return s[:max_len - 3].rstrip() + "..."
 
 
+def _is_valid_source_url(url: str) -> bool:
+    """Return True if url is a valid http(s) URL for synthesis."""
+    if not url or not url.strip():
+        return False
+    u = url.strip()
+    if u.lower().startswith("urn:"):
+        return False
+    if u.lower().startswith("github://"):
+        return False
+    return u.startswith(("http://", "https://"))
+
+
 # ---------------------------------------------------------------------------
 # OpportunityHypothesis
 # ---------------------------------------------------------------------------
@@ -89,7 +118,7 @@ class OpportunityHypothesis:
     source_review_item_ids: list[str] = field(default_factory=list)
     title: str = ""
     problem_statement: str = ""
-    target_icp: str = "unknown"
+    target_icp: str = "unproven; validate actor"
     target_actor: str = "unknown"
     workflow_context: str = ""
     pain_summary: str = ""
@@ -162,7 +191,7 @@ class OpportunityHypothesis:
             source_review_item_ids=list(data.get("source_review_item_ids", [])),
             title=str(data.get("title", "")),
             problem_statement=str(data.get("problem_statement", "")),
-            target_icp=str(data.get("target_icp", "unknown")),
+            target_icp=str(data.get("target_icp", "unproven; validate actor")),
             target_actor=str(data.get("target_actor", "unknown")),
             workflow_context=str(data.get("workflow_context", "")),
             pain_summary=str(data.get("pain_summary", "")),
@@ -196,55 +225,71 @@ def _cluster_is_eligible(
     """Determine if a cluster is eligible for opportunity synthesis.
 
     Returns (is_eligible, reason_if_not).
+
+    Eligibility requires:
+    - A matching review item with PROMOTE or NEEDS_MORE_EVIDENCE decision.
+    - No catch-all risk.
+    - Non-placeholder title.
+    - Evidence present with acceptable noise ratio.
+    - Not product_launch/self-promo only.
+    - Not all low_text_context.
+    - Traceability clean (review_item traceability_status and source URLs).
+    - Minimum evidence diversity/recurrence/score.
     """
     cluster_id = str(cluster.get("cluster_id", "?"))
 
-    # --- Hard rejects ---
+    # --- Require a review item with allowed decision ---
+    if not review_item:
+        return (False, f"Cluster {cluster_id} has no review item; synthesis requires a review item.")
+    rec = str(review_item.get("recommended_decision", ""))
+    if rec not in _ALLOWED_SYNTHESIS_DECISIONS:
+        return (False, f"Cluster {cluster_id} review decision is {rec!r}; synthesis requires PROMOTE or NEEDS_MORE_EVIDENCE.")
 
-    # Catch-all risk clusters: not eligible (unless marked as diagnostic_only)
+    # --- Catch-all risk ---
     catch_all = bool(cluster.get("catch_all_risk", False))
     if catch_all:
-        # Only allow if explicitly diagnostic
         return (False, f"Cluster {cluster_id} is catch-all risk; not eligible for synthesis.")
 
-    # Check recommendation from review item
-    rec = ""
-    if review_item:
-        rec = str(review_item.get("recommended_decision", ""))
+    # --- Traceability enforcement ---
+    ri_trace = str(review_item.get("traceability_status", "") or "").strip()
+    if ri_trace and ri_trace != "clean":
+        return (False, f"Cluster {cluster_id} review item traceability is {ri_trace!r}; must be clean.")
 
-    # KILL items are not eligible
-    if rec == "KILL":
-        return (False, f"Review item for cluster {cluster_id} is KILL; not eligible.")
-
-    # --- Quality checks ---
-
-    # Evidence quality: check noise ratio
+    # --- Evidence existence ---
     evidence_list = cluster.get("source_evidence_list", [])
     if not evidence_list:
         return (False, f"Cluster {cluster_id} has no evidence; not eligible.")
 
+    # Validate source URLs on all evidence links
+    invalid_urls: list[str] = []
+    for ev in evidence_list:
+        url = str(ev.get("source_url", "") or "")
+        if not _is_valid_source_url(url):
+            ev_id = str(ev.get("evidence_id", "?"))
+            invalid_urls.append(f"{ev_id}: {url!r}")
+    if invalid_urls:
+        return (False, f"Cluster {cluster_id} has invalid source URLs: {'; '.join(invalid_urls[:3])}")
+
+    # --- Quality checks ---
     quality_summary = compute_evidence_quality_summary(evidence_list)
     noise_ratio = float(quality_summary.get("noise_ratio", 0.0))
     accepted_count = int(quality_summary.get("accepted_evidence_count", 0))
     weak_count = int(quality_summary.get("weak_evidence_count", 0))
     total = int(quality_summary.get("total_evidence_count", 0))
 
-    # High noise ratio -> not eligible
     if noise_ratio >= 0.5:
         return (False, f"Cluster {cluster_id} noise ratio {noise_ratio:.2f} >= 0.5; not eligible.")
 
-    # No accepted evidence at all
     if accepted_count == 0 and weak_count > 0:
-        # Allow NEEDS_MORE_EVIDENCE items with weak-only evidence
         if rec != "NEEDS_MORE_EVIDENCE":
             return (False, f"Cluster {cluster_id} has zero accepted evidence; not eligible without NEEDS_MORE_EVIDENCE recommendation.")
 
-    # Check if all evidence is product_launch or self-promo only
-    evidence_kinds = {str(ev.get("evidence_kind", "")).lower() for ev in evidence_list}
-    if evidence_kinds and evidence_kinds <= {"product_launch", "launch_hype"}:
+    # Product_launch / self-promo only
+    evidence_kinds_set = {str(ev.get("evidence_kind", "")).lower() for ev in evidence_list}
+    if evidence_kinds_set and evidence_kinds_set <= {"product_launch", "launch_hype"}:
         return (False, f"Cluster {cluster_id} evidence is product_launch/self-promo only; not eligible.")
 
-    # Check if all evidence is low_text_context
+    # All low_text_context
     all_low_text = all(
         "low_text_context" in (ev.get("quality_flags", []) or [])
         for ev in evidence_list
@@ -252,32 +297,31 @@ def _cluster_is_eligible(
     if all_low_text and total > 0:
         return (False, f"Cluster {cluster_id} all evidence is low_text_context; not eligible.")
 
-    # Check cohesion
-    cohesion = float(cluster.get("cohesion_score", 0.5))
-
-    # --- Soft checks (eligible but with notes) ---
-
-    # Coherent title check
+    # --- Placeholder title check ---
     title = str(cluster.get("title", ""))
     cluster_title = str(cluster.get("cluster_title", ""))
-    if not title and not cluster_title:
-        return (False, f"Cluster {cluster_id} has no title; not eligible.")
+    combined_title = (title or cluster_title).strip()
 
-    # Check for placeholder titles
-    combined_title = (title or cluster_title).lower()
-    placeholder_markers = ["needs_more_evidence", "unknown", "[dead]"]
-    if any(marker in combined_title for marker in placeholder_markers):
-        if combined_title == "needs_more_evidence":
-            return (False, f"Cluster {cluster_id} has placeholder title; not eligible.")
+    if not combined_title:
+        return (False, f"Cluster {cluster_id} has empty title; not eligible.")
 
-    # Source diversity / recurrence check for minimum eligibility
+    combined_lower = combined_title.lower()
+    for marker in _PLACEHOLDER_TITLE_MARKERS:
+        if marker in combined_lower:
+            return (False, f"Cluster {cluster_id} title contains placeholder marker {marker!r}; not eligible.")
+
+    # Generic catch-all title without concrete pain
+    generic_catch_all_terms = {"catch-all", "miscellaneous", "various", "general", "other"}
+    if any(term in combined_lower for term in generic_catch_all_terms):
+        pain_pattern = str(cluster.get("pain_pattern", ""))
+        if not pain_pattern or pain_pattern in ("unknown", ""):
+            return (False, f"Cluster {cluster_id} title appears generic/catch-all without concrete pain; not eligible.")
+
+    # --- Source diversity / recurrence ---
     source_diversity = int(cluster.get("source_diversity", 1))
     recurrence = int(cluster.get("recurrence", 1))
     overall_score = float((cluster.get("scoring", {}) or {}).get("overall", 0.0))
 
-    # Minimum: source_diversity >= 2 OR recurrence >= 2 OR strong evidence with moderate+ score
-    # For NEEDS_MORE_EVIDENCE items, lower the score threshold since we explicitly
-    # want to generate low/medium confidence hypotheses from them.
     min_score_for_single = 0.70 if rec != "NEEDS_MORE_EVIDENCE" else 0.50
     has_minimum_evidence = (
         source_diversity >= 2
@@ -287,20 +331,16 @@ def _cluster_is_eligible(
     if not has_minimum_evidence:
         return (False, f"Cluster {cluster_id} lacks minimum evidence diversity/recurrence/score (src_div={source_diversity}, rec={recurrence}, score={overall_score:.2f}).")
 
-    # --- Eligible ---
+    # --- Fatal blocker check ---
     blockers = list(cluster.get("promotion_blockers", []) or [])
-    if review_item:
-        blockers_from_ri = review_item.get("promotion_blockers", [])
-        if blockers_from_ri:
-            blockers = list(blockers_from_ri)
+    blockers_from_ri = review_item.get("promotion_blockers", [])
+    if blockers_from_ri:
+        blockers = list(blockers_from_ri)
 
-    # Hard blocker check: if blockers are traceability/scope-related, not eligible
     fatal_blockers = [b for b in blockers if "traceability" in b.lower() or "source scope" in b.lower()]
     if fatal_blockers:
         return (False, f"Cluster {cluster_id} has fatal promotion blockers: {'; '.join(fatal_blockers[:2])}")
 
-    # If there are other blockers but recommendation is PROMOTE or NEEDS_MORE_EVIDENCE,
-    # still eligible (confidence will be lowered)
     return (True, "")
 
 
@@ -322,17 +362,14 @@ def _determine_confidence(
     Returns (confidence_level, uncertainty_notes).
     """
     accepted_count = int(quality_summary.get("accepted_evidence_count", 0))
-    weak_count = int(quality_summary.get("weak_evidence_count", 0))
     noise_ratio = float(quality_summary.get("noise_ratio", 0.0))
     weak_ratio = float(quality_summary.get("weak_ratio", 0.0))
 
-    # Diagnostic only: catch-all risk explicitly marked
     if catch_all:
         return ("diagnostic_only", "Catch-all risk cluster; opportunity is diagnostic only, not actionable.")
 
     notes: list[str] = []
 
-    # High confidence (rare): clean traceability, accepted evidence, source_diversity >= 2, recurrence >= 2, low noise, no blockers
     if (
         accepted_count >= 2
         and source_diversity >= 2
@@ -343,7 +380,6 @@ def _determine_confidence(
     ):
         return ("high", "")
 
-    # Build uncertainty notes
     if source_diversity == 1:
         notes.append("Single source only; cross-source validation missing.")
     if recurrence < 2:
@@ -357,11 +393,9 @@ def _determine_confidence(
     if accepted_count == 0:
         notes.append("No accepted (clean) evidence; all evidence is weak.")
 
-    # Medium confidence
     if accepted_count >= 1 and source_diversity >= 1 and recurrence >= 1 and noise_ratio < 0.5:
         return ("medium", "; ".join(notes) if notes else "")
 
-    # Low confidence
     return ("low", "; ".join(notes) if notes else "Insufficient evidence quality for higher confidence.")
 
 
@@ -372,18 +406,15 @@ def _determine_confidence(
 
 def _derive_title(cluster: dict[str, Any]) -> str:
     """Derive a founder-readable opportunity title from cluster data."""
-    # Use cluster title if available and specific
     title = str(cluster.get("cluster_title", "") or cluster.get("title", ""))
     if title and len(title) >= 10 and not any(
-        m in title.lower() for m in ("needs_more_evidence", "unknown", "[dead]", "catch-all", "miscellaneous", "various")
+        m in title.lower() for m in _PLACEHOLDER_TITLE_MARKERS | {"catch-all", "miscellaneous", "various"}
     ):
-        # Clean up title
         cleaned = title.strip().rstrip(".")
         if len(cleaned) <= 80:
             return cleaned
         return cleaned[:77].rstrip() + "..."
 
-    # Build from actor + workflow + object
     actor = str(cluster.get("actor", ""))
     workflow = str(cluster.get("workflow", ""))
     obj = str(cluster.get("object", ""))
@@ -400,34 +431,28 @@ def _derive_title(cluster: dict[str, Any]) -> str:
     if parts:
         return " ".join(parts)[:80]
 
-    # Fallback: use pain_pattern
     if pain_pattern and pain_pattern not in ("unknown", ""):
         return _capped_str(pain_pattern, 80)
 
-    # Last resort
     return f"Opportunity from cluster {str(cluster.get('cluster_id', '?'))[:12]}"
 
 
 def _derive_problem_statement(cluster: dict[str, Any]) -> str:
     """Derive a founder-readable problem statement grounded in cluster evidence."""
-    actor = str(cluster.get("actor", "developers"))
+    actor = str(cluster.get("actor", "users"))
     workflow = str(cluster.get("workflow", "their workflow"))
     pain_pattern = str(cluster.get("pain_pattern", ""))
     obj = str(cluster.get("object", ""))
 
     if actor in ("unknown", ""):
-        actor = "developers"
+        actor = "users"
 
-    # Build from pain_pattern if specific enough
     if pain_pattern and pain_pattern not in ("unknown", "") and len(pain_pattern) >= 20:
-        # Check if it already reads like a problem statement
         if any(verb in pain_pattern.lower() for verb in ("struggle", "cannot", "hard to", "difficult", "pain", "lack")):
-            # Include actor context if not already in the pattern
             if actor.lower() not in pain_pattern.lower():
                 return _capped_str(f"{actor} report: {pain_pattern}", 300)
             return _capped_str(pain_pattern, 300)
 
-    # Build deterministic template: "Developers building <workflow> struggle to <pain> because <reason>."
     evidence_list = cluster.get("source_evidence_list", [])
     titles = [str(ev.get("title", "")) for ev in evidence_list[:3] if ev.get("title")]
 
@@ -460,19 +485,16 @@ def _derive_validation_action(
     confidence_level: str,
     evidence_kinds: set[str],
 ) -> tuple[str, list[str]]:
-    """Derive suggested validation action and validation questions.
-
-    Returns (action, validation_questions).
-
-    Map:
-    - strong cross-source + clear pain -> interview_5_users or competitor_scan
-    - promising but thin -> collect_more_evidence
-    - workflow/tooling pain -> workflow_mapping or prototype_probe
-    - unclear buyer/business cost -> interview_5_users
-    - product-launch-heavy -> competitor_scan
-    """
+    """Derive suggested validation action and validation questions."""
     accepted_count = int(quality_summary.get("accepted_evidence_count", 0))
     questions: list[str] = []
+
+    # Strong cross-source + clear pain (highest priority)
+    if source_diversity >= 2 and recurrence >= 2 and accepted_count >= 2:
+        questions.append("Who are 5 people you can interview about this pain this week?")
+        questions.append("What workarounds are they currently using?")
+        questions.append("What would they pay to eliminate this pain?")
+        return ("interview_5_users", questions)
 
     # Product-launch-heavy evidence
     is_product_launch_heavy = evidence_kinds and evidence_kinds <= {"product_launch", "launch_hype"}
@@ -485,12 +507,6 @@ def _derive_validation_action(
         questions.append("Who exactly experiences this pain? Can you name 5 specific people?")
         questions.append("What is their job title, company size, and daily workflow?")
         return ("interview_5_users", questions)
-
-    # Thin evidence
-    if recurrence < 2 and source_diversity < 2:
-        questions.append("Is this pain recurring across multiple independent sources?")
-        questions.append("Can you find 3+ more evidence items from different sources?")
-        return ("collect_more_evidence", questions)
 
     # Workflow/tooling pain
     workflow = str(cluster.get("workflow", ""))
@@ -509,12 +525,11 @@ def _derive_validation_action(
         questions.append("Where exactly in the workflow does friction occur?")
         return ("workflow_mapping", questions)
 
-    # Strong cross-source + clear pain
-    if source_diversity >= 2 and recurrence >= 2 and accepted_count >= 2:
-        questions.append("Who are 5 people you can interview about this pain this week?")
-        questions.append("What workarounds are they currently using?")
-        questions.append("What would they pay to eliminate this pain?")
-        return ("interview_5_users", questions)
+    # Thin evidence
+    if recurrence < 2 and source_diversity < 2:
+        questions.append("Is this pain recurring across multiple independent sources?")
+        questions.append("Can you find 3+ more evidence items from different sources?")
+        return ("collect_more_evidence", questions)
 
     # Low confidence
     if confidence_level == "low":
@@ -571,8 +586,9 @@ def synthesize_opportunities(
 
     Args:
         pain_clusters: List of PainCluster dicts.
-        review_items: Optional list of FounderReviewQueueItem dicts for
-            recommendation context.
+        review_items: Required list of FounderReviewQueueItem dicts for
+            recommendation context. A cluster without a matching review
+            item with PROMOTE or NEEDS_MORE_EVIDENCE decision is ineligible.
         generated_at: ISO 8601 timestamp. Uses UTC now if None.
 
     Returns:
@@ -616,7 +632,7 @@ def synthesize_opportunities(
         cluster_blockers = cluster.get("promotion_blockers", [])
         if cluster_blockers:
             blockers.extend(cluster_blockers)
-        blockers = list(dict.fromkeys(blockers))  # deduplicate keeping order
+        blockers = list(dict.fromkeys(blockers))
 
         # --- Evidence kinds ---
         evidence_kinds = {str(ev.get("evidence_kind", "")).lower() for ev in evidence_list}
@@ -632,7 +648,16 @@ def synthesize_opportunities(
 
         # --- ICP / Actor ---
         actor = str(cluster.get("actor", "unknown"))
-        target_icp = actor if actor not in ("unknown", "") else "developers building with AI/LLM tooling"
+        if actor in ("unknown", ""):
+            target_icp = "unproven; validate actor"
+            target_actor = "unknown"
+            # Append uncertainty note re: unproven actor
+            actor_note = "Actor/ICP is not proven by evidence."
+            if actor_note not in uncertainty_notes:
+                uncertainty_notes = ("; ".join([s for s in [uncertainty_notes, actor_note] if s]) if uncertainty_notes else actor_note)
+        else:
+            target_icp = actor
+            target_actor = actor
 
         # --- Workflow context ---
         workflow = str(cluster.get("workflow", ""))
@@ -677,7 +702,7 @@ def synthesize_opportunities(
             title=title,
             problem_statement=problem_statement,
             target_icp=target_icp,
-            target_actor=actor,
+            target_actor=target_actor,
             workflow_context=workflow_context,
             pain_summary=pain_summary,
             evidence_summary=evidence_summary,
@@ -709,6 +734,7 @@ def render_opportunity_hypotheses_markdown(
 ) -> str:
     """Render opportunity hypotheses as a Markdown section.
 
+    Always includes `## Opportunity Hypotheses` header.
     Returns a string suitable for inclusion in a founder review package.
     """
     lines: list[str] = []
