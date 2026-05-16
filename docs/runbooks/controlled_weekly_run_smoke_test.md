@@ -1,8 +1,8 @@
 # Controlled Weekly Run Smoke Test — Runbook
 
 **Roadmap:** v2.7 item 5.1 / v2.10 item 3.1-C
-**Version:** 1.1
-**Last updated:** 2026-05-11
+**Version:** 1.2
+**Last updated:** 2026-05-16 (v2.14-FIX hardened gates)
 
 ## 1. Purpose
 
@@ -465,37 +465,41 @@ The pilot step appears as "Step 10: Operational Discovery Pilot Smoke" and repor
 
 ---
 
-## 21. v2.14 Controlled Quality Smoke (v2.14 Item 9)
+## 21. v2.14 Controlled Quality Smoke (v2.14 Item 9) — HARDENED v2.14-FIX
 
 ### Purpose
 
-This smoke step runs the full Operational Discovery Pilot pipeline on a curated v2.14 quality fixture that exercises all quality gates introduced in v2.14 (noise classification, cluster assembly tuning, title generation, founder review package clarity, opportunity synthesis hardening, and Source Quality Report contradiction fix). It verifies end-to-end that v2.14 quality improvements work correctly before any source expansion or live pilot re-run.
+This smoke step runs the full Operational Discovery Pilot pipeline on a curated v2.14 quality fixture that exercises all quality gates introduced in v2.14. **v2.14-FIX hardens the gates so they no longer pass vacuously.** The step reads SQR JSON values directly and requires non-trivial outcomes when the fixture includes noise/weak signals and quality flags.
 
-### What It Verifies
+### What It Verifies (Hardened)
 
-- **Gate A — Source Quality Report:** classification_health is not falsely clean when weak/noise/flags exist; evidence_quality_status reflects caution/problematic; contradiction_warnings present; dominant_quality_flags include evidence-only flags; per-source warnings render in Markdown.
-- **Gate B — PainCluster Assembly:** mixed anchors do not collapse into one catch-all cluster; coherent stack-trace/trace-debugging items remain clustered; cluster titles are readable (not `[dead]` / `needs_more_evidence`); zero `catch_all_risk = true` clusters.
-- **Gate C — Founder Review Package:** Executive Summary present; Signal-to-Noise Ratio present; Per-Source Breakdown present; Quality Gate per review item; Opportunity Hypotheses section present (even if empty).
-- **Gate D — Opportunity Synthesis:** synthesis does not produce candidates from invalid/noisy/placeholder inputs; hypotheses have `not_a_solution_yet = true`, `created_by = deterministic_stub`, `evidence_links` preserved; unknown actor results in `unproven; validate actor` (no invented ICP).
+- **Gate A — Source Quality Report:** `noise_signal_total > 0`, `weak_signal_total > 0`, `classification_health != "clean"`, `evidence_quality_status != "clean"`, `flagged_record_count > 0`, `contradiction_warnings` count > 0, at least one per-source warning, Markdown contains non-empty warning bullets (not just section headers).
+- **Gate B — PainCluster Assembly:** Mixed anchors do not collapse into one catch-all; coherent trace items share EXACTLY ONE cluster (includes v214_gh_prov_001); no dead/nme titles; zero catch-all risk clusters.
+- **Gate C — Founder Review Package:** Unchanged (Executive Summary, SNR, Per-Source, Quality Gate, Opportunity Hypotheses).
+- **Gate D — Opportunity Synthesis:** At least 1 opportunity candidate synthesized; `not_a_solution_yet = true`, `created_by = deterministic_stub`, `evidence_links` preserved; at least one unknown-actor hypothesis with `unproven; validate actor` ICP.
 
-### Fixture Composition
+### Fixture Composition (v2.14-FIX)
 
-The v2.14 quality smoke fixture includes 9 evidence items:
+The v2.14 quality smoke fixture includes 11 evidence items (added unknown-actor pair):
 
 | Evidence ID | Source | Character | Expected Classification |
 |-------------|--------|-----------|------------------------|
 | `v214_gh_stack_001` | GitHub Issues | Concrete stack-trace debugging pain | Accepted |
 | `v214_gh_trace_001` | GitHub Issues | Prompt replay / trace debugging pain | Accepted |
-| `v214_gh_prov_001` | GitHub Issues | Multi-agent provenance pain | Accepted |
+| `v214_gh_prov_001` | GitHub Issues | Multi-agent provenance pain (same topic_id) | Accepted |
 | `v214_hn_noise_001` | HN | Product launch + vendor_promo flags | Noise |
 | `v214_hn_noise_002` | HN | Product launch + launch_hype flags | Noise |
 | `v214_hn_flagged_001` | HN | Evidence-only flags (low_text_context) | Weak/Noise |
 | `v214_hn_pain_001` | HN | Positive pain flags (cost_signal, workaround) | Accepted (flagged) |
 | `v214_hn_clean_001` | HN | Clean agent debugging pain (no flags) | Accepted |
+| `v214_hn_unknown_001` | HN | Unknown actor agent debugging pain | Accepted |
+| `v214_gh_unknown_001` | GitHub Issues | Unknown actor agent debugging pain | Accepted |
+
+The unknown-actor pair has `target_user = "unknown"` in raw_metadata and `topic_id = "unknown_actor_debugging"`. This ensures at least one cluster exercises the unknown actor → `unproven; validate actor` path and produces a PROMOTE or NEEDS_MORE_EVIDENCE review item eligible for opportunity synthesis.
 
 ### Expected Artifacts
 
-The v2.14 quality smoke writes only to `<temp_root>/v2_14_quality_smoke/pilot_smoke_v2_14_quality/`. All 9 required artifacts are verified.
+The v2.14 quality smoke writes only to `<temp_root>/v2_14_quality_smoke/pilot_smoke_v2_14_quality/`. All required artifacts are verified.
 
 ### Running the Quality Smoke Standalone
 
@@ -503,43 +507,50 @@ The v2.14 quality smoke writes only to `<temp_root>/v2_14_quality_smoke/pilot_sm
 .\scripts\run-controlled-smoke.ps1
 ```
 
-The quality smoke step appears as "Step 11: v2.14 Controlled Quality Smoke" and reports individual PASS/FAIL for each gate check.
+The quality smoke step appears as "Step 11: v2.14 Controlled Quality Smoke" and reports individual PASS/FAIL for each hardened gate check.
 
-### Smoke Assertions
+### Smoke Assertions (HARDENED v2.14-FIX)
 
 | Gate | Assertion | Expected |
 |------|-----------|----------|
-| A1 | classification_health | Not `clean` when noise/weak/flags exist |
-| A2 | evidence_quality_status | Reflects caution/problematic |
-| A3 | contradiction_warnings | List present in quality_health |
-| A4 | dominant_quality_flags | Includes vendor_promo/suspected_self_promo |
-| A5 | Per-source warnings in Markdown | Present in SQR MD |
+| A1 | noise_signal_total | > 0 (from SQR JSON, not Markdown) |
+| A2 | weak_signal_total | > 0 (from SQR JSON) |
+| A3 | classification_health | != `clean` (mandatory when noise/weak/flags exist) |
+| A4 | evidence_quality_status | != `clean` |
+| A5 | flagged_record_count | > 0 |
+| A6 | dominant_quality_flags | Includes vendor_promo/suspected_self_promo/low_confidence_source/requires_manual_review |
+| A7 | contradiction_warnings | len(cw) > 0 (not just isinstance check) |
+| A8 | Per-source warnings | At least one source has non-empty warnings |
+| A9 | Markdown warning bullets | Non-empty bullet content, not only section headers |
 | B1 | Multiple clusters | > 1 cluster (not single catch-all) |
-| B2 | Coherent trace items | Stack/trace items clustered together |
+| B2 | Coherent trace items | EXACTLY 1 cluster (not ≤ 2); includes v214_gh_prov_001 |
 | B3 | No dead/nme titles | Zero `[dead]` or `needs_more_evidence` titles |
 | B4 | Zero catch-all risk | No `catch_all_risk = true` clusters |
-| C1 | Executive Summary | Present in FRP Markdown |
-| C2 | Signal-to-Noise Ratio | Present in FRP Markdown |
-| C3 | Per-Source Breakdown | Present in FRP Markdown |
-| C4 | Quality Gate per item | Present in FRP Markdown |
-| C5 | Opportunity Hypotheses | Section present in FRP Markdown |
-| D1 | Opportunity candidates list | May be empty; must be a list |
+| C1–C5 | FRP sections | Unchanged |
+| D1 | Opportunity candidates count | >= 1 (not "may be empty") |
 | D2 | not_a_solution_yet | True on all hypotheses |
 | D3 | created_by | `deterministic_stub` on all hypotheses |
-| D4 | evidence_links | Preserved on all hypotheses |
-| D5 | No invented ICP | Unknown actor → `unproven; validate actor` |
+| D4 | evidence_links | Non-empty on all hypotheses |
+| D5 | Unknown actor hypothesis | At least one hypothesis exercises unknown actor |
+| D6 | No invented ICP | Unknown actor → `unproven; validate actor` |
+
+### Previous 0-Opportunity Gap Fixed
+
+Prior to v2.14-FIX, gates D1–D5 passed vacuously when `opportunity_candidate_count = 0`. The fixture now includes an unknown-actor evidence pair (`v214_hn_unknown_001`, `v214_gh_unknown_001`) with clean pain signals from two sources, which enables a cluster with PROMOTE or NEEDS_MORE_EVIDENCE recommendation eligible for deterministic opportunity synthesis. Additionally, `v214_gh_prov_001` was moved from `topic_id = "agent_provenance"` to `"agent_debugging_traces"` so three clean GitHub items cohere into one eligible cluster.
 
 ### Failure Guidance
 
 | Failure | Likely Cause | Fix |
 |---------|-------------|-----|
-| Gate A1/A2/A4 fail | Noise classifier not rejecting flagged evidence | Check `noise_classifier.py` rules for vendor_promo, low_text_context |
-| Gate A3 fail | SQR contradiction detection not triggered | Check `source_quality_report.py` contradiction thresholds |
+| Gate A1/A2/A3/A4 fail | Noise classifier not rejecting flagged evidence | Check `noise_classifier.py` rules for vendor_promo, low_text_context |
+| Gate A7 fail | SQR contradiction detection not triggered | Check `source_quality_report.py` contradiction thresholds |
+| Gate A8 fail | Per-source warnings empty | Check per_source_warnings population in SQR |
+| Gate A9 fail | Markdown renders headers without warning bullets | Check `render_source_quality_report_markdown` outputs bullet lines |
 | Gate B1 fail | Catch-all cluster formed | Check cluster assembly `_should_merge()` and canonical anchors |
+| Gate B2 fail | Coherent items split across > 1 cluster | Check cluster assembly for topic_id co-location |
 | Gate B3 fail | Bad cluster title generated | Check `generate_cluster_review_title()` fallback logic |
-| Gate C failures | FRP section missing | Check `pilot_founder_review_package.py` rendering |
-| Gate D2/D3/D4/D5 | Synthesis contract violation | Check `opportunity_synthesis.py` hypothesis construction |
-| Exit code non-zero | Any check failed | Review the specific V214_CHECK FAIL lines |
+| Gate D1 fail | Zero candidates synthesized | Check eligibility gates in `_cluster_is_eligible()` |
+| Gate D5/D6 fail | Unknown actor path broken | Check `target_icp` assignment in `synthesize_opportunities()` |
 
 ### No Live APIs / No LLMs
 

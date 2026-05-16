@@ -787,7 +787,7 @@ if (Test-Path $PilotRunDir) {
 Record-Pass "operational discovery pilot: smoke step complete (temp-only output)"
 
 # ===========================================================================
-# STEP 11: v2.14 Controlled Quality Smoke (Roadmap v2.14 Item 9)
+# STEP 11: v2.14 Controlled Quality Smoke (Roadmap v2.14 Item 9) -- HARDENED v2.14-FIX
 # ===========================================================================
 Write-Section "Step 11: v2.14 Controlled Quality Smoke"
 
@@ -795,13 +795,10 @@ $V214SmokeDir = Join-Path $TempRoot "v2_14_quality_smoke"
 $V214FixturePath = Join-Path $TempRoot "v2_14_quality_fixture.json"
 
 # Build v2.14 quality smoke fixture: mixed evidence exercising all quality gates.
-# Includes:
-#   - HN evidence with quality flags (requires_manual_review, low_confidence_source,
-#     suspected_self_promo) -- should be noise/weak
-#   - GitHub evidence with concrete stack-trace / trace-debugging pain -- clean
-#   - Evidence-only flag case (signal omits flags)
-#   - Positive pain flag that remains accepted but flagged
-#   - All source_urls are valid http(s)
+# v2.14-FIX: Added unknown-actor evidence pair to ensure at least one cluster
+# gets PROMOTE or NEEDS_MORE_EVIDENCE and produces opportunity candidates.
+# Changed v214_gh_prov_001 topic_id -> "agent_debugging_traces" so 3 clean
+# GitHub items cohere into one eligible cluster.
 $V214Evidence = @(
     # --- Clean: GitHub concrete stack-trace pain ---
     @{
@@ -851,7 +848,7 @@ $V214Evidence = @(
         created_at = "2026-05-14T08:30:00Z"
         fetched_at = "2026-05-14T10:00:00Z"
         collected_at = "2026-05-14T10:00:00Z"
-        topic_id = "agent_provenance"
+        topic_id = "agent_debugging_traces"
         query_kind = "pilot_smoke_fixture"
         quality_flags = @("debugging_pain")
         raw_metadata = @{ target_user = "developer"; repo = "example/provenance-lib" }
@@ -951,13 +948,50 @@ $V214Evidence = @(
         raw_metadata = @{ target_user = "developer" }
         contribution_to_cluster = "primary"
         excerpt = "We are deploying LLM agents to production and our biggest challenge is debugging when agents take wrong actions."
+    },
+    # --- Unknown actor case: two clean items, different sources, same pain ---
+    @{
+        evidence_id = "v214_hn_unknown_001"
+        source_id = "hacker_news"
+        source_type = "discussion"
+        source_url = "https://news.ycombinator.com/item?id=42000006"
+        title = "Struggling with AI agent debugging -- unclear who the target user is"
+        body = "I keep seeing tools for AI agent debugging but nobody seems to know who the actual end user is. The pain of untraceable agent decisions is real -- we spend hours diagnosing wrong agent outputs. But the ICP is completely unclear: is this for individual devs, platform teams, or enterprise SREs?"
+        evidence_kind = "pain_signal_candidate"
+        created_at = "2026-05-14T10:00:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "unknown_actor_debugging"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("debugging_pain", "workaround_signal")
+        raw_metadata = @{ target_user = "unknown" }
+        contribution_to_cluster = "primary"
+        excerpt = "I keep seeing tools for AI agent debugging but nobody seems to know who the actual end user is."
+    },
+    @{
+        evidence_id = "v214_gh_unknown_001"
+        source_id = "github_issues"
+        source_type = "issue_tracker"
+        source_url = "https://github.com/example/unknown-debugger/issues/1"
+        title = "Agent debugging tools have unclear target audience -- who is this for?"
+        body = "We're building agent debugging infrastructure but cannot determine the ICP. The technical pain is clear (unobservable agent decisions, hours lost to manual trace correlation), but we don't know if this is for individual developers, platform teams, or enterprise SREs. This ambiguity is hurting adoption."
+        evidence_kind = "bug_report"
+        created_at = "2026-05-14T10:30:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "unknown_actor_debugging"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("debugging_pain")
+        raw_metadata = @{ target_user = "unknown"; repo = "example/unknown-debugger" }
+        contribution_to_cluster = "primary"
+        excerpt = "We're building agent debugging infrastructure but cannot determine the ICP."
     }
 )
 
 $V214FixtureJson = $V214Evidence | ConvertTo-Json -Depth 5
 $Utf8NoBom2 = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText($V214FixturePath, $V214FixtureJson, $Utf8NoBom2)
-Write-Host "  v2.14 quality fixture written with $($V214Evidence.Count) evidence items"
+Write-Host "  v2.14 quality fixture written with $($V214Evidence.Count) evidence items (incl. unknown-actor pair)"
 Record-Pass "v2.14 quality smoke fixture created"
 
 # Run pilot orchestrator on v2.14 quality fixture
@@ -997,43 +1031,54 @@ summary = {
 print('V214_PILOT_RESULT_JSON:' + json.dumps(summary))
 
 # =========================================================================
-# GATE A: Source Quality Report checks
+# GATE A: Source Quality Report checks (HARDENED v2.14-FIX)
 # =========================================================================
 sqr = result.source_quality_report or {}
 checks = []
 
-# A1: classification_health is NOT clean when noise/weak/flags exist
+# Read SQR JSON values directly -- do not rely on Markdown alone.
+noise_total = sqr.get('noise_signal_total', 0)
+weak_total = sqr.get('weak_signal_total', 0)
+flagged_count = sqr.get('flagged_record_count', 0)
+
+# A1: classification_health must NOT be 'clean' when noise/weak/flags exist.
+# v2.14-FIX: Assert fixture expectations directly from JSON.
 qh = sqr.get('quality_health', {})
 ch = qh.get('classification_health', 'clean')
-has_noise_or_weak = (
-    sqr.get('noise_signal_total', 0) > 0 or
-    sqr.get('weak_signal_total', 0) > 0
-)
+noise_gt_0 = noise_total > 0
+weak_gt_0 = weak_total > 0
 checks.append((
-    'A1_classification_health_not_simply_clean',
-    ch != 'clean' or not has_noise_or_weak,
-    f'classification_health={ch}, noise={sqr.get("noise_signal_total",0)}, weak={sqr.get("weak_signal_total",0)}'
+    'A1_noise_signal_total_gt_0',
+    noise_gt_0,
+    f'noise_signal_total={noise_total}'
+))
+checks.append((
+    'A2_weak_signal_total_gt_0',
+    weak_gt_0,
+    f'weak_signal_total={weak_total}'
+))
+checks.append((
+    'A3_classification_health_not_clean',
+    ch != 'clean',
+    f'classification_health={ch}'
 ))
 
-# A2: evidence_quality_status reflects caution/problematic/noisy
+# A4: evidence_quality_status NOT 'clean' when noise/weak present
 eqs = qh.get('evidence_quality_status', 'clean')
 checks.append((
-    'A2_evidence_quality_status_reflects_caution',
-    eqs in ('clean', 'caution', 'problematic', 'failing', 'noisy'),
+    'A4_evidence_quality_status_not_clean',
+    eqs != 'clean',
     f'evidence_quality_status={eqs}'
 ))
 
-# A3: contradiction_warnings present when accepted_rate/flagged_rate conflict
-cw = qh.get('contradiction_warnings', [])
+# A5: flagged_record_count > 0
 checks.append((
-    'A3_contradiction_warnings_field_present',
-    isinstance(cw, list),
-    f'contradiction_warnings type={type(cw).__name__}, len={len(cw)}'
+    'A5_flagged_record_count_gt_0',
+    flagged_count > 0,
+    f'flagged_record_count={flagged_count}'
 ))
 
-# A4: dominant_quality_flags include evidence-only flags (vendor_promo
-# aliases to suspected_self_promo; low_confidence_source and
-# requires_manual_review are also valid evidence-only flags)
+# A6: dominant_quality_flags includes expected evidence-only flags
 dqf = qh.get('dominant_quality_flags', [])
 has_evidence_flags = any(
     f in dqf
@@ -1041,28 +1086,65 @@ has_evidence_flags = any(
               'low_confidence_source', 'requires_manual_review')
 )
 checks.append((
-    'A4_dominant_quality_flags_include_evidence_flags',
+    'A6_dominant_quality_flags_include_evidence_flags',
     has_evidence_flags,
     f'dominant_quality_flags={dqf[:10]}'
 ))
 
-# A5: per-source warnings render in Markdown
+# A7: contradiction_warnings list has at least 1 entry
+cw = qh.get('contradiction_warnings', [])
+checks.append((
+    'A7_contradiction_warnings_count_gt_0',
+    isinstance(cw, list) and len(cw) > 0,
+    f'contradiction_warnings len={len(cw) if isinstance(cw, list) else "N/A"}'
+))
+
+# A8: Per-source warnings exist (at least one source with non-empty warnings)
+per_source_warnings = qh.get('per_source_warnings', {})
+has_any_per_source_warning = False
+if isinstance(per_source_warnings, dict):
+    for src_id, warns in per_source_warnings.items():
+        if isinstance(warns, list) and len(warns) > 0:
+            has_any_per_source_warning = True
+            break
+checks.append((
+    'A8_at_least_one_per_source_warning',
+    has_any_per_source_warning,
+    f'per_source_warnings keys={list(per_source_warnings.keys())[:5] if isinstance(per_source_warnings, dict) else "N/A"}'
+))
+
+# A9: Markdown contains non-empty warning bullets (not just headers).
+# Check for actual warning content lines, e.g. bullet items under warning sections.
 from oos.source_quality_report import (
     SourceQualityReport,
     render_source_quality_report_markdown,
 )
 sqr_obj = SourceQualityReport.from_dict(sqr)
 md = render_source_quality_report_markdown(sqr_obj)
+# Look for bullet lines (starting with '- ') in the warning sections
+has_warning_content = False
+lines = md.split('\n')
+in_warnings_section = False
+for line in lines:
+    if 'Per-Source Quality Warnings' in line or 'Contradiction Warnings' in line:
+        in_warnings_section = True
+        continue
+    if in_warnings_section and line.startswith('#'):
+        in_warnings_section = False
+    if in_warnings_section and line.strip().startswith('- ') and len(line.strip()) > 3:
+        has_warning_content = True
+        break
 checks.append((
-    'A5_per_source_warnings_in_markdown',
-    'Per-Source Quality Warnings' in md or '## Contradiction Warnings' in md,
-    'per-source warnings or contradiction warnings found in SQR md'
+    'A9_markdown_warning_bullets_not_empty',
+    has_warning_content,
+    'warning bullets found in SQR md' if has_warning_content else 'no non-empty warning bullets in SQR md'
 ))
 
 # =========================================================================
-# GATE B: PainCluster assembly checks
+# GATE B: PainCluster assembly checks (HARDENED v2.14-FIX)
 # =========================================================================
 pain_clusters = result.pain_clusters
+
 # B1: mixed anchors do not collapse into one catch-all
 checks.append((
     'B1_multiple_clusters_not_single_catch_all',
@@ -1070,18 +1152,18 @@ checks.append((
     f'pain_cluster_count={len(pain_clusters)}'
 ))
 
-# B2: coherent stack-trace/trace-debugging items remain clustered
+# B2: coherent stack-trace/trace-debugging items share EXACTLY ONE cluster.
+# v2.14-FIX: Require exactly 1, not <= 2.
 trace_cluster_ids = set()
 for pc in pain_clusters:
     for ev in pc.get('source_evidence_list', []):
         eid = ev.get('evidence_id', '')
-        if eid in ('v214_gh_stack_001', 'v214_gh_trace_001'):
+        if eid in ('v214_gh_stack_001', 'v214_gh_trace_001', 'v214_gh_prov_001'):
             trace_cluster_ids.add(pc.get('cluster_id', ''))
-
 checks.append((
-    'B2_coherent_trace_items_clustered_together',
-    len(trace_cluster_ids) <= 2,
-    f'v214_gh_stack_001 and v214_gh_trace_001 in {len(trace_cluster_ids)} cluster(s)'
+    'B2_coherent_trace_items_in_exactly_one_cluster',
+    len(trace_cluster_ids) == 1,
+    f'v214_gh_stack_001, v214_gh_trace_001, v214_gh_prov_001 in {len(trace_cluster_ids)} cluster(s), ids={trace_cluster_ids}'
 ))
 
 # B3: cluster titles are readable (not [dead] / needs_more_evidence)
@@ -1123,13 +1205,15 @@ checks.append(('C4_quality_gate_per_item', '#### Quality Gate' in frp_md))
 checks.append(('C5_opportunity_hypotheses_section', '## Opportunity Hypotheses' in frp_md))
 
 # =========================================================================
-# GATE D: Opportunity synthesis checks
+# GATE D: Opportunity synthesis checks (HARDENED v2.14-FIX)
 # =========================================================================
 opp_candidates = result.opportunity_candidates
+
+# D1: At least 1 opportunity candidate synthesized. v2.14-FIX: REQUIRE >= 1.
 checks.append((
-    'D1_opportunity_candidates_may_exist',
-    isinstance(opp_candidates, list),
-    f'opportunity_candidates count={len(opp_candidates)}'
+    'D1_opportunity_candidate_count_gte_1',
+    isinstance(opp_candidates, list) and len(opp_candidates) >= 1,
+    f'opportunity_candidates count={len(opp_candidates) if isinstance(opp_candidates, list) else "N/A"}'
 ))
 
 # D2: synthesized hypotheses have not_a_solution_yet=True
@@ -1139,7 +1223,7 @@ for oh in opp_candidates:
         all_not_solution = False
 checks.append((
     'D2_all_hypotheses_not_a_solution_yet',
-    all_not_solution,
+    all_not_solution if opp_candidates else False,
     f'checked {len(opp_candidates)} hypotheses'
 ))
 
@@ -1150,7 +1234,7 @@ for oh in opp_candidates:
         all_deterministic = False
 checks.append((
     'D3_all_created_by_deterministic_stub',
-    all_deterministic,
+    all_deterministic if opp_candidates else False,
     f'checked {len(opp_candidates)} hypotheses'
 ))
 
@@ -1161,21 +1245,30 @@ for oh in opp_candidates:
         all_have_links = False
 checks.append((
     'D4_all_hypotheses_have_evidence_links',
-    all_have_links if opp_candidates else True,
+    all_have_links if opp_candidates else False,
     f'checked {len(opp_candidates)} hypotheses'
 ))
 
-# D5: no invented ICP for unknown actor
+# D5: no invented ICP for unknown actor -> target_icp == "unproven; validate actor"
+# v2.14-FIX: Must find at least one hypothesis with unknown actor.
+found_unknown_actor_hypothesis = False
 no_invented_icp = True
 for oh in opp_candidates:
     if isinstance(oh, dict):
         target_icp = oh.get('target_icp', '')
         target_actor = oh.get('target_actor', '')
-        if target_actor == 'unknown' and target_icp != 'unproven; validate actor':
-            no_invented_icp = False
+        if target_actor == 'unknown' or (target_actor == '' and target_icp == 'unproven; validate actor'):
+            found_unknown_actor_hypothesis = True
+            if target_icp != 'unproven; validate actor':
+                no_invented_icp = False
 checks.append((
-    'D5_no_invented_icp_for_unknown_actor',
-    no_invented_icp,
+    'D5_unknown_actor_hypothesis_found',
+    found_unknown_actor_hypothesis,
+    f'found unknown actor hypothesis: {found_unknown_actor_hypothesis}'
+))
+checks.append((
+    'D6_no_invented_icp_for_unknown_actor',
+    no_invented_icp if found_unknown_actor_hypothesis else False,
     f'checked {len(opp_candidates)} hypotheses'
 ))
 

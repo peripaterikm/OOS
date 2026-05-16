@@ -5,6 +5,7 @@ Covers:
 - Smoke script existence, strict mode, and forbidden command checks
 - Smoke script temp-only and safety boundary verification
 - Optional lightweight execution test against temp root
+- v2.14 hardened quality smoke gate checks (v2.14-FIX)
 """
 
 import subprocess
@@ -599,12 +600,13 @@ class TestSmokeScriptContainsOperationalDiscoveryPilotStep(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# v2.14 Item 9 Controlled Quality Smoke tests
+# v2.14 Item 9 Controlled Quality Smoke tests (HARDENED v2.14-FIX)
 # ---------------------------------------------------------------------------
 
 
 class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
-    """Verify the smoke script includes the v2.14 quality smoke step (Step 11)."""
+    """Verify the smoke script includes the v2.14 quality smoke step (Step 11)
+    with hardened gates (v2.14-FIX)."""
 
     def test_contains_v214_quality_smoke_section(self) -> None:
         text = _read_script_text("run-controlled-smoke.ps1")
@@ -623,27 +625,90 @@ class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
         self.assertIn("run_operational_discovery_pilot", text,
                       "Smoke script missing run_operational_discovery_pilot in Step 11")
 
-    def test_checks_gate_a_source_quality_report(self) -> None:
-        """Step 11 must check Gate A: Source Quality Report."""
+    # --- HARDENED Gate A: Source Quality Report checks (v2.14-FIX) ---
+
+    def test_gate_a1_noise_signal_total_gt_0(self) -> None:
+        """A1: noise_signal_total > 0 (hardened, reads SQR JSON directly)."""
         text = _read_script_text("run-controlled-smoke.ps1")
-        gate_a_checks = [
-            "A1_classification_health_not_simply_clean",
-            "A2_evidence_quality_status_reflects_caution",
-            "A3_contradiction_warnings_field_present",
-            "A4_dominant_quality_flags_include_evidence_flags",
-            "A5_per_source_warnings_in_markdown",
-        ]
-        for check in gate_a_checks:
-            with self.subTest(check=check):
-                self.assertIn(check, text,
-                              f"Step 11 missing Gate A check: {check}")
+        self.assertIn("A1_noise_signal_total_gt_0", text,
+                      "Step 11 missing hardened A1: noise_signal_total > 0")
+        self.assertIn("noise_signal_total", text,
+                      "Step 11 must read noise_signal_total from SQR JSON")
+
+    def test_gate_a2_weak_signal_total_gt_0(self) -> None:
+        """A2: weak_signal_total > 0 (hardened)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("A2_weak_signal_total_gt_0", text,
+                      "Step 11 missing hardened A2: weak_signal_total > 0")
+
+    def test_gate_a3_classification_health_not_clean(self) -> None:
+        """A3: classification_health != 'clean' (hardened, mandatory)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("A3_classification_health_not_clean", text,
+                      "Step 11 missing hardened A3: classification_health != clean")
+        self.assertIn("ch != 'clean'", text,
+                      "Step 11 must assert classification_health != 'clean' directly")
+
+    def test_gate_a4_evidence_quality_status_not_clean(self) -> None:
+        """A4: evidence_quality_status != 'clean' (hardened)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("A4_evidence_quality_status_not_clean", text,
+                      "Step 11 missing hardened A4: evidence_quality_status != clean")
+
+    def test_gate_a5_flagged_record_count_gt_0(self) -> None:
+        """A5: flagged_record_count > 0 (hardened)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("A5_flagged_record_count_gt_0", text,
+                      "Step 11 missing hardened A5: flagged_record_count > 0")
+
+    def test_gate_a6_dominant_quality_flags_include_evidence_flags(self) -> None:
+        """A6: dominant_quality_flags includes evidence-only flags."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("A6_dominant_quality_flags_include_evidence_flags", text,
+                      "Step 11 missing hardened A6: dominant flags check")
+
+    def test_gate_a7_contradiction_warnings_count_gt_0(self) -> None:
+        """A7: contradiction_warnings count > 0 (hardened)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("A7_contradiction_warnings_count_gt_0", text,
+                      "Step 11 missing hardened A7: contradiction_warnings count > 0")
+        self.assertIn("len(cw) > 0", text,
+                      "Step 11 must assert len(contradiction_warnings) > 0")
+
+    def test_gate_a8_at_least_one_per_source_warning(self) -> None:
+        """A8: at least one per-source warning (hardened)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("A8_at_least_one_per_source_warning", text,
+                      "Step 11 missing hardened A8: at least one per_source_warning")
+
+    def test_gate_a9_markdown_warning_bullets_not_empty(self) -> None:
+        """A9: Markdown contains non-empty warning bullets, not just headers."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("A9_markdown_warning_bullets_not_empty", text,
+                      "Step 11 missing hardened A9: markdown warning bullets not empty")
+        self.assertIn("line.strip().startswith('- ')", text,
+                      "Step 11 must check for non-empty bullet content in SQR md")
+
+    def test_gate_a_reads_sqr_json_not_md_only(self) -> None:
+        """Hardened gates read SQR JSON values directly, not Markdown headers only."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        # Must reference SQR JSON fields directly
+        json_fields = ["noise_signal_total", "weak_signal_total",
+                       "classification_health", "evidence_quality_status",
+                       "flagged_record_count", "contradiction_warnings"]
+        for field in json_fields:
+            with self.subTest(field=field):
+                self.assertIn(field, text,
+                              f"Step 11 must read SQR JSON field: {field}")
+
+    # --- HARDENED Gate B: PainCluster assembly (v2.14-FIX) ---
 
     def test_checks_gate_b_pain_cluster_assembly(self) -> None:
-        """Step 11 must check Gate B: PainCluster assembly."""
+        """Step 11 must check Gate B: PainCluster assembly (hardened names)."""
         text = _read_script_text("run-controlled-smoke.ps1")
         gate_b_checks = [
             "B1_multiple_clusters_not_single_catch_all",
-            "B2_coherent_trace_items_clustered_together",
+            "B2_coherent_trace_items_in_exactly_one_cluster",
             "B3_no_dead_or_nme_titles",
             "B4_zero_catch_all_risk_clusters",
         ]
@@ -651,6 +716,16 @@ class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
             with self.subTest(check=check):
                 self.assertIn(check, text,
                               f"Step 11 missing Gate B check: {check}")
+
+    def test_gate_b2_exactly_one_cluster(self) -> None:
+        """B2: coherent trace items share EXACTLY ONE cluster (hardened)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("B2_coherent_trace_items_in_exactly_one_cluster", text,
+                      "Step 11 missing hardened B2: exactly one cluster")
+        self.assertIn("len(trace_cluster_ids) == 1", text,
+                      "Step 11 must assert exactly 1 cluster for coherent trace items, not <= 2")
+
+    # --- Gate C: Founder Review Package (unchanged except C5 check) ---
 
     def test_checks_gate_c_founder_review_package(self) -> None:
         """Step 11 must check Gate C: Founder Review Package."""
@@ -667,20 +742,49 @@ class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
                 self.assertIn(check, text,
                               f"Step 11 missing Gate C check: {check}")
 
-    def test_checks_gate_d_opportunity_synthesis(self) -> None:
-        """Step 11 must check Gate D: Opportunity synthesis."""
+    # --- HARDENED Gate D: Opportunity synthesis (v2.14-FIX) ---
+
+    def test_gate_d1_opportunity_candidate_count_gte_1(self) -> None:
+        """D1: opportunity candidate count >= 1 (hardened, not 'may exist')."""
         text = _read_script_text("run-controlled-smoke.ps1")
-        gate_d_checks = [
-            "D1_opportunity_candidates_may_exist",
-            "D2_all_hypotheses_not_a_solution_yet",
-            "D3_all_created_by_deterministic_stub",
-            "D4_all_hypotheses_have_evidence_links",
-            "D5_no_invented_icp_for_unknown_actor",
-        ]
-        for check in gate_d_checks:
-            with self.subTest(check=check):
-                self.assertIn(check, text,
-                              f"Step 11 missing Gate D check: {check}")
+        self.assertIn("D1_opportunity_candidate_count_gte_1", text,
+                      "Step 11 missing hardened D1: candidate count >= 1")
+        self.assertIn("len(opp_candidates) >= 1", text,
+                      "Step 11 must assert len(opp_candidates) >= 1")
+
+    def test_gate_d2_not_a_solution_yet(self) -> None:
+        """D2: all hypotheses have not_a_solution_yet==True (hardened)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("D2_all_hypotheses_not_a_solution_yet", text,
+                      "Step 11 must check D2: not_a_solution_yet")
+
+    def test_gate_d3_created_by_deterministic_stub(self) -> None:
+        """D3: all hypotheses have created_by==deterministic_stub."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("D3_all_created_by_deterministic_stub", text,
+                      "Step 11 must check D3: created_by deterministic_stub")
+
+    def test_gate_d4_evidence_links_preserved(self) -> None:
+        """D4: all hypotheses have non-empty evidence_links."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("D4_all_hypotheses_have_evidence_links", text,
+                      "Step 11 must check D4: evidence_links preserved")
+
+    def test_gate_d5_unknown_actor_hypothesis_found(self) -> None:
+        """D5: at least one hypothesis exercises unknown actor (hardened)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("D5_unknown_actor_hypothesis_found", text,
+                      "Step 11 missing hardened D5: unknown actor hypothesis found")
+
+    def test_gate_d6_no_invented_icp_for_unknown_actor(self) -> None:
+        """D6: unknown actor ICP is 'unproven; validate actor' (hardened)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("D6_no_invented_icp_for_unknown_actor", text,
+                      "Step 11 missing hardened D6: no invented ICP for unknown actor")
+        self.assertIn("unproven; validate actor", text,
+                      "Step 11 must assert target_icp == 'unproven; validate actor' for unknown actor")
+
+    # --- Fixture and scope checks (preserved from original) ---
 
     def test_uses_temp_output_location(self) -> None:
         text = _read_script_text("run-controlled-smoke.ps1")
@@ -714,6 +818,20 @@ class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
             step11_section = text[step11_start:step11_end]
             self.assertIn("low_text_context", step11_section,
                           "Step 11 fixture missing low_text_context flag (evidence-only case)")
+
+    def test_fixture_includes_unknown_actor_evidence(self) -> None:
+        """Step 11 fixture must include unknown-actor evidence pair (v2.14-FIX)."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        step11_start = text.find("STEP 11:")
+        step11_end = text.find("SUMMARY", step11_start) if step11_start >= 0 else -1
+        if step11_start >= 0 and step11_end >= 0:
+            step11_section = text[step11_start:step11_end]
+            self.assertIn("v214_hn_unknown_001", step11_section,
+                          "Step 11 fixture missing unknown-actor HN evidence (v2.14-FIX)")
+            self.assertIn("v214_gh_unknown_001", step11_section,
+                          "Step 11 fixture missing unknown-actor GitHub evidence (v2.14-FIX)")
+            self.assertIn("unknown_actor_debugging", step11_section,
+                          "Step 11 fixture missing unknown_actor_debugging topic (v2.14-FIX)")
 
     def test_fixture_has_valid_http_source_urls(self) -> None:
         """All source_urls in Step 11 fixture must be http(s)."""

@@ -13,10 +13,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `10 — Final v2.14 checkpoint`
-- [x] **0.3** Roadmap state: `active / item 10 ready`
-- [x] **0.4** Completed from this roadmap: **10 / 11**
-- [x] **0.5** Remaining: **1 / 11**
+- [ ] **0.2** Current item: `9 — Controlled quality smoke (FIX in progress)`
+- [ ] **0.3** Roadmap state: `active / item 9 fix`
+- [x] **0.4** Completed from this roadmap: **8 / 11** (Item 9 Codex fix pending validation)
+- [x] **0.5** Remaining: **3 / 11** (Item 9 fix + Item 10)
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -692,14 +692,20 @@ Run a deterministic, fixture-only controlled quality smoke test focused on the c
 - Existing smoke steps still pass
 - Smoke runbook updated
 
-### Definition of Done
+### Definition of Done (v2.14-FIX: Codex review fixes applied)
 
 - [x] **9.1** Quality smoke step added to `scripts/run-controlled-smoke.ps1`
-- [x] **9.2** Smoke step passes on v2.14 fixtures (temp directory)
+- [ ] **9.2** Smoke step passes on v2.14 fixtures with hardened gates (temp directory)
 - [x] **9.3** All existing smoke steps still pass
-- [x] **9.4** Smoke runbook updated with quality smoke section
-- [x] **9.5** `.\scripts\dev-git-check.ps1` passes
-- [x] **9.6** One local commit made with message: `[v2.14] 9 run controlled quality smoke`
+- [x] **9.4** Smoke runbook updated with hardened quality smoke section (v2.14-FIX)
+- [ ] **9.5** `.\scripts\dev-git-check.ps1` passes
+- [x] **9.6** SQR false-clean gates hardened: noise_signal_total>0, weak_signal_total>0, classification_health!=clean, evidence_quality_status!=clean, flagged_record_count>0, contradiction_warnings count>0, per-source warnings, non-empty Markdown bullets
+- [x] **9.7** Opportunity synthesis gate hardened: >=1 candidate required, not just isinstance check
+- [x] **9.8** B2 coherent cluster gate hardened: exactly 1 cluster, not <=2
+- [x] **9.9** Fixture updated: unknown-actor pair added, v214_gh_prov_001 topic_id aligned
+- [x] **9.10** Run report updated with fix documentation and eligibility path
+- [x] **9.11** Tests updated with hardened gate assertions
+- [ ] **9.12** One local commit made with message: `[v2.14] Fix controlled quality smoke gates`
 
 ---
 
@@ -819,4 +825,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 9 complete; item 10 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 9 Codex fix applied; awaiting validation before item 10. No source expansion. No runtime artifacts committed.*
