@@ -13,7 +13,7 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `7 — Source Quality Report Contradiction Fix`
+- [x] **0.2** Current item: `8 — Targeted regression fixtures from Run 1 / Run 2 summaries`
 - [x] **0.3** Roadmap state: `active / item 8 ready`
 - [x] **0.4** Completed from this roadmap: **8 / 11**
 - [x] **0.5** Remaining: **3 / 11**
@@ -534,7 +534,7 @@ Harden the opportunity synthesis pipeline so it produces opportunity candidates 
 - [x] **6.8** `.\scripts\dev-git-check.ps1` passes
 - [x] **6.9** One local commit made with message: `[v2.14] 6 harden opportunity synthesis stub`
 
-**Item 7 complete; item 8 is next.**
+**Item 6 complete; item 7 is next.**
 
 ---
 
@@ -819,4 +819,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 7 complete; item 8 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 7 fix applied; item 8 is next. No source expansion. No runtime artifacts committed.*

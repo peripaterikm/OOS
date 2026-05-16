@@ -137,6 +137,59 @@ def _normalize_opportunity_candidate(oc: Any) -> dict[str, Any]:
     return {"_raw": str(oc)}
 
 
+def _non_empty_str(*values: Any) -> str:
+    """Return the first non-empty string value from the given values."""
+    for v in values:
+        s = str(v or "").strip()
+        if s:
+            return s
+    return ""
+
+
+def _merge_signal_with_evidence_for_classification(
+    signal: dict[str, Any],
+    evidence_by_id: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Merge signal fields with matching evidence fields for noise classification.
+
+    - Locates matching raw evidence by evidence_id where available.
+    - Merges quality_flags from both evidence and signal (evidence first, then signal).
+    - Deduplicates flags deterministically while preserving stable order.
+    - Uses evidence title/body/excerpt/evidence_kind/source_url when signal lacks those fields.
+    - Signal fields may override only when explicitly present and non-empty.
+
+    Returns a dict with keys: evidence_id, source_id, source_type, title, body,
+    excerpt, evidence_kind, source_url, quality_flags.
+    """
+    sig_eid = str(signal.get("evidence_id", "") or "")
+    ev = evidence_by_id.get(sig_eid, {}) if sig_eid else {}
+
+    # Merge quality_flags: evidence flags first, then signal flags
+    ev_flags = list(ev.get("quality_flags", []) or [])
+    sig_flags = list(signal.get("quality_flags", []) or [])
+
+    # Dedupe while preserving stable order (evidence first, signal second)
+    seen: set[str] = set()
+    merged_flags: list[str] = []
+    for f in ev_flags + sig_flags:
+        flag_norm = str(f).strip()
+        if flag_norm and flag_norm not in seen:
+            seen.add(flag_norm)
+            merged_flags.append(flag_norm)
+
+    return {
+        "evidence_id": sig_eid,
+        "source_id": _evidence_source_id(signal) or _evidence_source_id(ev),
+        "source_type": _evidence_source_type(signal) or _evidence_source_type(ev),
+        "title": _non_empty_str(signal.get("title"), ev.get("title")),
+        "body": _non_empty_str(signal.get("body"), ev.get("body")),
+        "excerpt": _non_empty_str(signal.get("excerpt"), ev.get("excerpt")),
+        "evidence_kind": _non_empty_str(signal.get("evidence_kind"), ev.get("evidence_kind")),
+        "source_url": _non_empty_str(signal.get("source_url"), ev.get("source_url")),
+        "quality_flags": merged_flags,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
@@ -730,17 +783,8 @@ def _build_source_metrics(
             continue
 
         # Merge signal flags with evidence fields so the classifier sees
-        # title, body, and excerpt from the original evidence item.
-        sig_eid = str(sig.get("evidence_id", "") or "")
-        ev = evidence_by_id.get(sig_eid, {})
-        merged = {
-            "quality_flags": sig.get("quality_flags", []) or [],
-            "evidence_kind": str(ev.get("evidence_kind", "") or ""),
-            "title": str(ev.get("title", "") or ""),
-            "body": str(ev.get("body", "") or ""),
-            "excerpt": str(ev.get("excerpt", "") or ""),
-            "source_url": str(ev.get("source_url", "") or ""),
-        }
+        # title, body, excerpt, and quality_flags from both evidence and signal.
+        merged = _merge_signal_with_evidence_for_classification(sig, evidence_by_id)
 
         nc_result = classify_noise_for_evidence(merged)
         if nc_result == NC_NOISE:
@@ -808,10 +852,11 @@ def _build_source_metrics(
     founder_kill = int(fd_counts.get("kill", 0))
     founder_needs_more = int(fd_counts.get("needs_more_evidence", 0))
 
-    # v2.14 item 7: flagged record counting
+    # v2.14 item 7: flagged record counting — use merged evidence+signal flags
     flagged_record_count = 0
     for sig in source_signals:
-        flags = sig.get("quality_flags", []) or []
+        merged_for_flag = _merge_signal_with_evidence_for_classification(sig, evidence_by_id)
+        flags = merged_for_flag.get("quality_flags", []) or []
         if flags:
             flagged_record_count += 1
 

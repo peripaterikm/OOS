@@ -1970,5 +1970,237 @@ class TestV214_ClassifierParity(unittest.TestCase):
         self.assertEqual(m.noise_signal_count, 0)
 
 
+class TestV214_EvidenceOnlyFlagClassification(unittest.TestCase):
+    """Regression tests: evidence-only quality flags must affect classification.
+
+    Codex finding: _build_source_metrics() passed only sig["quality_flags"]
+    into classify_noise_for_evidence(), ignoring evidence-level quality_flags.
+    This can produce accepted=1, weak=0, noise=0, classification_health=clean
+    while dominant_quality_flags shows risk flags.
+    """
+
+    def test_evidence_only_low_text_context_no_pain_noise(self):
+        """Evidence has low_text_context, signal has empty flags, no pain in text -> noise."""
+        evidence = [_hn_evidence_dict("hn_001", title="", body="",
+                     quality_flags=["low_text_context"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=[])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertGreaterEqual(m.noise_signal_count, 1)
+
+    def test_evidence_only_low_text_context_with_pain_weak(self):
+        """Evidence has low_text_context + pain text, signal has empty flags -> weak."""
+        evidence = [_hn_evidence_dict("hn_001",
+                     title="debugging is broken",
+                     body="Cannot trace agents. This is a real problem costing us hours every week.",
+                     quality_flags=["low_text_context"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=[])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertGreaterEqual(m.weak_signal_count, 1)
+
+    def test_evidence_only_vendor_promo_product_launch_noise(self):
+        """Evidence has vendor_promo + product_launch, no pain -> noise, even if signal has no flags."""
+        evidence = [
+            _hn_evidence_dict("hn_001", title="Check out my new SaaS", body="Launching today!",
+                             quality_flags=["vendor_promo", "product_launch"]),
+        ]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=[])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        # vendor_promo aliases to suspected_self_promo (medium) + product_launch + no pain -> noise
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertGreaterEqual(m.weak_signal_count + m.noise_signal_count, 1)
+
+    def test_evidence_only_requires_manual_review_weak(self):
+        """Evidence has requires_manual_review, signal has no flags -> weak."""
+        evidence = [_hn_evidence_dict("hn_001",
+                     title="Something is off with this tool",
+                     body="Not sure if this is a real pain or just a one-off complaint.",
+                     quality_flags=["requires_manual_review"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=[])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertGreaterEqual(m.weak_signal_count, 1)
+
+    def test_evidence_only_missing_actor_generic_language_weak_or_noise(self):
+        """Evidence has missing_actor + generic_language, no pain -> noise or at least weak."""
+        evidence = [_hn_evidence_dict("hn_001",
+                     title="It would be nice to have this",
+                     body="Someone should build a tool that does this thing.",
+                     quality_flags=["missing_actor", "generic_language"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=[])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertGreaterEqual(m.weak_signal_count + m.noise_signal_count, 1)
+
+    def test_evidence_only_positive_pain_flags_accepted_but_flagged(self):
+        """Evidence has positive pain flags, signal has no flags -> accepted, but flagged_record_count increments."""
+        evidence = [_hn_evidence_dict("hn_001",
+                     title="CI/CD debugging wastes hours each week",
+                     body="Flaky tests cause entire team to wait. This is costing us real money.",
+                     quality_flags=["debugging_pain", "workflow_pain"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=[])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 1)
+        # flagged_record_count should be 1 because merged flags include evidence flags
+        self.assertEqual(m.flagged_record_count, 1)
+
+    def test_evidence_only_flags_appear_in_dominant_quality_flags(self):
+        """Evidence-only flags should appear in dominant_quality_flags."""
+        evidence = [
+            _hn_evidence_dict("hn_001", quality_flags=["low_text_context", "generic_language"]),
+            _hn_evidence_dict("hn_002", quality_flags=["low_text_context"]),
+        ]
+        signals = [
+            _signal_dict("sig_001", "hn_001", classification="pain_signal_candidate",
+                        quality_flags=[]),
+            _signal_dict("sig_002", "hn_002", classification="pain_signal_candidate",
+                        quality_flags=[]),
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        qh = report.quality_health
+        # low_text_context appears twice in evidence, so should be dominant
+        self.assertIn("low_text_context", qh.dominant_quality_flags)
+
+    def test_evidence_only_flags_make_classification_health_not_clean(self):
+        """Evidence-only flags causing weak/noise should make health not clean."""
+        evidence = [_hn_evidence_dict("hn_001",
+                     title="", body="",
+                     quality_flags=["low_text_context", "generic_language", "unclear_actor"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=[])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        qh = report.quality_health
+        # Signal should NOT be accepted (flags cause weak or noise)
+        self.assertNotEqual(qh.classification_health, "clean",
+                           f"expected not clean, got {qh.classification_health}")
+        self.assertNotEqual(qh.evidence_quality_status, "clean",
+                           f"expected not clean, got {qh.evidence_quality_status}")
+
+    def test_signal_only_flags_still_work(self):
+        """Signal-only flags (no evidence flags) still classify correctly."""
+        evidence = [_hn_evidence_dict("hn_001", title="", body="")]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=["low_text_context"])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertGreaterEqual(m.noise_signal_count, 1)
+
+    def test_both_evidence_and_signal_flags_merge_no_duplicates(self):
+        """When evidence and signal both have flags, they merge without duplicates."""
+        evidence = [_hn_evidence_dict("hn_001",
+                     quality_flags=["low_text_context", "generic_language"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=["low_text_context", "unclear_actor"])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        # low_text_context appears in both, should not be double-counted in quality_flag_counts
+        # quality_flag_counts is from evidence only (not merged), so low_text_context=1, generic_language=1
+        # The classification uses merged flags: low_text_context, generic_language, unclear_actor
+        self.assertEqual(m.quality_flag_counts.get("low_text_context", 0), 1)
+        self.assertEqual(m.quality_flag_counts.get("generic_language", 0), 1)
+        # flagged_record_count should be 1 (merged flags are non-empty)
+        self.assertEqual(m.flagged_record_count, 1)
+
+    def test_evidence_only_flags_contradiction_warning_when_appropriate(self):
+        """Evidence-only quality-risk flags should trigger contradiction warnings."""
+        evidence = [
+            _hn_evidence_dict(f"hn_{i}",
+                             source_url=f"https://news.ycombinator.com/item?id={i}",
+                             quality_flags=["requires_manual_review", "low_confidence_extraction",
+                                          "suspected_self_promo"])
+            for i in range(3)
+        ]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}",
+                        classification="pain_signal_candidate",
+                        quality_flags=[])
+            for i in range(3)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        # Evidence has sensitive flags in quality_flag_counts
+        sensitive_total = sum(
+            m.quality_flag_counts.get(f, 0)
+            for f in ["requires_manual_review", "low_confidence_extraction",
+                      "suspected_self_promo"]
+        )
+        # Three evidence items each with 3 flags = 9 flag occurrences
+        self.assertGreaterEqual(sensitive_total, 3,
+                               f"sensitive_total={sensitive_total}, qfc={m.quality_flag_counts}")
+        has_warning = any("quality-risk flags" in w.lower() for w in m.contradiction_warnings)
+        self.assertTrue(has_warning, f"contradiction_warnings={m.contradiction_warnings}")
+
+    def test_evidence_id_missing_classify_on_signal_alone(self):
+        """When evidence_id is missing, classify safely using signal dict alone (no crash)."""
+        evidence = [_hn_evidence_dict("hn_001", quality_flags=["low_text_context"])]
+        signals = [_signal_dict("sig_001", evidence_id="missing_ev_id",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=["low_text_context"])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        # Uses signal flags only since evidence not found; low_text_context + no pain -> noise
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertGreaterEqual(m.noise_signal_count, 1)
+
+
 if __name__ == "__main__":
     unittest.main()
