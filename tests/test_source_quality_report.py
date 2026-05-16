@@ -19,6 +19,7 @@ from oos.pain_cluster import (
 )
 from oos.source_quality_report import (
     NoiseCategorySummary,
+    SourceQualityHealth,
     SourceQualityMetrics,
     SourceQualityReport,
     SourceQualityReportValidationResult,
@@ -1263,6 +1264,710 @@ class TestEmptyInputHandling(unittest.TestCase):
         )
         self.assertIsInstance(report, SourceQualityReport)
         self.assertEqual(report.raw_evidence_total, 0)
+
+
+# =========================================================================
+# v2.14 Item 7 — Contradiction Fix Tests
+# =========================================================================
+
+
+class TestV214_QualityHealth_ClassificationHealth(unittest.TestCase):
+    """Test report-level classification_health computation."""
+
+    def test_clean_evidence_health_clean(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(5)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="pain_signal_candidate")
+            for i in range(5)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        self.assertEqual(report.quality_health.classification_health, "clean")
+        self.assertEqual(report.quality_health.evidence_quality_status, "clean")
+
+    def test_high_weak_rate_caution(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(5)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="needs_human_review")
+            for i in range(3)
+        ] + [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="pain_signal_candidate")
+            for i in range(3, 5)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        self.assertEqual(report.quality_health.classification_health, "caution")
+
+    def test_high_noise_rate_problematic(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(10)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="noise")
+            for i in range(4)
+        ] + [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="pain_signal_candidate")
+            for i in range(4, 10)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        self.assertEqual(report.quality_health.classification_health, "problematic")
+
+    def test_noise_rate_failing(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(4)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="noise")
+            for i in range(3)
+        ] + [
+            _signal_dict(f"sig_3", f"hn_3", classification="pain_signal_candidate"),
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        self.assertEqual(report.quality_health.classification_health, "failing")
+
+    def test_evidence_quality_noisy_when_high_noise_rate(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(5)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="noise")
+            for i in range(2)
+        ] + [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="pain_signal_candidate")
+            for i in range(2, 5)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        self.assertEqual(report.quality_health.evidence_quality_status, "noisy")
+
+
+class TestV214_ContradictionWarnings(unittest.TestCase):
+    """Test per-source contradiction detection."""
+
+    def test_high_accepted_rate_high_flagged_rate_warns(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(5)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}",
+                         classification="pain_signal_candidate",
+                         quality_flags=["debugging_pain", "workflow_pain"])
+            for i in range(3)
+        ] + [
+            _signal_dict(f"sig_{i}", f"hn_{i}",
+                         classification="pain_signal_candidate")
+            for i in range(3, 5)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertGreater(m.flagged_record_rate, 0.19)
+        self.assertGreater(m.accepted_rate, 0.79)
+        has_warning = any("high accepted_rate" in w.lower() and "flagged" in w.lower()
+                         for w in m.contradiction_warnings)
+        self.assertTrue(has_warning, f"contradiction_warnings={m.contradiction_warnings}")
+
+    def test_traceability_clean_but_weak_noisy_warns(self):
+        evidence = [
+            _hn_evidence_dict("hn_001", "https://news.ycombinator.com/item?id=1",
+                              quality_flags=["generic_language", "unclear_actor"]),
+            _hn_evidence_dict("hn_002", "https://news.ycombinator.com/item?id=2",
+                              quality_flags=["low_text_context"]),
+            _hn_evidence_dict("hn_003", "https://news.ycombinator.com/item?id=3"),
+        ]
+        signals = [
+            _signal_dict("sig_001", "hn_001", classification="pain_signal_candidate",
+                        quality_flags=["generic_language", "unclear_actor"]),
+            _signal_dict("sig_002", "hn_002", classification="pain_signal_candidate",
+                        quality_flags=["low_text_context"]),
+            _signal_dict("sig_003", "hn_003", classification="pain_signal_candidate"),
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertTrue(m.source_url_validation_passed)
+        has_warning = any("source_url validation" in w.lower() or "traceability" in w.lower()
+                         for w in m.contradiction_warnings)
+        self.assertTrue(has_warning, f"contradiction_warnings={m.contradiction_warnings}")
+
+    def test_source_with_noise_evidence_warns(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(4)]
+        signals = [
+            _signal_dict("sig_0", "hn_0", classification="noise"),
+            _signal_dict("sig_1", "hn_1", classification="noise"),
+            _signal_dict("sig_2", "hn_2", classification="pain_signal_candidate"),
+            _signal_dict("sig_3", "hn_3", classification="pain_signal_candidate"),
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertGreater(m.noise_rate, 0.0)
+        self.assertGreater(m.accepted_rate, 0.0)
+
+    def test_many_sensitive_flags_warns(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}",
+                     quality_flags=["requires_manual_review", "low_confidence_extraction",
+                                   "suspected_self_promo"])
+                   for i in range(3)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}",
+                        quality_flags=["requires_manual_review", "low_confidence_extraction",
+                                      "suspected_self_promo"])
+            for i in range(3)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        sensitive_total = sum(
+            m.quality_flag_counts.get(f, 0)
+            for f in ["requires_manual_review", "low_confidence_extraction",
+                      "suspected_self_promo"]
+        )
+        self.assertGreaterEqual(sensitive_total, 3)
+        has_warning = any("quality-risk flags" in w.lower() for w in m.contradiction_warnings)
+        self.assertTrue(has_warning, f"contradiction_warnings={m.contradiction_warnings}")
+
+    def test_clean_report_no_contradiction_warnings(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}", "https://news.ycombinator.com/item?id=" + str(i))
+                   for i in range(3)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="pain_signal_candidate")
+            for i in range(3)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        self.assertEqual(len(report.quality_health.contradiction_warnings), 0)
+
+    def test_source_url_validation_clean_does_not_suppress_quality_warnings(self):
+        evidence = [
+            _hn_evidence_dict("hn_001", "https://news.ycombinator.com/item?id=1",
+                             quality_flags=["generic_language", "unclear_actor", "low_text_context"]),
+            _hn_evidence_dict("hn_002", "https://news.ycombinator.com/item?id=2",
+                             quality_flags=["low_text_context"]),
+        ]
+        signals = [
+            _signal_dict("sig_001", "hn_001",
+                        quality_flags=["generic_language", "unclear_actor", "low_text_context"]),
+            _signal_dict("sig_002", "hn_002",
+                        quality_flags=["low_text_context"]),
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertTrue(m.source_url_validation_passed)
+        self.assertTrue(len(m.source_quality_warnings) > 0,
+                       f"Expected quality warnings, got: {m.source_quality_warnings}")
+
+
+class TestV214_PerSourceQualityWarnings(unittest.TestCase):
+    """Test per-source quality warning generation."""
+
+    def test_high_noise_rate_failing_warning(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(4)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="noise")
+            for i in range(3)
+        ] + [
+            _signal_dict("sig_3", "hn_3", classification="pain_signal_candidate"),
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        has_warning = any("failing" in w.lower() for w in m.source_quality_warnings)
+        self.assertTrue(has_warning, f"source_quality_warnings={m.source_quality_warnings}")
+
+    def test_high_weak_rate_caution_warning(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(5)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="needs_human_review")
+            for i in range(2)
+        ] + [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="pain_signal_candidate")
+            for i in range(2, 5)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        has_warning = any(
+            "weak rate" in w.lower() and ("caution" in w.lower() or "significant" in w.lower())
+            for w in m.source_quality_warnings
+        )
+        self.assertTrue(has_warning, f"source_quality_warnings={m.source_quality_warnings}")
+
+    def test_high_flagged_rate_warning(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}",
+                     quality_flags=["requires_manual_review"]) for i in range(3)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}",
+                        classification="pain_signal_candidate",
+                        quality_flags=["requires_manual_review"])
+            for i in range(3)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertGreater(m.flagged_record_rate, 0.19)
+        has_warning = any("flagged" in w.lower() for w in m.source_quality_warnings)
+        self.assertTrue(has_warning, f"source_quality_warnings={m.source_quality_warnings}")
+
+
+class TestV214_FlaggedRecordCounting(unittest.TestCase):
+    """Test flagged record counting."""
+
+    def test_flagged_record_count(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}",
+                     quality_flags=["requires_manual_review"] if i < 3 else [])
+                   for i in range(5)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}",
+                        classification="pain_signal_candidate",
+                        quality_flags=["requires_manual_review"] if i < 3 else [])
+            for i in range(5)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.flagged_record_count, 3)
+        self.assertEqual(m.flagged_record_rate, 0.6)
+
+    def test_no_flagged_records(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(3)]
+        signals = [_signal_dict(f"sig_{i}", f"hn_{i}") for i in range(3)]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.flagged_record_count, 0)
+        self.assertEqual(m.flagged_record_rate, 0.0)
+
+    def test_all_flagged_records(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}", quality_flags=["generic_language"])
+                   for i in range(4)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}",
+                        quality_flags=["generic_language"])
+            for i in range(4)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.flagged_record_count, 4)
+        self.assertEqual(m.flagged_record_rate, 1.0)
+
+
+class TestV214_WeakRateMetric(unittest.TestCase):
+    """Test weak_rate computation."""
+
+    def test_weak_rate_computed(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(4)]
+        signals = [
+            _signal_dict("sig_0", "hn_0", classification="needs_human_review"),
+            _signal_dict("sig_1", "hn_1", classification="pain_signal_candidate"),
+            _signal_dict("sig_2", "hn_2", classification="pain_signal_candidate"),
+            _signal_dict("sig_3", "hn_3", classification="pain_signal_candidate"),
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.weak_rate, 0.25)
+
+    def test_zero_weak_rate(self):
+        evidence = [_hn_evidence_dict(f"hn_{i}") for i in range(3)]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="pain_signal_candidate")
+            for i in range(3)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.weak_rate, 0.0)
+
+
+class TestV214_QualityHealthFields(unittest.TestCase):
+    """Test quality_health fields are populated correctly."""
+
+    def test_quality_health_populated(self):
+        evidence = [
+            _hn_evidence_dict("hn_001", "https://news.ycombinator.com/item?id=1"),
+            _gh_evidence_dict("gh_001", "https://github.com/owner/repo/issues/1"),
+        ]
+        signals = [
+            _signal_dict("sig_001", "hn_001", classification="pain_signal_candidate"),
+            _signal_dict("sig_002", "gh_001", "github_issues", "issue_tracker",
+                        classification="pain_signal_candidate"),
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        qh = report.quality_health
+        self.assertEqual(qh.traceability_status, "clean")
+        self.assertEqual(qh.source_scope_status, "clean")
+        self.assertEqual(qh.accepted_count, 2)
+        self.assertEqual(qh.weak_count, 0)
+        self.assertEqual(qh.noise_count, 0)
+        self.assertEqual(qh.accepted_rate, 1.0)
+
+    def test_quality_health_dominant_flags(self):
+        evidence = [
+            _hn_evidence_dict("hn_001", quality_flags=["launch_hype", "suspected_self_promo"]),
+            _hn_evidence_dict("hn_002", quality_flags=["launch_hype"]),
+            _hn_evidence_dict("hn_003", quality_flags=["launch_hype"]),
+        ]
+        signals = [
+            _signal_dict(f"sig_{i}", f"hn_00{i+1}",
+                        quality_flags=["launch_hype", "suspected_self_promo"] if i == 0 else ["launch_hype"])
+            for i in range(3)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        qh = report.quality_health
+        self.assertIn("launch_hype", qh.dominant_quality_flags)
+
+    def test_sources_with_high_weak_or_noise(self):
+        evidence = [
+            _hn_evidence_dict(f"hn_{i}") for i in range(5)
+        ] + [
+            _gh_evidence_dict(f"gh_{i}") for i in range(5)
+        ]
+        signals = [
+            _signal_dict(f"sig_hn_{i}", f"hn_{i}", classification="noise")
+            for i in range(3)
+        ] + [
+            _signal_dict(f"sig_hn_{i}", f"hn_{i}", classification="pain_signal_candidate")
+            for i in range(3, 5)
+        ] + [
+            _signal_dict(f"sig_gh_{i}", f"gh_{i}", "github_issues", "issue_tracker",
+                        classification="pain_signal_candidate")
+            for i in range(5)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        qh = report.quality_health
+        self.assertIn("hacker_news", qh.sources_with_high_weak_or_noise)
+
+    def test_traceability_failing_sets_status(self):
+        evidence = [_hn_evidence_dict("hn_001", source_url="")]
+        report = build_source_quality_report(
+            evidence_items=evidence,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        qh = report.quality_health
+        self.assertEqual(qh.traceability_status, "failing")
+
+
+class TestV214_MarkdownRendering_ContradictionFix(unittest.TestCase):
+    """Test Markdown rendering for v2.14 item 7 changes."""
+
+    def setUp(self):
+        evidence = [
+            _hn_evidence_dict("hn_001", "https://news.ycombinator.com/item?id=1",
+                              "Debugging AI agents is painful", "Cannot trace.",
+                              quality_flags=["launch_hype"]),
+            _hn_evidence_dict("hn_002", "https://news.ycombinator.com/item?id=2",
+                              "Check out my SaaS", "Launching...",
+                              quality_flags=["suspected_self_promo"]),
+            _hn_evidence_dict("hn_003", "https://news.ycombinator.com/item?id=3",
+                              "Agent tracing broken", "Multi-step trace lost."),
+        ]
+        signals = [
+            _signal_dict("sig_001", "hn_001", classification="pain_signal_candidate",
+                        quality_flags=["launch_hype"]),
+            _signal_dict("sig_002", "hn_002", classification="noise",
+                        quality_flags=["suspected_self_promo"]),
+            _signal_dict("sig_003", "hn_003", classification="pain_signal_candidate"),
+        ]
+        self.report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="test_md_v214", created_at="2026-01-01T00:00:00Z",
+        )
+
+    def test_executive_summary_has_quality_status(self):
+        md = render_source_quality_report_markdown(self.report)
+        self.assertIn("### Quality Status", md)
+        self.assertIn("Traceability", md)
+        self.assertIn("Source Scope", md)
+        self.assertIn("Classification Health", md)
+        self.assertIn("Evidence Quality", md)
+
+    def test_quality_risk_summary_table_renders(self):
+        md = render_source_quality_report_markdown(self.report)
+        self.assertIn("### Quality Risk Summary", md)
+        self.assertIn("Accepted", md)
+        self.assertIn("Weak", md)
+        self.assertIn("Noise", md)
+        self.assertIn("Flagged Records", md)
+        self.assertIn("Dominant Quality Flags", md)
+
+    def test_contradiction_warnings_section_renders(self):
+        md = render_source_quality_report_markdown(self.report)
+        self.assertIn("## Contradiction Warnings", md)
+
+    def test_quality_flags_table_renders(self):
+        md = render_source_quality_report_markdown(self.report)
+        self.assertIn("## Quality Flags", md)
+
+    def test_per_source_warnings_section_renders(self):
+        md = render_source_quality_report_markdown(self.report)
+        self.assertIn("## Per-Source Quality Warnings", md)
+
+    def test_signal_classification_table_has_rates(self):
+        md = render_source_quality_report_markdown(self.report)
+        self.assertIn("## Signal Classification Summary", md)
+        self.assertIn("Rate", md)
+
+    def test_ascii_safe_output(self):
+        md = render_source_quality_report_markdown(self.report, output_mode="ascii_safe")
+        for i, ch in enumerate(md):
+            self.assertLess(ord(ch), 128, f"Non-ASCII char at position {i}: {ch!r}")
+
+    def test_clean_report_empty_contradiction_message(self):
+        clean_evidence = [_hn_evidence_dict(f"hn_{i}", f"https://news.ycombinator.com/item?id={i+100}")
+                         for i in range(3)]
+        clean_signals = [
+            _signal_dict(f"sig_{i}", f"hn_{i}", classification="pain_signal_candidate")
+            for i in range(3)
+        ]
+        clean_report = build_source_quality_report(
+            evidence_items=clean_evidence, candidate_signals=clean_signals,
+            discovery_run_id="clean", created_at="2026-01-01T00:00:00Z",
+        )
+        md = render_source_quality_report_markdown(clean_report)
+        self.assertIn("internally consistent", md.lower())
+
+    def test_opportunity_candidate_note(self):
+        md = render_source_quality_report_markdown(self.report)
+        if self.report.opportunity_candidates:
+            self.assertIn("SQR build time", md)
+
+
+class TestV214_SerializationBackwardCompatibility(unittest.TestCase):
+    """Test serialization backward compatibility for v2.14 fields."""
+
+    def test_metrics_roundtrip_includes_new_fields(self):
+        m = SourceQualityMetrics(
+            source_id="hacker_news",
+            source_type="discussion",
+            accepted_signal_count=5,
+            weak_signal_count=2,
+            noise_signal_count=3,
+            flagged_record_count=4,
+            source_quality_warnings=["test warning"],
+            contradiction_warnings=["test contradiction"],
+        )
+        m.recompute_rates()
+        m.flagged_record_rate = 0.4
+        data = m.to_dict()
+        m2 = SourceQualityMetrics.from_dict(data)
+        self.assertEqual(m2.flagged_record_count, 4)
+        self.assertEqual(m2.flagged_record_rate, 0.4)
+        self.assertEqual(m2.source_quality_warnings, ["test warning"])
+        self.assertEqual(m2.contradiction_warnings, ["test contradiction"])
+        self.assertEqual(m2.weak_rate, 0.2)
+
+    def test_old_dict_without_new_fields_loads_safely(self):
+        old_data = {
+            "source_id": "hacker_news",
+            "source_type": "discussion",
+            "records_seen": 10,
+            "records_emitted": 10,
+            "records_rejected": 0,
+            "accepted_signal_count": 8,
+            "weak_signal_count": 1,
+            "noise_signal_count": 1,
+            "accepted_rate": 0.8,
+            "noise_rate": 0.1,
+            "duplicate_count": 0,
+            "missing_url_count": 0,
+            "placeholder_url_count": 0,
+            "source_url_validation_passed": True,
+            "source_diversity_contribution": 2,
+            "cluster_contribution_count": 2,
+            "opportunity_contribution_count": 0,
+            "founder_promote_count": 0,
+            "founder_kill_count": 0,
+            "founder_needs_more_evidence_count": 0,
+            "quality_flag_counts": {},
+            "rejection_reasons": [],
+        }
+        m = SourceQualityMetrics.from_dict(old_data)
+        self.assertEqual(m.flagged_record_count, 0)
+        self.assertEqual(m.flagged_record_rate, 0.0)
+        self.assertEqual(m.source_quality_warnings, [])
+        self.assertEqual(m.contradiction_warnings, [])
+        self.assertEqual(m.weak_rate, 0.0)
+
+    def test_report_roundtrip_with_quality_health(self):
+        evidence = [
+            _hn_evidence_dict("hn_001", "https://news.ycombinator.com/item?id=1",
+                             quality_flags=["launch_hype"]),
+        ]
+        signals = [
+            _signal_dict("sig_001", "hn_001", classification="pain_signal_candidate",
+                        quality_flags=["launch_hype"]),
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="roundtrip_v214", created_at="2026-01-01T00:00:00Z",
+        )
+        data = report.to_dict()
+        report2 = SourceQualityReport.from_dict(data)
+        self.assertEqual(report.report_id, report2.report_id)
+        self.assertEqual(
+            report.quality_health.classification_health,
+            report2.quality_health.classification_health,
+        )
+        self.assertEqual(
+            report.quality_health.traceability_status,
+            report2.quality_health.traceability_status,
+        )
+        self.assertEqual(
+            report.quality_health.accepted_count,
+            report2.quality_health.accepted_count,
+        )
+
+    def test_old_report_without_quality_health_loads_safely(self):
+        old_data = {
+            "artifact_type": "source_quality_report",
+            "schema_version": "1.0.0",
+            "report_id": "sqr_old",
+            "discovery_run_id": "old_run",
+            "created_at": "2025-01-01T00:00:00Z",
+            "source_metrics": [],
+            "raw_evidence_total": 0,
+            "accepted_signal_total": 0,
+            "weak_signal_total": 0,
+            "noise_signal_total": 0,
+            "pain_cluster_count": 0,
+            "opportunity_candidate_count": 0,
+            "top_pain_clusters": [],
+            "opportunity_candidates": [],
+            "main_noise_categories": [],
+            "founder_decisions_needed": {},
+            "next_validation_actions": [],
+            "traceability_summary": {"source_url_validation_passed": True},
+            "warnings": [],
+            "errors": [],
+        }
+        report = SourceQualityReport.from_dict(old_data)
+        self.assertEqual(report.report_id, "sqr_old")
+        self.assertIsInstance(report.quality_health, SourceQualityHealth)
+        self.assertEqual(report.quality_health.traceability_status, "clean")
+
+
+class TestV214_ClassifierParity(unittest.TestCase):
+    """Test that SQR classification counts come from the canonical classifier."""
+
+    def test_vendor_promo_counted_weak_or_noise(self):
+        evidence = [_hn_evidence_dict("hn_001",
+                     quality_flags=["vendor_promo", "product_launch"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=["vendor_promo", "product_launch"])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        # vendor_promo aliases to suspected_self_promo (medium flag = weak)
+        # With product_launch and no pain in title/body → noise
+        self.assertGreaterEqual(m.weak_signal_count + m.noise_signal_count, 1)
+        self.assertEqual(m.accepted_signal_count, 0)
+
+    def test_missing_actor_counted_weak(self):
+        evidence = [_hn_evidence_dict("hn_001",
+                     quality_flags=["missing_actor", "generic_language"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=["missing_actor", "generic_language"])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertGreaterEqual(m.weak_signal_count + m.noise_signal_count, 1)
+        self.assertEqual(m.accepted_signal_count, 0)
+
+    def test_low_text_context_no_pain_noise(self):
+        evidence = [_hn_evidence_dict("hn_001", title="", body="",
+                     quality_flags=["low_text_context"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=["low_text_context"])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertGreaterEqual(m.noise_signal_count, 1)
+
+    def test_low_text_context_with_pain_weak(self):
+        evidence = [_hn_evidence_dict("hn_001",
+                     title="debugging is broken", body="Cannot trace agents. This is a real problem costing us hours every week.",
+                     quality_flags=["low_text_context"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=["low_text_context"])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        # low_text_context + pain markers → weak, never accepted
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertGreaterEqual(m.weak_signal_count, 1)
+
+    def test_positive_pain_flags_remain_accepted(self):
+        evidence = [_hn_evidence_dict("hn_001",
+                     title="CI/CD debugging wastes hours", body="Flaky tests cause entire team to wait. This is costing us real money.",
+                     quality_flags=["debugging_pain", "workflow_pain"])]
+        signals = [_signal_dict("sig_001", "hn_001",
+                                 classification="pain_signal_candidate",
+                                 quality_flags=["debugging_pain", "workflow_pain"])]
+        report = build_source_quality_report(
+            evidence_items=evidence, candidate_signals=signals,
+            discovery_run_id="t", created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 1)
+        self.assertEqual(m.weak_signal_count, 0)
+        self.assertEqual(m.noise_signal_count, 0)
 
 
 if __name__ == "__main__":

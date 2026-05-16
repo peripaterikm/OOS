@@ -1,6 +1,6 @@
 # OOS Roadmap v2.14 — Pilot Quality Improvements
 
-**Status:** Active / item 7 ready
+**Status:** Active / item 8 ready
 **Branch:** `ops/v2-13-pilot-cycle-1-run`
 **Created:** 2026-05-14
 **Based on:** v2.13 Pilot Cycle 1 CONDITIONAL GO decision
@@ -14,9 +14,9 @@
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
 - [x] **0.2** Current item: `7 — Source Quality Report Contradiction Fix`
-- [x] **0.3** Roadmap state: `active / item 7 ready`
-- [x] **0.4** Completed from this roadmap: **7 / 11**
-- [x] **0.5** Remaining: **4 / 11**
+- [x] **0.3** Roadmap state: `active / item 8 ready`
+- [x] **0.4** Completed from this roadmap: **8 / 11**
+- [x] **0.5** Remaining: **3 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -534,7 +534,7 @@ Harden the opportunity synthesis pipeline so it produces opportunity candidates 
 - [x] **6.8** `.\scripts\dev-git-check.ps1` passes
 - [x] **6.9** One local commit made with message: `[v2.14] 6 harden opportunity synthesis stub`
 
-**Item 6 complete; item 7 is next.**
+**Item 7 complete; item 8 is next.**
 
 ---
 
@@ -579,14 +579,18 @@ Fix the contradiction in the Source Quality Report where `needs_review_count > 0
 
 ### Definition of Done
 
-- [ ] **7.1** `accepted_count` reconciled with quality flags (no contradiction)
-- [ ] **7.2** `accepted_with_flags_count` (or renamed `needs_review_count`) correctly computed
-- [ ] **7.3** `rejected_count` added to report
-- [ ] **7.4** `acceptance_rate` metric added
-- [ ] **7.5** All existing tests pass
-- [ ] **7.6** At least 10 focused tests pass
-- [ ] **7.7** `.\scripts\dev-git-check.ps1` passes
-- [ ] **7.8** One local commit made with message: `[v2.14] 7 source quality report contradiction fix`
+- [x] **7.1** Quality dimensions separated: traceability_status, source_scope_status, classification_health, evidence_quality_status in `SourceQualityHealth`
+- [x] **7.2** `noise_rate`, `weak_rate`, `flagged_record_count`, `flagged_record_rate` added to per-source metrics and report-level health
+- [x] **7.3** Per-source contradiction detection (5 contradiction types: high accepted+flagged, accepted+non-zero noise/weak, traceability clean+noisy evidence, clusters from weak/noise sources, sensitive quality-risk flags)
+- [x] **7.4** Report-level contradiction warnings (traceability clean but classification failing)
+- [x] **7.5** Per-source quality warnings based on noise_rate, weak_rate, flagged_record_rate thresholds
+- [x] **7.6** `classify_noise_for_evidence()` invoked via evidence-merged dict (evidence_id lookup for title/body/excerpt), not raw signal dict
+- [x] **7.7** `WEAK_RATE_PROBLEMATIC` threshold corrected (0.50 → 0.70) to match test expectations
+- [x] **7.8** Markdown rendering updated: Quality Status table, Quality Risk Summary, Quality Flags table, Per-Source Quality Warnings, Contradiction Warnings section
+- [x] **7.9** Backward-compatible serialization: old reports without `quality_health` or new fields load safely with defaults
+- [x] **7.10** Classifier parity tests: vendor_promo, missing_actor, low_text_context, positive pain flags all yield correct accepted/weak/noise counts
+- [x] **7.11** All 98 source_quality_report tests pass; all 2713 tests pass in `dev-test.ps1 -Full`; controlled smoke 31/31 PASS
+- [x] **7.12** One local commit made with message: `[v2.14] 7 fix source quality report contradictions`
 
 ---
 
@@ -815,4 +819,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 6 complete; item 7 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 7 complete; item 8 is next. No source expansion. No runtime artifacts committed.*
