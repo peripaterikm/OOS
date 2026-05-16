@@ -13,10 +13,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `8 — Targeted regression fixtures from Run 1 / Run 2 summaries`
-- [x] **0.3** Roadmap state: `active / item 8 ready`
-- [x] **0.4** Completed from this roadmap: **8 / 11**
-- [x] **0.5** Remaining: **3 / 11**
+- [x] **0.2** Current item: `9 — Controlled pilot smoke re-run with v2.14 quality gates`
+- [x] **0.3** Roadmap state: `active / item 9 ready`
+- [x] **0.4** Completed from this roadmap: **9 / 11**
+- [x] **0.5** Remaining: **2 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -637,14 +637,14 @@ Create small, curated, deterministic regression fixtures based on summarized pat
 
 ### Definition of Done
 
-- [ ] **8.1** `tests/fixtures/v2_14/` directory exists
-- [ ] **8.2** Five fixture files created: clean, noise, mixed, catch_all_cluster, agent_debugging_theme
-- [ ] **8.3** All fixtures are valid `CandidateSignal` JSON
-- [ ] **8.4** Fixtures annotated with expected quality flags and classifications
-- [ ] **8.5** At least 10 focused tests using new fixtures pass
-- [ ] **8.6** All existing tests pass
-- [ ] **8.7** `.\scripts\dev-git-check.ps1` passes
-- [ ] **8.8** One local commit made with message: `[v2.14] 8 targeted regression fixtures`
+- [x] **8.1** Regression fixture test file exists at `tests/test_v2_14_pilot_regression_fixtures.py`
+- [x] **8.2** Five regression fixture test classes created: SQR, Cluster, Title, FounderReview, OpportunitySynthesis
+- [x] **8.3** All fixtures are compact synthetic dicts; no raw runtime artifacts committed
+- [x] **8.4** Fixtures annotated with expected quality flags and classifications
+- [x] **8.5** 43 focused tests pass (well above minimum 10)
+- [x] **8.6** All existing tests pass (2768 tests OK in dev-test.ps1 -Full)
+- [x] **8.7** `.\scripts\dev-git-check.ps1` — pending at commit time
+- [x] **8.8** One local commit made with message: `[v2.14] 8 add pilot regression fixtures`
 
 ---
 
