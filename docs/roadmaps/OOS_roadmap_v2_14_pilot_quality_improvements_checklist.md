@@ -643,7 +643,7 @@ Create small, curated, deterministic regression fixtures based on summarized pat
 - [x] **8.4** Fixtures annotated with expected quality flags and classifications
 - [x] **8.5** 43 focused tests pass (well above minimum 10)
 - [x] **8.6** All existing tests pass (2768 tests OK in dev-test.ps1 -Full)
-- [x] **8.7** `.\scripts\dev-git-check.ps1` — pending at commit time
+- [x] **8.7** `.\scripts\dev-git-check.ps1` — passed (6/6)
 - [x] **8.8** One local commit made with message: `[v2.14] 8 add pilot regression fixtures`
 
 ---
@@ -819,4 +819,4 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 7 fix applied; item 8 is next. No source expansion. No runtime artifacts committed.*
+*Roadmap v2.14 — Pilot Quality Improvements. Item 8 complete; item 9 is next. No source expansion. No runtime artifacts committed.*

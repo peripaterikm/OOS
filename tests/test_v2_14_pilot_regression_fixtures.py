@@ -438,6 +438,33 @@ class TestRun1Run2ClusterRegressionFixtures(unittest.TestCase):
             self.assertFalse(c.catch_all_risk,
                              f"Cluster {c.cluster_id} should not be catch_all_risk")
 
+        # -- Strengthened assertions: evidence_id -> cluster_id map --
+        eid_cid = {}
+        for c in clusters:
+            for entry in c.source_evidence_list:
+                eid_cid[entry.evidence_id] = c.cluster_id
+
+        # Incompatible pairs must NOT share a cluster
+        # provenance != agent_trace_debugging
+        self.assertNotEqual(
+            eid_cid.get("hn_prov_1"), eid_cid.get("hn_trace_1"),
+            "output_provenance and agent_trace_debugging must not be in same cluster")
+        self.assertNotEqual(
+            eid_cid.get("hn_prov_2"), eid_cid.get("hn_trace_2"),
+            "output_provenance and agent_trace_debugging must not be in same cluster")
+
+        # checkpoint/state != structured_output
+        self.assertNotEqual(
+            eid_cid.get("hn_state_1"), eid_cid.get("hn_output_1"),
+            "checkpoint_state_reproducibility and structured_output_reliability must not be in same cluster")
+
+        # Compatible memberships: same-source / same-anchor pairs that share
+        # strong keyword overlap should be together. Check that hn_prov_1 and
+        # hn_prov_2 (both provenance+attribution keywords) share a cluster.
+        self.assertEqual(
+            eid_cid.get("hn_prov_1"), eid_cid.get("hn_prov_2"),
+            "output_provenance evidence with shared keywords must share same cluster")
+
     def test_provenance_and_trace_debugging_not_in_same_cluster(self):
         """output_provenance evidence must NOT merge with agent_trace_debugging evidence."""
         evidence = [
@@ -488,11 +515,23 @@ class TestRun1Run2ClusterRegressionFixtures(unittest.TestCase):
             for entry in c.source_evidence_list:
                 cid_map[entry.evidence_id] = c.cluster_id
 
-        # At least hn_stack_1 and hn_stack_2 should be together
+        # Helper: assert two evidence IDs share the same cluster_id
+        def assert_same_cluster(eid_a, eid_b):
+            cid_a = cid_map.get(eid_a)
+            cid_b = cid_map.get(eid_b)
+            self.assertIsNotNone(cid_a, f"{eid_a} not found in any cluster")
+            self.assertIsNotNone(cid_b, f"{eid_b} not found in any cluster")
+            self.assertEqual(cid_a, cid_b,
+                             f"{eid_a} (cluster {cid_a}) and {eid_b} (cluster {cid_b}) must share same cluster")
+
+        # All stack/error-context evidence must share the same cluster
+        assert_same_cluster("hn_stack_1", "hn_stack_2")
+        assert_same_cluster("hn_stack_2", "gh_stack_1")
+
+        # All three evidence IDs must map to exactly one cluster
         stack_ids = {cid_map.get(eid) for eid in ["hn_stack_1", "hn_stack_2", "gh_stack_1"] if eid in cid_map}
-        # With 3 stack-trace items, we expect at most 2 clusters (ideally 1)
-        self.assertLessEqual(len(stack_ids), 2,
-                             f"Stack trace items over-fragmented: {len(stack_ids)} clusters for 3 items")
+        self.assertEqual(len(stack_ids), 1,
+                         f"Stack trace items must be in exactly 1 cluster, got {len(stack_ids)}: {stack_ids}")
 
     def test_two_checkpoint_state_items_merge(self):
         """Two checkpoint/state reproducibility items should merge."""
@@ -775,7 +814,7 @@ class TestRun1Run2FounderReviewRegressionFixtures(unittest.TestCase):
                       "FRP Markdown must include Opportunity Hypotheses section")
 
     def test_frp_empty_opportunity_hypotheses_shows_safe_message(self):
-        """FRP with no opportunity hypotheses shows a safe empty-state message."""
+        """FRP with no opportunity hypotheses shows the deterministic empty-state message."""
         # Use a cluster that won't synthesize (e.g., low score to get PARK)
         cluster = self._make_cluster_dict("pc_empty_oh", overall=0.40)
 
@@ -785,11 +824,14 @@ class TestRun1Run2FounderReviewRegressionFixtures(unittest.TestCase):
             created_at=_FIXED_TS,
         )
         md = render_founder_review_package_markdown(pkg)
-        # Either "No opportunity hypotheses" empty state or the section header is present
-        self.assertTrue(
-            "No opportunity hypotheses" in md or "## Opportunity Hypotheses" in md,
-            "FRP must show opportunity hypotheses section with empty-state message"
+        # Must assert the actual empty-state message, not just section header
+        self.assertIn(
+            "No opportunity hypotheses generated under deterministic eligibility gates",
+            md,
+            "FRP must show the deterministic empty-state message when no opportunities synthesized"
         )
+        self.assertIn("## Opportunity Hypotheses", md,
+                      "FRP must include Opportunity Hypotheses section header")
 
     def test_frp_priority_ranks_align_with_sort_order(self):
         """Review priority ranks (review_priority) must align with sorted card order."""
