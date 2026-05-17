@@ -352,7 +352,7 @@ Pilot Cycle 1 was executed in two runtime runs outside the repository (no runtim
 - Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
 - Parent decision: CONDITIONAL GO (`docs/operations/pilot_cycle_1_conditional_go_summary_v2_13.md`)
 - Closed: 2026-05-17
-- Latest commit: pending (`[v2.14] 10 close pilot quality improvements`)
+- Latest commit: 71860c9 (`[v2.14] 10 close pilot quality improvements`)
 
 ### v2.14 Items (Complete)
 
@@ -397,6 +397,6 @@ Pilot Cycle 1 was executed in two runtime runs outside the repository (no runtim
 
 - Branch: `ops/v2-13-pilot-cycle-1-run`
 - Based on: v2.13 Pilot Cycle 1 CONDITIONAL GO
-- Latest commit: pending (`[v2.14] 10 close pilot quality improvements`)
+- Latest commit: 71860c9 (`[v2.14] 10 close pilot quality improvements`)
 - No push, PR, merge, or tag performed.
 - **Next action:** PR review/merge when explicitly requested. Pilot Cycle 2 after explicit founder approval. Source expansion remains blocked. v2.15 must not start without explicit roadmap.
