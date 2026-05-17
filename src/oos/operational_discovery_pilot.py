@@ -272,6 +272,9 @@ def _derive_minimal_candidate_signals(
 
     Deterministic only. Does NOT implement LLM classification.
     Maps available fields from evidence to candidate-signal fields.
+
+    Propagates quality_flags from evidence so that noise classification
+    can act on them downstream in Source Quality Report.
     """
     ts = created_at or _iso_utc_now()
     candidates: list[dict[str, Any]] = []
@@ -314,6 +317,9 @@ def _derive_minimal_candidate_signals(
         if not target_user:
             target_user = "unknown"
 
+        # Propagate quality_flags from evidence for noise classification downstream
+        quality_flags = list(ev_norm.get("quality_flags", []) or [])
+
         # Build signal_id
         sig_key = f"{ev_id}|{signal_type}|{sid}|{ts}"
         sig_hash = hashlib.sha256(sig_key.encode("utf-8")).hexdigest()[:12]
@@ -344,6 +350,11 @@ def _derive_minimal_candidate_signals(
             },
             "scoring_model_version": "",
             "scoring_breakdown": {},
+            "quality_flags": quality_flags,
+            "evidence_kind": evidence_kind,
+            "title": title,
+            "body": body,
+            "excerpt": str(ev_norm.get("excerpt", "") or ""),
             "_derived": True,
         }
         candidates.append(candidate)
@@ -650,6 +661,11 @@ def run_operational_discovery_pilot(
 
     frp_validation = validate_founder_review_package(frp)
     frp_valid_dict = frp_validation.to_dict()
+
+    # v2.14 item 6: If no external opportunity_candidates were provided,
+    # populate from the FRP's opportunity_hypotheses.
+    if not opp_candidates and frp.opportunity_hypotheses:
+        opp_candidates = [dict(oh) for oh in frp.opportunity_hypotheses]
 
     # ---------------------------------------------------------------
     # Phase 7: Validation

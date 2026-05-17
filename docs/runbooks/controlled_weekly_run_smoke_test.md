@@ -1,8 +1,8 @@
 # Controlled Weekly Run Smoke Test — Runbook
 
 **Roadmap:** v2.7 item 5.1 / v2.10 item 3.1-C
-**Version:** 1.1
-**Last updated:** 2026-05-11
+**Version:** 1.2
+**Last updated:** 2026-05-16 (v2.14-FIX hardened gates)
 
 ## 1. Purpose
 
@@ -462,6 +462,107 @@ The pilot smoke runs as part of the full controlled smoke script:
 ```
 
 The pilot step appears as "Step 10: Operational Discovery Pilot Smoke" and reports individual PASS/FAIL for each verification gate.
+
+---
+
+## 21. v2.14 Controlled Quality Smoke (v2.14 Item 9) — HARDENED v2.14-FIX
+
+### Purpose
+
+This smoke step runs the full Operational Discovery Pilot pipeline on a curated v2.14 quality fixture that exercises all quality gates introduced in v2.14. **v2.14-FIX hardens the gates so they no longer pass vacuously.** The step reads SQR JSON values directly and requires non-trivial outcomes when the fixture includes noise/weak signals and quality flags.
+
+### What It Verifies (Hardened)
+
+- **Gate A — Source Quality Report:** `noise_signal_total > 0`, `weak_signal_total > 0`, `classification_health != "clean"`, `evidence_quality_status != "clean"`, `flagged_record_count > 0`, `contradiction_warnings` count > 0, at least one per-source warning, Markdown contains non-empty warning bullets (not just section headers).
+- **Gate B — PainCluster Assembly:** Mixed anchors do not collapse into one catch-all; coherent stack/trace items (`v214_gh_stack_001` + `v214_gh_trace_001`) share EXACTLY ONE cluster (B2); provenance item (`v214_gh_prov_001`) is in a SEPARATE cluster (B2b); no dead/nme titles; zero catch-all risk clusters.
+- **Gate C — Founder Review Package:** Unchanged (Executive Summary, SNR, Per-Source, Quality Gate, Opportunity Hypotheses).
+- **Gate D — Opportunity Synthesis:** At least 1 opportunity candidate synthesized; `not_a_solution_yet = true`, `created_by = deterministic_stub`, `evidence_links` preserved; D6 verifies known-actor hypotheses do NOT carry `unproven; validate actor` ICP. **Unknown-actor synthesis behavior (`target_actor='unknown'` → `target_icp='unproven; validate actor'`) is covered by regression tests in `test_opportunity_synthesis.py`, not by this smoke Step 11 gate.**
+
+### Fixture Composition (v2.14-FIX)
+
+The v2.14 quality smoke fixture includes 10 evidence items:
+
+| Evidence ID | Source | Character | Expected Classification |
+|-------------|--------|-----------|------------------------|
+| `v214_gh_stack_001` | GitHub Issues | Concrete stack-trace debugging pain | Accepted |
+| `v214_gh_trace_001` | GitHub Issues | Prompt replay / trace debugging pain | Accepted |
+| `v214_gh_prov_001` | GitHub Issues | Multi-agent provenance pain (same topic_id=agent_debugging_traces) | Accepted |
+| `v214_hn_noise_001` | HN | Product launch + vendor_promo flags | Noise |
+| `v214_hn_noise_002` | HN | Product launch + launch_hype flags | Noise |
+| `v214_hn_flagged_001` | HN | Evidence-only flags (low_text_context) | Weak/Noise |
+| `v214_hn_pain_001` | HN | Positive pain flags (cost_signal, workaround) | Accepted (flagged) |
+| `v214_hn_clean_001` | HN | Clean agent debugging pain (no flags) | Accepted |
+| `v214_hn_unknown_001` | HN | Unknown actor agent debugging pain | Accepted |
+| `v214_gh_unknown_001` | GitHub Issues | Unknown actor agent debugging pain | Accepted |
+
+The unknown-actor evidence pair has `target_user = "unknown"` in raw_metadata. Under current cluster assembly policy (`pain_cluster_assembly.py`: unknown actor does NOT block merge when workflow+object match), these items merge into the developer-dominant cluster, so the synthesized hypothesis carries `target_actor='developer'` (known). The unknown-actor → `unproven; validate actor` path is exercised by `test_opportunity_synthesis.py` regression tests.
+
+### Expected Artifacts
+
+The v2.14 quality smoke writes only to `<temp_root>/v2_14_quality_smoke/pilot_smoke_v2_14_quality/`. All required artifacts are verified.
+
+### Running the Quality Smoke Standalone
+
+```powershell
+.\scripts\run-controlled-smoke.ps1
+```
+
+The quality smoke step appears as "Step 11: v2.14 Controlled Quality Smoke" and reports individual PASS/FAIL for each hardened gate check.
+
+### Smoke Assertions (HARDENED v2.14-FIX)
+
+| Gate | Assertion | Expected |
+|------|-----------|----------|
+| A1 | noise_signal_total | > 0 (from SQR JSON, not Markdown) |
+| A2 | weak_signal_total | > 0 (from SQR JSON) |
+| A3 | classification_health | != `clean` (mandatory when noise/weak/flags exist) |
+| A4 | evidence_quality_status | != `clean` |
+| A5 | flagged_record_count | > 0 |
+| A6 | dominant_quality_flags | Includes vendor_promo/suspected_self_promo/low_confidence_source/requires_manual_review |
+| A7 | contradiction_warnings | len(cw) > 0 (not just isinstance check) |
+| A8 | Per-source warnings | At least one source has non-empty warnings |
+| A9 | Markdown warning bullets | Non-empty bullet content, not only section headers |
+| B1 | Multiple clusters | > 1 cluster (not single catch-all) |
+| B2 | Coherent stack/trace items (`v214_gh_stack_001` + `v214_gh_trace_001`) | EXACTLY 1 cluster |
+| B2b | Provenance item separate (`v214_gh_prov_001`) | NOT merged with B2 trace cluster |
+| B3 | No dead/nme titles | Zero `[dead]` or `needs_more_evidence` titles |
+| B4 | Zero catch-all risk | No `catch_all_risk = true` clusters |
+| C1–C5 | FRP sections | Unchanged |
+| D1 | Opportunity candidates count | >= 1 (not "may be empty") |
+| D2 | not_a_solution_yet | True on all hypotheses |
+| D3 | created_by | `deterministic_stub` on all hypotheses |
+| D4 | evidence_links | Non-empty on all hypotheses |
+| D5 | Synthesized hypothesis required fields | not_a_solution_yet + created_by + evidence_links |
+| D6 | Known-actor ICP safe | target_icp NOT `unproven; validate actor` for known actors |
+
+*D6 checks known-actor hypotheses do not carry `unproven; validate actor`. Unknown-actor → `unproven; validate actor` behavior is covered by `test_opportunity_synthesis.py` regression tests.*
+
+### Previous 0-Opportunity Gap Fixed
+
+Prior to v2.14-FIX, gates D1–D5 passed vacuously when `opportunity_candidate_count = 0`. The fixture now includes three clean GitHub items sharing `topic_id = "agent_debugging_traces"` (`v214_gh_stack_001`, `v214_gh_trace_001`, `v214_gh_prov_001`) plus HN pain-signal evidence, which enables a cluster with PROMOTE or NEEDS_MORE_EVIDENCE recommendation eligible for deterministic opportunity synthesis.
+
+### Failure Guidance
+
+| Failure | Likely Cause | Fix |
+|---------|-------------|-----|
+| Gate A1/A2/A3/A4 fail | Noise classifier not rejecting flagged evidence | Check `noise_classifier.py` rules for vendor_promo, low_text_context |
+| Gate A7 fail | SQR contradiction detection not triggered | Check `source_quality_report.py` contradiction thresholds |
+| Gate A8 fail | Per-source warnings empty | Check per_source_warnings population in SQR |
+| Gate A9 fail | Markdown renders headers without warning bullets | Check `render_source_quality_report_markdown` outputs bullet lines |
+| Gate B1 fail | Catch-all cluster formed | Check cluster assembly `_should_merge()` and canonical anchors |
+| Gate B2 fail | Coherent items split across > 1 cluster | Check cluster assembly for topic_id co-location |
+| Gate B3 fail | Bad cluster title generated | Check `generate_cluster_review_title()` fallback logic |
+| Gate D1 fail | Zero candidates synthesized | Check eligibility gates in `_cluster_is_eligible()` |
+| Gate D5 fail | Synthesized hypothesis missing required fields | Check not_a_solution_yet, created_by, evidence_links in `synthesize_opportunities()` |
+| Gate D6 fail | Known-actor hypothesis carries `unproven; validate actor` | Check `target_icp` assignment logic at line 658 of `opportunity_synthesis.py`; unknown-actor items merged into known-actor cluster |
+
+### No Live APIs / No LLMs
+
+The v2.14 quality smoke step uses deterministic in-memory fixture data only. No network calls. No LLM calls. All assertions are computed from pipeline outputs.
+
+### Temp-Output Behavior
+
+All v2.14 quality smoke artifacts are written to a temp directory under `$TempRoot/v2_14_quality_smoke/`. The real repository `artifacts/` directory is never touched.
 
 ---
 

@@ -1,4 +1,4 @@
-﻿# Dev Ledger Project State
+# Dev Ledger Project State
 
 ## Current Roadmap
 
@@ -10,9 +10,10 @@
 - Roadmap v2.10 status: **complete / closed** (`8 / 9`, item 5 skipped; replace-all gate BLOCKED)
 - Roadmap v2.11 status: **complete / closed** (`10 / 10`, branch `feat/v2-11-discovery-sources-foundation`, local-only)
 - Roadmap v2.12 status: **complete / closed** (`10 / 10`, branch `feat/v2-12-operational-discovery-pilot`, PR #52 merged)
-- Roadmap v2.13 status: **complete / closed** (`12 / 12`, branch `ops/v2-13-operational-pilot-cycle-1`, operational preparation package)
-- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`
-- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
+- Roadmap v2.13 status: **complete / closed** (`12 / 12`, branch `ops/v2-13-operational-pilot-cycle-1`); Pilot Cycle 1 executed — result: **CONDITIONAL GO**
+- Roadmap v2.14 status: **complete / closed** (`11 / 11`, branch `ops/v2-13-pilot-cycle-1-run`)
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
+- Inactive/archive roadmap files: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_12_operational_discovery_pilot_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_10_recovery_correction_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_9_output_modes_source_url_strictness_and_correction_recovery_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_8_founder_decision_correction_and_operational_polish_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_7_traceability_and_real_run_readiness_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_6_real_weekly_loop_operationalization_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_5_opportunity_formation_and_founder_learning_checklist.md`, `docs/roadmaps/OOS_roadmap_v2_3_source_intelligence_checklist.md`, older roadmap drafts, and Roadmap v2.2 completion documents.
 
 ## Current Progress
 
@@ -23,19 +24,22 @@
 - Roadmap v2.12 planning created: yes
 - Roadmap v2.12 status: `complete / closed` (`10 / 10`, branch `feat/v2-12-operational-discovery-pilot`)
 - Roadmap v2.13 planning created: yes
-- Roadmap v2.13 status: **complete / closed** (`12 / 12`, branch `ops/v2-13-operational-pilot-cycle-1`)
+- Roadmap v2.13 status: **complete / closed** (`12 / 12`, branch `ops/v2-13-operational-pilot-cycle-1`); Pilot Cycle 1 executed — result: **CONDITIONAL GO**
+- Roadmap v2.14 planning created: yes
+- Roadmap v2.14 status: **complete / closed** (`11 / 11`, branch `ops/v2-13-pilot-cycle-1-run`)
 - Current item: `none / complete`
 - Roadmap state: `complete / closed`
-- Completed: `12 / 12`
-- Remaining: `0 / 12`
-- Latest completed roadmap item: Roadmap v2.13 item `11` — Final v2.13 Checkpoint
-- Next planned roadmap item: `none (v2.13 is complete; v2.14 requires explicit roadmap and actual Go/No-Go decision or explicit founder override)`
+- Completed: `11 / 11`
+- Remaining: `0 / 11`
+- Latest completed roadmap item: Roadmap v2.14 item `10` — Final v2.14 checkpoint
+- Next planned roadmap item: None (await PR review/merge, then Pilot Cycle 2 after explicit founder approval)
 - Roadmap v2.5 GitHub state: PR `#40` merged to `main`; tag `v2.5` created and pushed.
 
 ## Branch And Commit Strategy
 
 - Work locally in small mini-epic packages.
-- Current branch: `ops/v2-13-operational-pilot-cycle-1`
+- Current branch: `ops/v2-13-pilot-cycle-1-run`
+- Previous branch (v2.13 execution): `ops/v2-13-operational-pilot-cycle-1`
 - Previous branch (v2.11 implementation): `feat/v2-11-discovery-sources-foundation`
 - Previous branch (v2.10 implementation): `feat/v2-10-recovery-correction`
 - Previous branch (v2.9 implementation): `feat/v2-9-output-source-recovery-block-1`
@@ -310,18 +314,22 @@ OOS can run a deterministic controlled discovery pilot on HN + GitHub Issues fix
 
 **Pilot Cycle 1 execution package ready.**
 
-### Explicitly Pending Next Operational Actions
+### Pilot Cycle 1 Execution (Completed 2026-05-14)
 
-The following actions remain pending and are NOT part of v2.13 closure:
+Pilot Cycle 1 was executed in two runtime runs outside the repository (no runtime artifacts committed):
 
-1. Prepare actual bounded input package.
-2. Obtain required founder approvals (live collection, repo allowlist sign-off).
-3. Run pilot using explicit `output_dir`.
-4. Perform founder review.
-5. Complete noise/quality analysis (populated with real data).
-6. Make actual Go / Conditional Go / No-Go decision.
+- **Run 1 — Broad Bounded Automated Collection:** 40 raw evidence (20 HN / 20 GitHub), 40 candidate signals, 14 pain clusters, 0 opportunity candidates. Valid run, traceability clean.
+- **Run 2 — Targeted Diagnostic Collection:** 40 raw evidence (20 HN / 20 GitHub), 40 candidate signals, 12 pain clusters, 0 opportunity candidates. Valid run, traceability clean. 1 GitHub PR correctly rejected.
 
-Broad source expansion remains blocked until after actual Go/No-Go decision. Do not start v2.14 without explicit roadmap and actual Go/No-Go decision or explicit founder override.
+**Decision:** **CONDITIONAL GO** (`gng_2026-05-14_cond_go`)
+
+**Decision rationale:** Pipeline is technically stable and traceable. A confirmed theme emerged — Agent Debugging / Observability / Provenance. However, five quality problems prevent a clean GO: (1) 100% acceptance / 0% noise despite quality flags, (2) hidden noise, (3) inconsistent cluster titles, (4) catch-all clusters, (5) no opportunity candidates synthesized. These problems are scoped and fixable. Source expansion would amplify existing problems.
+
+**Decision record:** `docs/operations/pilot_cycle_1_conditional_go_summary_v2_13.md`
+
+**Explicit non-approvals:** No source expansion of any kind. No Product Hunt, Reddit, pimenov.ai, broad web, Stack Exchange, Discord, Slack, X/Twitter. No portfolio mutation. No KillReason records.
+
+**Next roadmap:** v2.14 Pilot Quality Improvements.
 
 ### v2.13 Branch and Commit Notes
 
@@ -331,5 +339,64 @@ Broad source expansion remains blocked until after actual Go/No-Go decision. Do 
 - Latest local commit before final checkpoint: `9e86288` ([v2.13] 10 define go no-go decision framework)
 - Final checkpoint commit: pending
 - No push, PR, merge, or tag was performed.
-- v2.13 is complete and closed as operational preparation package.
-- **Next action:** Prepare PR/merge only when explicitly requested. Do not start actual pilot run without explicit founder approval. Do not start v2.14 without actual Go/No-Go decision or explicit roadmap.
+- v2.13 is complete and closed as operational preparation package + executed pilot cycle.
+- **Next action:** v2.14 Pilot Quality Improvements (roadmap created at `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`). Source expansion blocked until explicit GO decision in a future pilot cycle.
+
+---
+
+## Roadmap v2.14 Completion
+
+- Roadmap: v2.14 Pilot Quality Improvements
+- Branch: `ops/v2-13-pilot-cycle-1-run`
+- Status: **complete / closed** (`11 / 11`)
+- Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
+- Parent decision: CONDITIONAL GO (`docs/operations/pilot_cycle_1_conditional_go_summary_v2_13.md`)
+- Closed: 2026-05-17
+- Latest commit: 71860c9 (`[v2.14] 10 close pilot quality improvements`)
+
+### v2.14 Items (Complete)
+
+| # | Item | Status |
+|---|------|--------|
+| 0 | Planning checkpoint | [x] |
+| 1 | Noise classification hardening | [x] |
+| 2 | Quality flags to scoring/tier integration | [x] |
+| 3 | Cluster title generation cleanup | [x] |
+| 4 | Cluster split/merge tuning | [x] |
+| 5 | Founder review package clarity improvements | [x] |
+| 6 | Opportunity synthesis contract / deterministic stub hardening | [x] |
+| 7 | Source Quality Report contradiction fix | [x] |
+| 8 | Targeted regression fixtures from Run 1/Run 2 summaries | [x] |
+| 9 | Controlled quality smoke for Agent Debugging theme | [x] |
+| 10 | Final v2.14 checkpoint | [x] |
+
+### v2.14 Key Outcomes
+
+1. **Noise Classification Hardening** — Deterministic `classify_noise()` with severity groups, alias resolution, pain marker detection, SQR integration
+2. **FRP Quality Gates / Promotion Blockers** — `compute_evidence_quality_summary()`, `compute_quality_gate_reasons()`, promotion blockers in `recommend_decision()`
+3. **Cluster Title Cleanup** — `generate_cluster_review_title()` with pattern-based/component-derived/evidence-based fallback tiers
+4. **Split/Merge Tuning** — `_should_merge()` with canonical anchors, union-find clustering, over-merge detection, catch-all risk flag
+5. **FRP Clarity Improvements** — Quality Gate block per review item, evidence excerpts, SNR summary, Decision Breakdown rename
+6. **Deterministic Opportunity Synthesis Stub** — Produces candidates from qualifying clusters; LLM contract hardened (disabled by default)
+7. **SQR Contradiction Fix** — `classification_health`, `noise_rate`, `weak_rate`, per-source contradiction detection, 5 contradiction types
+8. **Targeted Regression Fixtures** — 43 focused tests, compact synthetic dicts, no raw runtime artifacts committed
+9. **Controlled Quality Smoke** — 59 PASS / 0 FAIL, hardened SQR/cluster/opportunity gates on v2.14 fixtures
+10. **Final Checkpoint** — Roadmap closed, dev ledger updated, final validation passed
+
+### v2.14 Final Validation
+
+| Validation Step | Result |
+|-----------------|--------|
+| `run-controlled-smoke.ps1` | 59 PASS / 0 FAIL |
+| `dev-test.ps1 -Full` | 2824 OK |
+| `dev-git-check.ps1` | 6/6 PASS |
+| `git status --short` | clean (post-commit) |
+| `git diff --check` | clean |
+
+### v2.14 Branch and Commit Notes
+
+- Branch: `ops/v2-13-pilot-cycle-1-run`
+- Based on: v2.13 Pilot Cycle 1 CONDITIONAL GO
+- Latest commit: 71860c9 (`[v2.14] 10 close pilot quality improvements`)
+- No push, PR, merge, or tag performed.
+- **Next action:** PR review/merge when explicitly requested. Pilot Cycle 2 after explicit founder approval. Source expansion remains blocked. v2.15 must not start without explicit roadmap.

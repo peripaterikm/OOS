@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "run_id": "<pilot_run_YYYY-MM-DD_XXXXXXXX>",
+    "input_mode": "Mode A/B — Bounded Manual Input",
+    "prepared_by": "<founder_or_operator_name>",
+    "prepared_at": "<ISO_8601_UTC_timestamp>",
+    "source_scope": [
+      {
+        "source_id": "hacker_news",
+        "source_type": "discussion",
+        "target_count": "5–15",
+        "url_pattern": "https://news.ycombinator.com/item?id=<objectID>"
+      },
+      {
+        "source_id": "github_issues",
+        "source_type": "issue_tracker",
+        "target_count": "5–15",
+        "url_pattern": "https://github.com/<owner>/<repo>/issues/<number>"
+      }
+    ],
+    "total_target_count": "10–25",
+    "collection_method": "manual_bounded",
+    "live_apis_called": false,
+    "approvals_required": [],
+    "notes": "This is a TEMPLATE file. Replace all placeholder values with real collected evidence before running the pilot. No live APIs were called to produce this template."
+  },
+  "raw_evidence": [
+    {
+      "evidence_id": "raw_hacker_news_<hn_item_id>",
+      "source_id": "hacker_news",
+      "source_type": "discussion",
+      "source_url": "https://news.ycombinator.com/item?id=<hn_item_id>",
+      "title": "<Ask HN / Show HN / Story title from Hacker News>",
+      "body": "<Human-written excerpt or summary of the HN item body. Capture the specific pain, actor, workflow, and context. Replace this placeholder with real content.>",
+      "evidence_kind": "pain_signal_candidate",
+      "collected_at": "<ISO_8601_UTC_timestamp>",
+      "source_created_at": "<ISO_8601_UTC_timestamp_or_null>",
+      "language": "en",
+      "author_or_context": "<privacy-safe role label, e.g. 'Ask HN author'>",
+      "raw_metadata": {
+        "objectID": "<hn_item_id>",
+        "points": "<number>",
+        "num_comments": "<number>",
+        "type": "story",
+        "tags": ["<tag1>", "<tag2>"],
+        "author_present": true
+      },
+      "quality_flags": ["<flag1>", "<flag2>"],
+      "collection_method": "manual_bounded",
+      "access_policy": "public_web",
+      "extraction_notes": "manual_summary"
+    },
+    {
+      "evidence_id": "raw_github_issues_<github_owner>_<github_repo>_<issue_number>",
+      "source_id": "github_issues",
+      "source_type": "issue_tracker",
+      "source_url": "https://github.com/<github_owner>/<github_repo>/issues/<issue_number>",
+      "title": "<GitHub issue title>",
+      "body": "<Human-written excerpt or summary of the issue body. Capture the specific pain, reproduction steps, impact, and workaround. Replace this placeholder with real content.>",
+      "evidence_kind": "bug_report",
+      "collected_at": "<ISO_8601_UTC_timestamp>",
+      "source_created_at": "<ISO_8601_UTC_timestamp_or_null>",
+      "source_updated_at": "<ISO_8601_UTC_timestamp_or_null>",
+      "language": "en",
+      "author_or_context": "<privacy-safe role label, e.g. 'Issue reporter'>",
+      "raw_metadata": {
+        "issue_number": "<issue_number>",
+        "repo": "<github_owner>/<github_repo>",
+        "labels": ["<label1>", "<label2>"],
+        "state": "open",
+        "comments_count": "<number>",
+        "is_pull_request": false,
+        "author_present": true
+      },
+      "quality_flags": ["<flag1>", "<flag2>"],
+      "collection_method": "manual_bounded",
+      "access_policy": "public_web",
+      "extraction_notes": "manual_summary"
+    }
+  ]
+}

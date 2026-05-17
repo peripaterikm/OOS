@@ -1,0 +1,1522 @@
+from __future__ import annotations
+
+"""Tests for deterministic noise classification hardening (v2.14 item 1).
+
+Covers:
+1. Clean pain evidence remains accepted.
+2. low_text_context + empty/URL-only body becomes noise.
+3. suspected_self_promo + product_launch becomes noise or weak, not accepted-clean.
+4. requires_manual_review alone becomes weak, not accepted-clean.
+5. stale_issue becomes weak unless paired with strong clear pain evidence.
+6. maintainer_housekeeping becomes noise.
+7. debugging_pain / integration_pain / workflow_pain do not by themselves make evidence noise.
+8. Source Quality Report counts accepted/weak/noise correctly from mixed evidence.
+9. Operational pilot output source quality report reflects noise/weak counts.
+10. Serialization roundtrips preserve classification fields.
+11. No traceability behavior is weakened.
+12. No source scope behavior is weakened.
+"""
+
+import json
+import unittest
+
+from oos.noise_classifier import (
+    ACCEPTED,
+    NOISE,
+    WEAK,
+    classify_noise,
+    classify_noise_for_evidence,
+    classify_noise_for_signal,
+    compute_evidence_quality_summary,
+)
+from oos.source_quality_report import (
+    build_source_quality_report,
+)
+from oos.operational_discovery_pilot import (
+    OperationalDiscoveryPilotInput,
+    _derive_minimal_candidate_signals,
+    run_operational_discovery_pilot,
+)
+
+
+# =========================================================================
+# Fixture helpers
+# =========================================================================
+
+def _make_evidence(**kwargs) -> dict:
+    defaults = {
+        "evidence_id": "ev_001",
+        "source_id": "hacker_news",
+        "source_type": "discussion",
+        "source_url": "https://news.ycombinator.com/item?id=1",
+        "title": "Debugging AI agents is impossible",
+        "body": "Multi-step agent traces are non-reproducible and cost hours of developer time.",
+        "evidence_kind": "pain_signal_candidate",
+        "quality_flags": [],
+        "excerpt": "",
+    }
+    defaults.update(kwargs)
+    return defaults
+
+
+def _make_signal(**kwargs) -> dict:
+    defaults = {
+        "signal_id": "sig_001",
+        "evidence_id": "ev_001",
+        "source_id": "hacker_news",
+        "source_type": "discussion",
+        "source_url": "https://news.ycombinator.com/item?id=1",
+        "classification": "pain_signal_candidate",
+        "signal_type": "pain_signal",
+        "quality_flags": [],
+        "pain_summary": "Debugging AI agents is impossible",
+        "evidence_kind": "pain_signal_candidate",
+        "title": "Debugging AI agents is impossible",
+        "body": "Multi-step agent traces are non-reproducible and cost hours.",
+        "excerpt": "",
+    }
+    defaults.update(kwargs)
+    return defaults
+
+
+def _make_pilot_evidence(
+    evidence_id="ev_p",
+    source_id="hacker_news",
+    source_type="discussion",
+    source_url="https://news.ycombinator.com/item?id=1",
+    title="Clean pain",
+    body="We struggle with a critical problem.",
+    evidence_kind="pain_signal_candidate",
+    quality_flags=None,
+):
+    return {
+        "evidence_id": evidence_id,
+        "source_id": source_id,
+        "source_type": source_type,
+        "source_url": source_url,
+        "title": title,
+        "body": body,
+        "evidence_kind": evidence_kind,
+        "created_at": "2026-01-01T00:00:00Z",
+        "collected_at": "2026-01-01T00:00:00Z",
+        "fetched_at": "2026-01-01T00:00:00Z",
+        "topic_id": "agent_debugging",
+        "query_kind": "pilot_fixture",
+        "quality_flags": quality_flags or [],
+        "excerpt": "",
+        "raw_metadata": {"target_user": "developer"},
+    }
+
+
+# =========================================================================
+# 1. Clean pain evidence remains accepted
+# =========================================================================
+
+class TestCleanPainAccepted(unittest.TestCase):
+    def test_clean_pain_signal_accepted(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging AI agents is impossible",
+            body="Multi-step agent traces are non-reproducible. We spend hours every week.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_pain_signal_with_workaround_flag_accepted(self):
+        result = classify_noise(
+            quality_flags=["workaround_signal"],
+            evidence_kind="pain_signal_candidate",
+            title="Manual spreadsheet reconciliation broken",
+            body="We waste 5 hours per week manually matching Stripe payouts to bank records.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_integration_pain_does_not_create_noise(self):
+        result = classify_noise(
+            quality_flags=["integration_pain"],
+            evidence_kind="integration_pain",
+            title="Cannot integrate Slack and Jira",
+            body="Every time a ticket moves, we need to manually update Slack. This costs hours.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_debugging_pain_does_not_create_noise(self):
+        result = classify_noise(
+            quality_flags=["debugging_pain"],
+            evidence_kind="pain_signal_candidate",
+            title="LLM agent trace debugging is broken",
+            body="Cannot reproduce multi-step agent failures. Critical for our dev workflow.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_workflow_pain_does_not_create_noise(self):
+        result = classify_noise(
+            quality_flags=["workflow_pain"],
+            evidence_kind="pain_signal_candidate",
+            title="CI/CD pipeline debugging wastes hours",
+            body="Flaky tests cause entire team to wait. This problem is costing us real money.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_business_cost_signal_does_not_create_noise(self):
+        result = classify_noise(
+            quality_flags=["business_cost_signal"],
+            evidence_kind="pain_signal_candidate",
+            title="Manual processes cost our startup $2000/month",
+            body="We need to automate invoice reconciliation. Currently a manual process.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+
+# =========================================================================
+# 2. low_text_context + empty/URL-only body becomes noise
+# =========================================================================
+
+class TestLowTextContextNoise(unittest.TestCase):
+    def test_low_text_context_empty_body_noise(self):
+        result = classify_noise(
+            quality_flags=["low_text_context"],
+            evidence_kind="bug_report",
+            title="",
+            body="",
+            excerpt="",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_low_text_context_url_only_body_noise(self):
+        result = classify_noise(
+            quality_flags=["low_text_context"],
+            evidence_kind="bug_report",
+            title="Check this out",
+            body="https://example.com",
+            excerpt="",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_low_text_context_no_pain_noise(self):
+        result = classify_noise(
+            quality_flags=["low_text_context"],
+            evidence_kind="bug_report",
+            title="it's broken",
+            body="fix it please",
+            excerpt="",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_low_text_context_with_clear_pain_weak_not_accepted(self):
+        # v2.14 Fix 2: low_text_context + clear pain → weak, never accepted by itself
+        result = classify_noise(
+            quality_flags=["low_text_context"],
+            evidence_kind="bug_report",
+            title="Agent debugging broken - costs hours",
+            body="The LLM agent debugging is broken. We cannot reproduce failures. Workaround is painfully manual. This problem frustrates our whole team.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_low_text_context_with_clear_pain_never_accepted(self):
+        # explicit assertion: never accepted-clean
+        result = classify_noise(
+            quality_flags=["low_text_context"],
+            evidence_kind="bug_report",
+            title="Agent debugging broken - costs hours",
+            body="The LLM agent debugging is broken. We cannot reproduce failures. Workaround is painfully manual.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+        self.assertEqual(result, WEAK)
+
+    def test_low_text_context_short_promo_body_noise(self):
+        # short promo text → no clear pain → noise
+        result = classify_noise(
+            quality_flags=["low_text_context"],
+            evidence_kind="bug_report",
+            title="Check out our new tool",
+            body="We just launched FooDebugger. Try it now for free!",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_low_text_context_positive_pain_flags_still_weak(self):
+        # Even with positive pain flags, low_text_context stays weak, not accepted
+        result = classify_noise(
+            quality_flags=["low_text_context", "debugging_pain"],
+            evidence_kind="bug_report",
+            title="Agent debugging broken - costs hours",
+            body="The LLM agent debugging is broken. We cannot reproduce failures. Workaround is painfully manual. This problem frustrates our whole team.",
+        )
+        self.assertEqual(result, WEAK)
+        self.assertNotEqual(result, ACCEPTED)
+
+
+# =========================================================================
+# 3. suspected_self_promo + product_launch becomes noise or weak, not accepted
+# =========================================================================
+
+class TestSelfPromoWithProductLaunch(unittest.TestCase):
+    def test_self_promo_product_launch_no_pain_noise(self):
+        result = classify_noise(
+            quality_flags=["suspected_self_promo", "launch_hype"],
+            evidence_kind="product_launch",
+            title="Check out our new AI debugging tool!",
+            body="We just launched FooDebugger 2.0. It makes debugging fun and easy. Try it now!",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+        self.assertIn(result, (WEAK, NOISE))
+
+    def test_self_promo_product_launch_no_pain_noise_single_flag(self):
+        # suspected_self_promo + product_launch evidence_kind + no pain → noise
+        # Use text that avoids pain-marker substrings (e.g., "debugging" contains "bug")
+        result = classify_noise(
+            quality_flags=["suspected_self_promo"],
+            evidence_kind="product_launch",
+            title="Introducing our new project management tool",
+            body="Available for download now. Visit our homepage to sign up.",
+        )
+        # Rule 3 catches this: self_promo + product_launch + no pain → noise
+        self.assertEqual(result, NOISE)
+
+    def test_self_promo_product_launch_with_pain_weak(self):
+        result = classify_noise(
+            quality_flags=["suspected_self_promo"],
+            evidence_kind="product_launch",
+            title="Our debugging tool solves real pain",
+            body="We struggled for months debugging multi-step agents. The workaround was manual and broken. Our tool solves this frustrating problem that costs developers hours every week.",
+        )
+        # Has clear pain, so NOT auto-noise. But suspected_self_promo is medium → weak
+        self.assertEqual(result, WEAK)
+
+    def test_self_promo_alone_without_product_launch_weak(self):
+        result = classify_noise(
+            quality_flags=["suspected_self_promo"],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging tool comparison",
+            body="We tried several debugging tools and found the current state frustrating. Manual workarounds cost hours.",
+        )
+        self.assertEqual(result, WEAK)
+
+
+# =========================================================================
+# 4. requires_manual_review alone becomes weak, not accepted-clean
+# =========================================================================
+
+class TestRequiresManualReviewWeak(unittest.TestCase):
+    def test_requires_manual_review_alone_weak(self):
+        result = classify_noise(
+            quality_flags=["requires_manual_review"],
+            evidence_kind="pain_signal_candidate",
+            title="Possible pain signal",
+            body="This might be about debugging issues but context is unclear.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_requires_manual_review_with_pain_weak(self):
+        result = classify_noise(
+            quality_flags=["requires_manual_review"],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging agents is hard",
+            body="We struggle with agent debugging every day. Our workaround is broken. This is a critical problem.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_requires_manual_review_not_accepted(self):
+        result = classify_noise(
+            quality_flags=["requires_manual_review"],
+            evidence_kind="pain_signal_candidate",
+            title="Standard clean issue",
+            body="This is a well-described problem with clear actor, workflow, and object. It affects many users.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+
+
+# =========================================================================
+# 5. stale_issue becomes weak unless paired with strong clear pain evidence
+# =========================================================================
+
+class TestStaleIssueClassification(unittest.TestCase):
+    def test_stale_issue_alone_weak(self):
+        result = classify_noise(
+            quality_flags=["stale_issue"],
+            evidence_kind="bug_report",
+            title="Old bug from 2019",
+            body="This issue was reported years ago and hasn't been active.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_stale_issue_with_strong_pain_accepted(self):
+        result = classify_noise(
+            quality_flags=["stale_issue"],
+            evidence_kind="bug_report",
+            title="Critical: Agent debugging still broken after 2 years",
+            body=(
+                "This critical bug has been open for two years and affects every developer on our team. "
+                "We cannot reproduce multi-step agent failures, the workaround is painfully manual, "
+                "and we waste hours every single week. Our costs are skyrocketing. This is frustrating "
+                "and broken. The problem has gotten worse with more complex agent workflows."
+            ),
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_stale_issue_with_marginal_pain_weak(self):
+        result = classify_noise(
+            quality_flags=["stale_issue"],
+            evidence_kind="bug_report",
+            title="Old issue",
+            body="This problem was reported a while ago and no one has followed up. It affects some users sometimes.",
+        )
+        self.assertEqual(result, WEAK)
+
+
+# =========================================================================
+# 6. maintainer_housekeeping becomes noise
+# =========================================================================
+
+class TestMaintainerHousekeepingNoise(unittest.TestCase):
+    def test_maintainer_housekeeping_noise(self):
+        result = classify_noise(
+            quality_flags=["maintainer_housekeeping"],
+            evidence_kind="bug_report",
+            title="Bump version to 2.0.1",
+            body="Release checklist: update changelog, tag release, publish to npm.",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_maintainer_housekeeping_with_pain_still_noise(self):
+        result = classify_noise(
+            quality_flags=["maintainer_housekeeping", "debugging_pain"],
+            evidence_kind="bug_report",
+            title="Update dependencies and fix broken debug tool",
+            body="Several dependencies are outdated. Need to update npm packages.",
+        )
+        self.assertEqual(result, NOISE)
+
+
+# =========================================================================
+# 7. Positive flags do not by themselves make evidence noise
+# =========================================================================
+
+class TestPositiveFlagsNotNoise(unittest.TestCase):
+    def test_debugging_pain_alone_accepted(self):
+        result = classify_noise(
+            quality_flags=["debugging_pain"],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging is hard",
+            body="We cannot debug our agent pipelines properly.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_integration_pain_alone_accepted(self):
+        result = classify_noise(
+            quality_flags=["integration_pain"],
+            evidence_kind="integration_pain",
+            title="Cannot integrate two systems",
+            body="Our CI/CD integration with monitoring tools is broken and frustrating.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_workflow_pain_alone_accepted(self):
+        result = classify_noise(
+            quality_flags=["workflow_pain"],
+            evidence_kind="pain_signal_candidate",
+            title="Workflow is broken",
+            body="Our deployment workflow wastes hours every week.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_reliability_pain_alone_accepted(self):
+        result = classify_noise(
+            quality_flags=["reliability_pain"],
+            evidence_kind="pain_signal_candidate",
+            title="System is unreliable",
+            body="Our monitoring system crashes frequently, causing data loss.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_positive_flags_dont_override_negative(self):
+        result = classify_noise(
+            quality_flags=["debugging_pain", "bot_generated"],
+            evidence_kind="pain_signal_candidate",
+            title="Bot message",
+            body="Automated update notification.",
+        )
+        self.assertEqual(result, NOISE)
+
+
+# =========================================================================
+# 8. Source Quality Report counts correctly from mixed evidence
+# =========================================================================
+
+class TestSourceQualityReportWithNoiseClassification(unittest.TestCase):
+    def test_mixed_evidence_produces_correct_counts(self):
+        evidence = [
+            # Clean accepted
+            _make_evidence(
+                evidence_id="hn_clean",
+                title="Debugging LLM agents is broken",
+                body="Cannot reproduce multi-step agent traces. Wastes hours. Manual workaround is painful.",
+                quality_flags=[],
+            ),
+            # Weak
+            _make_evidence(
+                evidence_id="hn_weak",
+                title="Something might be wrong",
+                body="Not sure if this is a pain point but seems relevant.",
+                quality_flags=["requires_manual_review"],
+            ),
+            # Noise (maintainer_housekeeping)
+            _make_evidence(
+                evidence_id="hn_noise",
+                title="Dependabot: bump express to 4.18.0",
+                body="Automated dependency update. Changelog: minor fixes.",
+                quality_flags=["maintainer_housekeeping"],
+                evidence_kind="bot_generated",
+            ),
+            # Clean accepted #2
+            _make_evidence(
+                evidence_id="hn_clean2",
+                title="Cannot integrate CI/CD tools properly",
+                body="Our monitoring and deployment pipeline is broken. Costs hours per week.",
+                quality_flags=["integration_pain", "workflow_pain"],
+            ),
+            # Noise (low_text_context)
+            _make_evidence(
+                evidence_id="hn_lowtext",
+                title="it",
+                body="",
+                quality_flags=["low_text_context"],
+            ),
+            # Weak (stale_issue no strong pain)
+            _make_evidence(
+                evidence_id="hn_stale",
+                title="Old issue from 2020",
+                body="This was reported a long time ago.",
+                quality_flags=["stale_issue"],
+            ),
+        ]
+        # Build candidate-signal-like dicts with same quality_flags
+        signals = []
+        for ev in evidence:
+            signals.append({
+                "signal_id": f"sig_{ev['evidence_id']}",
+                "evidence_id": ev["evidence_id"],
+                "source_id": ev["source_id"],
+                "source_type": ev["source_type"],
+                "source_url": ev.get("source_url", ""),
+                "classification": ev.get("classification", "pain_signal_candidate"),
+                "signal_type": ev.get("signal_type", "pain_signal"),
+                "quality_flags": ev.get("quality_flags", []),
+                "evidence_kind": ev.get("evidence_kind", "pain_signal_candidate"),
+                "title": ev.get("title", ""),
+                "body": ev.get("body", ""),
+                "excerpt": ev.get("excerpt", ""),
+            })
+
+        report = build_source_quality_report(
+            evidence_items=evidence,
+            candidate_signals=signals,
+            discovery_run_id="test_mixed",
+            created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.source_id, "hacker_news")
+        # hn_clean: no flags → accepted
+        # hn_weak: requires_manual_review → weak
+        # hn_noise: maintainer_housekeeping → noise
+        # hn_clean2: positive flags only → accepted
+        # hn_lowtext: low_text_context, no pain → noise
+        # hn_stale: stale_issue, no strong pain → weak
+        self.assertEqual(m.accepted_signal_count, 2)
+        self.assertEqual(m.weak_signal_count, 2)
+        self.assertEqual(m.noise_signal_count, 2)
+
+    def test_all_clean_evidence_produces_full_accepted(self):
+        evidence = [
+            _make_evidence(evidence_id=f"hn_{i}", quality_flags=[])
+            for i in range(5)
+        ]
+        signals = [
+            {
+                "signal_id": f"sig_hn_{i}",
+                "evidence_id": f"hn_{i}",
+                "source_id": "hacker_news",
+                "source_type": "discussion",
+                "source_url": "https://news.ycombinator.com/item?id=1",
+                "classification": "pain_signal_candidate",
+                "signal_type": "pain_signal",
+                "quality_flags": [],
+                "evidence_kind": "pain_signal_candidate",
+                "title": f"Title {i}",
+                "body": "Pain body text.",
+                "excerpt": "",
+            }
+            for i in range(5)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence,
+            candidate_signals=signals,
+            discovery_run_id="test_clean",
+            created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 5)
+        self.assertEqual(m.weak_signal_count, 0)
+        self.assertEqual(m.noise_signal_count, 0)
+        self.assertGreater(m.accepted_rate, 0.99)
+
+    def test_all_noise_evidence_produces_zero_accepted(self):
+        evidence = [
+            _make_evidence(
+                evidence_id=f"hn_n{i}",
+                quality_flags=["bot_generated"],
+                title="Automated message",
+                body="This is an automated notification.",
+            )
+            for i in range(3)
+        ]
+        signals = [
+            {
+                "signal_id": f"sig_hn_n{i}",
+                "evidence_id": f"hn_n{i}",
+                "source_id": "hacker_news",
+                "source_type": "discussion",
+                "source_url": "https://news.ycombinator.com/item?id=1",
+                "classification": "pain_signal_candidate",
+                "signal_type": "pain_signal",
+                "quality_flags": ["bot_generated"],
+                "evidence_kind": "pain_signal_candidate",
+                "title": "Automated message",
+                "body": "This is an automated notification.",
+                "excerpt": "",
+            }
+            for i in range(3)
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence,
+            candidate_signals=signals,
+            discovery_run_id="test_noise",
+            created_at="2026-01-01T00:00:00Z",
+        )
+        m = report.source_metrics[0]
+        self.assertEqual(m.accepted_signal_count, 0)
+        self.assertEqual(m.noise_signal_count, 3)
+
+
+# =========================================================================
+# 9. Operational pilot output source quality report reflects noise/weak counts
+# =========================================================================
+
+class TestOperationalPilotNoisePropagation(unittest.TestCase):
+    def test_pilot_with_mixed_quality_flags(self):
+        evidence = [
+            _make_pilot_evidence(
+                evidence_id="hn_p1",
+                title="Debugging is broken",
+                body="Cannot debug agent traces. Hours wasted. Manual workaround required.",
+                quality_flags=[],
+            ),
+            _make_pilot_evidence(
+                evidence_id="hn_p2",
+                title="Check out my tool",
+                body="Launching FooBar. Sign up now.",
+                evidence_kind="product_launch",
+                quality_flags=["suspected_self_promo", "launch_hype"],
+            ),
+            _make_pilot_evidence(
+                evidence_id="hn_p3",
+                title="Automated dependency update",
+                body="Bump express to next version.",
+                evidence_kind="bug_report",
+                quality_flags=["maintainer_housekeeping"],
+            ),
+        ]
+
+        result = run_operational_discovery_pilot(
+            OperationalDiscoveryPilotInput(
+                raw_evidence=evidence,
+                discovery_run_id="test_noise_pilot",
+                created_at="2026-01-01T00:00:00Z",
+            )
+        )
+
+        sqr = result.source_quality_report
+        self.assertIsNotNone(sqr)
+        m = sqr["source_metrics"][0]
+
+        # hn_p1: clean → accepted
+        # hn_p2: suspected_self_promo + launch_hype + product_launch, no pain → noise
+        # hn_p3: maintainer_housekeeping → noise
+        self.assertEqual(m["accepted_signal_count"], 1)
+        self.assertEqual(m["noise_signal_count"], 2)
+        self.assertEqual(m["weak_signal_count"], 0)
+
+    def test_pilot_clean_traceability_preserved(self):
+        evidence = [
+            _make_pilot_evidence(
+                evidence_id="hn_t1",
+                source_url="https://news.ycombinator.com/item?id=42",
+                title="Clean pain signal",
+                body="We struggle with debugging agent workflows. It's a critical problem.",
+                quality_flags=["debugging_pain"],
+            ),
+        ]
+        result = run_operational_discovery_pilot(
+            OperationalDiscoveryPilotInput(
+                raw_evidence=evidence,
+                discovery_run_id="test_traceability",
+                created_at="2026-01-01T00:00:00Z",
+            )
+        )
+        self.assertTrue(result.is_valid)
+        ts = result.source_quality_report["traceability_summary"]
+        self.assertTrue(ts["source_url_validation_passed"])
+
+
+# =========================================================================
+# 10. Serialization roundtrips preserve classification fields
+# =========================================================================
+
+class TestSerializationRoundtrips(unittest.TestCase):
+    def test_classify_noise_for_evidence_dict_roundtrip(self):
+        ev = _make_evidence(
+            quality_flags=["requires_manual_review"],
+            evidence_kind="pain_signal_candidate",
+        )
+        classification = classify_noise_for_evidence(ev)
+        self.assertEqual(classification, WEAK)
+
+        serialized = json.dumps(ev, sort_keys=True)
+        restored = json.loads(serialized)
+        classification2 = classify_noise_for_evidence(restored)
+        self.assertEqual(classification, classification2)
+
+    def test_classify_noise_for_signal_dict_roundtrip(self):
+        sig = _make_signal(
+            quality_flags=["maintainer_housekeeping"],
+        )
+        classification = classify_noise_for_signal(sig)
+        self.assertEqual(classification, NOISE)
+
+        serialized = json.dumps(sig, sort_keys=True)
+        restored = json.loads(serialized)
+        classification2 = classify_noise_for_signal(restored)
+        self.assertEqual(classification, classification2)
+
+    def test_source_quality_report_to_dict_has_counts(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=[]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["bot_generated"]),
+        ]
+        signals = [
+            {
+                "signal_id": f"sig_{ev['evidence_id']}",
+                "evidence_id": ev["evidence_id"],
+                "source_id": ev["source_id"],
+                "source_type": ev["source_type"],
+                "source_url": ev.get("source_url", ""),
+                "classification": "pain_signal_candidate",
+                "signal_type": "pain_signal",
+                "quality_flags": ev.get("quality_flags", []),
+                "evidence_kind": ev.get("evidence_kind", "pain_signal_candidate"),
+                "title": ev.get("title", ""),
+                "body": ev.get("body", ""),
+                "excerpt": ev.get("excerpt", ""),
+            }
+            for ev in evidence
+        ]
+        report = build_source_quality_report(
+            evidence_items=evidence,
+            candidate_signals=signals,
+            discovery_run_id="test_roundtrip",
+            created_at="2026-01-01T00:00:00Z",
+        )
+        d = report.to_dict()
+        self.assertIn("accepted_signal_total", d)
+        self.assertIn("weak_signal_total", d)
+        self.assertIn("noise_signal_total", d)
+        restored = report.from_dict(d)
+        self.assertEqual(restored.accepted_signal_total, d["accepted_signal_total"])
+        self.assertEqual(restored.weak_signal_total, d["weak_signal_total"])
+        self.assertEqual(restored.noise_signal_total, d["noise_signal_total"])
+
+
+# =========================================================================
+# 11. No traceability behavior is weakened
+# =========================================================================
+
+class TestTraceabilityUnchanged(unittest.TestCase):
+    def test_missing_source_url_errors_preserved(self):
+        evidence = [
+            _make_pilot_evidence(
+                evidence_id="ev_bad",
+                source_url="",
+                quality_flags=[],
+            ),
+        ]
+        result = run_operational_discovery_pilot(
+            OperationalDiscoveryPilotInput(
+                raw_evidence=evidence,
+                discovery_run_id="test_trace",
+                created_at="2026-01-01T00:00:00Z",
+            )
+        )
+        self.assertFalse(result.is_valid)
+        self.assertTrue(len(result.errors) > 0)
+        self.assertTrue(any("source_url" in e.lower() for e in result.errors))
+
+    def test_valid_source_url_still_passes(self):
+        evidence = [
+            _make_pilot_evidence(
+                evidence_id="ev_good",
+                source_url="https://news.ycombinator.com/item?id=1",
+                quality_flags=[],
+            ),
+        ]
+        result = run_operational_discovery_pilot(
+            OperationalDiscoveryPilotInput(
+                raw_evidence=evidence,
+                discovery_run_id="test_trace_ok",
+                created_at="2026-01-01T00:00:00Z",
+            )
+        )
+        self.assertTrue(result.is_valid)
+
+    def test_placeholder_url_still_caught(self):
+        evidence = [
+            {
+                "evidence_id": "ev_placeholder",
+                "source_id": "hacker_news",
+                "source_type": "discussion",
+                "source_url": "urn:oos:placeholder",
+                "title": "Test",
+                "body": "Content",
+                "evidence_kind": "pain_signal_candidate",
+                "created_at": "2026-01-01T00:00:00Z",
+                "collected_at": "2026-01-01T00:00:00Z",
+                "fetched_at": "2026-01-01T00:00:00Z",
+                "topic_id": "test",
+                "query_kind": "test",
+                "quality_flags": [],
+                "raw_metadata": {},
+            },
+        ]
+        result = run_operational_discovery_pilot(
+            OperationalDiscoveryPilotInput(
+                raw_evidence=evidence,
+                discovery_run_id="test_placeholder",
+                created_at="2026-01-01T00:00:00Z",
+            )
+        )
+        self.assertFalse(result.is_valid)
+
+
+# =========================================================================
+# 12. No source scope behavior is weakened
+# =========================================================================
+
+class TestSourceScopeUnchanged(unittest.TestCase):
+    def test_deferred_source_still_rejected(self):
+        evidence = [
+            {
+                "evidence_id": "ph_001",
+                "source_id": "product_hunt",
+                "source_type": "discussion",
+                "source_url": "https://producthunt.com/posts/1",
+                "title": "PH post",
+                "body": "content",
+                "evidence_kind": "pain_signal_candidate",
+                "created_at": "2026-01-01T00:00:00Z",
+                "collected_at": "2026-01-01T00:00:00Z",
+                "fetched_at": "2026-01-01T00:00:00Z",
+                "topic_id": "testing",
+                "query_kind": "test",
+                "quality_flags": [],
+                "raw_metadata": {},
+            },
+        ]
+        result = run_operational_discovery_pilot(
+            OperationalDiscoveryPilotInput(
+                raw_evidence=evidence,
+                discovery_run_id="test_scope",
+                created_at="2026-01-01T00:00:00Z",
+            )
+        )
+        self.assertFalse(result.is_valid)
+        self.assertTrue(any("product_hunt" in e.lower() for e in result.errors))
+
+    def test_allowed_sources_still_pass(self):
+        evidence = [
+            _make_pilot_evidence(
+                evidence_id="hn_ok",
+                source_url="https://news.ycombinator.com/item?id=1",
+                quality_flags=[],
+            ),
+        ]
+        result = run_operational_discovery_pilot(
+            OperationalDiscoveryPilotInput(
+                raw_evidence=evidence,
+                discovery_run_id="test_scope_ok",
+                created_at="2026-01-01T00:00:00Z",
+            )
+        )
+        self.assertTrue(result.is_valid)
+
+
+# =========================================================================
+# Additional edge cases
+# =========================================================================
+
+class TestEdgeCases(unittest.TestCase):
+    def test_multiple_severe_flags_noise(self):
+        result = classify_noise(
+            quality_flags=["bot_generated", "flamewar_or_meta_discussion"],
+            evidence_kind="pain_signal_candidate",
+            title="Any title",
+            body="Any body with pain and struggle and problems.",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_multiple_medium_flags_weak(self):
+        result = classify_noise(
+            quality_flags=["unclear_actor", "unclear_workflow", "no_business_cost"],
+            evidence_kind="pain_signal_candidate",
+            title="Development is hard",
+            body="People find software development difficult.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_no_flags_no_content_accepted(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="",
+            title="",
+            body="",
+            excerpt="",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_none_quality_flags_accepted(self):
+        result = classify_noise(
+            quality_flags=None,
+            evidence_kind="pain_signal_candidate",
+            title="Debugging is hard",
+            body="We have real problems with agent debugging.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_empty_string_quality_flags_list(self):
+        result = classify_noise(
+            quality_flags=[""],
+            evidence_kind="pain_signal_candidate",
+            title="Title",
+            body="Pain evidence with struggle and problems.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_derived_signals_propagate_quality_flags(self):
+        evidence = [
+            {
+                "evidence_id": "ev_qf",
+                "source_id": "hacker_news",
+                "source_type": "discussion",
+                "source_url": "https://news.ycombinator.com/item?id=1",
+                "title": "Test",
+                "body": "Content",
+                "evidence_kind": "pain_signal_candidate",
+                "quality_flags": ["requires_manual_review", "stale_issue"],
+                "excerpt": "",
+                "created_at": "2026-01-01T00:00:00Z",
+                "collected_at": "2026-01-01T00:00:00Z",
+                "fetched_at": "2026-01-01T00:00:00Z",
+                "topic_id": "test",
+                "query_kind": "test",
+                "raw_metadata": {"target_user": "developer"},
+            },
+        ]
+        signals = _derive_minimal_candidate_signals(evidence, "2026-01-01T00:00:00Z")
+        self.assertEqual(len(signals), 1)
+        sig = signals[0]
+        self.assertIn("quality_flags", sig)
+        self.assertEqual(sig["quality_flags"], ["requires_manual_review", "stale_issue"])
+        self.assertIn("evidence_kind", sig)
+        self.assertEqual(sig["evidence_kind"], "pain_signal_candidate")
+
+    def test_flamewar_always_noise(self):
+        result = classify_noise(
+            quality_flags=["flamewar_or_meta_discussion"],
+            evidence_kind="pain_signal_candidate",
+            title="Rust vs Go debate",
+            body="Rust is better than Go because of ownership. Also debugging agents is hard and broken and frustrating.",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_wishlist_without_pain_weak(self):
+        result = classify_noise(
+            quality_flags=["wishlist_without_pain"],
+            evidence_kind="feature_request",
+            title="Add dark mode please",
+            body="It would be nice to have a dark mode option in the settings.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_one_off_bug_weak(self):
+        result = classify_noise(
+            quality_flags=["one_off_bug"],
+            evidence_kind="bug_report",
+            title="Crashes on Python 3.7 on Windows XP",
+            body="This only happens with a specific locale setting and an old OS.",
+        )
+        self.assertEqual(result, WEAK)
+
+
+# =========================================================================
+# Fix 1 — Missing flags / alias handling
+# =========================================================================
+
+class TestVendorPromoFlag(unittest.TestCase):
+    """vendor_promo is alias for suspected_self_promo; never accepted-clean."""
+
+    def test_vendor_promo_alone_weak(self):
+        result = classify_noise(
+            quality_flags=["vendor_promo"],
+            evidence_kind="pain_signal_candidate",
+            title="Our new debugging tool",
+            body="We built FooDebugger to help developers trace agent failures. It is available now.",
+        )
+        self.assertEqual(result, WEAK)
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_vendor_promo_product_launch_no_pain_noise(self):
+        result = classify_noise(
+            quality_flags=["vendor_promo"],
+            evidence_kind="product_launch",
+            title="Introducing FooDebugger 2.0",
+            body="Available for download now. Visit our homepage to sign up for early access.",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_vendor_promo_clear_pain_weak(self):
+        result = classify_noise(
+            quality_flags=["vendor_promo"],
+            evidence_kind="pain_signal_candidate",
+            title="Our debugging tool solves real pain",
+            body="We struggled for months debugging multi-step agents. The workaround was manual and broken. Our tool solves this frustrating problem that costs developers hours every week.",
+        )
+        self.assertEqual(result, WEAK)
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_vendor_promo_never_accepted(self):
+        result = classify_noise(
+            quality_flags=["vendor_promo"],
+            evidence_kind="pain_signal_candidate",
+            title="Great debugging tool",
+            body="This is a well-described problem with clear actor, workflow, and object. It affects many users and has clear pain.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+
+
+class TestLowConfidenceExtractionFlag(unittest.TestCase):
+    """low_confidence_extraction is medium-risk -> weak, never accepted."""
+
+    def test_low_confidence_extraction_weak(self):
+        result = classify_noise(
+            quality_flags=["low_confidence_extraction"],
+            evidence_kind="pain_signal_candidate",
+            title="Something about debugging maybe",
+            body="The text extraction was low confidence. Context might indicate a pain point.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_low_confidence_extraction_never_accepted(self):
+        result = classify_noise(
+            quality_flags=["low_confidence_extraction"],
+            evidence_kind="pain_signal_candidate",
+            title="Well described issue",
+            body="This is a clear problem with specific actor and workflow. Many users are affected.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_low_confidence_extraction_with_pain_still_weak(self):
+        result = classify_noise(
+            quality_flags=["low_confidence_extraction"],
+            evidence_kind="pain_signal_candidate",
+            title="Agent debugging is broken",
+            body="We cannot debug agent traces. Hours wasted every week. Manual workaround is painful and broken.",
+        )
+        self.assertEqual(result, WEAK)
+        self.assertNotEqual(result, ACCEPTED)
+
+
+class TestGenericLanguageFlag(unittest.TestCase):
+    """generic_language is medium-risk -> weak; combined with unclear_actor + no pain -> noise."""
+
+    def test_generic_language_weak(self):
+        result = classify_noise(
+            quality_flags=["generic_language"],
+            evidence_kind="pain_signal_candidate",
+            title="Development needs improvement",
+            body="Software development has many challenges that teams face daily.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_generic_language_never_accepted(self):
+        result = classify_noise(
+            quality_flags=["generic_language"],
+            evidence_kind="pain_signal_candidate",
+            title="Well described issue",
+            body="This is a clear problem with specific actor and workflow. Many users are affected.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_generic_language_unclear_actor_no_pain_noise(self):
+        # Text must NOT contain any pain markers (no "need", "problem", "issue", etc.)
+        result = classify_noise(
+            quality_flags=["generic_language", "unclear_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Development ecosystem overview",
+            body="Several categories of software are available for various technology stacks today.",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_generic_language_missing_actor_no_pain_noise(self):
+        # Text must NOT contain any pain markers
+        result = classify_noise(
+            quality_flags=["generic_language", "missing_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Technology landscape summary",
+            body="The current market provides multiple options across different segments and categories.",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_generic_language_unclear_actor_with_pain_weak(self):
+        result = classify_noise(
+            quality_flags=["generic_language", "unclear_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging is frustrating",
+            body="We struggle with debugging agent workflows every day. The manual workaround is broken and costs hours. This is a critical problem for our team.",
+        )
+        self.assertEqual(result, WEAK)
+
+
+class TestMissingActorFlag(unittest.TestCase):
+    """missing_actor is alias for unclear_actor -> weak; never accepted."""
+
+    def test_missing_actor_weak(self):
+        result = classify_noise(
+            quality_flags=["missing_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Something is wrong with the system",
+            body="Users are experiencing problems but we cannot identify who exactly is affected.",
+        )
+        self.assertEqual(result, WEAK)
+
+    def test_missing_actor_never_accepted(self):
+        result = classify_noise(
+            quality_flags=["missing_actor"],
+            evidence_kind="pain_signal_candidate",
+            title="Clear issue description",
+            body="This problem has well-defined symptoms and affects many users in specific ways.",
+        )
+        self.assertNotEqual(result, ACCEPTED)
+
+    def test_missing_actor_generic_language_no_pain_noise(self):
+        result = classify_noise(
+            quality_flags=["missing_actor", "generic_language"],
+            evidence_kind="pain_signal_candidate",
+            title="Tooling ecosystem gaps",
+            body="There are various gaps in the current development ecosystem.",
+        )
+        self.assertEqual(result, NOISE)
+
+
+# =========================================================================
+# Fix 3 - Token/phrase-aware pain matching
+# =========================================================================
+
+class TestPainMatchingWordBoundary(unittest.TestCase):
+    """Single-word pain markers require word boundaries; bug must not match debugging."""
+
+    def test_debugging_tool_launch_no_pain(self):
+        result = classify_noise(
+            quality_flags=["suspected_self_promo"],
+            evidence_kind="product_launch",
+            title="Debugging tool launch",
+            body="We just launched FooDebugger. Try it now for free!",
+        )
+        self.assertEqual(result, NOISE)
+
+    def test_bug_not_match_inside_debugging(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging is fun",
+            body="Debugging multi-step agent workflows is an interesting challenge that we enjoy solving with our new platform.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_hard_to_debug_counts_as_pain(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="pain_signal_candidate",
+            title="Agent trace debugging",
+            body="It is hard to debug multi-step agent traces. We spend hours trying to reproduce failures and the manual workaround is broken.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_debugging_is_painful_counts_as_pain(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="pain_signal_candidate",
+            title="Debugging agents",
+            body="Debugging multi-step agent workflows is painful. We cannot reproduce failures and waste hours every week on manual workarounds.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_cannot_reproduce_counts_as_pain(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="pain_signal_candidate",
+            title="Agent state reproducibility",
+            body="We cannot reproduce agent state after failures. This makes debugging nearly impossible and wastes hours of developer time.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_clean_explicit_bug_report_accepted(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="bug_report",
+            title="Critical bug in agent trace rendering",
+            body="There is a critical bug in the trace rendering pipeline. This bug causes crashes when viewing multi-step agent execution traces. It frustrates our whole team.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+    def test_explicit_pain_terms_work_word_boundary(self):
+        result = classify_noise(
+            quality_flags=[],
+            evidence_kind="bug_report",
+            title="System errors causing crashes",
+            body="Our monitoring system has errors and crash problems. The pipeline is broken, slow, and fails frequently. This is frustrating and costs us hours every week.",
+        )
+        self.assertEqual(result, ACCEPTED)
+
+
+# =========================================================================
+# v2.14 item 2 — Quality Summary and Gate Tests
+# =========================================================================
+
+
+class TestComputeEvidenceQualitySummary(unittest.TestCase):
+    """Tests for compute_evidence_quality_summary()."""
+
+    def test_all_clean_evidence_accepted(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=[]),
+            _make_evidence(evidence_id="ev_2", quality_flags=[]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["debugging_pain"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["accepted_evidence_count"], 3)
+        self.assertEqual(summary["weak_evidence_count"], 0)
+        self.assertEqual(summary["noise_evidence_count"], 0)
+        self.assertEqual(summary["total_evidence_count"], 3)
+        self.assertEqual(summary["accepted_ratio"], 1.0)
+        self.assertEqual(summary["weak_ratio"], 0.0)
+        self.assertEqual(summary["noise_ratio"], 0.0)
+
+    def test_cluster_with_weak_evidence(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=[]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["requires_manual_review"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["stale_issue"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["accepted_evidence_count"], 1)
+        self.assertEqual(summary["weak_evidence_count"], 2)
+        self.assertEqual(summary["noise_evidence_count"], 0)
+        self.assertGreater(summary["weak_ratio"], 0.5)
+        self.assertAlmostEqual(summary["weak_ratio"], 2.0 / 3.0, places=4)
+
+    def test_cluster_with_noise_evidence(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["bot_generated"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["maintainer_housekeeping"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["accepted_evidence_count"], 1)
+        self.assertEqual(summary["noise_evidence_count"], 2)
+        self.assertAlmostEqual(summary["noise_ratio"], 2.0 / 3.0, places=4)
+
+    def test_quality_flag_counts_aggregate_correctly(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain", "debugging_pain"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["debugging_pain", "integration_pain"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["quality_flag_counts"].get("debugging_pain", 0), 3)
+        self.assertEqual(summary["quality_flag_counts"].get("integration_pain", 0), 1)
+
+    def test_positive_pain_flags_dont_count_as_noise(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain", "business_cost_signal"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["positive_pain_flag_count"], 2)
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+        self.assertEqual(summary["medium_risk_flag_count"], 0)
+        self.assertEqual(summary["accepted_evidence_count"], 1)
+
+    def test_severe_noise_flag_count(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["bot_generated", "flamewar_or_meta_discussion"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["maintainer_housekeeping"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["severe_noise_flag_count"], 3)
+        self.assertEqual(summary["noise_evidence_count"], 2)
+
+    def test_medium_risk_flag_count(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["requires_manual_review", "stale_issue"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["generic_language"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 3)
+        self.assertEqual(summary["weak_evidence_count"], 2)
+
+    def test_dominant_quality_flags(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain", "debugging_pain"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["integration_pain"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["bot_generated"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        dominant = summary["dominant_quality_flags"]
+        self.assertIn("debugging_pain", dominant)
+        self.assertEqual(dominant[0], "debugging_pain")  # most frequent first
+
+    def test_empty_list(self):
+        from oos.noise_classifier import compute_evidence_quality_summary
+        summary = compute_evidence_quality_summary([])
+        self.assertEqual(summary["total_evidence_count"], 0)
+        self.assertEqual(summary["accepted_ratio"], 0.0)
+        self.assertEqual(summary["dominant_quality_flags"], [])
+
+
+class TestComputeQualityGateReasons(unittest.TestCase):
+    """Tests for compute_quality_gate_reasons()."""
+
+    def test_clean_cluster_no_blockers(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["integration_pain"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=2,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertEqual(blockers, [])
+        # May have single-source gate reason if diversity=1, but we set diversity=2.
+
+    def test_high_noise_ratio_blocks_promotion(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["bot_generated"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["maintainer_housekeeping"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # noise_ratio = 2/3 >= 0.5
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=1, recurrence=3,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertTrue(any("noise ratio" in b.lower() for b in blockers))
+
+    def test_only_weak_evidence_blocks_promotion(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["requires_manual_review"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["stale_issue"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["generic_language"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # weak_ratio = 1.0, accepted=0
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=3,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertTrue(any("all evidence is weak" in b.lower() for b in blockers))
+
+    def test_severe_noise_no_clean_cross_source_blocks(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["bot_generated"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # severe_noise_flag_count=1, accepted=1 (< 2)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=1, recurrence=2,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertTrue(any("severe noise flags present" in b.lower() for b in blockers))
+
+    def test_traceability_failure_blocks(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=2,
+            traceability_clean=False, source_scope_clean=True,
+        )
+        self.assertTrue(any("traceability" in b.lower() for b in blockers))
+
+    def test_source_scope_failure_blocks(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=[]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=2,
+            traceability_clean=True, source_scope_clean=False,
+        )
+        self.assertTrue(any("source scope" in b.lower() for b in blockers))
+
+    def test_clean_cross_source_can_promote(self):
+        from oos.noise_classifier import compute_evidence_quality_summary, compute_quality_gate_reasons
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["debugging_pain"]),
+            _make_evidence(evidence_id="ev_2", source_id="github_issues", source_type="issue_tracker",
+                          source_url="https://github.com/o/r/issues/1",
+                          quality_flags=["integration_pain"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["workaround_signal"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        blockers, gate_reasons = compute_quality_gate_reasons(
+            summary, source_diversity=2, recurrence=3,
+            traceability_clean=True, source_scope_clean=True,
+        )
+        self.assertEqual(blockers, [])
+
+
+class TestAliasAwareQualitySummarySeverityCounts(unittest.TestCase):
+    """v2.14 Fix 1: compute_evidence_quality_summary resolves aliases for severity counts."""
+
+    def test_vendor_promo_increments_medium_risk_flag_count(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_vp", quality_flags=["vendor_promo"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 1,
+                         "vendor_promo alias should count as medium-risk via suspected_self_promo")
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+        self.assertEqual(summary["positive_pain_flag_count"], 0)
+
+    def test_missing_actor_increments_medium_risk_flag_count(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_ma", quality_flags=["missing_actor"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 1,
+                         "missing_actor alias should count as medium-risk via unclear_actor")
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+
+    def test_low_confidence_extraction_increments_medium_risk_flag_count(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_lce", quality_flags=["low_confidence_extraction"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 1)
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+
+    def test_generic_language_increments_medium_risk_flag_count(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_gl", quality_flags=["generic_language"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["medium_risk_flag_count"], 1)
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+
+    def test_original_quality_flag_counts_still_contains_original_names(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_vp", quality_flags=["vendor_promo"]),
+            _make_evidence(evidence_id="ev_ma", quality_flags=["missing_actor"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        qfc = summary["quality_flag_counts"]
+        self.assertEqual(qfc.get("vendor_promo", 0), 1,
+                         "quality_flag_counts should preserve original flag name vendor_promo")
+        self.assertEqual(qfc.get("missing_actor", 0), 1,
+                         "quality_flag_counts should preserve original flag name missing_actor")
+        self.assertEqual(summary["medium_risk_flag_count"], 2,
+                         "Both aliases should count as medium-risk")
+
+    def test_positive_pain_flags_do_not_increment_medium_or_severe(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_pp", quality_flags=["debugging_pain", "integration_pain"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["positive_pain_flag_count"], 2)
+        self.assertEqual(summary["medium_risk_flag_count"], 0)
+        self.assertEqual(summary["severe_noise_flag_count"], 0)
+
+    def test_mixed_aliases_and_original_flags_aggregate_deterministically(self):
+        evidence = [
+            _make_evidence(evidence_id="ev_1", quality_flags=["vendor_promo", "low_confidence_extraction"]),
+            _make_evidence(evidence_id="ev_2", quality_flags=["missing_actor", "generic_language"]),
+            _make_evidence(evidence_id="ev_3", quality_flags=["debugging_pain", "bot_generated"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # severity counts (alias-resolved):
+        # ev_1: vendor_promo->suspected_self_promo(medium), low_confidence_extraction(medium) = 2 medium
+        # ev_2: missing_actor->unclear_actor(medium), generic_language(medium) = 2 medium
+        # ev_3: debugging_pain(positive), bot_generated(severe) = 1 positive, 1 severe
+        # Total: 4 medium, 1 severe, 1 positive
+        self.assertEqual(summary["medium_risk_flag_count"], 4)
+        self.assertEqual(summary["severe_noise_flag_count"], 1)
+        self.assertEqual(summary["positive_pain_flag_count"], 1)
+        # Original flag counts:
+        qfc = summary["quality_flag_counts"]
+        self.assertEqual(qfc.get("vendor_promo", 0), 1)
+        self.assertEqual(qfc.get("low_confidence_extraction", 0), 1)
+        self.assertEqual(qfc.get("missing_actor", 0), 1)
+        self.assertEqual(qfc.get("generic_language", 0), 1)
+        self.assertEqual(qfc.get("debugging_pain", 0), 1)
+        self.assertEqual(qfc.get("bot_generated", 0), 1)
+
+    def test_severe_aliases_count_in_severe_noise_flag_count(self):
+        # If any flag aliases to a severe flag, it should count as severe.
+        # Current alias map has none, but test defensively.
+        # We use a direct severe flag for safety.
+        evidence = [
+            _make_evidence(evidence_id="ev_sev", quality_flags=["bot_generated"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        self.assertEqual(summary["severe_noise_flag_count"], 1)
+        self.assertEqual(summary["medium_risk_flag_count"], 0)
+
+    def test_quality_summary_severity_counts_different_from_old_behavior(self):
+        """Demonstrate that the alias-resolved counts differ from original-flag-based counts.
+        vendor_promo is NOT in MEDIUM_NOISE_FLAGS set (only suspected_self_promo is).
+        The old behavior would NOT count vendor_promo as medium."""
+        evidence = [
+            _make_evidence(evidence_id="ev_vp", quality_flags=["vendor_promo"]),
+        ]
+        summary = compute_evidence_quality_summary(evidence)
+        # With alias resolution: vendor_promo -> suspected_self_promo -> MEDIUM_NOISE_FLAGS -> medium=1
+        self.assertEqual(summary["medium_risk_flag_count"], 1,
+                         "vendor_promo must count as medium after alias resolution")
+
+
+if __name__ == "__main__":
+    unittest.main()

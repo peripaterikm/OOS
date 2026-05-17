@@ -787,6 +787,585 @@ if (Test-Path $PilotRunDir) {
 Record-Pass "operational discovery pilot: smoke step complete (temp-only output)"
 
 # ===========================================================================
+# STEP 11: v2.14 Controlled Quality Smoke (Roadmap v2.14 Item 9) -- HARDENED v2.14-FIX
+# ===========================================================================
+Write-Section "Step 11: v2.14 Controlled Quality Smoke"
+
+$V214SmokeDir = Join-Path $TempRoot "v2_14_quality_smoke"
+$V214FixturePath = Join-Path $TempRoot "v2_14_quality_fixture.json"
+
+# Build v2.14 quality smoke fixture: mixed evidence exercising all quality gates.
+# v2.14-FIX: Added unknown-actor evidence pair to ensure at least one cluster
+# gets PROMOTE or NEEDS_MORE_EVIDENCE and produces opportunity candidates.
+# The stack/trace items (v214_gh_stack_001 + v214_gh_trace_001) cohere into
+# one eligible cluster. Provenance (v214_gh_prov_001) remains separate by
+# design in its own cluster per B2/B2b.
+$V214Evidence = @(
+    # --- Clean: GitHub concrete stack-trace pain ---
+    @{
+        evidence_id = "v214_gh_stack_001"
+        source_id = "github_issues"
+        source_type = "issue_tracker"
+        source_url = "https://github.com/example/agent-sdk/issues/2001"
+        title = "Stack traces lack full execution context for debugging agent tool calls"
+        body = "When an LLM agent makes a tool call that fails, the stack trace shows the tool call site but not the agent reasoning chain. This makes it incredibly painful to diagnose why the agent chose a wrong tool. We spend hours correlating logs manually. We need agent execution traces that capture the full call tree with prompt context."
+        evidence_kind = "bug_report"
+        created_at = "2026-05-14T08:00:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "agent_debugging_traces"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("debugging_pain")
+        raw_metadata = @{ target_user = "developer"; repo = "example/agent-sdk" }
+        contribution_to_cluster = "primary"
+        excerpt = "When an LLM agent makes a tool call that fails, the stack trace shows the tool call site but not the agent reasoning chain."
+    },
+    @{
+        evidence_id = "v214_gh_trace_001"
+        source_id = "github_issues"
+        source_type = "issue_tracker"
+        source_url = "https://github.com/example/trace-debugger/issues/45"
+        title = "Cannot replay production traces for debugging -- missing prompt snapshot"
+        body = "We need to replay a production trace to debug an agent misbehavior, but the trace only captures tool inputs/outputs. The original prompt context and LLM parameters are missing. Prompt replay and trace debugging are essential for reproducing failures."
+        evidence_kind = "bug_report"
+        created_at = "2026-05-14T09:00:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "agent_debugging_traces"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("debugging_pain", "workaround_signal")
+        raw_metadata = @{ target_user = "developer"; repo = "example/trace-debugger" }
+        contribution_to_cluster = "primary"
+        excerpt = "We need to replay a production trace to debug an agent misbehavior, but the trace only captures tool inputs/outputs."
+    },
+    @{
+        evidence_id = "v214_gh_prov_001"
+        source_id = "github_issues"
+        source_type = "issue_tracker"
+        source_url = "https://github.com/example/provenance-lib/issues/12"
+        title = "Multi-agent output provenance is untraceable -- which agent contributed which claim?"
+        body = "In a multi-agent workflow, we cannot trace which agent produced which output claim. Provenance and source attribution are completely missing. This is critical for trust and debugging."
+        evidence_kind = "bug_report"
+        created_at = "2026-05-14T08:30:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "agent_debugging_traces"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("debugging_pain")
+        raw_metadata = @{ target_user = "developer"; repo = "example/provenance-lib" }
+        contribution_to_cluster = "primary"
+        excerpt = "In a multi-agent workflow, we cannot trace which agent produced which output claim. Provenance and source attribution are completely missing."
+    },
+    # --- HN noise: requires_manual_review, suspected_self_promo, low_confidence_source ---
+    @{
+        evidence_id = "v214_hn_noise_001"
+        source_id = "hacker_news"
+        source_type = "discussion"
+        source_url = "https://news.ycombinator.com/item?id=42000001"
+        title = "Show HN: Our AI debugging platform -- early access"
+        body = "We built an AI debugging platform that automatically finds bugs. Sign up for early access! We are looking for beta users."
+        evidence_kind = "product_launch"
+        created_at = "2026-05-14T07:00:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "vendor_promo"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("requires_manual_review", "suspected_self_promo", "low_confidence_source", "vendor_promo")
+        raw_metadata = @{ target_user = "unknown" }
+        contribution_to_cluster = "primary"
+        excerpt = "We built an AI debugging platform that automatically finds bugs. Sign up for early access!"
+    },
+    @{
+        evidence_id = "v214_hn_noise_002"
+        source_id = "hacker_news"
+        source_type = "discussion"
+        source_url = "https://news.ycombinator.com/item?id=42000002"
+        title = "Launch HN: DebugAI -- AI-powered debugging assistant"
+        body = "Excited to launch DebugAI! Our AI assistant helps you fix bugs faster. Check it out at debugai.example.com."
+        evidence_kind = "product_launch"
+        created_at = "2026-05-14T07:30:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "vendor_promo"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("requires_manual_review", "low_confidence_source", "launch_hype")
+        raw_metadata = @{ target_user = "unknown" }
+        contribution_to_cluster = "primary"
+        excerpt = "Excited to launch DebugAI! Our AI assistant helps you fix bugs faster."
+    },
+    # --- Evidence-only flag case: evidence has flags, signal omits them (simulated in smoke) ---
+    @{
+        evidence_id = "v214_hn_flagged_001"
+        source_id = "hacker_news"
+        source_type = "discussion"
+        source_url = "https://news.ycombinator.com/item?id=42000003"
+        title = "Anyone tried the new AI debugging tool?"
+        body = "Just saw an ad for a new AI debugging tool. Has anyone tried it? Looks interesting but not sure if it solves real problems."
+        evidence_kind = "pain_signal_candidate"
+        created_at = "2026-05-14T08:00:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "generic_discussion"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("low_text_context", "requires_manual_review", "low_confidence_source")
+        raw_metadata = @{ target_user = "unknown" }
+        contribution_to_cluster = "context_only"
+        excerpt = "Just saw an ad for a new AI debugging tool. Has anyone tried it?"
+    },
+    # --- Positive pain flag: accepted but flagged ---
+    @{
+        evidence_id = "v214_hn_pain_001"
+        source_id = "hacker_news"
+        source_type = "discussion"
+        source_url = "https://news.ycombinator.com/item?id=42000004"
+        title = "Debugging multi-agent workflows is a nightmare -- how do you trace cross-agent state?"
+        body = "We run 5+ agents in a workflow and debugging cross-agent state transitions is extremely painful. We built a manual workaround with log scraping but it takes 5+ hours per incident. Agent observability is the biggest gap in our AI toolchain."
+        evidence_kind = "pain_signal_candidate"
+        created_at = "2026-05-14T09:00:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "agent_debugging_traces"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("debugging_pain", "workaround_signal", "cost_signal")
+        raw_metadata = @{ target_user = "developer" }
+        contribution_to_cluster = "primary"
+        excerpt = "We run 5+ agents in a workflow and debugging cross-agent state transitions is extremely painful."
+    },
+    # --- Clean HN: concrete agent debugging pain (no flags) ---
+    @{
+        evidence_id = "v214_hn_clean_001"
+        source_id = "hacker_news"
+        source_type = "discussion"
+        source_url = "https://news.ycombinator.com/item?id=42000005"
+        title = "Ask HN: Best practices for debugging LLM agent execution traces?"
+        body = "We are deploying LLM agents to production and our biggest challenge is debugging when agents take wrong actions. Traces show the final result but not the intermediate reasoning. How are others handling agent observability? We are spending 10+ hours per week on manual trace inspection."
+        evidence_kind = "pain_signal_candidate"
+        created_at = "2026-05-14T09:30:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "agent_debugging_traces"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @()
+        raw_metadata = @{ target_user = "developer" }
+        contribution_to_cluster = "primary"
+        excerpt = "We are deploying LLM agents to production and our biggest challenge is debugging when agents take wrong actions."
+    },
+    # --- Unknown actor case: two clean items, different sources, same pain ---
+    @{
+        evidence_id = "v214_hn_unknown_001"
+        source_id = "hacker_news"
+        source_type = "discussion"
+        source_url = "https://news.ycombinator.com/item?id=42000006"
+        title = "Struggling with AI agent debugging -- unclear who the target user is"
+        body = "I keep seeing tools for AI agent debugging but nobody seems to know who the actual end user is. The pain of untraceable agent decisions is real -- we spend hours diagnosing wrong agent outputs. But the ICP is completely unclear: is this for individual devs, platform teams, or enterprise SREs?"
+        evidence_kind = "pain_signal_candidate"
+        created_at = "2026-05-14T10:00:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "unknown_actor_debugging"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("debugging_pain", "workaround_signal")
+        raw_metadata = @{ target_user = "unknown" }
+        contribution_to_cluster = "primary"
+        excerpt = "I keep seeing tools for AI agent debugging but nobody seems to know who the actual end user is."
+    },
+    @{
+        evidence_id = "v214_gh_unknown_001"
+        source_id = "github_issues"
+        source_type = "issue_tracker"
+        source_url = "https://github.com/example/unknown-debugger/issues/1"
+        title = "Agent debugging tools have unclear target audience -- who is this for?"
+        body = "We're building agent debugging infrastructure but cannot determine the ICP. The technical pain is clear (unobservable agent decisions, hours lost to manual trace correlation), but we don't know if this is for individual developers, platform teams, or enterprise SREs. This ambiguity is hurting adoption."
+        evidence_kind = "bug_report"
+        created_at = "2026-05-14T10:30:00Z"
+        fetched_at = "2026-05-14T10:00:00Z"
+        collected_at = "2026-05-14T10:00:00Z"
+        topic_id = "unknown_actor_debugging"
+        query_kind = "pilot_smoke_fixture"
+        quality_flags = @("debugging_pain")
+        raw_metadata = @{ target_user = "unknown"; repo = "example/unknown-debugger" }
+        contribution_to_cluster = "primary"
+        excerpt = "We're building agent debugging infrastructure but cannot determine the ICP."
+    }
+)
+
+$V214FixtureJson = $V214Evidence | ConvertTo-Json -Depth 5
+$Utf8NoBom2 = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText($V214FixturePath, $V214FixtureJson, $Utf8NoBom2)
+Write-Host "  v2.14 quality fixture written with $($V214Evidence.Count) evidence items (incl. unknown-actor pair)"
+Record-Pass "v2.14 quality smoke fixture created"
+
+# Run pilot orchestrator on v2.14 quality fixture
+$V214PyScript = Join-Path $TempRoot "_v2_14_quality_smoke.py"
+@"
+import json, sys
+sys.path.insert(0, '$($TempSrc -replace '\\', '/')')
+from oos.operational_discovery_pilot import (
+    OperationalDiscoveryPilotInput,
+    run_operational_discovery_pilot,
+)
+
+fixture_path = '$($V214FixturePath -replace '\\', '/')'
+output_dir = '$($V214SmokeDir -replace '\\', '/')'
+
+with open(fixture_path, 'r', encoding='utf-8-sig') as f:
+    evidence = json.load(f)
+
+inp = OperationalDiscoveryPilotInput(
+    raw_evidence=evidence,
+    created_at='2026-05-14T10:00:00Z',
+    discovery_run_id='pilot_smoke_v2_14_quality',
+    output_dir=output_dir,
+)
+result = run_operational_discovery_pilot(inp)
+
+summary = {
+    'discovery_run_id': result.discovery_run_id,
+    'is_valid': result.is_valid,
+    'raw_evidence_count': result.raw_evidence_count,
+    'candidate_signal_count': result.candidate_signal_count,
+    'pain_cluster_count': result.pain_cluster_count,
+    'opportunity_candidate_count': result.opportunity_candidate_count,
+    'errors': [e[:200] for e in result.errors],
+    'warnings': result.warnings[:10],
+}
+print('V214_PILOT_RESULT_JSON:' + json.dumps(summary))
+
+# =========================================================================
+# GATE A: Source Quality Report checks (HARDENED v2.14-FIX)
+# =========================================================================
+sqr = result.source_quality_report or {}
+checks = []
+
+# Read SQR JSON values directly -- do not rely on Markdown alone.
+# A1: classification_health must NOT be 'clean' when noise/weak/flags exist.
+# v2.14-FIX: Assert fixture expectations directly from JSON.
+qh = sqr.get('quality_health', {})
+noise_total = sqr.get('noise_signal_total', 0)
+weak_total = sqr.get('weak_signal_total', 0)
+flagged_count = qh.get('flagged_record_count', 0)
+ch = qh.get('classification_health', 'clean')
+noise_gt_0 = noise_total > 0
+weak_gt_0 = weak_total > 0
+checks.append((
+    'A1_noise_signal_total_gt_0',
+    noise_gt_0,
+    f'noise_signal_total={noise_total}'
+))
+checks.append((
+    'A2_weak_signal_total_gt_0',
+    weak_gt_0,
+    f'weak_signal_total={weak_total}'
+))
+checks.append((
+    'A3_classification_health_not_clean',
+    ch != 'clean',
+    f'classification_health={ch}'
+))
+
+# A4: evidence_quality_status NOT 'clean' when noise/weak present
+eqs = qh.get('evidence_quality_status', 'clean')
+checks.append((
+    'A4_evidence_quality_status_not_clean',
+    eqs != 'clean',
+    f'evidence_quality_status={eqs}'
+))
+
+# A5: flagged_record_count > 0
+checks.append((
+    'A5_flagged_record_count_gt_0',
+    flagged_count > 0,
+    f'flagged_record_count={flagged_count}'
+))
+
+# A6: dominant_quality_flags includes expected evidence-only flags
+dqf = qh.get('dominant_quality_flags', [])
+has_evidence_flags = any(
+    f in dqf
+    for f in ('vendor_promo', 'suspected_self_promo',
+              'low_confidence_source', 'requires_manual_review')
+)
+checks.append((
+    'A6_dominant_quality_flags_include_evidence_flags',
+    has_evidence_flags,
+    f'dominant_quality_flags={dqf[:10]}'
+))
+
+# A7: contradiction_warnings list has at least 1 entry
+cw = qh.get('contradiction_warnings', [])
+checks.append((
+    'A7_contradiction_warnings_count_gt_0',
+    isinstance(cw, list) and len(cw) > 0,
+    f'contradiction_warnings len={len(cw) if isinstance(cw, list) else "N/A"}'
+))
+
+# A8: Per-source warnings exist (at least one source_metric has non-empty warnings).
+# v2.14-FIX: Per-source quality warnings live in source_metrics[].source_quality_warnings,
+# not in quality_health.per_source_warnings (which does not exist).
+source_metrics = sqr.get('source_metrics', [])
+has_any_per_source_warning = False
+per_source_warning_src_ids = []
+for sm in source_metrics:
+    warns = sm.get('source_quality_warnings', [])
+    if isinstance(warns, list) and len(warns) > 0:
+        has_any_per_source_warning = True
+        per_source_warning_src_ids.append(sm.get('source_id', '?'))
+checks.append((
+    'A8_at_least_one_per_source_warning',
+    has_any_per_source_warning,
+    f'source_ids with quality_warnings={per_source_warning_src_ids}'
+))
+
+# A9: Markdown contains non-empty warning bullets (not just headers).
+# Check for actual warning content lines, e.g. bullet items under warning sections.
+from oos.source_quality_report import (
+    SourceQualityReport,
+    render_source_quality_report_markdown,
+)
+sqr_obj = SourceQualityReport.from_dict(sqr)
+md = render_source_quality_report_markdown(sqr_obj)
+# Look for bullet lines (starting with '- ') in the warning sections
+has_warning_content = False
+lines = md.split('\n')
+in_warnings_section = False
+for line in lines:
+    if 'Per-Source Quality Warnings' in line or 'Contradiction Warnings' in line:
+        in_warnings_section = True
+        continue
+    if in_warnings_section and line.startswith('#'):
+        in_warnings_section = False
+    if in_warnings_section and line.strip().startswith('- ') and len(line.strip()) > 3:
+        has_warning_content = True
+        break
+checks.append((
+    'A9_markdown_warning_bullets_not_empty',
+    has_warning_content,
+    'warning bullets found in SQR md' if has_warning_content else 'no non-empty warning bullets in SQR md'
+))
+
+# =========================================================================
+# GATE B: PainCluster assembly checks (HARDENED v2.14-FIX)
+# =========================================================================
+pain_clusters = result.pain_clusters
+
+# B1: mixed anchors do not collapse into one catch-all
+checks.append((
+    'B1_multiple_clusters_not_single_catch_all',
+    len(pain_clusters) > 1,
+    f'pain_cluster_count={len(pain_clusters)}'
+))
+
+# B2: Truly coherent trace-debugging items share EXACTLY ONE cluster.
+# v2.14-FIX: v214_gh_stack_001 + v214_gh_trace_001 (stack-trace + trace-replay)
+# form a coherent pair. v214_gh_prov_001 (provenance) is a different pain
+# anchor and must NOT be forced into the same cluster.
+trace_cluster_ids = set()
+for pc in pain_clusters:
+    for ev in pc.get('source_evidence_list', []):
+        eid = ev.get('evidence_id', '')
+        if eid in ('v214_gh_stack_001', 'v214_gh_trace_001'):
+            trace_cluster_ids.add(pc.get('cluster_id', ''))
+checks.append((
+    'B2_coherent_trace_items_in_exactly_one_cluster',
+    len(trace_cluster_ids) == 1,
+    f'v214_gh_stack_001 + v214_gh_trace_001 in {len(trace_cluster_ids)} cluster(s), ids={trace_cluster_ids}'
+))
+
+# B2b: Provenance item must NOT merge with the trace-debugging items.
+# Provenance (which agent contributed which claim) is a separate pain anchor.
+prov_cluster_id = None
+trace_coherent_cluster_id = list(trace_cluster_ids)[0] if trace_cluster_ids else None
+for pc in pain_clusters:
+    for ev in pc.get('source_evidence_list', []):
+        if ev.get('evidence_id', '') == 'v214_gh_prov_001':
+            prov_cluster_id = pc.get('cluster_id', '')
+provenance_separate = (
+    prov_cluster_id is not None
+    and trace_coherent_cluster_id is not None
+    and prov_cluster_id != trace_coherent_cluster_id
+)
+checks.append((
+    'B2b_provenance_not_merged_with_trace_items',
+    provenance_separate,
+    f'prov in cluster={prov_cluster_id}, trace in cluster={trace_coherent_cluster_id}'
+))
+
+# B3: cluster titles are readable (not [dead] / needs_more_evidence)
+bad_titles = []
+for pc in pain_clusters:
+    from oos.pain_cluster_assembly import generate_cluster_review_title
+    title = generate_cluster_review_title(pc)
+    if '[dead]' in title.lower() or 'needs_more_evidence' in title.lower():
+        bad_titles.append(title)
+checks.append((
+    'B3_no_dead_or_nme_titles',
+    len(bad_titles) == 0,
+    f'bad titles: {bad_titles}'
+))
+
+# B4: no catch_all_risk clusters
+catch_all_count = sum(1 for pc in pain_clusters if pc.get('catch_all_risk', False))
+checks.append((
+    'B4_zero_catch_all_risk_clusters',
+    catch_all_count == 0,
+    f'catch_all_risk count: {catch_all_count}'
+))
+
+# =========================================================================
+# GATE C: Founder Review Package checks
+# =========================================================================
+frp = result.founder_review_package or {}
+from oos.pilot_founder_review_package import (
+    FounderReviewPackage,
+    render_founder_review_package_markdown,
+)
+frp_obj = FounderReviewPackage.from_dict(frp)
+frp_md = render_founder_review_package_markdown(frp_obj)
+
+checks.append(('C1_executive_summary', '## Executive Summary' in frp_md))
+checks.append(('C2_signal_to_noise_ratio', '## Signal-to-Noise Ratio' in frp_md))
+checks.append(('C3_per_source_breakdown', '### Per-Source Breakdown' in frp_md))
+checks.append(('C4_quality_gate_per_item', '#### Quality Gate' in frp_md))
+checks.append(('C5_opportunity_hypotheses_section', '## Opportunity Hypotheses' in frp_md))
+
+# =========================================================================
+# GATE D: Opportunity synthesis checks (HARDENED v2.14-FIX)
+# =========================================================================
+opp_candidates = result.opportunity_candidates
+
+# D1: At least 1 opportunity candidate synthesized. v2.14-FIX: REQUIRE >= 1.
+checks.append((
+    'D1_opportunity_candidate_count_gte_1',
+    isinstance(opp_candidates, list) and len(opp_candidates) >= 1,
+    f'opportunity_candidates count={len(opp_candidates) if isinstance(opp_candidates, list) else "N/A"}'
+))
+
+# D2: synthesized hypotheses have not_a_solution_yet=True
+all_not_solution = True
+for oh in opp_candidates:
+    if isinstance(oh, dict) and not oh.get('not_a_solution_yet', False):
+        all_not_solution = False
+checks.append((
+    'D2_all_hypotheses_not_a_solution_yet',
+    all_not_solution if opp_candidates else False,
+    f'checked {len(opp_candidates)} hypotheses'
+))
+
+# D3: created_by = deterministic_stub
+all_deterministic = True
+for oh in opp_candidates:
+    if isinstance(oh, dict) and oh.get('created_by', '') != 'deterministic_stub':
+        all_deterministic = False
+checks.append((
+    'D3_all_created_by_deterministic_stub',
+    all_deterministic if opp_candidates else False,
+    f'checked {len(opp_candidates)} hypotheses'
+))
+
+# D4: evidence_links preserved
+all_have_links = True
+for oh in opp_candidates:
+    if isinstance(oh, dict) and len(oh.get('evidence_links', [])) == 0:
+        all_have_links = False
+checks.append((
+    'D4_all_hypotheses_have_evidence_links',
+    all_have_links if opp_candidates else False,
+    f'checked {len(opp_candidates)} hypotheses'
+))
+
+# D5: At least one hypothesis was synthesized with valid attributes.
+# v2.14-FIX: The unknown-actor items merge into the developer-dominant cluster
+# because pain_cluster_assembly allows unknown-actor merge when workflow+object
+# match. The hypothesis has target_actor='developer' (known, from majority
+# evidence). This gate verifies the hypothesis carries the required
+# not_a_solution_yet and created_by fields and evidence_links.
+synthesized_any = False
+all_have_required_fields = True
+for oh in opp_candidates:
+    if isinstance(oh, dict):
+        synthesized_any = True
+        if not oh.get('not_a_solution_yet', False):
+            all_have_required_fields = False
+        if oh.get('created_by', '') != 'deterministic_stub':
+            all_have_required_fields = False
+        if len(oh.get('evidence_links', [])) == 0:
+            all_have_required_fields = False
+checks.append((
+    'D5_synthesized_hypothesis_has_required_fields',
+    synthesized_any and all_have_required_fields,
+    f'synthesized={synthesized_any}, all_required={all_have_required_fields}'
+))
+
+# D6: No hypothesis invents ICP for a known-actor cluster.
+# v2.14-FIX: The cluster actor is 'developer' (known); target_icp must NOT be
+# 'unproven; validate actor' for known actors. Unknown-actor items that merged
+# into a known-actor cluster should not cause the whole hypothesis to be
+# downgraded to "unproven".
+# Unknown-actor synthesis behavior (target_icp='unproven; validate actor' when
+# cluster actor is genuinely 'unknown') is covered by regression tests in
+# test_opportunity_synthesis.py, not by this smoke Step 11 gate.
+has_known_actor_hyp = False
+known_actor_icp_ok = True
+for oh in opp_candidates:
+    if isinstance(oh, dict):
+        target_actor = oh.get('target_actor', '')
+        target_icp = oh.get('target_icp', '')
+        if target_actor and target_actor != 'unknown':
+            has_known_actor_hyp = True
+            if target_icp == 'unproven; validate actor':
+                known_actor_icp_ok = False
+checks.append((
+    'D6_known_actor_icp_not_unproven',
+    has_known_actor_hyp and known_actor_icp_ok,
+    f'has_known_actor={has_known_actor_hyp}, icp_ok={known_actor_icp_ok}'
+))
+
+# =========================================================================
+# Report all checks
+# =========================================================================
+all_pass = True
+for i, check in enumerate(checks):
+    if len(check) == 2:
+        name, passed = check
+        detail = ''
+    else:
+        name, passed, detail = check
+    status = 'PASS' if passed else 'FAIL'
+    print(f'V214_CHECK: {name} = {status}')
+    if detail:
+        print(f'V214_CHECK_DETAIL: {name}: {detail}')
+    if not passed:
+        all_pass = False
+
+print(f'V214_ALL_PASS: {all_pass}')
+sys.exit(0 if all_pass else 1)
+"@ | Set-Content -Path $V214PyScript -Encoding UTF8
+
+$V214Result = Invoke-CliSafe -Arguments @($V214PyScript)
+$V214Output = ($V214Result.Output | Out-String)
+Write-Host "  v2.14 quality smoke output:"
+Write-Host $V214Output
+
+if ($V214Result.ExitCode -ne 0) {
+    Record-Fail "v2.14 quality smoke: pipeline or gate failures" "exit code: $($V214Result.ExitCode)"
+} else {
+    Record-Pass "v2.14 quality smoke: all gates passed (exit 0)"
+}
+
+# Parse individual check results
+$V214Lines = $V214Output -split "`n"
+foreach ($line in $V214Lines) {
+    if ($line -match "V214_CHECK: (.+) = PASS") {
+        Record-Pass "v2.14 quality gate: $($Matches[1])"
+    } elseif ($line -match "V214_CHECK: (.+) = FAIL") {
+        $detailLine = $V214Lines | Where-Object { $_ -match "V214_CHECK_DETAIL: $($Matches[1]):" }
+        Record-Fail "v2.14 quality gate: $($Matches[1])" "$detailLine"
+    }
+}
+
+Record-Pass "v2.14 quality smoke: step complete (temp-only output)"
+
+# ===========================================================================
 # SUMMARY
 # ===========================================================================
 Write-Host ""

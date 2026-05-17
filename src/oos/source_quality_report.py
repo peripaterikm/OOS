@@ -6,12 +6,22 @@ Implements the Source Quality Report specified in
 docs/contracts/operational_discovery_pilot_run_contract.md Sections 10–11.
 
 Accepts plain deterministic inputs (no live sources, no APIs, no LLM).
+
+v2.14 item 7: Source Quality Report Contradiction Fix.
+Adds report-level quality status, per-source contradiction detection,
+and separates traceability/scope/classification/evidence-quality dimensions.
 """
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+from .noise_classifier import (
+    ACCEPTED,
+    NOISE as NC_NOISE,
+    WEAK,
+    classify_noise_for_evidence,
+)
 from .pain_cluster_dedupe import (
     normalize_source_id,
     normalize_source_type,
@@ -23,7 +33,7 @@ from .pain_cluster import PainCluster
 # Constants
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 ARTIFACT_TYPE = "source_quality_report"
 
 CANONICAL_SOURCE_IDS = frozenset({"hacker_news", "github_issues"})
@@ -45,6 +55,37 @@ KNOWN_NOISE_CATEGORIES: frozenset[str] = frozenset({
     "placeholder_url",
     "low_confidence_source",
     "requires_manual_review",
+})
+
+# ---------------------------------------------------------------------------
+# Quality thresholds (v2.14 item 7)
+# ---------------------------------------------------------------------------
+
+# Classification health thresholds
+NOISE_RATE_FAILING = 0.50
+NOISE_RATE_PROBLEMATIC = 0.20
+WEAK_RATE_PROBLEMATIC = 0.70
+WEAK_RATE_CAUTION = 0.20
+FLAGGED_RATE_CAUTION = 0.20
+FLAGGED_RATE_LOW = 0.10
+
+# Per-source contradiction thresholds
+ACCEPTED_RATE_HIGH = 0.80
+FLAGGED_RATE_HIGH = 0.20
+
+# Quality-risk flags that trigger contradiction warnings
+CONTRADICTION_SENSITIVE_FLAGS: frozenset[str] = frozenset({
+    "requires_manual_review",
+    "low_confidence_extraction",
+    "suspected_self_promo",
+    "generic_language",
+    "low_text_context",
+    "launch_hype",
+    "stale_issue",
+    "unclear_actor",
+    "unclear_workflow",
+    "unclear_buyer",
+    "no_business_cost",
 })
 
 # ---------------------------------------------------------------------------
@@ -96,6 +137,59 @@ def _normalize_opportunity_candidate(oc: Any) -> dict[str, Any]:
     return {"_raw": str(oc)}
 
 
+def _non_empty_str(*values: Any) -> str:
+    """Return the first non-empty string value from the given values."""
+    for v in values:
+        s = str(v or "").strip()
+        if s:
+            return s
+    return ""
+
+
+def _merge_signal_with_evidence_for_classification(
+    signal: dict[str, Any],
+    evidence_by_id: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Merge signal fields with matching evidence fields for noise classification.
+
+    - Locates matching raw evidence by evidence_id where available.
+    - Merges quality_flags from both evidence and signal (evidence first, then signal).
+    - Deduplicates flags deterministically while preserving stable order.
+    - Uses evidence title/body/excerpt/evidence_kind/source_url when signal lacks those fields.
+    - Signal fields may override only when explicitly present and non-empty.
+
+    Returns a dict with keys: evidence_id, source_id, source_type, title, body,
+    excerpt, evidence_kind, source_url, quality_flags.
+    """
+    sig_eid = str(signal.get("evidence_id", "") or "")
+    ev = evidence_by_id.get(sig_eid, {}) if sig_eid else {}
+
+    # Merge quality_flags: evidence flags first, then signal flags
+    ev_flags = list(ev.get("quality_flags", []) or [])
+    sig_flags = list(signal.get("quality_flags", []) or [])
+
+    # Dedupe while preserving stable order (evidence first, signal second)
+    seen: set[str] = set()
+    merged_flags: list[str] = []
+    for f in ev_flags + sig_flags:
+        flag_norm = str(f).strip()
+        if flag_norm and flag_norm not in seen:
+            seen.add(flag_norm)
+            merged_flags.append(flag_norm)
+
+    return {
+        "evidence_id": sig_eid,
+        "source_id": _evidence_source_id(signal) or _evidence_source_id(ev),
+        "source_type": _evidence_source_type(signal) or _evidence_source_type(ev),
+        "title": _non_empty_str(signal.get("title"), ev.get("title")),
+        "body": _non_empty_str(signal.get("body"), ev.get("body")),
+        "excerpt": _non_empty_str(signal.get("excerpt"), ev.get("excerpt")),
+        "evidence_kind": _non_empty_str(signal.get("evidence_kind"), ev.get("evidence_kind")),
+        "source_url": _non_empty_str(signal.get("source_url"), ev.get("source_url")),
+        "quality_flags": merged_flags,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
@@ -103,7 +197,11 @@ def _normalize_opportunity_candidate(oc: Any) -> dict[str, Any]:
 
 @dataclass
 class SourceQualityMetrics:
-    """Per-source quality metrics (contract Section 11)."""
+    """Per-source quality metrics (contract Section 11).
+
+    v2.14 item 7: added weak_rate, flagged_record_count, flagged_record_rate,
+    source_quality_warnings, contradiction_warnings.
+    """
 
     source_id: str
     source_type: str
@@ -114,6 +212,7 @@ class SourceQualityMetrics:
     weak_signal_count: int = 0
     noise_signal_count: int = 0
     accepted_rate: float = 0.0
+    weak_rate: float = 0.0
     noise_rate: float = 0.0
     duplicate_count: int = 0
     missing_url_count: int = 0
@@ -127,6 +226,11 @@ class SourceQualityMetrics:
     founder_needs_more_evidence_count: int = 0
     quality_flag_counts: dict[str, int] = field(default_factory=dict)
     rejection_reasons: list[str] = field(default_factory=list)
+    # v2.14 item 7 additions:
+    flagged_record_count: int = 0
+    flagged_record_rate: float = 0.0
+    source_quality_warnings: list[str] = field(default_factory=list)
+    contradiction_warnings: list[str] = field(default_factory=list)
 
     def recompute_rates(self) -> None:
         total_classified = (
@@ -135,6 +239,7 @@ class SourceQualityMetrics:
             + self.noise_signal_count
         )
         self.accepted_rate = _safe_rate(self.accepted_signal_count, total_classified)
+        self.weak_rate = _safe_rate(self.weak_signal_count, total_classified)
         self.noise_rate = _safe_rate(self.noise_signal_count, total_classified)
         self.source_url_validation_passed = (
             self.missing_url_count == 0 and self.placeholder_url_count == 0
@@ -151,6 +256,7 @@ class SourceQualityMetrics:
             "weak_signal_count": self.weak_signal_count,
             "noise_signal_count": self.noise_signal_count,
             "accepted_rate": self.accepted_rate,
+            "weak_rate": self.weak_rate,
             "noise_rate": self.noise_rate,
             "duplicate_count": self.duplicate_count,
             "missing_url_count": self.missing_url_count,
@@ -164,6 +270,10 @@ class SourceQualityMetrics:
             "founder_needs_more_evidence_count": self.founder_needs_more_evidence_count,
             "quality_flag_counts": dict(self.quality_flag_counts),
             "rejection_reasons": list(self.rejection_reasons),
+            "flagged_record_count": self.flagged_record_count,
+            "flagged_record_rate": self.flagged_record_rate,
+            "source_quality_warnings": list(self.source_quality_warnings),
+            "contradiction_warnings": list(self.contradiction_warnings),
         }
 
     @classmethod
@@ -178,6 +288,7 @@ class SourceQualityMetrics:
             weak_signal_count=int(data.get("weak_signal_count", 0)),
             noise_signal_count=int(data.get("noise_signal_count", 0)),
             accepted_rate=float(data.get("accepted_rate", 0.0)),
+            weak_rate=float(data.get("weak_rate", data.get("weak_count", 0.0))),
             noise_rate=float(data.get("noise_rate", 0.0)),
             duplicate_count=int(data.get("duplicate_count", 0)),
             missing_url_count=int(data.get("missing_url_count", 0)),
@@ -193,6 +304,82 @@ class SourceQualityMetrics:
             ),
             quality_flag_counts=dict(data.get("quality_flag_counts", {})),
             rejection_reasons=list(data.get("rejection_reasons", [])),
+            # v2.14 item 7 additions — default safely for old data
+            flagged_record_count=int(data.get("flagged_record_count", 0)),
+            flagged_record_rate=float(data.get("flagged_record_rate", 0.0)),
+            source_quality_warnings=list(data.get("source_quality_warnings", [])),
+            contradiction_warnings=list(data.get("contradiction_warnings", [])),
+        )
+
+
+@dataclass
+class SourceQualityHealth:
+    """Report-level quality status (v2.14 item 7).
+
+    Separates distinct quality dimensions so the report doesn't conflate
+    traceability cleanliness with classification or evidence quality.
+    """
+
+    traceability_status: str = "clean"        # clean | failing
+    source_scope_status: str = "clean"         # clean | failing
+    classification_health: str = "clean"       # clean | caution | problematic | failing
+    evidence_quality_status: str = "clean"     # clean | caution | noisy
+
+    # Aggregate counts and rates
+    accepted_count: int = 0
+    weak_count: int = 0
+    noise_count: int = 0
+    accepted_rate: float = 0.0
+    weak_rate: float = 0.0
+    noise_rate: float = 0.0
+    flagged_record_count: int = 0
+    flagged_record_rate: float = 0.0
+
+    # Dominant quality flags across all sources
+    dominant_quality_flags: list[str] = field(default_factory=list)
+    # Source IDs with high weak/noise evidence
+    sources_with_high_weak_or_noise: list[str] = field(default_factory=list)
+
+    # Contradiction warnings detected across the report
+    contradiction_warnings: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "traceability_status": self.traceability_status,
+            "source_scope_status": self.source_scope_status,
+            "classification_health": self.classification_health,
+            "evidence_quality_status": self.evidence_quality_status,
+            "accepted_count": self.accepted_count,
+            "weak_count": self.weak_count,
+            "noise_count": self.noise_count,
+            "accepted_rate": self.accepted_rate,
+            "weak_rate": self.weak_rate,
+            "noise_rate": self.noise_rate,
+            "flagged_record_count": self.flagged_record_count,
+            "flagged_record_rate": self.flagged_record_rate,
+            "dominant_quality_flags": list(self.dominant_quality_flags),
+            "sources_with_high_weak_or_noise": list(self.sources_with_high_weak_or_noise),
+            "contradiction_warnings": list(self.contradiction_warnings),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> SourceQualityHealth:
+        return cls(
+            traceability_status=str(data.get("traceability_status", "clean")),
+            source_scope_status=str(data.get("source_scope_status", "clean")),
+            classification_health=str(data.get("classification_health", "clean")),
+            evidence_quality_status=str(data.get("evidence_quality_status", "clean")),
+            accepted_count=int(data.get("accepted_count", 0)),
+            weak_count=int(data.get("weak_count", 0)),
+            noise_count=int(data.get("noise_count", 0)),
+            accepted_rate=float(data.get("accepted_rate", 0.0)),
+            weak_rate=float(data.get("weak_rate", 0.0)),
+            noise_rate=float(data.get("noise_rate", 0.0)),
+            flagged_record_count=int(data.get("flagged_record_count", 0)),
+            flagged_record_rate=float(data.get("flagged_record_rate", 0.0)),
+            dominant_quality_flags=list(data.get("dominant_quality_flags", [])),
+            sources_with_high_weak_or_noise=list(data.get("sources_with_high_weak_or_noise", [])),
+            contradiction_warnings=list(data.get("contradiction_warnings", [])),
         )
 
 
@@ -238,7 +425,11 @@ class SourceQualityReportValidationResult:
 
 @dataclass
 class SourceQualityReport:
-    """Structured source quality report (contract Section 10)."""
+    """Structured source quality report (contract Section 10).
+
+    v2.14 item 7: added quality_health field for report-level quality status
+    that separates traceability/scope/classification/evidence-quality dimensions.
+    """
 
     report_id: str
     discovery_run_id: str
@@ -258,6 +449,8 @@ class SourceQualityReport:
     traceability_summary: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    # v2.14 item 7: report-level quality health
+    quality_health: SourceQualityHealth = field(default_factory=SourceQualityHealth)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -281,10 +474,13 @@ class SourceQualityReport:
             "traceability_summary": dict(self.traceability_summary),
             "warnings": list(self.warnings),
             "errors": list(self.errors),
+            "quality_health": self.quality_health.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SourceQualityReport:
+        qh_data = data.get("quality_health", None)
+        quality_health = SourceQualityHealth.from_dict(qh_data) if qh_data else SourceQualityHealth()
         return cls(
             report_id=str(data.get("report_id", "")),
             discovery_run_id=str(data.get("discovery_run_id", "")),
@@ -310,6 +506,7 @@ class SourceQualityReport:
             traceability_summary=dict(data.get("traceability_summary", {})),
             warnings=list(data.get("warnings", [])),
             errors=list(data.get("errors", [])),
+            quality_health=quality_health,
         )
 
 
@@ -464,6 +661,13 @@ def build_source_quality_report(
         warnings=warnings,
     )
 
+    # ---- Quality Health (v2.14 item 7) ----
+    quality_health = _compute_quality_health(
+        source_metrics=source_metrics,
+        evidence_items=evidence_items,
+        traceability_summary=traceability_summary,
+    )
+
     report = SourceQualityReport(
         report_id=report_id,
         discovery_run_id=discovery_run_id,
@@ -483,6 +687,7 @@ def build_source_quality_report(
         traceability_summary=traceability_summary,
         warnings=warnings,
         errors=errors,
+        quality_health=quality_health,
     )
 
     return report
@@ -539,7 +744,7 @@ def _build_source_metrics(
     local_summary: dict[str, Any],
     fd_counts: dict[str, int],
 ) -> SourceQualityMetrics:
-    """Build per-source metrics."""
+    """Build per-source metrics (v2.14 item 7 updated with flagged counts + warnings)."""
 
     # Filter evidence for this source
     source_evidence = [
@@ -556,28 +761,45 @@ def _build_source_metrics(
     records_emitted = int(local_summary.get("records_emitted", 0)) or len(source_evidence)
     records_rejected = max(0, records_seen - records_emitted)
 
-    # Signal classification — infer from signal's classification field
+    # Build evidence lookup by evidence_id so the noise classifier can
+    # access title/body/excerpt from the original evidence item.
+    evidence_by_id: dict[str, dict[str, Any]] = {}
+    for ev in evidence_items:
+        eid = str(ev.get("evidence_id", "") or "")
+        if eid:
+            evidence_by_id[eid] = ev
+
+    # Signal classification — infer from classification field + noise classifier
     accepted = weak = noise = 0
     for sig in source_signals:
         classification = str(sig.get("classification", "") or "").lower()
-        if classification in ("pain_signal_candidate", "workaround_signal_candidate",
-                              "buying_intent_candidate", "competitor_weakness_candidate",
-                              "trend_trigger_candidate"):
-            accepted += 1
-        elif classification in ("needs_human_review",):
-            weak += 1
-        elif classification in ("noise",):
+        sig_type = str(sig.get("signal_type", "") or "").lower()
+
+        if classification in ("noise",):
             noise += 1
+            continue
+        elif classification in ("needs_human_review",) or sig_type in ("needs_human_review",):
+            weak += 1
+            continue
+
+        # Merge signal flags with evidence fields so the classifier sees
+        # title, body, excerpt, and quality_flags from both evidence and signal.
+        merged = _merge_signal_with_evidence_for_classification(sig, evidence_by_id)
+
+        nc_result = classify_noise_for_evidence(merged)
+        if nc_result == NC_NOISE:
+            noise += 1
+        elif nc_result == WEAK:
+            weak += 1
         else:
-            # Try signal_type
-            sig_type = str(sig.get("signal_type", "") or "").lower()
-            if sig_type in ("pain_signal", "workaround", "buying_intent",
+            if classification in ("pain_signal_candidate", "workaround_signal_candidate",
+                                  "buying_intent_candidate", "competitor_weakness_candidate",
+                                  "trend_trigger_candidate"):
+                accepted += 1
+            elif sig_type in ("pain_signal", "workaround", "buying_intent",
                             "competitor_weakness", "trend_trigger"):
                 accepted += 1
-            elif sig_type in ("needs_human_review",):
-                weak += 1
             else:
-                # Default: count as weak (unclassified)
                 weak += 1
 
     # Duplicate count
@@ -600,10 +822,6 @@ def _build_source_metrics(
     cluster_contribution_count = 0
     opportunity_contribution_count = 0
     for pc in clusters:
-        ev_ids_in_cluster = {
-            e.get("source_id") for e in pc.get("source_evidence_list", [])
-        }
-        # Check if this source contributed to this cluster
         sid_normalized = normalize_source_id(source_id)
         contributed = False
         for e in pc.get("source_evidence_list", []):
@@ -613,15 +831,12 @@ def _build_source_metrics(
                 break
         if contributed:
             cluster_contribution_count += 1
-            # Check if any opp candidate links to this cluster
             cluster_id = pc.get("cluster_id", "")
             for oc in opp_candidates:
                 oc_cluster = str(oc.get("source_pain_cluster_id", "") or "")
                 if oc_cluster == cluster_id:
                     opportunity_contribution_count += 1
 
-    # Source diversity contribution = number of distinct clusters this source
-    # contributed to (same as cluster_contribution_count)
     source_diversity_contribution = cluster_contribution_count
 
     # Quality flag counts
@@ -631,13 +846,19 @@ def _build_source_metrics(
             flag_key = str(flag).lower().replace(" ", "_")
             quality_flag_counts[flag_key] = quality_flag_counts.get(flag_key, 0) + 1
 
-    # Rejection reasons from local_summary
     rejection_reasons = list(local_summary.get("rejection_reasons", []) or [])
 
-    # Founder decision counts
     founder_promote = int(fd_counts.get("promote", 0))
     founder_kill = int(fd_counts.get("kill", 0))
     founder_needs_more = int(fd_counts.get("needs_more_evidence", 0))
+
+    # v2.14 item 7: flagged record counting — use merged evidence+signal flags
+    flagged_record_count = 0
+    for sig in source_signals:
+        merged_for_flag = _merge_signal_with_evidence_for_classification(sig, evidence_by_id)
+        flags = merged_for_flag.get("quality_flags", []) or []
+        if flags:
+            flagged_record_count += 1
 
     metrics = SourceQualityMetrics(
         source_id=source_id,
@@ -659,9 +880,236 @@ def _build_source_metrics(
         founder_needs_more_evidence_count=founder_needs_more,
         quality_flag_counts=quality_flag_counts,
         rejection_reasons=rejection_reasons,
+        flagged_record_count=flagged_record_count,
     )
     metrics.recompute_rates()
+    metrics.flagged_record_rate = _safe_rate(flagged_record_count, len(source_signals))
+
+    # v2.14 item 7: per-source quality + contradiction warnings
+    _compute_source_quality_warnings(metrics, source_signals)
+
     return metrics
+
+
+def _compute_source_quality_warnings(
+    metrics: SourceQualityMetrics,
+    source_signals: list[dict[str, Any]],
+) -> None:
+    """Compute per-source quality and contradiction warnings (v2.14 item 7)."""
+    source_id = metrics.source_id or "unknown"
+    total = metrics.accepted_signal_count + metrics.weak_signal_count + metrics.noise_signal_count
+
+    if total == 0:
+        return
+
+    # Quality warnings based on evidence health
+    if metrics.noise_rate >= NOISE_RATE_FAILING:
+        metrics.source_quality_warnings.append(
+            f"{source_id} noise rate {metrics.noise_rate:.2f} >= {NOISE_RATE_FAILING}; "
+            f"evidence quality is failing."
+        )
+    elif metrics.noise_rate >= NOISE_RATE_PROBLEMATIC:
+        metrics.source_quality_warnings.append(
+            f"{source_id} noise rate {metrics.noise_rate:.2f} >= {NOISE_RATE_PROBLEMATIC}; "
+            f"evidence quality is problematic."
+        )
+
+    if metrics.weak_rate >= WEAK_RATE_PROBLEMATIC:
+        metrics.source_quality_warnings.append(
+            f"{source_id} weak rate {metrics.weak_rate:.2f} >= {WEAK_RATE_PROBLEMATIC}; "
+            f"most evidence is unclassified or weakly classified."
+        )
+    elif metrics.weak_rate >= WEAK_RATE_CAUTION:
+        metrics.source_quality_warnings.append(
+            f"{source_id} weak rate {metrics.weak_rate:.2f} >= {WEAK_RATE_CAUTION}; "
+            f"significant portion of evidence is weak."
+        )
+
+    if metrics.flagged_record_rate >= FLAGGED_RATE_CAUTION:
+        metrics.source_quality_warnings.append(
+            f"{source_id} flagged record rate {metrics.flagged_record_rate:.2f} >= "
+            f"{FLAGGED_RATE_CAUTION}; many records carry quality flags."
+        )
+
+    # Contradiction detection
+    _detect_per_source_contradictions(metrics, source_signals, source_id, total)
+
+
+def _detect_per_source_contradictions(
+    metrics: SourceQualityMetrics,
+    source_signals: list[dict[str, Any]],
+    source_id: str,
+    total: int,
+) -> None:
+    """Detect per-source contradictions (v2.14 item 7)."""
+    if total == 0:
+        return
+
+    # Contradiction 1: high accepted_rate but high flagged_record_rate
+    if metrics.accepted_rate >= ACCEPTED_RATE_HIGH and metrics.flagged_record_rate >= FLAGGED_RATE_HIGH:
+        metrics.contradiction_warnings.append(
+            f"{source_id} has high accepted_rate ({metrics.accepted_rate:.2f}) but "
+            f"high flagged_record_rate ({metrics.flagged_record_rate:.2f}); "
+            f"treat as caution: accepted signals carry quality risk flags."
+        )
+
+    # Contradiction 2: noise/weak non-zero but accepted_rate looks clean
+    if (metrics.noise_rate > 0.0 or metrics.weak_rate > 0.0) and metrics.accepted_rate >= ACCEPTED_RATE_HIGH:
+        if metrics.noise_rate > 0.0 and metrics.weak_rate > 0.0:
+            metrics.contradiction_warnings.append(
+                f"{source_id}: accepted_rate is high ({metrics.accepted_rate:.2f}) but "
+                f"noise_rate={metrics.noise_rate:.2f} and weak_rate={metrics.weak_rate:.2f} "
+                f"are non-zero. 0% noise does not imply clean source quality."
+            )
+        elif metrics.noise_rate > 0.0:
+            metrics.contradiction_warnings.append(
+                f"{source_id}: accepted_rate is high ({metrics.accepted_rate:.2f}) but "
+                f"noise_rate={metrics.noise_rate:.2f} is non-zero."
+            )
+        elif metrics.weak_rate > 0.0:
+            metrics.contradiction_warnings.append(
+                f"{source_id}: accepted_rate is high ({metrics.accepted_rate:.2f}) but "
+                f"weak_rate={metrics.weak_rate:.2f} is non-zero."
+            )
+
+    # Contradiction 3: source_url validation clean but classification/evidence noisy
+    if metrics.source_url_validation_passed:
+        if metrics.noise_rate >= NOISE_RATE_PROBLEMATIC or metrics.weak_rate >= WEAK_RATE_CAUTION:
+            metrics.contradiction_warnings.append(
+                f"{source_id}: source_url validation is clean (PASS) but evidence quality "
+                f"is weak/noisy (noise_rate={metrics.noise_rate:.2f}, "
+                f"weak_rate={metrics.weak_rate:.2f}). Source traceability does not imply "
+                f"classification quality."
+            )
+
+    # Contradiction 4: source contributes clusters but mostly weak/noisy evidence
+    if metrics.cluster_contribution_count > 0:
+        if metrics.accepted_signal_count == 0:
+            metrics.contradiction_warnings.append(
+                f"{source_id} contributes to {metrics.cluster_contribution_count} "
+                f"clusters but has zero accepted signals (all weak/noise)."
+            )
+        elif metrics.accepted_rate <= 0.5:
+            metrics.contradiction_warnings.append(
+                f"{source_id} contributes to {metrics.cluster_contribution_count} "
+                f"clusters but accepted_rate is only {metrics.accepted_rate:.2f}; "
+                f"cluster evidence is mostly weak/noisy."
+            )
+
+    # Contradiction 5: many quality-risk flags
+    sensitive_count = sum(
+        metrics.quality_flag_counts.get(f, 0)
+        for f in CONTRADICTION_SENSITIVE_FLAGS
+        if f in metrics.quality_flag_counts
+    )
+    if sensitive_count >= 3:
+        metrics.contradiction_warnings.append(
+            f"{source_id} has {sensitive_count} quality-risk flags "
+            f"(requires_manual_review, low_confidence, self_promo, etc.); "
+            f"treat as caution even if overall acceptance looks clean."
+        )
+
+
+# ---------------------------------------------------------------------------
+# Quality Health (v2.14 item 7)
+# ---------------------------------------------------------------------------
+
+
+def _compute_quality_health(
+    *,
+    source_metrics: list[SourceQualityMetrics],
+    evidence_items: list[dict[str, Any]],
+    traceability_summary: dict[str, Any],
+) -> SourceQualityHealth:
+    """Compute report-level quality health status (v2.14 item 7)."""
+    # Traceability
+    trace_pass = traceability_summary.get("source_url_validation_passed", False)
+    traceability_status = "clean" if trace_pass else "failing"
+
+    # Source scope — check for scope violations from evidence
+    scope_violations = 0
+    for ev in evidence_items:
+        flags = ev.get("quality_flags", []) or []
+        if "source_scope_violation" in [str(f).lower().replace(" ", "_") for f in flags]:
+            scope_violations += 1
+    source_scope_status = "failing" if scope_violations > 0 else "clean"
+
+    # Aggregate classification counts
+    accepted_total = sum(m.accepted_signal_count for m in source_metrics)
+    weak_total = sum(m.weak_signal_count for m in source_metrics)
+    noise_total = sum(m.noise_signal_count for m in source_metrics)
+    total_classified = accepted_total + weak_total + noise_total
+
+    accepted_rate = _safe_rate(accepted_total, total_classified)
+    weak_rate = _safe_rate(weak_total, total_classified)
+    noise_rate = _safe_rate(noise_total, total_classified)
+
+    flagged_total = sum(m.flagged_record_count for m in source_metrics)
+    flagged_rate = _safe_rate(flagged_total, total_classified)
+
+    # Classification health
+    if noise_rate >= NOISE_RATE_FAILING:
+        classification_health = "failing"
+    elif noise_rate >= NOISE_RATE_PROBLEMATIC or weak_rate >= WEAK_RATE_PROBLEMATIC:
+        classification_health = "problematic"
+    elif weak_rate >= WEAK_RATE_CAUTION or flagged_rate >= FLAGGED_RATE_CAUTION:
+        classification_health = "caution"
+    else:
+        classification_health = "clean"
+
+    # Evidence quality status
+    if noise_rate >= NOISE_RATE_PROBLEMATIC:
+        evidence_quality_status = "noisy"
+    elif weak_rate >= WEAK_RATE_CAUTION or flagged_rate >= FLAGGED_RATE_CAUTION:
+        evidence_quality_status = "caution"
+    else:
+        evidence_quality_status = "clean"
+
+    # Dominant quality flags
+    all_flag_counts: dict[str, int] = {}
+    for m in source_metrics:
+        for f, c in m.quality_flag_counts.items():
+            all_flag_counts[f] = all_flag_counts.get(f, 0) + c
+    sorted_flags = sorted(all_flag_counts.items(), key=lambda x: (-x[1], x[0]))
+    dominant_quality_flags = [f for f, _ in sorted_flags[:5]]
+
+    # Sources with high weak/noise
+    sources_with_high = []
+    for m in source_metrics:
+        if m.noise_rate >= NOISE_RATE_PROBLEMATIC or m.weak_rate >= WEAK_RATE_CAUTION:
+            sources_with_high.append(m.source_id)
+
+    # Report-level contradiction warnings (from per-source)
+    contradiction_warnings: list[str] = []
+    for m in source_metrics:
+        contradiction_warnings.extend(m.contradiction_warnings)
+
+    # Additional report-level contradiction: traceability clean but classification failing
+    if traceability_status == "clean" and classification_health in ("problematic", "failing"):
+        contradiction_warnings.append(
+            f"Traceability is clean ({traceability_status}) but classification health "
+            f"is {classification_health} (noise_rate={noise_rate:.2f}, "
+            f"weak_rate={weak_rate:.2f}). Source URL validity does not guarantee "
+            f"evidence quality."
+        )
+
+    return SourceQualityHealth(
+        traceability_status=traceability_status,
+        source_scope_status=source_scope_status,
+        classification_health=classification_health,
+        evidence_quality_status=evidence_quality_status,
+        accepted_count=accepted_total,
+        weak_count=weak_total,
+        noise_count=noise_total,
+        accepted_rate=accepted_rate,
+        weak_rate=weak_rate,
+        noise_rate=noise_rate,
+        flagged_record_count=flagged_total,
+        flagged_record_rate=flagged_rate,
+        dominant_quality_flags=dominant_quality_flags,
+        sources_with_high_weak_or_noise=sources_with_high,
+        contradiction_warnings=contradiction_warnings,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -868,7 +1316,7 @@ def _build_traceability_summary(
         "source_url_validation_passed": (missing == 0 and placeholder == 0),
         "clusters_with_all_evidence_urls": clusters_with_all_urls,
         "clusters_with_url_failures": clusters_with_failures,
-        "opportunity_candidates_with_traceability": 0,  # filled if candidates provided
+        "opportunity_candidates_with_traceability": 0,
         "failures": failures,
         "warnings": [],
     }
@@ -891,33 +1339,27 @@ def _validate_report_state(
     errors: list[str] = []
     warnings: list[str] = []
 
-    # Fail: no source metrics
     if not source_metrics:
         errors.append("no source metrics computed")
 
-    # Fail: source_id missing in any metric
     for m in source_metrics:
         if not m.source_id:
             errors.append("source metric missing source_id")
 
-    # Fail: source_url traceability failure
     if not traceability_summary.get("source_url_validation_passed", False):
         failures = traceability_summary.get("failures", [])
         for f in failures:
             errors.append(f"traceability failure: {f}")
 
-    # Warn: zero clusters
     if len(clusters) == 0:
         warnings.append("zero pain clusters formed")
 
-    # Warn: high noise rate (> 60%)
     for m in source_metrics:
         if m.noise_rate > 0.60:
             warnings.append(
                 f"high noise rate for {m.source_id}: {m.noise_rate}"
             )
 
-    # Warn: low source diversity (all clusters single-source)
     if clusters:
         all_single_source = all(
             int(pc.get("source_diversity", 1)) == 1
@@ -926,11 +1368,9 @@ def _validate_report_state(
         if all_single_source:
             warnings.append("all clusters are single-source (low source diversity)")
 
-    # Warn: no opportunity candidates
     if not opp_candidates:
         warnings.append("no opportunity candidates supplied")
 
-    # Warn: founder decisions needed but clusters exist
     pending = sum(
         1 for pc in clusters
         if pc.get("status") in ("new", "needs_more_evidence", None)
@@ -966,7 +1406,6 @@ def _build_next_validation_actions(
             "increase collection window, or enable additional sources."
         )
 
-    # High noise rate
     for m in source_metrics:
         if m.noise_rate > 0.60:
             actions.append(
@@ -974,7 +1413,6 @@ def _build_next_validation_actions(
                 f"Tune noise filters and review quality flags."
             )
 
-    # Low source diversity
     all_single = all(
         int(pc.get("source_diversity", 1)) == 1
         for pc in clusters
@@ -985,21 +1423,18 @@ def _build_next_validation_actions(
             "Adjust source mix or queries to enable cross-source validation."
         )
 
-    # Missing traceability
     if not traceability_summary.get("source_url_validation_passed", False):
         actions.append(
             "Traceability failures detected. Fix source_url handling "
             "before founder review."
         )
 
-    # Few candidates despite clusters
     if clusters and not opp_candidates:
         actions.append(
             "Clusters exist but no opportunity candidates. "
             "Consider founder review or collecting more evidence."
         )
 
-    # Top clusters exceed threshold → suggest validation
     candidate_clusters = [
         pc for pc in clusters
         if _cluster_tier_label(
@@ -1014,7 +1449,6 @@ def _build_next_validation_actions(
             f"or conduct manual market research."
         )
 
-    # No actions triggered? Default message
     if not actions:
         actions.append(
             "Source quality report is clean. Proceed with founder review."
@@ -1036,6 +1470,9 @@ def render_source_quality_report_markdown(
 
     ASCII-safe by default. No colors. No Unicode symbols.
 
+    v2.14 item 7: added Executive Summary statuses, quality health table,
+    quality flags table, per-source quality warnings, contradiction warnings.
+
     Args:
         report: The SourceQualityReport to render.
         output_mode: 'ascii_safe' (default) or 'utf8'.
@@ -1044,6 +1481,7 @@ def render_source_quality_report_markdown(
         Markdown string.
     """
     lines: list[str] = []
+    qh = report.quality_health
 
     # Title
     lines.append("# Source Quality Report")
@@ -1053,7 +1491,7 @@ def render_source_quality_report_markdown(
     lines.append(f"- **Generated**: {report.created_at}")
     lines.append("")
 
-    # Executive summary
+    # Executive Summary with quality dimensions
     lines.append("## Executive Summary")
     lines.append("")
     lines.append(
@@ -1071,19 +1509,43 @@ def render_source_quality_report_markdown(
         lines.append("No pain clusters were formed in this run.")
     lines.append("")
 
+    # Quality status table (v2.14 item 7)
+    lines.append("### Quality Status")
+    lines.append("")
+    lines.append("| Dimension | Status |")
+    lines.append("|-----------|--------|")
+    lines.append(f"| Traceability | {qh.traceability_status} |")
+    lines.append(f"| Source Scope | {qh.source_scope_status} |")
+    lines.append(f"| Classification Health | {qh.classification_health} |")
+    lines.append(f"| Evidence Quality | {qh.evidence_quality_status} |")
+    lines.append("")
+
+    # Quality risk summary (v2.14 item 7)
+    lines.append("### Quality Risk Summary")
+    lines.append("")
+    lines.append("| Metric | Value |")
+    lines.append("|--------|-------|")
+    lines.append(f"| Accepted | {qh.accepted_count} ({qh.accepted_rate:.2%}) |")
+    lines.append(f"| Weak | {qh.weak_count} ({qh.weak_rate:.2%}) |")
+    lines.append(f"| Noise | {qh.noise_count} ({qh.noise_rate:.2%}) |")
+    lines.append(f"| Flagged Records | {qh.flagged_record_count} ({qh.flagged_record_rate:.2%}) |")
+    lines.append(f"| Dominant Quality Flags | {', '.join(qh.dominant_quality_flags) if qh.dominant_quality_flags else 'none'} |")
+    lines.append(f"| Sources with High Weak/Noise | {', '.join(qh.sources_with_high_weak_or_noise) if qh.sources_with_high_weak_or_noise else 'none'} |")
+    lines.append("")
+
     # Source quality table
     lines.append("## Source Quality by Source")
     lines.append("")
     if report.source_metrics:
         lines.append(
             "| Source | Type | Seen | Emitted | Rejected | Accepted | Weak | "
-            "Noise | Accept Rate | Noise Rate | Dups | Missing URL | "
-            "Placeholder URL | URL OK | Clusters | Opportunities |"
+            "Noise | Accept Rate | Weak Rate | Noise Rate | Dups | Missing URL | "
+            "Placeholder URL | URL OK | Flagged | Clusters | Opportunities |"
         )
         lines.append(
             "|--------|------|------|---------|----------|----------|------|"
-            "-------|-------------|------------|------|-------------|"
-            "----------------|--------|----------|---------------|"
+            "-------|-------------|-----------|------------|------|-------------|"
+            "----------------|--------|---------|----------|---------------|"
         )
         for m in report.source_metrics:
             url_ok = "PASS" if m.source_url_validation_passed else "FAIL"
@@ -1092,21 +1554,73 @@ def render_source_quality_report_markdown(
                 f"{m.records_emitted} | {m.records_rejected} | "
                 f"{m.accepted_signal_count} | {m.weak_signal_count} | "
                 f"{m.noise_signal_count} | {m.accepted_rate} | "
-                f"{m.noise_rate} | {m.duplicate_count} | "
+                f"{m.weak_rate} | {m.noise_rate} | {m.duplicate_count} | "
                 f"{m.missing_url_count} | {m.placeholder_url_count} | "
-                f"{url_ok} | {m.cluster_contribution_count} | "
+                f"{url_ok} | {m.flagged_record_count} | "
+                f"{m.cluster_contribution_count} | "
                 f"{m.opportunity_contribution_count} |"
             )
     else:
         lines.append("_No source metrics available._")
     lines.append("")
 
-    # Accepted / weak / noise summary
+    # Signal Classification Summary
     lines.append("## Signal Classification Summary")
     lines.append("")
-    lines.append(f"- **Accepted**: {report.accepted_signal_total}")
-    lines.append(f"- **Weak**: {report.weak_signal_total}")
-    lines.append(f"- **Noise**: {report.noise_signal_total}")
+    lines.append("| Metric | Count | Rate |")
+    lines.append("|--------|-------|------|")
+    total_sig = report.accepted_signal_total + report.weak_signal_total + report.noise_signal_total
+    lines.append(f"| Accepted | {report.accepted_signal_total} | {_safe_rate(report.accepted_signal_total, total_sig):.2%} |")
+    lines.append(f"| Weak | {report.weak_signal_total} | {_safe_rate(report.weak_signal_total, total_sig):.2%} |")
+    lines.append(f"| Noise | {report.noise_signal_total} | {_safe_rate(report.noise_signal_total, total_sig):.2%} |")
+    lines.append(f"| **Total** | **{total_sig}** | |")
+    lines.append("")
+
+    # Quality Flags table (v2.14 item 7)
+    lines.append("## Quality Flags")
+    lines.append("")
+    all_flags: dict[str, int] = {}
+    for m in report.source_metrics:
+        for f, c in m.quality_flag_counts.items():
+            all_flags[f] = all_flags.get(f, 0) + c
+    if all_flags:
+        lines.append("| Flag | Count |")
+        lines.append("|------|-------|")
+        sorted_flags = sorted(all_flags.items(), key=lambda x: (-x[1], x[0]))
+        for flag, count in sorted_flags:
+            lines.append(f"| {flag} | {count} |")
+    else:
+        lines.append("_No quality flags detected._")
+    lines.append("")
+
+    # Per-source quality warnings (v2.14 item 7)
+    has_source_warnings = any(
+        m.source_quality_warnings for m in report.source_metrics
+    )
+    if has_source_warnings:
+        lines.append("## Per-Source Quality Warnings")
+        lines.append("")
+        for m in report.source_metrics:
+            if m.source_quality_warnings:
+                lines.append(f"### {m.source_id}")
+                lines.append("")
+                for w in m.source_quality_warnings:
+                    lines.append(f"- {w}")
+                lines.append("")
+    else:
+        lines.append("## Per-Source Quality Warnings")
+        lines.append("")
+        lines.append("_No per-source quality warnings._")
+        lines.append("")
+
+    # Contradiction warnings (v2.14 item 7)
+    lines.append("## Contradiction Warnings")
+    lines.append("")
+    if qh.contradiction_warnings:
+        for w in qh.contradiction_warnings:
+            lines.append(f"- {w}")
+    else:
+        lines.append("_No contradiction warnings detected. Report is internally consistent._")
     lines.append("")
 
     # Top pain clusters
@@ -1152,6 +1666,11 @@ def render_source_quality_report_markdown(
             )
             lines.append(f"- **Review Status**: {oc['founder_review_status']}")
             lines.append("")
+        lines.append(
+            "_Note: opportunity candidate counts reflect candidates available at SQR build time. "
+            "Deterministic synthesis timing and hypothesis generation may affect when candidates appear._"
+        )
+        lines.append("")
     else:
         lines.append("_No opportunity candidates._")
     lines.append("")
@@ -1206,6 +1725,12 @@ def render_source_quality_report_markdown(
     lines.append("Small sample sizes and limited source scope (HN + GitHub Issues) ")
     lines.append("are inherent limitations of the operational discovery pilot.")
     lines.append("")
+    lines.append("**Quality dimensions are separate:**")
+    lines.append("- **Traceability clean** does not imply classification quality.")
+    lines.append("- **Source scope clean** does not imply evidence quality.")
+    lines.append("- **High accepted_rate** does not mean evidence is clean if weak/noise rates are non-zero.")
+    lines.append("- **0% noise** does not imply clean source quality when flagged or weak records exist.")
+    lines.append("")
 
     # Traceability
     lines.append("## Traceability")
@@ -1247,32 +1772,26 @@ def validate_source_quality_report(
     errors: list[str] = []
     warnings: list[str] = []
 
-    # Fail: empty source_metrics
     if not report.source_metrics:
         errors.append("source_metrics is empty")
 
-    # Fail: missing source_id
     for m in report.source_metrics:
         if not m.source_id:
             errors.append("source metric has empty source_id")
 
-    # Fail: traceability not passed
     ts = report.traceability_summary
     if not ts.get("source_url_validation_passed", False):
         errors.append("source_url traceability validation failed")
 
-    # Warn: zero clusters
     if report.pain_cluster_count == 0:
         warnings.append("zero pain clusters")
 
-    # Warn: high noise
     for m in report.source_metrics:
         if m.noise_rate > 0.60:
             warnings.append(
                 f"high noise rate ({m.noise_rate}) for source {m.source_id}"
             )
 
-    # Warn: low source diversity
     if report.top_pain_clusters:
         all_single = all(
             pc.get("source_diversity", 1) == 1
@@ -1281,11 +1800,9 @@ def validate_source_quality_report(
         if all_single:
             warnings.append("all clusters are single-source (low diversity)")
 
-    # Warn: no opportunity candidates
     if report.opportunity_candidate_count == 0:
         warnings.append("no opportunity candidates")
 
-    # Warn: pending decisions without review package
     fdn = report.founder_decisions_needed
     if fdn.get("total_pending_decisions", 0) > 0 and report.opportunity_candidate_count == 0:
         warnings.append("founder decisions needed but no review package exists")
