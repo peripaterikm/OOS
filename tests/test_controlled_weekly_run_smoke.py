@@ -1080,12 +1080,12 @@ class TestRunReportV214ContentGuards(unittest.TestCase):
                       "Run report missing Final Validation State section (v2.14-FIX)")
 
     def test_final_validation_includes_dev_test_full(self) -> None:
-        """Run report must reference dev-test.ps1 -Full with 2817 OK."""
+        """Run report must reference dev-test.ps1 -Full with 2824 OK."""
         text = _read_run_report_text(self.RUN_REPORT_NAME)
         self.assertIn("dev-test.ps1 -Full", text,
                       "Run report must mention dev-test.ps1 -Full (v2.14-FIX)")
-        self.assertIn("2817", text,
-                      "Run report must include 2817 OK result (v2.14-FIX)")
+        self.assertIn("2824", text,
+                      "Run report must include 2824 OK result (v2.14-FIX)")
 
     def test_final_validation_includes_dev_git_check(self) -> None:
         """Run report must reference dev-git-check with 6/6 PASS."""
