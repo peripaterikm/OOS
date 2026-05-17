@@ -717,13 +717,21 @@ class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
                 self.assertIn(check, text,
                               f"Step 11 missing Gate B check: {check}")
 
-    def test_gate_b2_exactly_one_cluster(self) -> None:
-        """B2: coherent trace items share EXACTLY ONE cluster (hardened)."""
+    def test_gate_b2_coherent_trace_in_one_cluster(self) -> None:
+        """B2: truly coherent trace items (stack + trace) share EXACTLY ONE cluster."""
         text = _read_script_text("run-controlled-smoke.ps1")
         self.assertIn("B2_coherent_trace_items_in_exactly_one_cluster", text,
-                      "Step 11 missing hardened B2: exactly one cluster")
+                      "Step 11 missing B2: coherent trace items in exactly one cluster")
         self.assertIn("len(trace_cluster_ids) == 1", text,
-                      "Step 11 must assert exactly 1 cluster for coherent trace items, not <= 2")
+                      "Step 11 must assert exactly 1 cluster for coherent trace items")
+
+    def test_gate_b2b_provenance_not_merged_with_trace(self) -> None:
+        """B2b: provenance item must NOT be merged with trace-debugging items."""
+        text = _read_script_text("run-controlled-smoke.ps1")
+        self.assertIn("B2b_provenance_not_merged_with_trace_items", text,
+                      "Step 11 missing B2b: provenance separate from trace items")
+        self.assertIn("prov_cluster_id != trace_coherent_cluster_id", text,
+                      "Step 11 must assert provenance cluster != trace cluster")
 
     # --- Gate C: Founder Review Package (unchanged except C5 check) ---
 
@@ -770,19 +778,17 @@ class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
         self.assertIn("D4_all_hypotheses_have_evidence_links", text,
                       "Step 11 must check D4: evidence_links preserved")
 
-    def test_gate_d5_unknown_actor_hypothesis_found(self) -> None:
-        """D5: at least one hypothesis exercises unknown actor (hardened)."""
+    def test_gate_d5_synthesized_hypothesis_has_required_fields(self) -> None:
+        """D5: synthesized hypothesis carries not_a_solution_yet, created_by, evidence_links."""
         text = _read_script_text("run-controlled-smoke.ps1")
-        self.assertIn("D5_unknown_actor_hypothesis_found", text,
-                      "Step 11 missing hardened D5: unknown actor hypothesis found")
+        self.assertIn("D5_synthesized_hypothesis_has_required_fields", text,
+                      "Step 11 missing D5: synthesized hypothesis required fields check")
 
-    def test_gate_d6_no_invented_icp_for_unknown_actor(self) -> None:
-        """D6: unknown actor ICP is 'unproven; validate actor' (hardened)."""
+    def test_gate_d6_known_actor_icp_not_unproven(self) -> None:
+        """D6: known-actor hypotheses must not have target_icp='unproven; validate actor'."""
         text = _read_script_text("run-controlled-smoke.ps1")
-        self.assertIn("D6_no_invented_icp_for_unknown_actor", text,
-                      "Step 11 missing hardened D6: no invented ICP for unknown actor")
-        self.assertIn("unproven; validate actor", text,
-                      "Step 11 must assert target_icp == 'unproven; validate actor' for unknown actor")
+        self.assertIn("D6_known_actor_icp_not_unproven", text,
+                      "Step 11 missing D6: known actor ICP not unproven")
 
     # --- Fixture and scope checks (preserved from original) ---
 

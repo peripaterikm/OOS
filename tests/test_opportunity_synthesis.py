@@ -288,13 +288,14 @@ class PlaceholderTitleTests(unittest.TestCase):
         self.assertFalse(eligible)
         self.assertIn("needs_more_evidence", reason.lower())
 
-    def test_empty_title_does_not_synthesize(self):
+    def test_empty_title_generates_dynamic_title_and_synthesizes(self):
+        """v2.14-FIX: Empty title fields fall back to generate_cluster_review_title().
+        A cluster with valid evidence, PROMOTE decision, and generate-able title is eligible."""
         ev1 = _make_evidence("ev_001")
         cluster = _make_cluster(title="", cluster_title="", evidence_list=[ev1])
         ri = _make_review_item(recommended_decision="PROMOTE")
         eligible, reason = _cluster_is_eligible(cluster, ri)
-        self.assertFalse(eligible)
-        self.assertIn("empty", reason.lower())
+        self.assertTrue(eligible, f"Expected eligible but got reason: {reason}")
 
     def test_placeholder_n_a_title_does_not_synthesize(self):
         ev1 = _make_evidence("ev_001")

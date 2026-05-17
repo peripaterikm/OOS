@@ -55,6 +55,17 @@ _NOISE_FLAG_CONTRIBUTIONS: dict[str, float] = {
     "missing_date": 0.05,
     "high_noise_source": 0.35,
     "one_off_bug": 0.12,
+    # v2.14-FIX: Positive pain flags contribute 0.0 to noise_risk.
+    # These signal evidence quality, not noise risk. Including them in
+    # noise_risk caused clean clusters with many pain signals to be
+    # killed (noise_risk >= 0.80) and blocked from opportunity synthesis.
+    "debugging_pain": 0.0,
+    "workaround_signal": 0.0,
+    "cost_signal": 0.0,
+    "workflow_pain": 0.0,
+    "reliability_pain": 0.0,
+    "integration_pain": 0.0,
+    "business_cost_signal": 0.0,
 }
 
 # Business relevance indicator terms

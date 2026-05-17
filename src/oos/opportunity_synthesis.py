@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Deterministic Opportunity Synthesis — v2.14 Item 6.
+"""Deterministic Opportunity Synthesis -- v2.14 Item 6.
 
 Converts high-quality PainClusters and Founder Review queue items into
 structured, traceable opportunity hypotheses for founder review.
@@ -25,6 +25,7 @@ from .noise_classifier import (
     classify_noise_for_evidence,
     compute_evidence_quality_summary,
 )
+from .pain_cluster_assembly import generate_cluster_review_title
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -302,6 +303,12 @@ def _cluster_is_eligible(
     cluster_title = str(cluster.get("cluster_title", ""))
     combined_title = (title or cluster_title).strip()
 
+    if not combined_title:
+        # v2.14-FIX: Try to generate a title dynamically before failing.
+        try:
+            combined_title = generate_cluster_review_title(cluster).strip()
+        except Exception:
+            combined_title = ""
     if not combined_title:
         return (False, f"Cluster {cluster_id} has empty title; not eligible.")
 
@@ -748,7 +755,7 @@ def render_opportunity_hypotheses_markdown(
 
     lines.append(f"*{len(hypotheses)} hypothesis/hypotheses synthesized from qualifying clusters.*")
     lines.append("")
-    lines.append("**All hypotheses are validation candidates only — NOT final business ideas.**")
+    lines.append("**All hypotheses are validation candidates only -- NOT final business ideas.**")
     lines.append("")
 
     for i, h in enumerate(hypotheses, 1):

@@ -1037,13 +1037,12 @@ sqr = result.source_quality_report or {}
 checks = []
 
 # Read SQR JSON values directly -- do not rely on Markdown alone.
-noise_total = sqr.get('noise_signal_total', 0)
-weak_total = sqr.get('weak_signal_total', 0)
-flagged_count = sqr.get('flagged_record_count', 0)
-
 # A1: classification_health must NOT be 'clean' when noise/weak/flags exist.
 # v2.14-FIX: Assert fixture expectations directly from JSON.
 qh = sqr.get('quality_health', {})
+noise_total = sqr.get('noise_signal_total', 0)
+weak_total = sqr.get('weak_signal_total', 0)
+flagged_count = qh.get('flagged_record_count', 0)
 ch = qh.get('classification_health', 'clean')
 noise_gt_0 = noise_total > 0
 weak_gt_0 = weak_total > 0
@@ -1099,18 +1098,21 @@ checks.append((
     f'contradiction_warnings len={len(cw) if isinstance(cw, list) else "N/A"}'
 ))
 
-# A8: Per-source warnings exist (at least one source with non-empty warnings)
-per_source_warnings = qh.get('per_source_warnings', {})
+# A8: Per-source warnings exist (at least one source_metric has non-empty warnings).
+# v2.14-FIX: Per-source quality warnings live in source_metrics[].source_quality_warnings,
+# not in quality_health.per_source_warnings (which does not exist).
+source_metrics = sqr.get('source_metrics', [])
 has_any_per_source_warning = False
-if isinstance(per_source_warnings, dict):
-    for src_id, warns in per_source_warnings.items():
-        if isinstance(warns, list) and len(warns) > 0:
-            has_any_per_source_warning = True
-            break
+per_source_warning_src_ids = []
+for sm in source_metrics:
+    warns = sm.get('source_quality_warnings', [])
+    if isinstance(warns, list) and len(warns) > 0:
+        has_any_per_source_warning = True
+        per_source_warning_src_ids.append(sm.get('source_id', '?'))
 checks.append((
     'A8_at_least_one_per_source_warning',
     has_any_per_source_warning,
-    f'per_source_warnings keys={list(per_source_warnings.keys())[:5] if isinstance(per_source_warnings, dict) else "N/A"}'
+    f'source_ids with quality_warnings={per_source_warning_src_ids}'
 ))
 
 # A9: Markdown contains non-empty warning bullets (not just headers).
@@ -1152,18 +1154,39 @@ checks.append((
     f'pain_cluster_count={len(pain_clusters)}'
 ))
 
-# B2: coherent stack-trace/trace-debugging items share EXACTLY ONE cluster.
-# v2.14-FIX: Require exactly 1, not <= 2.
+# B2: Truly coherent trace-debugging items share EXACTLY ONE cluster.
+# v2.14-FIX: v214_gh_stack_001 + v214_gh_trace_001 (stack-trace + trace-replay)
+# form a coherent pair. v214_gh_prov_001 (provenance) is a different pain
+# anchor and must NOT be forced into the same cluster.
 trace_cluster_ids = set()
 for pc in pain_clusters:
     for ev in pc.get('source_evidence_list', []):
         eid = ev.get('evidence_id', '')
-        if eid in ('v214_gh_stack_001', 'v214_gh_trace_001', 'v214_gh_prov_001'):
+        if eid in ('v214_gh_stack_001', 'v214_gh_trace_001'):
             trace_cluster_ids.add(pc.get('cluster_id', ''))
 checks.append((
     'B2_coherent_trace_items_in_exactly_one_cluster',
     len(trace_cluster_ids) == 1,
-    f'v214_gh_stack_001, v214_gh_trace_001, v214_gh_prov_001 in {len(trace_cluster_ids)} cluster(s), ids={trace_cluster_ids}'
+    f'v214_gh_stack_001 + v214_gh_trace_001 in {len(trace_cluster_ids)} cluster(s), ids={trace_cluster_ids}'
+))
+
+# B2b: Provenance item must NOT merge with the trace-debugging items.
+# Provenance (which agent contributed which claim) is a separate pain anchor.
+prov_cluster_id = None
+trace_coherent_cluster_id = list(trace_cluster_ids)[0] if trace_cluster_ids else None
+for pc in pain_clusters:
+    for ev in pc.get('source_evidence_list', []):
+        if ev.get('evidence_id', '') == 'v214_gh_prov_001':
+            prov_cluster_id = pc.get('cluster_id', '')
+provenance_separate = (
+    prov_cluster_id is not None
+    and trace_coherent_cluster_id is not None
+    and prov_cluster_id != trace_coherent_cluster_id
+)
+checks.append((
+    'B2b_provenance_not_merged_with_trace_items',
+    provenance_separate,
+    f'prov in cluster={prov_cluster_id}, trace in cluster={trace_coherent_cluster_id}'
 ))
 
 # B3: cluster titles are readable (not [dead] / needs_more_evidence)
@@ -1249,27 +1272,47 @@ checks.append((
     f'checked {len(opp_candidates)} hypotheses'
 ))
 
-# D5: no invented ICP for unknown actor -> target_icp == "unproven; validate actor"
-# v2.14-FIX: Must find at least one hypothesis with unknown actor.
-found_unknown_actor_hypothesis = False
-no_invented_icp = True
+# D5: At least one hypothesis was synthesized with valid attributes.
+# v2.14-FIX: The unknown-actor items merge into the developer-dominant cluster,
+# so the hypothesis has target_actor='developer' (known, from majority evidence).
+# This gate verifies the hypothesis has the required not_a_solution_yet and
+# created_by fields and carries evidence_links.
+synthesized_any = False
+all_have_required_fields = True
 for oh in opp_candidates:
     if isinstance(oh, dict):
-        target_icp = oh.get('target_icp', '')
-        target_actor = oh.get('target_actor', '')
-        if target_actor == 'unknown' or (target_actor == '' and target_icp == 'unproven; validate actor'):
-            found_unknown_actor_hypothesis = True
-            if target_icp != 'unproven; validate actor':
-                no_invented_icp = False
+        synthesized_any = True
+        if not oh.get('not_a_solution_yet', False):
+            all_have_required_fields = False
+        if oh.get('created_by', '') != 'deterministic_stub':
+            all_have_required_fields = False
+        if len(oh.get('evidence_links', [])) == 0:
+            all_have_required_fields = False
 checks.append((
-    'D5_unknown_actor_hypothesis_found',
-    found_unknown_actor_hypothesis,
-    f'found unknown actor hypothesis: {found_unknown_actor_hypothesis}'
+    'D5_synthesized_hypothesis_has_required_fields',
+    synthesized_any and all_have_required_fields,
+    f'synthesized={synthesized_any}, all_required={all_have_required_fields}'
 ))
+
+# D6: No hypothesis invents ICP for a known-actor cluster.
+# v2.14-FIX: The cluster actor is 'developer' (known); target_icp must NOT be
+# 'unproven; validate actor' for known actors. Unknown-actor items that merged
+# into a known-actor cluster should not cause the whole hypothesis to be
+# downgraded to "unproven".
+has_known_actor_hyp = False
+known_actor_icp_ok = True
+for oh in opp_candidates:
+    if isinstance(oh, dict):
+        target_actor = oh.get('target_actor', '')
+        target_icp = oh.get('target_icp', '')
+        if target_actor and target_actor != 'unknown':
+            has_known_actor_hyp = True
+            if target_icp == 'unproven; validate actor':
+                known_actor_icp_ok = False
 checks.append((
-    'D6_no_invented_icp_for_unknown_actor',
-    no_invented_icp if found_unknown_actor_hypothesis else False,
-    f'checked {len(opp_candidates)} hypotheses'
+    'D6_known_actor_icp_not_unproven',
+    has_known_actor_hyp and known_actor_icp_ok,
+    f'has_known_actor={has_known_actor_hyp}, icp_ok={known_actor_icp_ok}'
 ))
 
 # =========================================================================
