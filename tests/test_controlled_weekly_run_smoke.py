@@ -924,40 +924,42 @@ class TestRoadmapStateAlignedForItem9CodexFix(unittest.TestCase):
     """Verify roadmap overview counters and footer reflect Item 9 complete,
     Item 10 next."""
 
-    def test_current_item_is_10(self):
+    def test_current_item_is_none_complete(self):
         roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
         text = roadmap_path.read_text(encoding="utf-8")
-        self.assertIn("Current item: `10 — Final v2.14 checkpoint`", text,
-                      "Roadmap 0.2 must say current item is 10")
+        self.assertIn("Current item: `none / complete`", text,
+                      "Roadmap 0.2 must say current item is none / complete")
         self.assertNotIn("Item 9 fix in progress", text,
                          "Roadmap must not contain stale 'Item 9 fix in progress' wording")
+        self.assertIn("Roadmap state: `complete / closed`", text,
+                      "Roadmap 0.3 must say state is complete / closed")
 
-    def test_completed_counter_is_10_of_11(self):
+    def test_completed_counter_is_11_of_11(self):
         roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
         text = roadmap_path.read_text(encoding="utf-8")
-        self.assertIn("**10 / 11**", text,
-                      "Roadmap 0.4 must say completed 10/11")
+        self.assertIn("**11 / 11**", text,
+                      "Roadmap 0.4 must say completed 11/11")
 
-    def test_remaining_counter_is_1_of_11(self):
+    def test_remaining_counter_is_0_of_11(self):
         roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
         text = roadmap_path.read_text(encoding="utf-8")
-        self.assertIn("**1 / 11**", text,
-                      "Roadmap 0.5 must say remaining 1/11")
+        self.assertIn("**0 / 11**", text,
+                      "Roadmap 0.5 must say remaining 0/11")
 
-    def test_item_10_not_marked_complete(self):
+    def test_item_10_dod_items_checked(self):
         roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
         text = roadmap_path.read_text(encoding="utf-8")
-        # Item 10 DoD items must remain unchecked
-        self.assertIn("- [ ] **10.1**", text,
-                      "Roadmap Item 10.1 must remain unchecked")
-        self.assertIn("- [ ] **10.2**", text,
-                      "Roadmap Item 10.2 must remain unchecked")
+        # Item 10 DoD items must be checked
+        self.assertIn("- [x] **10.1**", text,
+                      "Roadmap Item 10.1 must be checked complete")
+        self.assertIn("- [x] **10.2**", text,
+                      "Roadmap Item 10.2 must be checked complete")
 
-    def test_footer_says_item_9_complete(self):
+    def test_footer_says_complete_and_closed(self):
         roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
         text = roadmap_path.read_text(encoding="utf-8")
-        self.assertIn("Item 9 complete; item 10 is next.", text,
-                      "Roadmap footer must say Item 9 complete; item 10 is next.")
+        self.assertIn("Complete and closed.", text,
+                      "Roadmap footer must say Complete and closed.")
 
     def test_footer_does_not_contain_stale_fix_wording(self):
         roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"

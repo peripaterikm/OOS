@@ -1,8 +1,9 @@
 # OOS Roadmap v2.14 — Pilot Quality Improvements
 
-**Status:** Active / item 10 ready
+**Status:** Complete / closed
 **Branch:** `ops/v2-13-pilot-cycle-1-run`
 **Created:** 2026-05-14
+**Closed:** 2026-05-17
 **Based on:** v2.13 Pilot Cycle 1 CONDITIONAL GO decision
 **Parent decision:** [`docs/operations/pilot_cycle_1_conditional_go_summary_v2_13.md`](../operations/pilot_cycle_1_conditional_go_summary_v2_13.md)
 
@@ -13,10 +14,10 @@
 ### Active Roadmap
 
 - [x] **0.1** Active roadmap: `docs/roadmaps/OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md`
-- [x] **0.2** Current item: `10 — Final v2.14 checkpoint`
-- [x] **0.3** Roadmap state: `active / item 10 ready`
-- [x] **0.4** Completed from this roadmap: **10 / 11** (Items 0–9 complete)
-- [x] **0.5** Remaining: **1 / 11** (Item 10 pending)
+- [x] **0.2** Current item: `none / complete`
+- [x] **0.3** Roadmap state: `complete / closed`
+- [x] **0.4** Completed from this roadmap: **11 / 11** (Items 0–10 complete)
+- [x] **0.5** Remaining: **0 / 11**
 - [x] **0.6** Predecessor roadmap: `docs/roadmaps/OOS_roadmap_v2_13_operational_pilot_go_no_go_checklist.md` (complete, `12 / 12`)
 
 ### Strategic Purpose
@@ -758,15 +759,17 @@ Close the v2.14 Pilot Quality Improvements roadmap. Verify all items are complet
 
 ### Definition of Done
 
-- [ ] **10.1** All items (0–10) are complete and committed
-- [ ] **10.2** Roadmap overview trackers updated: state → `complete / closed`
-- [ ] **10.3** Full validation suite passes (dev-test, controlled-smoke, dev-validate-final, dev-git-check)
-- [ ] **10.4** Closure run report exists
-- [ ] **10.5** `docs/dev_ledger/00_project_state.md` updated
-- [ ] **10.6** Zero source expansion confirmed
-- [ ] **10.7** Zero runtime artifacts committed
-- [ ] **10.8** `.\scripts\dev-git-check.ps1` passes
-- [ ] **10.9** One local commit made with message: `[v2.14] 10 final validation checkpoint`
+- [x] **10.1** All items (0–10) are complete and committed
+- [x] **10.2** Roadmap overview trackers updated: state → `complete / closed`
+- [x] **10.3** Full validation suite passes (dev-test, controlled-smoke, dev-validate-final, dev-git-check)
+- [x] **10.4** Closure run report exists at `docs/dev_ledger/03_run_reports/10.1-roadmap-v2-14-final-validation.md`
+- [x] **10.5** `docs/dev_ledger/00_project_state.md` updated
+- [x] **10.6** Zero source expansion confirmed
+- [x] **10.7** Zero runtime artifacts committed
+- [x] **10.8** `.\scripts\dev-git-check.ps1` passes
+- [x] **10.9** One local commit made with message: `[v2.14] 10 close pilot quality improvements`
+
+**Item 10 complete. Roadmap v2.14 closed.**
 
 ---
 
@@ -825,4 +828,31 @@ Do NOT use chained shell commands for validation. Each validation step must use 
 
 ---
 
-*Roadmap v2.14 — Pilot Quality Improvements. Item 9 complete; item 10 is next. No source expansion. No runtime artifacts committed.*
+---
+
+## v2.14 Final Readiness Statement
+
+**v2.14 Pilot Quality Improvements complete.** OOS controlled discovery pilot quality gates are hardened and smoke-validated. The system is ready for PR review/merge and then a new bounded Pilot Cycle 2 using HN + GitHub Issues only, subject to explicit founder approval.
+
+- **Broad source expansion remains blocked.**
+- **Live collection still requires explicit founder approval.**
+- **v2.15 / source expansion must not start without explicit roadmap.**
+
+### Key v2.14 Outcomes
+
+| # | Item | Key Outcome |
+|---|------|-------------|
+| 1 | Noise Classification Hardening | Deterministic `classify_noise()` with severity groups, alias resolution, pain marker detection, SQR integration |
+| 2 | FRP Quality Gates / Promotion Blockers | `compute_evidence_quality_summary()`, `compute_quality_gate_reasons()`, promotion blockers in `recommend_decision()` |
+| 3 | Cluster Title Cleanup | `generate_cluster_review_title()` with pattern-based/component-derived/evidence-based fallback tiers |
+| 4 | Split/Merge Tuning | `_should_merge()` with canonical anchors, union-find clustering, over-merge detection, catch-all risk flag |
+| 5 | FRP Clarity Improvements | Quality Gate block per review item, evidence excerpts, SNR summary, Decision Breakdown rename |
+| 6 | Deterministic Opportunity Synthesis Stub | Produces candidates from qualifying clusters; LLM contract hardened (disabled by default) |
+| 7 | SQR Contradiction Fix | `classification_health`, `noise_rate`, `weak_rate`, per-source contradiction detection, 5 contradiction types |
+| 8 | Targeted Regression Fixtures | 43 focused tests, compact synthetic dicts, no raw runtime artifacts committed |
+| 9 | Controlled Quality Smoke | 59 PASS / 0 FAIL, hardened SQR/cluster/opportunity gates on v2.14 fixtures |
+| 10 | Final Checkpoint | Roadmap closed, dev ledger updated, final validation passed |
+
+---
+
+*Roadmap v2.14 — Pilot Quality Improvements. Complete and closed. No source expansion. No runtime artifacts committed.*
