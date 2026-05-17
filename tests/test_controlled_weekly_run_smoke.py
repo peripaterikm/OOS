@@ -973,3 +973,100 @@ class TestRoadmapStateAlignedForItem9CodexFix(unittest.TestCase):
             with self.subTest(dod=f"9.{n}"):
                 self.assertIn(f"- [x] **9.{n}**", text,
                               f"Roadmap Item 9.{n} DoD must be checked [x]")
+
+
+# ---------------------------------------------------------------------------
+# v2.14 Item 9 Codex fix: Run report content guard tests
+# ---------------------------------------------------------------------------
+
+
+RUN_REPORT_DIR = REPO_ROOT / "docs" / "dev_ledger" / "03_run_reports"
+
+
+def _read_run_report_text(report_name: str) -> str:
+    path = RUN_REPORT_DIR / report_name
+    return path.read_text(encoding="utf-8")
+
+
+class TestRunReportV214ContentGuards(unittest.TestCase):
+    """Verify the v2.14 Item 9 run report does not contain stale/contradictory
+    wording that the Codex review flagged as FAIL."""
+
+    RUN_REPORT_NAME = "9.1-v2-14-controlled-quality-smoke.md"
+
+    def test_run_report_exists(self) -> None:
+        path = RUN_REPORT_DIR / self.RUN_REPORT_NAME
+        self.assertTrue(path.is_file(),
+                        f"Run report not found at {path}")
+
+    def test_does_not_contain_awaiting_re_validation(self) -> None:
+        """Report must not contain stale 'awaiting re-validation' wording."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertNotIn(
+            "awaiting re-validation", text,
+            "Run report must not contain stale 'awaiting re-validation' wording"
+        )
+
+    def test_status_is_complete_not_fix_applied(self) -> None:
+        """Report status must say Complete/PASS, not 'Fix applied'."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertNotIn(
+            "Fix applied /", text,
+            "Run report status must not contain stale 'Fix applied' wording"
+        )
+        self.assertIn("Complete", text,
+                      "Run report must contain 'Complete' status wording")
+
+    def test_b2_does_not_claim_provenance_in_coherent_set(self) -> None:
+        """B2 must NOT claim v214_gh_prov_001 is in the coherent stack/trace set."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertNotIn(
+            "Includes `v214_gh_prov_001` in the coherent set", text,
+            "Run report must not claim v214_gh_prov_001 is in the B2 coherent set"
+        )
+
+    def test_b2_describes_stack_trace_only(self) -> None:
+        """B2 must describe stack/trace pair only, provenance in B2b."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertIn("stack/trace pair", text,
+                      "Run report B2 must reference stack/trace pair")
+        self.assertIn("SEPARATE", text,
+                      "Run report B2b must say provenance is SEPARATE from trace cluster")
+
+    def test_eligibility_path_states_stack_trace_debug_cluster(self) -> None:
+        """Eligibility path must describe stack/trace/debug cluster, not stack+trace+provenance."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertIn("stack/trace/debug cluster", text,
+                      "Eligibility path must describe 'stack/trace/debug cluster'")
+
+    def test_unknown_actor_is_described_as_regression_tested(self) -> None:
+        """Unknown-actor behavior must be described as regression-tested, not smoke-tested."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertIn("regression-tested", text,
+                      "Run report must state unknown-actor is regression-tested")
+        self.assertIn("not smoke-tested", text,
+                      "Run report must state unknown-actor is not smoke-tested")
+
+    def test_total_passes_59_not_24(self) -> None:
+        """Pass/Fail total must reflect actual 59 PASS / 0 FAIL, not the old 24."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertIn("59", text,
+                      "Run report must show 59 total passes, not 24")
+
+    def test_gate_b2_table_shows_stack_trace_only(self) -> None:
+        """Gate B table must specify B2 is stack/trace items only."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertIn("v214_gh_stack_001", text,
+                      "Run report Gate B must reference v214_gh_stack_001")
+        self.assertIn("v214_gh_trace_001", text,
+                      "Run report Gate B must reference v214_gh_trace_001")
+
+    def test_gate_b2b_table_shows_provenance_separate(self) -> None:
+        """Gate B table must have B2b row showing provenance is separate."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertIn("B2b", text,
+                      "Run report Gate B must contain B2b row")
+        self.assertIn("provenance", text.lower(),
+                      "Run report Gate B2b must mention provenance")
+        self.assertIn("separate", text.lower(),
+                      "Run report Gate B2b must say provenance is separate")
