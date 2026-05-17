@@ -797,8 +797,9 @@ $V214FixturePath = Join-Path $TempRoot "v2_14_quality_fixture.json"
 # Build v2.14 quality smoke fixture: mixed evidence exercising all quality gates.
 # v2.14-FIX: Added unknown-actor evidence pair to ensure at least one cluster
 # gets PROMOTE or NEEDS_MORE_EVIDENCE and produces opportunity candidates.
-# Changed v214_gh_prov_001 topic_id -> "agent_debugging_traces" so 3 clean
-# GitHub items cohere into one eligible cluster.
+# The stack/trace items (v214_gh_stack_001 + v214_gh_trace_001) cohere into
+# one eligible cluster. Provenance (v214_gh_prov_001) remains separate by
+# design in its own cluster per B2/B2b.
 $V214Evidence = @(
     # --- Clean: GitHub concrete stack-trace pain ---
     @{

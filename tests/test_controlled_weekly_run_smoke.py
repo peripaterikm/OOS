@@ -1070,3 +1070,81 @@ class TestRunReportV214ContentGuards(unittest.TestCase):
                       "Run report Gate B2b must mention provenance")
         self.assertIn("separate", text.lower(),
                       "Run report Gate B2b must say provenance is separate")
+
+    # --- v2.14-FIX final validation state checks ---
+
+    def test_final_validation_state_section_exists(self) -> None:
+        """Run report must contain a Final Validation State section."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertIn("Final Validation State", text,
+                      "Run report missing Final Validation State section (v2.14-FIX)")
+
+    def test_final_validation_includes_dev_test_full(self) -> None:
+        """Run report must reference dev-test.ps1 -Full with 2817 OK."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertIn("dev-test.ps1 -Full", text,
+                      "Run report must mention dev-test.ps1 -Full (v2.14-FIX)")
+        self.assertIn("2817", text,
+                      "Run report must include 2817 OK result (v2.14-FIX)")
+
+    def test_final_validation_includes_dev_git_check(self) -> None:
+        """Run report must reference dev-git-check with 6/6 PASS."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertIn("dev-git-check", text,
+                      "Run report must mention dev-git-check (v2.14-FIX)")
+        self.assertIn("6/6 PASS", text,
+                      "Run report must include 6/6 PASS result (v2.14-FIX)")
+
+    def test_final_validation_includes_working_tree_clean(self) -> None:
+        """Run report must include 'working tree clean' or equivalent."""
+        text = _read_run_report_text(self.RUN_REPORT_NAME)
+        self.assertTrue(
+            "working tree clean" in text.lower() or "clean / working tree clean" in text,
+            "Run report must include working tree clean status (v2.14-FIX)"
+        )
+
+
+class TestV214ScriptStaleCommentRemoved(unittest.TestCase):
+    """Verify the smoke script no longer contains the stale '3 clean GitHub
+    items cohere into one eligible cluster' comment, and instead uses
+    aligned B2/B2b wording."""
+
+    SCRIPT_NAME = "run-controlled-smoke.ps1"
+
+    def test_script_does_not_contain_stale_3_github_items_comment(self) -> None:
+        """Script must NOT contain the stale phrase about 3 GitHub items."""
+        text = _read_script_text(self.SCRIPT_NAME)
+        self.assertNotIn(
+            "3 clean GitHub items cohere into one eligible cluster",
+            text,
+            "Smoke script must not contain stale '3 clean GitHub items cohere into one eligible cluster' (v2.14-FIX)"
+        )
+
+    def test_script_contains_aligned_stack_trace_cluster_wording(self) -> None:
+        """Script must use aligned B2/B2b wording: stack/trace cohere;
+        provenance separate by design."""
+        text = _read_script_text(self.SCRIPT_NAME)
+        self.assertIn(
+            "stack/trace items",
+            text,
+            "Smoke script must reference stack/trace items cohering (v2.14-FIX)"
+        )
+        self.assertTrue(
+            "provenance" in text.lower() and "separate" in text.lower(),
+            "Smoke script must state provenance remains separate by design (v2.14-FIX)"
+        )
+
+    def test_step11_comment_has_b2b_aligned_wording(self) -> None:
+        """The Step 11 fixture comment block must mention B2/B2b."""
+        text = _read_script_text(self.SCRIPT_NAME)
+        step11_start = text.find("STEP 11:")
+        step11_end = text.find("STEP 10:", text.rfind("STEP 10:"))
+        # Actually find the comment block near the fixture construction
+        fixture_comment_start = text.find("# Build v2.14 quality smoke fixture:")
+        fixture_comment_end = text.find("$V214Evidence = @(")
+        if fixture_comment_start >= 0 and fixture_comment_end >= 0:
+            comment_block = text[fixture_comment_start:fixture_comment_end]
+            self.assertIn("stack/trace", comment_block,
+                          "Step 11 fixture comment must mention stack/trace (v2.14-FIX)")
+            self.assertIn("separate", comment_block.lower(),
+                          "Step 11 fixture comment must say provenance separate (v2.14-FIX)")
