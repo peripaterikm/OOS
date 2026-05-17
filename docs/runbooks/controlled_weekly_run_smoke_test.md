@@ -474,19 +474,19 @@ This smoke step runs the full Operational Discovery Pilot pipeline on a curated 
 ### What It Verifies (Hardened)
 
 - **Gate A — Source Quality Report:** `noise_signal_total > 0`, `weak_signal_total > 0`, `classification_health != "clean"`, `evidence_quality_status != "clean"`, `flagged_record_count > 0`, `contradiction_warnings` count > 0, at least one per-source warning, Markdown contains non-empty warning bullets (not just section headers).
-- **Gate B — PainCluster Assembly:** Mixed anchors do not collapse into one catch-all; coherent trace items share EXACTLY ONE cluster (includes v214_gh_prov_001); no dead/nme titles; zero catch-all risk clusters.
+- **Gate B — PainCluster Assembly:** Mixed anchors do not collapse into one catch-all; coherent stack/trace items (`v214_gh_stack_001` + `v214_gh_trace_001`) share EXACTLY ONE cluster (B2); provenance item (`v214_gh_prov_001`) is in a SEPARATE cluster (B2b); no dead/nme titles; zero catch-all risk clusters.
 - **Gate C — Founder Review Package:** Unchanged (Executive Summary, SNR, Per-Source, Quality Gate, Opportunity Hypotheses).
-- **Gate D — Opportunity Synthesis:** At least 1 opportunity candidate synthesized; `not_a_solution_yet = true`, `created_by = deterministic_stub`, `evidence_links` preserved; at least one unknown-actor hypothesis with `unproven; validate actor` ICP.
+- **Gate D — Opportunity Synthesis:** At least 1 opportunity candidate synthesized; `not_a_solution_yet = true`, `created_by = deterministic_stub`, `evidence_links` preserved; D6 verifies known-actor hypotheses do NOT carry `unproven; validate actor` ICP. **Unknown-actor synthesis behavior (`target_actor='unknown'` → `target_icp='unproven; validate actor'`) is covered by regression tests in `test_opportunity_synthesis.py`, not by this smoke Step 11 gate.**
 
 ### Fixture Composition (v2.14-FIX)
 
-The v2.14 quality smoke fixture includes 11 evidence items (added unknown-actor pair):
+The v2.14 quality smoke fixture includes 10 evidence items:
 
 | Evidence ID | Source | Character | Expected Classification |
 |-------------|--------|-----------|------------------------|
 | `v214_gh_stack_001` | GitHub Issues | Concrete stack-trace debugging pain | Accepted |
 | `v214_gh_trace_001` | GitHub Issues | Prompt replay / trace debugging pain | Accepted |
-| `v214_gh_prov_001` | GitHub Issues | Multi-agent provenance pain (same topic_id) | Accepted |
+| `v214_gh_prov_001` | GitHub Issues | Multi-agent provenance pain (same topic_id=agent_debugging_traces) | Accepted |
 | `v214_hn_noise_001` | HN | Product launch + vendor_promo flags | Noise |
 | `v214_hn_noise_002` | HN | Product launch + launch_hype flags | Noise |
 | `v214_hn_flagged_001` | HN | Evidence-only flags (low_text_context) | Weak/Noise |
@@ -495,7 +495,7 @@ The v2.14 quality smoke fixture includes 11 evidence items (added unknown-actor 
 | `v214_hn_unknown_001` | HN | Unknown actor agent debugging pain | Accepted |
 | `v214_gh_unknown_001` | GitHub Issues | Unknown actor agent debugging pain | Accepted |
 
-The unknown-actor pair has `target_user = "unknown"` in raw_metadata and `topic_id = "unknown_actor_debugging"`. This ensures at least one cluster exercises the unknown actor → `unproven; validate actor` path and produces a PROMOTE or NEEDS_MORE_EVIDENCE review item eligible for opportunity synthesis.
+The unknown-actor evidence pair has `target_user = "unknown"` in raw_metadata. Under current cluster assembly policy (`pain_cluster_assembly.py`: unknown actor does NOT block merge when workflow+object match), these items merge into the developer-dominant cluster, so the synthesized hypothesis carries `target_actor='developer'` (known). The unknown-actor → `unproven; validate actor` path is exercised by `test_opportunity_synthesis.py` regression tests.
 
 ### Expected Artifacts
 
@@ -523,7 +523,8 @@ The quality smoke step appears as "Step 11: v2.14 Controlled Quality Smoke" and 
 | A8 | Per-source warnings | At least one source has non-empty warnings |
 | A9 | Markdown warning bullets | Non-empty bullet content, not only section headers |
 | B1 | Multiple clusters | > 1 cluster (not single catch-all) |
-| B2 | Coherent trace items | EXACTLY 1 cluster (not ≤ 2); includes v214_gh_prov_001 |
+| B2 | Coherent stack/trace items (`v214_gh_stack_001` + `v214_gh_trace_001`) | EXACTLY 1 cluster |
+| B2b | Provenance item separate (`v214_gh_prov_001`) | NOT merged with B2 trace cluster |
 | B3 | No dead/nme titles | Zero `[dead]` or `needs_more_evidence` titles |
 | B4 | Zero catch-all risk | No `catch_all_risk = true` clusters |
 | C1–C5 | FRP sections | Unchanged |
@@ -531,12 +532,14 @@ The quality smoke step appears as "Step 11: v2.14 Controlled Quality Smoke" and 
 | D2 | not_a_solution_yet | True on all hypotheses |
 | D3 | created_by | `deterministic_stub` on all hypotheses |
 | D4 | evidence_links | Non-empty on all hypotheses |
-| D5 | Unknown actor hypothesis | At least one hypothesis exercises unknown actor |
-| D6 | No invented ICP | Unknown actor → `unproven; validate actor` |
+| D5 | Synthesized hypothesis required fields | not_a_solution_yet + created_by + evidence_links |
+| D6 | Known-actor ICP safe | target_icp NOT `unproven; validate actor` for known actors |
+
+*D6 checks known-actor hypotheses do not carry `unproven; validate actor`. Unknown-actor → `unproven; validate actor` behavior is covered by `test_opportunity_synthesis.py` regression tests.*
 
 ### Previous 0-Opportunity Gap Fixed
 
-Prior to v2.14-FIX, gates D1–D5 passed vacuously when `opportunity_candidate_count = 0`. The fixture now includes an unknown-actor evidence pair (`v214_hn_unknown_001`, `v214_gh_unknown_001`) with clean pain signals from two sources, which enables a cluster with PROMOTE or NEEDS_MORE_EVIDENCE recommendation eligible for deterministic opportunity synthesis. Additionally, `v214_gh_prov_001` was moved from `topic_id = "agent_provenance"` to `"agent_debugging_traces"` so three clean GitHub items cohere into one eligible cluster.
+Prior to v2.14-FIX, gates D1–D5 passed vacuously when `opportunity_candidate_count = 0`. The fixture now includes three clean GitHub items sharing `topic_id = "agent_debugging_traces"` (`v214_gh_stack_001`, `v214_gh_trace_001`, `v214_gh_prov_001`) plus HN pain-signal evidence, which enables a cluster with PROMOTE or NEEDS_MORE_EVIDENCE recommendation eligible for deterministic opportunity synthesis.
 
 ### Failure Guidance
 
@@ -550,7 +553,8 @@ Prior to v2.14-FIX, gates D1–D5 passed vacuously when `opportunity_candidate_c
 | Gate B2 fail | Coherent items split across > 1 cluster | Check cluster assembly for topic_id co-location |
 | Gate B3 fail | Bad cluster title generated | Check `generate_cluster_review_title()` fallback logic |
 | Gate D1 fail | Zero candidates synthesized | Check eligibility gates in `_cluster_is_eligible()` |
-| Gate D5/D6 fail | Unknown actor path broken | Check `target_icp` assignment in `synthesize_opportunities()` |
+| Gate D5 fail | Synthesized hypothesis missing required fields | Check not_a_solution_yet, created_by, evidence_links in `synthesize_opportunities()` |
+| Gate D6 fail | Known-actor hypothesis carries `unproven; validate actor` | Check `target_icp` assignment logic at line 658 of `opportunity_synthesis.py`; unknown-actor items merged into known-actor cluster |
 
 ### No Live APIs / No LLMs
 

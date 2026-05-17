@@ -785,10 +785,40 @@ class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
                       "Step 11 missing D5: synthesized hypothesis required fields check")
 
     def test_gate_d6_known_actor_icp_not_unproven(self) -> None:
-        """D6: known-actor hypotheses must not have target_icp='unproven; validate actor'."""
+        """D6: known-actor hypotheses must not have target_icp='unproven; validate actor'.
+        Unknown-actor synthesis behavior is covered by regression tests, not this smoke gate."""
         text = _read_script_text("run-controlled-smoke.ps1")
         self.assertIn("D6_known_actor_icp_not_unproven", text,
                       "Step 11 missing D6: known actor ICP not unproven")
+        # D6 gate must NOT claim unknown-actor ICP smoke coverage
+        self.assertIn("covered by regression tests", text,
+                      "Step 11 D6 must reference regression tests for unknown-actor coverage")
+
+    def test_gate_d6_docs_do_not_overclaim_unknown_actor(self) -> None:
+        """Runbook and run report must not overclaim unknown-actor smoke coverage in D6."""
+        runbook = _read_runbook_text("controlled_weekly_run_smoke_test.md")
+        # Runbook section 21 must acknowledge unknown actor is regression-tested
+        self.assertIn("regression tests", runbook,
+                      "Runbook section 21 must reference regression tests for unknown actor")
+        self.assertIn("test_opportunity_synthesis", runbook,
+                      "Runbook must reference test_opportunity_synthesis.py")
+
+    def test_gate_b2_docs_say_stack_trace_only(self) -> None:
+        """B2 checks stack/trace coherent pair only; provenance is separate (B2b)."""
+        runbook = _read_runbook_text("controlled_weekly_run_smoke_test.md")
+        # B2 description must mention stack + trace (not provenance) as the coherent pair
+        self.assertIn("v214_gh_stack_001", runbook,
+                      "Runbook must reference v214_gh_stack_001 in B2 description")
+        self.assertIn("v214_gh_trace_001", runbook,
+                      "Runbook must reference v214_gh_trace_001 in B2 description")
+        # B2b must say provenance is separate
+        self.assertIn("B2b", runbook,
+                      "Runbook must contain B2b gate description")
+        self.assertIn("provenance", runbook.lower(),
+                      "Runbook must mention provenance in B2b context")
+        # Must NOT say coherent items include v214_gh_prov_001 in B2
+        self.assertIn("SEPARATE", runbook,
+                      "Runbook must say provenance is SEPARATE from trace cluster")
 
     # --- Fixture and scope checks (preserved from original) ---
 
@@ -883,3 +913,63 @@ class TestSmokeScriptContainsV214QualitySmokeStep(unittest.TestCase):
                             f"Step 11 fixture uses deferred source_id '{source}' "
                             f"in fixture data"
                         )
+
+
+# ---------------------------------------------------------------------------
+# v2.14 Item 9 Codex fix: Roadmap state alignment tests
+# ---------------------------------------------------------------------------
+
+
+class TestRoadmapStateAlignedForItem9CodexFix(unittest.TestCase):
+    """Verify roadmap overview counters and footer reflect Item 9 complete,
+    Item 10 next."""
+
+    def test_current_item_is_10(self):
+        roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
+        text = roadmap_path.read_text(encoding="utf-8")
+        self.assertIn("Current item: `10 — Final v2.14 checkpoint`", text,
+                      "Roadmap 0.2 must say current item is 10")
+        self.assertNotIn("Item 9 fix in progress", text,
+                         "Roadmap must not contain stale 'Item 9 fix in progress' wording")
+
+    def test_completed_counter_is_10_of_11(self):
+        roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
+        text = roadmap_path.read_text(encoding="utf-8")
+        self.assertIn("**10 / 11**", text,
+                      "Roadmap 0.4 must say completed 10/11")
+
+    def test_remaining_counter_is_1_of_11(self):
+        roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
+        text = roadmap_path.read_text(encoding="utf-8")
+        self.assertIn("**1 / 11**", text,
+                      "Roadmap 0.5 must say remaining 1/11")
+
+    def test_item_10_not_marked_complete(self):
+        roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
+        text = roadmap_path.read_text(encoding="utf-8")
+        # Item 10 DoD items must remain unchecked
+        self.assertIn("- [ ] **10.1**", text,
+                      "Roadmap Item 10.1 must remain unchecked")
+        self.assertIn("- [ ] **10.2**", text,
+                      "Roadmap Item 10.2 must remain unchecked")
+
+    def test_footer_says_item_9_complete(self):
+        roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
+        text = roadmap_path.read_text(encoding="utf-8")
+        self.assertIn("Item 9 complete; item 10 is next.", text,
+                      "Roadmap footer must say Item 9 complete; item 10 is next.")
+
+    def test_footer_does_not_contain_stale_fix_wording(self):
+        roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
+        text = roadmap_path.read_text(encoding="utf-8")
+        self.assertNotIn("fix applied; awaiting validation", text,
+                         "Roadmap footer must not contain stale awaiting-validation wording")
+
+    def test_item_9_dod_items_checked(self):
+        """Item 9 DoD items 9.1 through 9.12 must be checked as complete."""
+        roadmap_path = REPO_ROOT / "docs" / "roadmaps" / "OOS_roadmap_v2_14_pilot_quality_improvements_checklist.md"
+        text = roadmap_path.read_text(encoding="utf-8")
+        for n in range(1, 13):
+            with self.subTest(dod=f"9.{n}"):
+                self.assertIn(f"- [x] **9.{n}**", text,
+                              f"Roadmap Item 9.{n} DoD must be checked [x]")

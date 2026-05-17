@@ -1273,10 +1273,11 @@ checks.append((
 ))
 
 # D5: At least one hypothesis was synthesized with valid attributes.
-# v2.14-FIX: The unknown-actor items merge into the developer-dominant cluster,
-# so the hypothesis has target_actor='developer' (known, from majority evidence).
-# This gate verifies the hypothesis has the required not_a_solution_yet and
-# created_by fields and carries evidence_links.
+# v2.14-FIX: The unknown-actor items merge into the developer-dominant cluster
+# because pain_cluster_assembly allows unknown-actor merge when workflow+object
+# match. The hypothesis has target_actor='developer' (known, from majority
+# evidence). This gate verifies the hypothesis carries the required
+# not_a_solution_yet and created_by fields and evidence_links.
 synthesized_any = False
 all_have_required_fields = True
 for oh in opp_candidates:
@@ -1299,6 +1300,9 @@ checks.append((
 # 'unproven; validate actor' for known actors. Unknown-actor items that merged
 # into a known-actor cluster should not cause the whole hypothesis to be
 # downgraded to "unproven".
+# Unknown-actor synthesis behavior (target_icp='unproven; validate actor' when
+# cluster actor is genuinely 'unknown') is covered by regression tests in
+# test_opportunity_synthesis.py, not by this smoke Step 11 gate.
 has_known_actor_hyp = False
 known_actor_icp_ok = True
 for oh in opp_candidates:
